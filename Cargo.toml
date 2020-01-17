@@ -1,0 +1,132 @@
+[package]
+authors = ['olanod']
+build = 'build.rs'
+edition = '2018'
+name = 'substrate-poc'
+version = '2.0.0'
+
+[build-dependencies]
+vergen = '3.0.4'
+
+[build-dependencies.build-script-utils]
+git = 'https://github.com/paritytech/substrate.git'
+package = 'substrate-build-script-utils'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[workspace]
+members = ['runtime']
+
+[[bin]]
+name = 'node'
+path = 'src/main.rs'
+[profile.release]
+panic = 'unwind'
+
+[dependencies]
+futures = '0.3.1'
+log = '0.4.8'
+parking_lot = '0.9.0'
+trie-root = '0.15.2'
+
+[dependencies.codec]
+package = 'parity-scale-codec'
+version = '1.0.0'
+
+[dependencies.ctrlc]
+features = ['termination']
+version = '3.1.3'
+
+[dependencies.grandpa]
+git = 'https://github.com/paritytech/substrate.git'
+package = 'sc-finality-grandpa'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.grandpa-primitives]
+git = 'https://github.com/paritytech/substrate.git'
+package = 'sp-finality-grandpa'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.node-runtime]
+path = 'runtime'
+version = '2.0.0'
+
+[dependencies.sc-basic-authorship]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+
+[dependencies.sc-cli]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8.0'
+
+[dependencies.sc-client]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sc-consensus-aura]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sc-executor]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sc-network]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sc-service]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sc-transaction-pool]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.sp-consensus]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sp-consensus-aura]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '0.8'
+
+[dependencies.sp-core]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.sp-inherents]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.sp-io]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.sp-runtime]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.sp-transaction-pool]
+git = 'https://github.com/paritytech/substrate.git'
+rev = '10bebed2fcdbadac9c8f12f579bace37f60c631b'
+version = '2.0.0'
+
+[dependencies.tokio]
+features = ['rt-threaded']
+version = '0.2'
