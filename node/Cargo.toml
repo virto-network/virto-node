@@ -1,146 +1,52 @@
-[build-dependencies.substrate-build-script-utils]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
 [package]
-authors = ['Anonymous']
+authors = ['Daniel Olano <daniel@olanod.com>']
 build = 'build.rs'
-description = 'A new FRAME-based Substrate node, ready for hacking.'
+description = 'Valiu Liquidity Network blockchain node'
 edition = '2018'
-homepage = 'https://substrate.dev'
+homepage = 'https://github.com/valibre-org/node'
 license = 'Unlicense'
-name = 'node'
-repository = 'https://github.com/paritytech/substrate/'
-version = '2.0.0-rc6'
+name = 'vln-node'
+repository = 'https://github.com/valibre-org/node'
+version = '2.0.0'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-jsonrpc-core = '14.0.3'
+frame-benchmarking = '2.0.0'
+frame-benchmarking-cli = '2.0.0'
+jsonrpc-core = '15.0.0'
+vln-runtime = { version = '2.0.0', path = '../runtime' }
+pallet-transaction-payment-rpc = '2.0.0'
+sc-basic-authorship = '0.8.0'
+sc-cli = { version = '0.8.0', features = ['wasmtime'] }
+sc-client-api = '2.0.0'
+sc-consensus = '0.8.0'
+sc-consensus-aura = '0.8.0'
+sc-executor = { version = '0.8.0', features = ['wasmtime'] }
+sc-finality-grandpa = '0.8.0'
+sc-rpc = '2.0.0'
+sc-rpc-api = '0.8.0'
+sc-service = { version = '0.8.0', features = ['wasmtime'] }
+sc-transaction-pool = '2.0.0'
+sp-api = '2.0.0'
+sp-block-builder = '2.0.0'
+sp-blockchain = '2.0.0'
+sp-consensus = '0.8.0'
+sp-consensus-aura = '0.8.0'
+sp-core = '2.0.0'
+sp-finality-grandpa = '2.0.0'
+sp-inherents = '2.0.0'
+sp-runtime = '2.0.0'
+sp-transaction-pool = '2.0.0'
 structopt = '0.3.8'
+substrate-frame-rpc-system = '2.0.0'
 
-[dependencies.node-runtime]
-path = '../runtime'
-version = '2.0.0-rc6'
+[build-dependencies]
+substrate-build-script-utils = '2.0.0'
 
-[dependencies.pallet-transaction-payment-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sc-basic-authorship]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-cli]
-features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-client-api]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sc-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-executor]
-features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-rpc]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sc-rpc-api]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-service]
-features = ['wasmtime']
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sc-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-api]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-block-builder]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-blockchain]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-consensus]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sp-consensus-aura]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '0.8.0-rc6'
-
-[dependencies.sp-core]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-finality-grandpa]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-inherents]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-runtime]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.sp-transaction-pool]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
-
-[dependencies.substrate-frame-rpc-system]
-git = 'https://github.com/paritytech/substrate.git'
-rev = 'be8bb186d87b9d2b47a2907c9b51ae1e252362c3'
-version = '2.0.0-rc6'
+[features]
+default = []
+runtime-benchmarks = ['vln-runtime/runtime-benchmarks']
 
 [[bin]]
-name = 'node'
+name = 'vln-node'

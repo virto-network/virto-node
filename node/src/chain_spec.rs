@@ -1,5 +1,5 @@
 use sp_core::{Pair, Public, sr25519};
-use node_runtime::{
+use vln_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, SystemConfig, WASM_BINARY, Signature
 };

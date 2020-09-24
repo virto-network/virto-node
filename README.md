@@ -55,7 +55,7 @@ RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node -lruntime=debug --dev
 ### Multi-Node Local Testnet
 
 To see the multi-node consensus algorithm in action, run a local testnet with two validator nodes,
-Alice and Bob, that have been [configured](/bin/node/node/src/chain_spec.rs) as the initial
+Alice and Bob, that have been [configured](/bin/node-template/node/src/chain_spec.rs) as the initial
 authorities of the `local` testnet chain and endowed with testnet units.
 
 Note: this will require two terminal sessions (one for each node).
@@ -199,9 +199,9 @@ git checkout <branch/tag/sha1>
 # Run the helper script to generate a node template. This script compiles Substrate, so it will take
 # a while to complete. It expects a single parameter: the location for the script's output expressed
 # as a relative path.
-.maintain/node-release.sh ../node.tar.gz
+.maintain/node-template-release.sh ../node-template.tar.gz
 ```
 
 Custom node templates are not supported. Please use a recently tagged version of the
-[Substrate Developer Node Template](https://github.com/substrate-developer-hub/substrate-node)
+[Substrate Developer Node Template](https://github.com/substrate-developer-hub/substrate-node-template)
 in order to receive support.
