@@ -1,6 +1,6 @@
-# Substrate Node Template
+# VLN Node
 
-A new FRAME-based Substrate node, ready for hacking :rocket:
+A Substrate based blockchain node for the Valiu Liquidity Network
 
 ## Local Development
 
@@ -22,7 +22,7 @@ Find manual setup instructions at the
 
 ### Build
 
-Once the development environment is set up, build the node template. This command will build the
+Once the development environment is set up, build the node. This command will build the
 [Wasm](https://substrate.dev/docs/en/knowledgebase/advanced/executor#wasm-execution) and
 [native](https://substrate.dev/docs/en/knowledgebase/advanced/executor#native-execution) code:
 
@@ -55,7 +55,7 @@ RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node -lruntime=debug --dev
 ### Multi-Node Local Testnet
 
 To see the multi-node consensus algorithm in action, run a local testnet with two validator nodes,
-Alice and Bob, that have been [configured](/bin/node-template/node/src/chain_spec.rs) as the initial
+Alice and Bob, that have been [configured](/node/src/chain_spec.rs) as the initial
 authorities of the `local` testnet chain and endowed with testnet units.
 
 Note: this will require two terminal sessions (one for each node).
@@ -91,7 +91,7 @@ cargo run -- \
   --validator
 ```
 
-Execute `cargo run -- --help` to learn more about the template node's CLI options.
+Execute `cargo run -- --help` to learn more about the node's CLI options.
 
 ## Template Structure
 
@@ -153,7 +153,7 @@ called "pallets". At the heart of FRAME is a helpful
 create pallets and flexibly compose them to create blockchains that can address
 [a variety of needs](https://www.substrate.io/substrate-users/).
 
-Review the [FRAME runtime implementation](./runtime/src/lib.rs) included in this template and note
+Review the [FRAME runtime implementation](./runtime/src/lib.rs) included and note
 the following:
 
 -   This file configures several pallets to include in the runtime. Each pallet configuration is
@@ -167,8 +167,7 @@ the following:
 ### Pallets
 
 The runtime in this project is constructed using many FRAME pallets that ship with the
-[core Substrate repository](https://github.com/paritytech/substrate/tree/master/frame) and a
-template pallet that is [defined in the `pallets`](./pallets/template/src/lib.rs) directory.
+[core Substrate repository](https://github.com/paritytech/substrate/tree/master/frame) and custom ones [defined in the `pallets`](./pallets/) directory.
 
 A FRAME pallet is compromised of a number of blockchain primitives:
 
@@ -184,24 +183,3 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 -   Trait: The `Trait` configuration interface is used to define the types and parameters upon which
     a FRAME pallet depends.
 
-## Generate a Custom Node Template
-
-Generate a Substrate node template based on a particular commit by running the following commands:
-
-```bash
-# Clone from the main Substrate repo
-git clone https://github.com/paritytech/substrate.git
-cd substrate
-
-# Switch to the branch or commit to base the template on
-git checkout <branch/tag/sha1>
-
-# Run the helper script to generate a node template. This script compiles Substrate, so it will take
-# a while to complete. It expects a single parameter: the location for the script's output expressed
-# as a relative path.
-.maintain/node-template-release.sh ../node-template.tar.gz
-```
-
-Custom node templates are not supported. Please use a recently tagged version of the
-[Substrate Developer Node Template](https://github.com/substrate-developer-hub/substrate-node-template)
-in order to receive support.

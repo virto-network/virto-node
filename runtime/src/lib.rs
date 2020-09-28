@@ -38,8 +38,8 @@ pub use frame_support::{
 	},
 };
 
-/// Import the template pallet.
-pub use template;
+/// Import the mediums pallet.
+pub use mediums;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -261,8 +261,8 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet template in pallets/template.
-impl template::Trait for Runtime {
+/// Configure the pallet mediums in pallets/mediums.
+impl mediums::Trait for Runtime {
 	type Event = Event;
 }
 
@@ -281,8 +281,8 @@ construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-		// Include the custom logic from the template pallet in the runtime.
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		// Include the custom logic from the mediums pallet in the runtime.
+		TemplateModule: mediums::{Module, Call, Storage, Event<T>},
 	}
 );
 

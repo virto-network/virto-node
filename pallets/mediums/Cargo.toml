@@ -1,13 +1,13 @@
 [package]
 authors = ['Daniel Olano <daniel@olanod.com>']
-description = 'FRAME pallet template for defining custom runtime logic.'
+description = 'Mediums Ledger module'
 edition = '2018'
 homepage = 'https://github.com/valibre-org/node'
 license = 'Unlicense'
-name = 'pallet-template'
+name = 'pallet-mediums'
 readme = 'README.md'
 repository = 'https://github.com/valibre-org/node'
-version = '2.0.0'
+version = '0.1.0'
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
