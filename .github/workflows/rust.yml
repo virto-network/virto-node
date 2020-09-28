@@ -35,9 +35,10 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build
+          if-no-files-found: error
           path: |
-            target/release/node
             .codedeploy/**/*
+            target/release/node
 
   package:
     name: Codedeploy Odin Node
