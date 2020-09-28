@@ -54,7 +54,7 @@ jobs:
       - name: S3 Upload
         uses: hannut91/aws-cli@1.18.65
         with:
-          args: s3 mv app.zip s3://$DEPLOY_BUCKET/valibre-org/node/ 
+          args: s3 mv app.zip s3://${{ secrets.DEPLOY_BUCKET }}/valibre-org/node/ 
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
