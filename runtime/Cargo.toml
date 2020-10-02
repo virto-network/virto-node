@@ -129,10 +129,10 @@ version = '2.0.0'
 default-features = false
 version = '2.0.0'
 
-[dependencies.mediums]
+[dependencies.providers]
 default-features = false
-package = 'pallet-mediums'
-path = '../pallets/mediums'
+package = 'pallet-providers'
+path = '../pallets/liquidity-providers'
 version = '0.1.0'
 
 [features]
@@ -173,5 +173,5 @@ std = [
     'sp-version/std',
     'frame-system/std',
     'frame-system-rpc-runtime-api/std',
-    'mediums/std',
+    'providers/std',
 ]

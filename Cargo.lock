@@ -3583,7 +3583,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-mediums"
+name = "pallet-providers"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -3592,6 +3592,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7459,7 +7460,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
- "pallet-mediums",
+ "pallet-providers",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-timestamp",

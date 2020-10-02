@@ -3,8 +3,8 @@ os: linux
 files:
         - source: app.service
           destination: /usr/lib/systemd/system/
-        - source: node
-          destination: /usr/bin/
+        - source: vln-node
+          destination: /valiu/
 
 hooks:
         AfterInstall:
