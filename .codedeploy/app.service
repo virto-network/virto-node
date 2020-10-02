@@ -4,7 +4,7 @@ Description=Valibre blockchain node
 [Service]
 Type=simple
 Restart=always
-ExecStart=/valiu/vln-node --chain dev \
+ExecStart=/valiu/vln_node --chain dev \
 	--alice \
 	--validator
 [Install]

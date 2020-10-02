@@ -49,4 +49,5 @@ default = []
 runtime-benchmarks = ['vln-runtime/runtime-benchmarks']
 
 [[bin]]
-name = 'vln-node'
+name = 'vln_node'
+path = 'src/main.rs'
