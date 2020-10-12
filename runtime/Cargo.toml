@@ -10,129 +10,129 @@ version = '2.0.0'
 targets = ['x86_64-unknown-linux-gnu']
 
 [build-dependencies.wasm-builder-runner]
-package = 'substrate-wasm-builder-runner'
-version = '1.0.5'
+package = "substrate-wasm-builder-runner"
+version = "1.0.6"
 [dependencies.codec]
 default-features = false
 features = ['derive']
-package = 'parity-scale-codec'
-version = '1.3.4'
+package = "parity-scale-codec"
+version = "1.3.5"
 
 [dependencies.frame-benchmarking]
 default-features = false
 optional = true
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.frame-executive]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.frame-support]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.frame-system]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.frame-system-benchmarking]
 default-features = false
 optional = true
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.frame-system-rpc-runtime-api]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.hex-literal]
 optional = true
-version = '0.3.1'
+version = "0.3.1"
 
 [dependencies.pallet-aura]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-balances]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-grandpa]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-randomness-collective-flip]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-sudo]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-timestamp]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-transaction-payment]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.pallet-transaction-payment-rpc-runtime-api]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.serde]
 features = ['derive']
 optional = true
-version = '1.0.101'
+version = "1.0.116"
 
 [dependencies.sp-api]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-block-builder]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-consensus-aura]
 default-features = false
-version = '0.8.0'
+version = "0.8.0"
 
 [dependencies.sp-core]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-inherents]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-offchain]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-runtime]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-session]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-std]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-transaction-pool]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
 [dependencies.sp-version]
 default-features = false
-version = '2.0.0'
+version = "2.0.0"
 
-[dependencies.providers]
+[dependencies.pallet-provider]
 default-features = false
-package = 'pallet-providers'
-path = '../pallets/liquidity-providers'
+package = 'pallet-provider'
+path = '../pallets/liquidity-provider'
 version = '0.1.0'
 
 [features]
@@ -173,5 +173,5 @@ std = [
     'sp-version/std',
     'frame-system/std',
     'frame-system-rpc-runtime-api/std',
-    'providers/std',
+    'pallet-provider/std',
 ]

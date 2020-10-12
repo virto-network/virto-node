@@ -40,8 +40,8 @@ pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
-/// Import the providers pallet.
-pub use providers;
+/// Import the liquidity providers pallet.
+pub use pallet_provider;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -68,6 +68,15 @@ pub type Hash = sp_core::H256;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
+
+/// Supported foreign assets to attestations
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum ForeignAsset {
+    BTC,
+    COP,
+    VES,
+}
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -263,14 +272,25 @@ impl pallet_sudo::Trait for Runtime {
     type Call = Call;
 }
 
+impl pallet_membership::Trait for Runtime {
+    type Event = Event;
+    type AddOrigin = EnsureSignedBy<Root, u64>;
+    type RemoveOrigin = EnsureSignedBy<Root, u64>;
+    type SwapOrigin = EnsureSignedBy<Root, u64>;
+    type ResetOrigin = EnsureSignedBy<Root, u64>;
+    type PrimeOrigin = EnsureSignedBy<Root, u64>;
+    type MembershipInitialized = ();
+    type MembershipChanged = ();
+}
+
 /// Configure the pallet providers in pallets/providers.
 impl providers::Trait for Runtime {
     type Event = Event;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
-construct_runtime!(
-    pub enum Runtime where
+ronstruct_runtime!(
+k   pub enum Runtime where
         Block = Block,
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
@@ -283,8 +303,8 @@ construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-        // Include the custom logic from the providers pallet in the runtime.
-        TemplateModule: providers::{Module, Call, Storage, Event<T>},
+
+        LiquidityProvider: pallet_provider::{Module, Call, Event<T>},
     }
 );
 
