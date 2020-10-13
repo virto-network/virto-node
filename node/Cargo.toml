@@ -15,7 +15,6 @@ targets = ['x86_64-unknown-linux-gnu']
 frame-benchmarking = '2.0.0'
 frame-benchmarking-cli = '2.0.0'
 jsonrpc-core = '15.0.0'
-vln-runtime = { version = '2.0.0', path = '../runtime' }
 pallet-transaction-payment-rpc = '2.0.0'
 sc-basic-authorship = '0.8.0'
 sc-cli = { version = '0.8.0', features = ['wasmtime'] }
@@ -31,8 +30,6 @@ sc-transaction-pool = '2.0.0'
 sp-api = '2.0.0'
 sp-block-builder = '2.0.0'
 sp-blockchain = '2.0.0'
-sp-consensus = '0.8.0'
-sp-consensus-aura = '0.8.0'
 sp-core = '2.0.0'
 sp-finality-grandpa = '2.0.0'
 sp-inherents = '2.0.0'
@@ -40,6 +37,7 @@ sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 structopt = '0.3.8'
 substrate-frame-rpc-system = '2.0.0'
+vln-runtime = { version = '2.0.0', path = '../runtime' }
 
 [build-dependencies]
 substrate-build-script-utils = '2.0.0'
