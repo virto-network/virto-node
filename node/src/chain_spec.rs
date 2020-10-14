@@ -1,6 +1,6 @@
 pub(crate) mod dev;
 pub(crate) mod local_testnet;
-pub(crate) mod test_valiu_testnet;
+pub(crate) mod testnet_testnet;
 
 use sc_service::Properties;
 use serde_json::Map;

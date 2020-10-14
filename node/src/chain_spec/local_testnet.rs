@@ -5,7 +5,7 @@ use sc_service::ChainType;
 use sp_core::sr25519;
 use vln_runtime::WASM_BINARY;
 
-pub fn local_testnet() -> Result<ChainSpec, String> {
+pub fn chain_spec() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "WASM binary not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
