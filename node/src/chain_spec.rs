@@ -1,7 +1,7 @@
 use sp_core::{Pair, Public, sr25519};
 use vln_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
-	SudoConfig, SystemConfig, WASM_BINARY, Signature
+	SudoConfig, SystemConfig, WASM_BINARY, Signature, MembershipConfig, TokensConfig
 };
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
@@ -149,9 +149,15 @@ fn testnet_genesis(
 		pallet_grandpa: Some(GrandpaConfig {
 			authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect(),
 		}),
+		pallet_membership: Some(MembershipConfig {
+			members: vec![],
+			phantom: Default::default()
+		}),
 		pallet_sudo: Some(SudoConfig {
-			// Assign network admin rights.
 			key: root_key,
+		}),
+		orml_tokens: Some(TokensConfig {
+			endowed_accounts: vec![]
 		}),
 	}
 }

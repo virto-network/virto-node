@@ -43,6 +43,7 @@ decl_error! {
 decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         type Error = Error<T>;
+
         fn deposit_event() = default;
 
         #[weight = 0]
