@@ -23,10 +23,12 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use frame_system::EnsureRoot;
+use codec::{Encode, Decode};
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime, parameter_types,
+    construct_runtime, parameter_types, RuntimeDebug,
     traits::{KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -39,9 +41,6 @@ pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-
-/// Import the liquidity providers pallet.
-pub use pallet_provider;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -71,7 +70,7 @@ pub type DigestItem = generic::DigestItem<Hash>;
 
 /// Supported foreign assets to attestations
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum ForeignAsset {
     BTC,
     COP,
@@ -274,23 +273,33 @@ impl pallet_sudo::Trait for Runtime {
 
 impl pallet_membership::Trait for Runtime {
     type Event = Event;
-    type AddOrigin = EnsureSignedBy<Root, u64>;
-    type RemoveOrigin = EnsureSignedBy<Root, u64>;
-    type SwapOrigin = EnsureSignedBy<Root, u64>;
-    type ResetOrigin = EnsureSignedBy<Root, u64>;
-    type PrimeOrigin = EnsureSignedBy<Root, u64>;
+    type AddOrigin = EnsureRoot<AccountId>;
+    type RemoveOrigin = EnsureRoot<AccountId>;
+    type SwapOrigin = EnsureRoot<AccountId>;
+    type ResetOrigin = EnsureRoot<AccountId>;
+    type PrimeOrigin = EnsureRoot<AccountId>;
     type MembershipInitialized = ();
     type MembershipChanged = ();
 }
 
-/// Configure the pallet providers in pallets/providers.
-impl providers::Trait for Runtime {
+// Configure the pallet providers in pallets/providers.
+impl pallet_provider::Trait for Runtime {
+    type Currency = orml_tokens::Module<Runtime>;
     type Event = Event;
 }
 
+impl orml_tokens::Trait for Runtime {
+	type Amount = i64;
+	type Balance = Balance;
+	type CurrencyId = u32;
+	type Event = Event;
+	type OnReceived = ();
+	type WeightInfo = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
-ronstruct_runtime!(
-k   pub enum Runtime where
+construct_runtime!(
+   pub enum Runtime where
         Block = Block,
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
@@ -304,7 +313,9 @@ k   pub enum Runtime where
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 
-        LiquidityProvider: pallet_provider::{Module, Call, Event<T>},
+        Membership: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
+        Provider: pallet_provider::{Module, Call, Event<T>},
+        Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
     }
 );
 

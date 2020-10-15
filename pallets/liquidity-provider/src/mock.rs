@@ -54,10 +54,11 @@ impl orml_tokens::Trait for Test {
     type Event = ();
     type Balance = u32;
     type Amount = i64;
-    type CurrencyId = ();
+    type CurrencyId = u32;
     type OnReceived = ();
     type WeightInfo = ();
 }
+
 pub type Tokens = orml_tokens::Module<Test>;
 
 ord_parameter_types! {
