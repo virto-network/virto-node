@@ -51,14 +51,14 @@ jobs:
       matrix:
         node: 
         - name: test-odin
-          args: ''
+          args: '--rpc-methods unsafe'
           bucket: deploy-valiu
         - name: test-thor
           bucket: de-deploy-valiu
-          args: '--bootnodes test.valibre.network'
+          args: '--bootnodes test.valibre.network --rpc-methods unsafe'
         - name: test-loki
           bucket: ca-deploy-valiu
-          args: '--bootnodes test.valibre.network'
+          args: '--bootnodes test.valibre.network --rpc-methods unsafe'
     steps:
       - uses: actions/download-artifact@v2
         with:
