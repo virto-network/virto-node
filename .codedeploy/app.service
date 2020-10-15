@@ -4,9 +4,15 @@ Description=Valibre blockchain node
 [Service]
 Type=simple
 Restart=always
-ExecStart=/valiu/vln_node --chain dev \
-	--alice \
-	--validator
+ExecStart=/valiu/vln_node \
+	--validator \
+	--chain testnet_testnet \
+	--name vln.CHAIN_NAME \
+	--ws-port 80 \
+	--ws-external \
+	--no-telemetry \
+	--no-prometheus \
+	--no-mdns EXTRA_ARGS
 [Install]
 WantedBy=multi-user.target
 
