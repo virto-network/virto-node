@@ -7,7 +7,7 @@ Restart=always
 ExecStart=/valiu/vln_node \
 	--validator \
 	--chain testnet_testnet \
-	--name vln.CHAIN_NAME \
+	--name vln-CHAIN_NAME \
 	--ws-port 80 \
 	--ws-external \
 	--no-telemetry \

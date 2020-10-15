@@ -44,19 +44,19 @@ jobs:
             target/release/vln_node
 
   package:
-    name: Codedeploy Odin Node
+    name: Codedeploy Node
     runs-on: ubuntu-latest
     needs: build
     strategy:
       matrix:
         node: 
-        - name: odin.test
+        - name: test-odin
           args: ''
           bucket: deploy-valiu
-        - name: thor.test
+        - name: test-thor
           bucket: de-deploy-valiu
           args: '--bootnodes test.valibre.network'
-        - name: loki.test
+        - name: test-loki
           bucket: ca-deploy-valiu
           args: '--bootnodes test.valibre.network'
     steps:

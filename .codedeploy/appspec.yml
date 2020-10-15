@@ -8,8 +8,12 @@ files:
 
 hooks:
         AfterInstall:
+                - location: change_permissions
                 - location: enable_service
         ApplicationStart:
                 - location: start_service
         ApplicationStop:
                 - location: stop_service
+        ValidateService:
+                - location: check_service
+

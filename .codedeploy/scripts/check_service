@@ -1,0 +1,3 @@
+#!/bin/bash
+systemctl is-active --quiet app
+
