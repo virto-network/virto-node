@@ -9,8 +9,8 @@ use sp_core::{crypto::Ss58Codec, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-    SystemConfig,
+    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, MembershipConfig,
+    Signature, SudoConfig, SystemConfig, TokensConfig,
 };
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -52,7 +52,14 @@ impl GenesisConfigBuilder<'_> {
                     .map(|x| (x.1.clone(), 1))
                     .collect(),
             }),
+            pallet_membership: Some(MembershipConfig {
+                members: vec![],
+                phantom: Default::default(),
+            }),
             pallet_sudo: Some(SudoConfig { key: self.sudo_key }),
+            orml_tokens: Some(TokensConfig {
+                endowed_accounts: vec![],
+            }),
         }
     }
 }
