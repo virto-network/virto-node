@@ -1,6 +1,7 @@
 use crate::{Module, Trait};
 use frame_support::{impl_outer_origin, ord_parameter_types, parameter_types, weights::Weight};
 use frame_system as system;
+use pallet_membership::Instance0;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -9,7 +10,6 @@ use sp_runtime::{
 };
 use system::EnsureSignedBy;
 use valiu_node_commons::ValiuCurrencies;
-use pallet_membership::Instance0;
 
 pub type Membership = pallet_membership::Module<Test, Instance0>;
 pub type TestProvider = Module<Test>;

@@ -46,7 +46,7 @@ decl_module! {
             let provider = ensure_signed(origin)?;
 
             let members = pallet_membership::Module::<T, Instance0>::members();
-			members.binary_search(&provider).ok().ok_or(pallet_membership::Error::<T, Instance0>::NotMember)?;
+            members.binary_search(&provider).ok().ok_or(pallet_membership::Error::<T, Instance0>::NotMember)?;
 
             T::Currency::deposit(ValiuCurrencies::Usdv, &provider, balance)?;
             Self::deposit_event(RawEvent::Mint(provider, ValiuCurrencies::Usdv));

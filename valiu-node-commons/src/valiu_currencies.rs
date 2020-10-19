@@ -22,7 +22,7 @@ impl ValiuCurrencies {
     pub const fn as_str(&self) -> &'static str {
         match *self {
             Self::Btc => "BTC",
-            Self::Usdv => "USDv"
+            Self::Usdv => "USDv",
         }
     }
 }

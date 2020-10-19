@@ -6,6 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use codec::{Decode, Encode};
+use frame_system::EnsureRoot;
 use pallet_grandpa::fg_primitives;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 use sp_api::impl_runtime_apis;
@@ -23,19 +25,17 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use frame_system::EnsureRoot;
-use codec::{Encode, Decode};
 use valiu_node_commons::ValiuCurrencies;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    construct_runtime, parameter_types, RuntimeDebug,
+    construct_runtime, parameter_types,
     traits::{KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         IdentityFee, Weight,
     },
-    StorageValue,
+    RuntimeDebug, StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -290,12 +290,12 @@ impl pallet_provider::Trait for Runtime {
 }
 
 impl orml_tokens::Trait for Runtime {
-	type Amount = i64;
-	type Balance = Balance;
-	type CurrencyId = ValiuCurrencies;
-	type Event = Event;
-	type OnReceived = ();
-	type WeightInfo = ();
+    type Amount = i64;
+    type Balance = Balance;
+    type CurrencyId = ValiuCurrencies;
+    type Event = Event;
+    type OnReceived = ();
+    type WeightInfo = ();
 }
 
 impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
