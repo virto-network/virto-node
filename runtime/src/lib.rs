@@ -25,6 +25,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use frame_system::EnsureRoot;
 use codec::{Encode, Decode};
+use valiu_node_commons::ValiuCurrencies;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -291,10 +292,26 @@ impl pallet_provider::Trait for Runtime {
 impl orml_tokens::Trait for Runtime {
 	type Amount = i64;
 	type Balance = Balance;
-	type CurrencyId = u32;
+	type CurrencyId = ValiuCurrencies;
 	type Event = Event;
 	type OnReceived = ();
 	type WeightInfo = ();
+}
+
+impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
+    type Event = Event;
+    type AddOrigin = EnsureRoot<AccountId>;
+    type RemoveOrigin = EnsureRoot<AccountId>;
+    type SwapOrigin = EnsureRoot<AccountId>;
+    type ResetOrigin = EnsureRoot<AccountId>;
+    type PrimeOrigin = EnsureRoot<AccountId>;
+    type MembershipInitialized = ();
+    type MembershipChanged = ();
+}
+
+impl pallet_usdv_minting::Trait for Runtime {
+    type Currency = orml_tokens::Module<Runtime>;
+    type Event = Event;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -316,6 +333,9 @@ construct_runtime!(
         Membership: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
         Provider: pallet_provider::{Module, Call, Event<T>},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
+
+        UsdvMinting: pallet_usdv_minting::{Call, Event<T>, Module},
+        MembershipUsdv: pallet_membership::<Instance0>::{Call, Config<T>, Event<T>, Module, Storage},
     }
 );
 

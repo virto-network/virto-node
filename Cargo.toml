@@ -5,5 +5,7 @@ panic = 'unwind'
 members = [
     'node',
     'pallets/liquidity-provider',
+    'pallets/usdv-minting',
     'runtime',
+    'valiu-node-commons',
 ]

@@ -9,7 +9,7 @@ use sp_core::{crypto::Ss58Codec, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, MembershipConfig,
+    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, 
     Signature, SudoConfig, SystemConfig, TokensConfig,
 };
 
@@ -52,7 +52,11 @@ impl GenesisConfigBuilder<'_> {
                     .map(|x| (x.1.clone(), 1))
                     .collect(),
             }),
-            pallet_membership: Some(MembershipConfig {
+            pallet_membership: Some(pallet_membership::GenesisConfig {
+                members: vec![],
+                phantom: Default::default(),
+            }),
+            pallet_membership_Instance0: Some(pallet_membership::GenesisConfig {
                 members: vec![],
                 phantom: Default::default(),
             }),
