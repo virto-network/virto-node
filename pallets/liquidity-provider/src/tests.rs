@@ -1,9 +1,9 @@
 use crate::{mock::*, Error};
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::BadOrigin;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
-const BTC: ValiuCurrencies = ValiuCurrencies::Btc;
+const BTC: Asset = Asset::Btc;
 const ROOT: u64 = 1;
 
 #[test]

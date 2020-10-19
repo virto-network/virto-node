@@ -8,7 +8,7 @@ use sp_runtime::{
     Perbill,
 };
 use system::EnsureSignedBy;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
 impl_outer_origin! {
     pub enum Origin for Test {}
@@ -55,7 +55,7 @@ impl orml_tokens::Trait for Test {
     type Event = ();
     type Balance = u32;
     type Amount = i64;
-    type CurrencyId = ValiuCurrencies;
+    type CurrencyId = Asset;
     type OnReceived = ();
     type WeightInfo = ();
 }

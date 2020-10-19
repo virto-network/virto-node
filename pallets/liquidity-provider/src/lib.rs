@@ -3,7 +3,7 @@
 use frame_support::{decl_error, decl_event, decl_module, dispatch};
 use frame_system::ensure_signed;
 use orml_traits::MultiCurrency;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
 #[cfg(test)]
 mod mock;
@@ -17,7 +17,7 @@ type BalanceOf<T> =
 pub trait Trait: pallet_membership::Trait {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-    type Currency: MultiCurrency<Self::AccountId, CurrencyId = ValiuCurrencies>;
+    type Currency: MultiCurrency<Self::AccountId, CurrencyId = Asset>;
 }
 
 decl_event!(
@@ -27,7 +27,7 @@ decl_event!(
     {
         /// Event documentation should end with an array that provides descriptive names for event
         /// parameters. [something, who]
-        Attestation(AccountId, ValiuCurrencies),
+        Attestation(AccountId, Asset),
     }
 );
 
@@ -45,8 +45,8 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 0]
-        pub fn attest(origin, asset_id: ValiuCurrencies, balance: BalanceOf<T>) -> dispatch::DispatchResult {
-            if let ValiuCurrencies::Usdv = asset_id {
+        pub fn attest(origin, asset_id: Asset, balance: BalanceOf<T>) -> dispatch::DispatchResult {
+            if let Asset::Usdv = asset_id {
                 return Err(Error::<T>::MustNotBeUsdv.into());
             }
 

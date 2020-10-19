@@ -12,12 +12,12 @@ use core::fmt;
     parity_scale_codec::Decode,
     parity_scale_codec::Encode,
 )]
-pub enum ValiuCurrencies {
+pub enum Asset {
     Btc,
     Usdv,
 }
 
-impl ValiuCurrencies {
+impl Asset {
     #[inline]
     pub const fn as_str(&self) -> &'static str {
         match *self {
@@ -27,7 +27,7 @@ impl ValiuCurrencies {
     }
 }
 
-impl fmt::Display for ValiuCurrencies {
+impl fmt::Display for Asset {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())

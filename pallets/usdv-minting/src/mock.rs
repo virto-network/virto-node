@@ -9,7 +9,7 @@ use sp_runtime::{
     Perbill,
 };
 use system::EnsureSignedBy;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
 pub type Membership = pallet_membership::Module<Test, Instance0>;
 pub type TestProvider = Module<Test>;
@@ -52,7 +52,7 @@ impl pallet_membership::Trait<Instance0> for Test {
 impl orml_tokens::Trait for Test {
     type Amount = i64;
     type Balance = u32;
-    type CurrencyId = ValiuCurrencies;
+    type CurrencyId = Asset;
     type Event = ();
     type OnReceived = ();
     type WeightInfo = ();

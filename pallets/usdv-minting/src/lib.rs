@@ -4,7 +4,7 @@ use frame_support::{decl_error, decl_event, decl_module, dispatch};
 use frame_system::ensure_signed;
 use orml_traits::MultiCurrency;
 use pallet_membership::Instance0;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
 #[cfg(test)]
 mod mock;
@@ -15,7 +15,7 @@ type BalanceOf<T> =
     <<T as Trait>::Currency as MultiCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
 
 pub trait Trait: pallet_membership::Trait<Instance0> {
-    type Currency: MultiCurrency<Self::AccountId, CurrencyId = ValiuCurrencies>;
+    type Currency: MultiCurrency<Self::AccountId, CurrencyId = Asset>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
@@ -28,7 +28,7 @@ decl_event!(
     where
         AccountId = <T as frame_system::Trait>::AccountId,
     {
-        Mint(AccountId, ValiuCurrencies),
+        Mint(AccountId, Asset),
     }
 );
 
@@ -48,8 +48,8 @@ decl_module! {
             let members = pallet_membership::Module::<T, Instance0>::members();
             members.binary_search(&provider).ok().ok_or(pallet_membership::Error::<T, Instance0>::NotMember)?;
 
-            T::Currency::deposit(ValiuCurrencies::Usdv, &provider, balance)?;
-            Self::deposit_event(RawEvent::Mint(provider, ValiuCurrencies::Usdv));
+            T::Currency::deposit(Asset::Usdv, &provider, balance)?;
+            Self::deposit_event(RawEvent::Mint(provider, Asset::Usdv));
             Ok(())
         }
     }

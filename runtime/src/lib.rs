@@ -25,7 +25,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -292,7 +292,7 @@ impl pallet_provider::Trait for Runtime {
 impl orml_tokens::Trait for Runtime {
     type Amount = i64;
     type Balance = Balance;
-    type CurrencyId = ValiuCurrencies;
+    type CurrencyId = Asset;
     type Event = Event;
     type OnReceived = ();
     type WeightInfo = ();

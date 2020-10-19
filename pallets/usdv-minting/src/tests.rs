@@ -1,8 +1,8 @@
 use crate::mock::*;
 use frame_support::assert_ok;
-use valiu_node_commons::ValiuCurrencies;
+use valiu_node_commons::Asset;
 
-const USDV: ValiuCurrencies = ValiuCurrencies::Usdv;
+const USDV: Asset = Asset::Usdv;
 const ROOT: u64 = 1;
 
 #[test]
