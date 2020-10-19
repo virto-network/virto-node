@@ -3666,6 +3666,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "valiu-node-commons",
 ]
 
 [[package]]
@@ -3786,6 +3787,23 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-usdv-minting"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-membership",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "valiu-node-commons",
 ]
 
 [[package]]
@@ -7464,6 +7482,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "valiu-node-commons"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
 name = "vcpkg"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7494,6 +7520,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "jsonrpc-core",
+ "pallet-membership",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
  "sc-cli",
@@ -7545,6 +7572,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-usdv-minting",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -7559,6 +7587,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder-runner",
+ "valiu-node-commons",
 ]
 
 [[package]]

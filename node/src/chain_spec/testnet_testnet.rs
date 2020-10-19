@@ -19,9 +19,7 @@ const LOKI_GRANDPA_SS58: &str = "5ELYs2C7ePxsSNFZBHo5v5Rgq18fQzwepMzbdn43j5i724v
 pub fn chain_spec() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "WASM binary not available".to_string())?;
 
-    let endowed_accounts = vec![
-        account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58)?
-    ];
+    let endowed_accounts = vec![account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58)?];
 
     let initial_authorities = vec![
         (
@@ -35,7 +33,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         (
             public_key_from_ss58::<AuraId>(LOKI_AURA_SS58)?,
             public_key_from_ss58::<GrandpaId>(LOKI_GRANDPA_SS58)?,
-        )
+        ),
     ];
 
     let sudo_key = account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58)?;

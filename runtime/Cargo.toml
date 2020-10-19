@@ -143,6 +143,15 @@ version = '0.1.0'
 default-features = false
 version = "0.3"
 
+[dependencies.pallet-usdv-minting]
+default-features = false
+path = '../pallets/usdv-minting'
+version = '0.1.0'
+
+[dependencies.valiu-node-commons]
+default-features = false
+path = '../valiu-node-commons'
+
 [features]
 default = ['std']
 runtime-benchmarks = [
@@ -172,6 +181,7 @@ std = [
     'pallet-timestamp/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-transaction-payment/std',
+    'pallet-usdv-minting/std',
     'serde',
     'sp-api/std',
     'sp-block-builder/std',
