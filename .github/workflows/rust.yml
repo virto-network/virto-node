@@ -50,14 +50,12 @@ jobs:
       matrix:
         node: 
         - name: test-odin
-          args: '--rpc-methods unsafe'
+          args: '--unsafe-ws-external --rpc-cors all'
           bucket: deploy-valiu
         - name: test-thor
           bucket: de-deploy-valiu
-          args: '--bootnodes test.valibre.network --rpc-methods unsafe'
         - name: test-loki
           bucket: ca-deploy-valiu
-          args: '--bootnodes test.valibre.network --rpc-methods unsafe'
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -65,7 +63,7 @@ jobs:
       - name: Adapt service file
         run: |
           sed -i 's/CHAIN_NAME/${{ matrix.node.name }}/' .codedeploy/app.service
-          sed -i 's/EXTRA_ARGS/${{ matrix.node.args }}/' .codedeploy/app.service
+          sed -i 's/EXTRA_ARGS/${{ matrix.node.args || secrets.NODE_ARGS }}/' .codedeploy/app.service
       - name: Create app.zip
         uses: montudor/action-zip@v0.1.0
         with:
