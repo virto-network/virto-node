@@ -1,5 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod valiu_currencies;
+mod asset;
 
-pub use valiu_currencies::*;
+pub use asset::*;
