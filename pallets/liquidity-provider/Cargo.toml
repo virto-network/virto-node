@@ -19,23 +19,19 @@ std = [
     'orml-traits/std',
     'pallet-membership/std',
     'parity-scale-codec/std',
-    'sp-std/std',
     'valiu-node-commons/std',
 ]
 
 [dependencies]
 frame-support = { version = '2.0.0', default-features = false }
 frame-system = { version = '2.0.0', default-features = false }
-sp-std = { version = '2.0.0', default-features = false }
 orml-traits = { version = '0.3.1', default-features = false }
 pallet-membership = { version = '2.0.0', default-features = false }
+parity-scale-codec = { features = ['derive'], version = '1.0', default-features = false }
 valiu-node-commons = { default-features = false, path = '../../valiu-node-commons' }
 
-parity-scale-codec = { features = ['derive'], version = '1.0', default-features = false }
-
 [dev-dependencies]
+orml-tokens = { default-features = false, version = '0.3' }
 sp-core = { version = '2.0.0', default-features = false }
 sp-io = { version = '2.0.0', default-features = false }
 sp-runtime = { version = '2.0.0', default-features = false }
-orml-tokens = '0.3.1'
-

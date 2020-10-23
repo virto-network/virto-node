@@ -285,7 +285,8 @@ impl pallet_membership::Trait for Runtime {
 
 // Configure the pallet providers in pallets/providers.
 impl pallet_provider::Trait for Runtime {
-    type Currency = orml_tokens::Module<Runtime>;
+    type Asset = orml_tokens::Module<Runtime>;
+    type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
 }
 
@@ -309,11 +310,6 @@ impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
     type MembershipChanged = ();
 }
 
-impl pallet_usdv_minting::Trait for Runtime {
-    type Currency = orml_tokens::Module<Runtime>;
-    type Event = Event;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
    pub enum Runtime where
@@ -330,12 +326,10 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 
-        Membership: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
+        MintMembers: pallet_membership::<Instance0>::{Call, Config<T>, Event<T>, Module, Storage},
         Provider: pallet_provider::{Module, Call, Event<T>},
+        ProviderMembers: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
-
-        UsdvMinting: pallet_usdv_minting::{Call, Event<T>, Module},
-        MembershipUsdv: pallet_membership::<Instance0>::{Call, Config<T>, Event<T>, Module, Storage},
     }
 );
 

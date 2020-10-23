@@ -1,3 +1,0 @@
-# USDv minting
-
-USDv minting
