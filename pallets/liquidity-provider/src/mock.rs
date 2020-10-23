@@ -10,80 +10,93 @@ use sp_runtime::{
 use system::EnsureSignedBy;
 use valiu_node_commons::Asset;
 
+pub type MintMembers = pallet_membership::Module<Test, pallet_membership::Instance0>;
+pub type ProviderMembers = pallet_membership::Module<Test, pallet_membership::DefaultInstance>;
+pub type TestProvider = Module<Test>;
+pub type Tokens = orml_tokens::Module<Test>;
+
 impl_outer_origin! {
     pub enum Origin for Test {}
 }
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Test;
-parameter_types! {
-    pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-}
-
-impl system::Trait for Test {
-    type BaseCallFilter = ();
-    type Origin = Origin;
-    type Call = ();
-    type Index = u64;
-    type BlockNumber = u64;
-    type Hash = H256;
-    type Hashing = BlakeTwo256;
-    type AccountId = u64;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = ();
-    type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
-    type DbWeight = ();
-    type BlockExecutionWeight = ();
-    type ExtrinsicBaseWeight = ();
-    type MaximumExtrinsicWeight = MaximumBlockWeight;
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
-    type Version = ();
-    type PalletInfo = ();
-    type AccountData = ();
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type SystemWeightInfo = ();
-}
-
-impl orml_tokens::Trait for Test {
-    type Event = ();
-    type Balance = u32;
-    type Amount = i64;
-    type CurrencyId = Asset;
-    type OnReceived = ();
-    type WeightInfo = ();
-}
-
-pub type Tokens = orml_tokens::Module<Test>;
 
 ord_parameter_types! {
     pub const Root: u64 = 1;
 }
 
-impl pallet_membership::Trait for Test {
-    type Event = ();
-    type AddOrigin = EnsureSignedBy<Root, u64>;
-    type RemoveOrigin = EnsureSignedBy<Root, u64>;
-    type SwapOrigin = EnsureSignedBy<Root, u64>;
-    type ResetOrigin = EnsureSignedBy<Root, u64>;
-    type PrimeOrigin = EnsureSignedBy<Root, u64>;
-    type MembershipInitialized = ();
-    type MembershipChanged = ();
+parameter_types! {
+    pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+    pub const BlockHashCount: u64 = 250;
+    pub const MaximumBlockLength: u32 = 2 * 1024;
+    pub const MaximumBlockWeight: Weight = 1024;
 }
-pub type Membership = pallet_membership::Module<Test>;
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct Test;
+
+impl system::Trait for Test {
+    type AccountData = ();
+    type AccountId = u64;
+    type AvailableBlockRatio = AvailableBlockRatio;
+    type BaseCallFilter = ();
+    type BlockExecutionWeight = ();
+    type BlockHashCount = BlockHashCount;
+    type BlockNumber = u64;
+    type Call = ();
+    type DbWeight = ();
+    type Event = ();
+    type ExtrinsicBaseWeight = ();
+    type Hash = H256;
+    type Hashing = BlakeTwo256;
+    type Header = Header;
+    type Index = u64;
+    type Lookup = IdentityLookup<Self::AccountId>;
+    type MaximumBlockLength = MaximumBlockLength;
+    type MaximumBlockWeight = MaximumBlockWeight;
+    type MaximumExtrinsicWeight = MaximumBlockWeight;
+    type OnKilledAccount = ();
+    type OnNewAccount = ();
+    type Origin = Origin;
+    type PalletInfo = ();
+    type SystemWeightInfo = ();
+    type Version = ();
+}
+
+impl orml_tokens::Trait for Test {
+    type Amount = i64;
+    type Balance = u32;
+    type CurrencyId = Asset;
+    type Event = ();
+    type OnReceived = ();
+    type WeightInfo = ();
+}
+
+impl pallet_membership::Trait<pallet_membership::DefaultInstance> for Test {
+    type AddOrigin = EnsureSignedBy<Root, u64>;
+    type Event = ();
+    type MembershipChanged = ();
+    type MembershipInitialized = ();
+    type PrimeOrigin = EnsureSignedBy<Root, u64>;
+    type RemoveOrigin = EnsureSignedBy<Root, u64>;
+    type ResetOrigin = EnsureSignedBy<Root, u64>;
+    type SwapOrigin = EnsureSignedBy<Root, u64>;
+}
+
+impl pallet_membership::Trait<pallet_membership::Instance0> for Test {
+    type AddOrigin = EnsureSignedBy<Root, u64>;
+    type Event = ();
+    type MembershipChanged = ();
+    type MembershipInitialized = ();
+    type PrimeOrigin = EnsureSignedBy<Root, u64>;
+    type RemoveOrigin = EnsureSignedBy<Root, u64>;
+    type ResetOrigin = EnsureSignedBy<Root, u64>;
+    type SwapOrigin = EnsureSignedBy<Root, u64>;
+}
 
 impl Trait for Test {
+    type Asset = Tokens;
+    type Collateral = Tokens;
     type Event = ();
-    type Currency = Tokens;
 }
-
-pub type TestProvider = Module<Test>;
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

@@ -1,4 +1,3 @@
-use crate::Collateral;
 use core::fmt;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -13,22 +12,20 @@ use core::fmt;
     parity_scale_codec::Decode,
     parity_scale_codec::Encode,
 )]
-pub enum Asset {
-    Collateral(Collateral),
-    Usdv,
+pub enum Collateral {
+    Usdc,
 }
 
-impl Asset {
+impl Collateral {
     #[inline]
     pub const fn as_str(&self) -> &'static str {
         match *self {
-            Self::Collateral(c) => c.as_str(),
-            Self::Usdv => "USDv",
+            Self::Usdc => "USDC",
         }
     }
 }
 
-impl fmt::Display for Asset {
+impl fmt::Display for Collateral {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())

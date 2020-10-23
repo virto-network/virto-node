@@ -1,42 +1,64 @@
-use crate::{mock::*, Error};
+use crate::mock::*;
 use frame_support::{assert_noop, assert_ok};
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_runtime::traits::BadOrigin;
-use valiu_node_commons::Asset;
+use valiu_node_commons::{Asset, Collateral};
 
-const BTC: Asset = Asset::Btc;
 const ROOT: u64 = 1;
+const USDC_ASSET: Asset = Asset::Collateral(USDC_COLLATERAL);
+const USDC_COLLATERAL: Collateral = Collateral::Usdc;
+const USDV_ASSET: Asset = Asset::Usdv;
 
 #[test]
-fn attest_increases_asset_supply() {
+fn attest_increases_supply() {
     new_test_ext().execute_with(|| {
-        assert_ok!(Membership::add_member(Origin::signed(ROOT), 2));
-        assert_ok!(Membership::add_member(Origin::signed(ROOT), 3));
+        assert_ok!(MintMembers::add_member(Origin::signed(ROOT), 2));
+        assert_ok!(ProviderMembers::add_member(Origin::signed(ROOT), 2));
+        assert_ok!(TestProvider::attest(
+            Origin::signed(2),
+            USDC_COLLATERAL,
+            123
+        ));
+        assert_eq!(Tokens::free_balance(USDC_ASSET, &2), 0);
+        assert_eq!(Tokens::reserved_balance(USDC_ASSET, &2), 123);
+        assert_eq!(Tokens::free_balance(USDV_ASSET, &2), 123);
 
-        let member_2 = Origin::signed(2);
-        assert_ok!(TestProvider::attest(member_2, BTC, 123));
-        assert_eq!(Tokens::free_balance(BTC, &2), 0);
-        assert_eq!(Tokens::reserved_balance(BTC, &2), 123);
+        assert_ok!(MintMembers::add_member(Origin::signed(ROOT), 3));
+        assert_ok!(ProviderMembers::add_member(Origin::signed(ROOT), 3));
+        assert_ok!(TestProvider::attest(
+            Origin::signed(3),
+            USDC_COLLATERAL,
+            456
+        ));
+        assert_eq!(Tokens::free_balance(USDC_ASSET, &3), 0);
+        assert_eq!(Tokens::reserved_balance(USDC_ASSET, &3), 456);
+        assert_eq!(Tokens::free_balance(USDV_ASSET, &3), 456);
 
-        let member_3 = Origin::signed(3);
-        assert_ok!(TestProvider::attest(member_3, BTC, 456));
-        assert_eq!(Tokens::free_balance(BTC, &3), 0);
-        assert_eq!(Tokens::reserved_balance(BTC, &3), 456);
-
-        assert_eq!(Tokens::total_issuance(BTC), 579);
+        assert_eq!(Tokens::total_issuance(USDC_ASSET), 579);
     });
 }
 
 #[test]
 fn only_providers_can_attest() {
     new_test_ext().execute_with(|| {
-        // only "root" can register
-        assert_noop!(Membership::add_member(Origin::signed(2), 2), BadOrigin);
+        assert_noop!(MintMembers::add_member(Origin::signed(2), 2), BadOrigin);
+        assert_noop!(ProviderMembers::add_member(Origin::signed(2), 2), BadOrigin);
+
         assert_noop!(
-            TestProvider::attest(Origin::signed(2), BTC, 123),
-            Error::<Test>::NotAProvider
+            TestProvider::attest(Origin::signed(2), USDC_COLLATERAL, 123),
+            pallet_membership::Error::<Test, pallet_membership::DefaultInstance>::NotMember
         );
-        assert_ok!(Membership::add_member(Origin::signed(ROOT), 2));
-        assert_ok!(TestProvider::attest(Origin::signed(2), BTC, 123));
+        assert_noop!(
+            TestProvider::attest(Origin::signed(2), USDC_COLLATERAL, 123),
+            pallet_membership::Error::<Test, pallet_membership::Instance0>::NotMember
+        );
+
+        assert_ok!(MintMembers::add_member(Origin::signed(ROOT), 2));
+        assert_ok!(ProviderMembers::add_member(Origin::signed(ROOT), 2));
+        assert_ok!(TestProvider::attest(
+            Origin::signed(2),
+            USDC_COLLATERAL,
+            123
+        ));
     });
 }

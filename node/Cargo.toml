@@ -8,6 +8,7 @@ license = 'Unlicense'
 name = 'vln-node'
 repository = 'https://github.com/valibre-org/node'
 version = '2.0.0'
+
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
