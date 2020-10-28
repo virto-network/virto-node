@@ -67,14 +67,13 @@ where
     Collateral::variants()
         .iter()
         .filter_map(|&collateral| {
-            let collateral_asset = Asset::Collateral(collateral);
-            let reserved = T::Collateral::reserved_balance(collateral_asset, who);
+            let reserved = T::Collateral::reserved_balance(collateral.into(), who);
 
             if reserved == Balance::<T>::zero() {
                 None
             } else {
                 Some(Account {
-                    asset: collateral_asset,
+                    asset: collateral.into(),
                     reserved,
                 })
             }

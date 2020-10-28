@@ -72,8 +72,8 @@ decl_module! {
                 .ok()
                 .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
 
-            T::Collateral::deposit(Asset::Collateral(collateral), &who, balance)?;
-            T::Collateral::reserve(Asset::Collateral(collateral), &who, balance)?;
+            T::Collateral::deposit(collateral.into(), &who, balance)?;
+            T::Collateral::reserve(collateral.into(), &who, balance)?;
             T::Asset::deposit(Asset::Usdv, &who, balance)?;
             Self::deposit_event(RawEvent::Attestation(who, collateral));
             Ok(())

@@ -1,3 +1,4 @@
+// Expands to 0 + 1 + 2 + 3 + ... + n through `replace_expr` calling
 macro_rules! count_idents {
     ($($idents:ident)*) => {0usize $(+ replace_expr!($idents 1usize))*};
 }
@@ -42,6 +43,7 @@ macro_rules! create_enum_with_aux_fns {
     }
 }
 
+// Erases `$_i` and returns `$sub`
 macro_rules! replace_expr {
     ($_i:ident $sub:expr) => {
         $sub

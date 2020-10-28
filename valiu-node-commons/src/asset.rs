@@ -34,3 +34,10 @@ impl fmt::Display for Asset {
         write!(f, "{}", self.as_str())
     }
 }
+
+impl From<Collateral> for Asset {
+    #[inline]
+    fn from(from: Collateral) -> Self {
+        Asset::Collateral(from)
+    }
+}
