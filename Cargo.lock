@@ -3656,12 +3656,14 @@ dependencies = [
 name = "pallet-provider"
 version = "0.1.0"
 dependencies = [
+ "arrayvec 0.5.1",
  "frame-support",
  "frame-system",
  "orml-tokens",
  "orml-traits",
  "pallet-membership",
  "parity-scale-codec",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
