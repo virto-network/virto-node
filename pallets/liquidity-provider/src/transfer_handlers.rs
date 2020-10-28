@@ -122,14 +122,14 @@ where
 
     let mut actually_transfered: Balance<T> = Balance::<T>::zero();
     let mut last_actually_transfered: Balance<T> = Balance::<T>::zero();
-    let _100 = Balance::<T>::from(100);
+    let hundred = Balance::<T>::from(100);
     let pct = wants_to_transfer
-        .checked_mul(&_100)?
+        .checked_mul(&hundred)?
         .checked_div(&total_collaterals)?;
 
     loop {
         for Account { reserved, .. } in collateral_balances.iter_mut() {
-            let partial_collateral = reserved.checked_mul(&pct)?.checked_div(&_100)?;
+            let partial_collateral = reserved.checked_mul(&pct)?.checked_div(&hundred)?;
             let partial_actually_transfered =
                 actually_transfered.checked_add(&partial_collateral)?;
 

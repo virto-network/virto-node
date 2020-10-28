@@ -12,7 +12,7 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          components: rustfmt
+          components: clippy, rustfmt
           override: true
           profile: minimal
           target: wasm32-unknown-unknown
@@ -37,6 +37,11 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+      - name: Clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
 
       - uses: actions-rs/cargo@v1
         with:
