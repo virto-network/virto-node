@@ -33,7 +33,8 @@ decl_event!(
         AccountId = <T as frame_system::Trait>::AccountId,
         Balance = Balance<T>,
     {
-        Attestation(AccountId, Collateral),
+        Attestation(AccountId, Asset),
+        Mint(AccountId, Collateral),
         Transfer(AccountId, AccountId, Balance),
     }
 );
@@ -56,26 +57,30 @@ decl_module! {
         #[weight = 0]
         pub fn attest(
             origin,
+            asset: Asset,
+            balance: Balance<T>
+        ) -> dispatch::DispatchResult
+        {
+            let who = ensure_signed(origin)?;
+            do_attest::<T>(who, asset, balance)
+        }
+
+        #[weight = 0]
+        pub fn mint(
+            origin,
             collateral: Collateral,
             balance: Balance<T>
         ) -> dispatch::DispatchResult
         {
             let who = ensure_signed(origin)?;
-
             pallet_membership::Module::<T, MintMembers>::members()
                 .binary_search(&who)
                 .ok()
                 .ok_or(pallet_membership::Error::<T, MintMembers>::NotMember)?;
-
-            pallet_membership::Module::<T, ProviderMembers>::members()
-                .binary_search(&who)
-                .ok()
-                .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
-
+            do_attest::<T>(who.clone(), Asset::Usdv, balance)?;
             T::Collateral::deposit(collateral.into(), &who, balance)?;
             T::Collateral::reserve(collateral.into(), &who, balance)?;
-            T::Asset::deposit(Asset::Usdv, &who, balance)?;
-            Self::deposit_event(RawEvent::Attestation(who, collateral));
+            Self::deposit_event(RawEvent::Mint(who, collateral));
             Ok(())
         }
 
@@ -94,4 +99,22 @@ decl_module! {
             Ok(())
         }
     }
+}
+
+#[inline]
+fn do_attest<T>(
+    from: <T as frame_system::Trait>::AccountId,
+    asset: Asset,
+    balance: Balance<T>,
+) -> dispatch::DispatchResult
+where
+    T: Trait,
+{
+    pallet_membership::Module::<T, ProviderMembers>::members()
+        .binary_search(&from)
+        .ok()
+        .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
+    T::Asset::deposit(asset, &from, balance)?;
+    Module::<T>::deposit_event(RawEvent::Attestation(from, asset));
+    Ok(())
 }
