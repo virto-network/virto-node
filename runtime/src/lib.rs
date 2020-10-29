@@ -159,7 +159,6 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 
-        MintMembers: pallet_membership::<Instance0>::{Call, Config<T>, Event<T>, Module, Storage},
         Provider: pallet_provider::{Module, Call, Event<T>},
         ProviderMembers: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
@@ -468,17 +467,6 @@ impl orml_tokens::Trait for Runtime {
     type Event = Event;
     type OnReceived = ();
     type WeightInfo = ();
-}
-
-impl pallet_membership::Trait<pallet_membership::Instance0> for Runtime {
-    type Event = Event;
-    type AddOrigin = EnsureRoot<AccountId>;
-    type RemoveOrigin = EnsureRoot<AccountId>;
-    type SwapOrigin = EnsureRoot<AccountId>;
-    type ResetOrigin = EnsureRoot<AccountId>;
-    type PrimeOrigin = EnsureRoot<AccountId>;
-    type MembershipInitialized = ();
-    type MembershipChanged = ();
 }
 
 /// The version information used to identify this runtime when compiled natively.

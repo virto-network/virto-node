@@ -56,10 +56,6 @@ impl GenesisConfigBuilder<'_> {
                 members: vec![],
                 phantom: Default::default(),
             }),
-            pallet_membership_Instance0: Some(pallet_membership::GenesisConfig {
-                members: vec![],
-                phantom: Default::default(),
-            }),
             pallet_sudo: Some(SudoConfig { key: self.sudo_key }),
             orml_tokens: Some(TokensConfig {
                 endowed_accounts: vec![],
