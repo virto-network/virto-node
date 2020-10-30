@@ -10,7 +10,6 @@ use sp_runtime::{
 use system::EnsureSignedBy;
 use valiu_node_commons::Asset;
 
-pub type MintMembers = pallet_membership::Module<Test, pallet_membership::Instance0>;
 pub type ProviderMembers = pallet_membership::Module<Test, pallet_membership::DefaultInstance>;
 pub type TestProvider = Module<Test>;
 pub type Tokens = orml_tokens::Module<Test>;
@@ -71,17 +70,6 @@ impl orml_tokens::Trait for Test {
 }
 
 impl pallet_membership::Trait<pallet_membership::DefaultInstance> for Test {
-    type AddOrigin = EnsureSignedBy<Root, u64>;
-    type Event = ();
-    type MembershipChanged = ();
-    type MembershipInitialized = ();
-    type PrimeOrigin = EnsureSignedBy<Root, u64>;
-    type RemoveOrigin = EnsureSignedBy<Root, u64>;
-    type ResetOrigin = EnsureSignedBy<Root, u64>;
-    type SwapOrigin = EnsureSignedBy<Root, u64>;
-}
-
-impl pallet_membership::Trait<pallet_membership::Instance0> for Test {
     type AddOrigin = EnsureSignedBy<Root, u64>;
     type Event = ();
     type MembershipChanged = ();

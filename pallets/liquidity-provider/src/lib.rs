@@ -4,7 +4,7 @@ use frame_support::{decl_error, decl_event, decl_module, dispatch};
 use frame_system::ensure_signed;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
-use valiu_node_commons::{Asset, Collateral, DistributionStrategy};
+use valiu_node_commons::{Asset, DistributionStrategy};
 
 #[cfg(test)]
 mod mock;
@@ -14,11 +14,9 @@ mod transfer_handlers;
 
 type Balance<T> =
     <<T as Trait>::Collateral as MultiCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
-type MintMembers = pallet_membership::Instance0;
 type ProviderMembers = pallet_membership::DefaultInstance;
 
-pub trait Trait:
-    pallet_membership::Trait<MintMembers> + pallet_membership::Trait<ProviderMembers>
+pub trait Trait: pallet_membership::Trait<ProviderMembers>
 where
     Balance<Self>: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + From<u8>,
 {
@@ -33,13 +31,14 @@ decl_event!(
         AccountId = <T as frame_system::Trait>::AccountId,
         Balance = Balance<T>,
     {
-        Attestation(AccountId, Collateral),
+        Attestation(AccountId, Asset),
         Transfer(AccountId, AccountId, Balance),
     }
 );
 
 decl_error! {
     pub enum Error for Module<T: Trait> {
+        MustNotBeUsdv,
         NoFunds
     }
 }
@@ -56,27 +55,21 @@ decl_module! {
         #[weight = 0]
         pub fn attest(
             origin,
-            collateral: Collateral,
+            asset: Asset,
             balance: Balance<T>
         ) -> dispatch::DispatchResult
         {
-            let who = ensure_signed(origin)?;
-
-            pallet_membership::Module::<T, MintMembers>::members()
-                .binary_search(&who)
-                .ok()
-                .ok_or(pallet_membership::Error::<T, MintMembers>::NotMember)?;
-
-            pallet_membership::Module::<T, ProviderMembers>::members()
-                .binary_search(&who)
-                .ok()
-                .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
-
-            T::Collateral::deposit(collateral.into(), &who, balance)?;
-            T::Collateral::reserve(collateral.into(), &who, balance)?;
-            T::Asset::deposit(Asset::Usdv, &who, balance)?;
-            Self::deposit_event(RawEvent::Attestation(who, collateral));
-            Ok(())
+            match asset {
+                Asset::Usdv => return Err(crate::Error::<T>::MustNotBeUsdv.into()),
+                Asset::Collateral(collateral) => {
+                    let who = ensure_signed(origin)?;
+                    do_attest::<T>(who.clone(), Asset::Usdv, balance)?;
+                    T::Collateral::deposit(collateral.into(), &who, balance)?;
+                    T::Collateral::reserve(collateral.into(), &who, balance)?;
+                    Self::deposit_event(RawEvent::Attestation(who, collateral.into()));
+                    Ok(())
+                }
+            }
         }
 
         #[weight = 0]
@@ -94,4 +87,22 @@ decl_module! {
             Ok(())
         }
     }
+}
+
+#[inline]
+fn do_attest<T>(
+    from: <T as frame_system::Trait>::AccountId,
+    asset: Asset,
+    balance: Balance<T>,
+) -> dispatch::DispatchResult
+where
+    T: Trait,
+{
+    pallet_membership::Module::<T, ProviderMembers>::members()
+        .binary_search(&from)
+        .ok()
+        .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
+    T::Asset::deposit(asset, &from, balance)?;
+    Module::<T>::deposit_event(RawEvent::Attestation(from, asset));
+    Ok(())
 }

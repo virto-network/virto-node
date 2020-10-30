@@ -22,28 +22,24 @@ use sc_service::PartialComponents;
 use vln_runtime::Block;
 
 impl SubstrateCli for Cli {
-    fn impl_name() -> String {
-        "Substrate Node".into()
+    fn author() -> String {
+        env!("CARGO_PKG_AUTHORS").into()
     }
 
-    fn impl_version() -> String {
-        env!("SUBSTRATE_CLI_IMPL_VERSION").into()
+    fn copyright_start_year() -> i32 {
+        2017
     }
 
     fn description() -> String {
         env!("CARGO_PKG_DESCRIPTION").into()
     }
 
-    fn author() -> String {
-        env!("CARGO_PKG_AUTHORS").into()
+    fn impl_name() -> String {
+        "Substrate Node".into()
     }
 
-    fn support_url() -> String {
-        "support.anonymous.an".into()
-    }
-
-    fn copyright_start_year() -> i32 {
-        2017
+    fn impl_version() -> String {
+        env!("SUBSTRATE_CLI_IMPL_VERSION").into()
     }
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -59,6 +55,10 @@ impl SubstrateCli for Cli {
 
     fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
         &vln_runtime::VERSION
+    }
+
+    fn support_url() -> String {
+        "support.anonymous.an".into()
     }
 }
 
