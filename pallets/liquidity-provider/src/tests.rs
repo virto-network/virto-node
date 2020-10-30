@@ -3,7 +3,7 @@ use alloc::vec;
 use frame_support::{assert_noop, assert_ok};
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_runtime::traits::BadOrigin;
-use valiu_node_commons::{Asset, Collateral, DistributionStrategy, OfferRate};
+use valiu_node_commons::{AccountRate, Asset, Collateral, DistributionStrategy, OfferRate};
 
 const ROOT: u64 = 1;
 const USD_ASSET: Asset = Asset::Collateral(USD_COLLATERAL);
@@ -55,21 +55,27 @@ fn must_be_provider_to_attest() {
 fn rate_offers_are_modified_when_attesting_or_updating() {
     new_test_ext().execute_with(|| {
         assert_ok!(ProviderMembers::add_member(Origin::signed(ROOT), 2));
-        let mut offers = vec![OfferRate::new(USD_ASSET, 123)];
+        let mut offers = vec![OfferRate::new(USDC_ASSET, 123)];
         assert_ok!(TestProvider::attest(
             Origin::signed(2),
-            USDC_ASSET,
+            USD_ASSET,
             123,
             offers.clone()
         ));
-        assert_eq!(TestProvider::offer_rates(&2, USDC_ASSET), offers.clone());
-        offers[0] = OfferRate::new(USD_ASSET, 100);
+        assert_eq!(
+            TestProvider::account_rates(&USD_ASSET, &USDC_ASSET),
+            vec![AccountRate::new(2, 123)]
+        );
+        offers[0] = OfferRate::new(USDC_ASSET, 100);
         assert_ok!(TestProvider::update_offer_rates(
             Origin::signed(2),
-            USDC_ASSET,
-            offers.clone()
+            USD_ASSET,
+            offers
         ));
-        assert_eq!(TestProvider::offer_rates(&2, USDC_ASSET), offers);
+        assert_eq!(
+            TestProvider::account_rates(&USD_ASSET, &USDC_ASSET),
+            vec![AccountRate::new(2, 100)]
+        );
     });
 }
 

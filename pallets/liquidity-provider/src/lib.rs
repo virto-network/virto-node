@@ -7,7 +7,7 @@ use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch}
 use frame_system::ensure_signed;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
-use valiu_node_commons::{Asset, DistributionStrategy, OfferRate};
+use valiu_node_commons::{AccountRate, Asset, DistributionStrategy, OfferRate};
 
 #[cfg(test)]
 mod mock;
@@ -15,8 +15,10 @@ mod mock;
 mod tests;
 mod transfer_handlers;
 
+type AccountRateTy<T> = AccountRate<<T as frame_system::Trait>::AccountId, Balance<T>>;
 type Balance<T> =
     <<T as Trait>::Collateral as MultiCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
+type OfferRateTy<T> = OfferRate<Balance<T>>;
 type ProviderMembers = pallet_membership::DefaultInstance;
 
 pub trait Trait: pallet_membership::Trait<ProviderMembers>
@@ -60,14 +62,14 @@ decl_module! {
             origin,
             asset: Asset,
             balance: Balance<T>,
-            new_offer_rates: Vec<OfferRate<Balance<T>>>
+            offer_rates: Vec<OfferRateTy<T>>
         ) -> dispatch::DispatchResult
         {
             match asset {
                 Asset::Usdv => return Err(crate::Error::<T>::MustNotBeUsdv.into()),
                 Asset::Collateral(collateral) => {
                     let who = ensure_signed(origin)?;
-                    do_update_offer_rates::<T>(&who, asset, new_offer_rates);
+                    update_account_rates::<T>(&who, asset, offer_rates);
                     do_attest::<T>(who.clone(), Asset::Usdv, balance)?;
                     T::Collateral::deposit(collateral.into(), &who, balance)?;
                     T::Collateral::reserve(collateral.into(), &who, balance)?;
@@ -96,11 +98,11 @@ decl_module! {
         pub fn update_offer_rates(
             origin,
             asset: Asset,
-            new_offer_rates: Vec<OfferRate<Balance<T>>>
+            offer_rates: Vec<OfferRateTy<T>>
         ) -> dispatch::DispatchResult
         {
             let who = ensure_signed(origin)?;
-            do_update_offer_rates::<T>(&who, asset, new_offer_rates);
+            update_account_rates::<T>(&who, asset, offer_rates);
             Ok(())
         }
     }
@@ -110,19 +112,16 @@ impl<T> Module<T>
 where
     T: Trait,
 {
-    pub fn offer_rates(
-        from: &<T as frame_system::Trait>::AccountId,
-        asset: Asset,
-    ) -> Vec<OfferRate<Balance<T>>> {
-        <Offers<T>>::get(from, asset)
+    pub fn account_rates(from_asset: &Asset, to_asset: &Asset) -> Vec<AccountRateTy<T>> {
+        <Offers<T>>::get(from_asset, to_asset)
     }
 }
 
 decl_storage! {
     trait Store for Module<T: Trait> as Tokens {
         pub Offers get(fn accounts):
-            double_map hasher(blake2_128_concat) <T as frame_system::Trait>::AccountId,
-            hasher(twox_64_concat) Asset => Vec<OfferRate<Balance<T>>>
+            double_map hasher(twox_64_concat) Asset,
+            hasher(twox_64_concat) Asset => Vec<AccountRateTy<T>>
     }
 }
 
@@ -145,23 +144,23 @@ where
 }
 
 #[inline]
-fn do_update_offer_rates<T>(
+fn update_account_rates<T>(
     from: &<T as frame_system::Trait>::AccountId,
     asset: Asset,
-    new_offer_rates: Vec<OfferRate<Balance<T>>>,
+    offer_rates: Vec<OfferRateTy<T>>,
 ) where
     T: Trait,
 {
-    <Offers<T>>::mutate(from, asset, |old_offers| {
-        for new_offer_rate in new_offer_rates {
-            let idx = old_offers
-                .binary_search_by(|e| e.asset().cmp(&new_offer_rate.asset()))
-                .unwrap_or_else(|x| x);
-            if let Some(rslt) = old_offers.get_mut(idx) {
-                *rslt = new_offer_rate;
+    for offer_rate in offer_rates {
+        <Offers<T>>::mutate(asset, offer_rate.asset(), |account_rates| {
+            let idx = account_rates
+                .binary_search_by(|el| el.account().cmp(from))
+                .unwrap_or_else(|idx| idx);
+            if let Some(rslt) = account_rates.get_mut(idx) {
+                *rslt.rate_mut() = *offer_rate.rate();
             } else {
-                old_offers.insert(idx, new_offer_rate)
+                account_rates.insert(idx, AccountRate::new(from.clone(), *offer_rate.rate()))
             }
-        }
-    })
+        })
+    }
 }
