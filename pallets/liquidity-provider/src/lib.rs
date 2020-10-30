@@ -1,10 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{decl_error, decl_event, decl_module, dispatch};
+extern crate alloc;
+
+use alloc::vec::Vec;
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch};
 use frame_system::ensure_signed;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
-use valiu_node_commons::{Asset, DistributionStrategy};
+use valiu_node_commons::{Asset, DistributionStrategy, OfferRate};
 
 #[cfg(test)]
 mod mock;
@@ -56,13 +59,15 @@ decl_module! {
         pub fn attest(
             origin,
             asset: Asset,
-            balance: Balance<T>
+            balance: Balance<T>,
+            new_offer_rates: Vec<OfferRate<Balance<T>>>
         ) -> dispatch::DispatchResult
         {
             match asset {
                 Asset::Usdv => return Err(crate::Error::<T>::MustNotBeUsdv.into()),
                 Asset::Collateral(collateral) => {
                     let who = ensure_signed(origin)?;
+                    do_update_offer_rates::<T>(&who, asset, new_offer_rates);
                     do_attest::<T>(who.clone(), Asset::Usdv, balance)?;
                     T::Collateral::deposit(collateral.into(), &who, balance)?;
                     T::Collateral::reserve(collateral.into(), &who, balance)?;
@@ -86,6 +91,38 @@ decl_module! {
             }
             Ok(())
         }
+
+        #[weight = 0]
+        pub fn update_offer_rates(
+            origin,
+            asset: Asset,
+            new_offer_rates: Vec<OfferRate<Balance<T>>>
+        ) -> dispatch::DispatchResult
+        {
+            let who = ensure_signed(origin)?;
+            do_update_offer_rates::<T>(&who, asset, new_offer_rates);
+            Ok(())
+        }
+    }
+}
+
+impl<T> Module<T>
+where
+    T: Trait,
+{
+    pub fn offer_rates(
+        from: &<T as frame_system::Trait>::AccountId,
+        asset: Asset,
+    ) -> Vec<OfferRate<Balance<T>>> {
+        <Offers<T>>::get(from, asset)
+    }
+}
+
+decl_storage! {
+    trait Store for Module<T: Trait> as Tokens {
+        pub Offers get(fn accounts):
+            double_map hasher(blake2_128_concat) <T as frame_system::Trait>::AccountId,
+            hasher(twox_64_concat) Asset => Vec<OfferRate<Balance<T>>>
     }
 }
 
@@ -105,4 +142,26 @@ where
     T::Asset::deposit(asset, &from, balance)?;
     Module::<T>::deposit_event(RawEvent::Attestation(from, asset));
     Ok(())
+}
+
+#[inline]
+fn do_update_offer_rates<T>(
+    from: &<T as frame_system::Trait>::AccountId,
+    asset: Asset,
+    new_offer_rates: Vec<OfferRate<Balance<T>>>,
+) where
+    T: Trait,
+{
+    <Offers<T>>::mutate(from, asset, |old_offers| {
+        for new_offer_rate in new_offer_rates {
+            let idx = old_offers
+                .binary_search_by(|e| e.asset().cmp(&new_offer_rate.asset()))
+                .unwrap_or_else(|x| x);
+            if let Some(rslt) = old_offers.get_mut(idx) {
+                *rslt = new_offer_rate;
+            } else {
+                old_offers.insert(idx, new_offer_rate)
+            }
+        }
+    })
 }
