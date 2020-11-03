@@ -159,7 +159,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 
-        Provider: pallet_provider::{Module, Call, Event<T>},
+        Provider: pallet_provider::{Call, Event<T>, Module, Storage},
         ProviderMembers: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
     }
