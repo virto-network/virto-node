@@ -1,0 +1,34 @@
+#!/bin/bash
+
+ODIN=12D3KooWBmXbz7NUHGKPVs8VMwmCr7M6NVqpmujg7hRjcm4WcKCU
+THOR=12D3KooWQuSeUa8PC4ndkFAwFtpzD4j5rgk2VugEArzsRZCsmtxa
+LOKI=12D3KooWNueDjtBDFm2ZHJkusTidiaS4hRUHj6Yb1m41KLrJsK9s
+
+LOKI_IP=$(dig loki.valiu +short)
+THOR_IP=$(dig thor.valiu +short)
+LOKI_IP=$(dig loki.valiu +short)
+
+bootnodes() {
+	nodes=
+	for node in "$@"; do
+	case "$node" in
+		odin) nodes="${nodes} --bootnodes /ip4/$ODIN_IP/tcp/30333/p2p/$ODIN";;
+		thor) nodes="${nodes} --bootnodes /ip4/$THOR_IP/tcp/30333/p2p/$THOR";;
+		loki) nodes="${nodes} --bootnodes /ip4/$LOKI_IP/tcp/30333/p2p/$LOKI";;
+	esac
+	done
+	echo $nodes
+}
+
+NAME=$(hostname)
+FLAGS=
+
+case "$NAME" in
+	freyja) FLAGS="--rpc-external --ws-external --rpc-cors all $(bootnodes odin thor loki)";;
+	odin) FLAGS="--validator";;
+	thor) FLAGS="--validator $(bootnodes odin loki)";;
+	loki) FLAGS="--validator $(bootnodes odin thor)";;
+esac
+
+sed -i "s/CHAIN_NAME/$NAME/" /usr/lib/systemd/system/app.service
+sed -i "s/EXTRA_FLAGS/$FLAGS/" /usr/lib/systemd/system/app.service

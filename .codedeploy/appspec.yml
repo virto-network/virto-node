@@ -8,6 +8,7 @@ files:
 
 hooks:
         AfterInstall:
+                - location: add_node_specific_config
                 - location: change_permissions
                 - location: enable_service
         ApplicationStart:
