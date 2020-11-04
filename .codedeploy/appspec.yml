@@ -7,6 +7,8 @@ files:
           destination: /valiu/
 
 hooks:
+        BeforeInstall:
+                - location: move_prev_version
         AfterInstall:
                 - location: add_node_specific_config
                 - location: change_permissions
