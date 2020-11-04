@@ -5,7 +5,7 @@ ODIN=12D3KooWBmXbz7NUHGKPVs8VMwmCr7M6NVqpmujg7hRjcm4WcKCU
 THOR=12D3KooWQuSeUa8PC4ndkFAwFtpzD4j5rgk2VugEArzsRZCsmtxa
 LOKI=12D3KooWNueDjtBDFm2ZHJkusTidiaS4hRUHj6Yb1m41KLrJsK9s
 
-LOKI_IP=$(dig loki.valiu +short)
+ODIN_IP=$(dig odin.valiu +short)
 THOR_IP=$(dig thor.valiu +short)
 LOKI_IP=$(dig loki.valiu +short)
 
