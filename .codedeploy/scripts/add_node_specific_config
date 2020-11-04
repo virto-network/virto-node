@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ODIN=12D3KooWBmXbz7NUHGKPVs8VMwmCr7M6NVqpmujg7hRjcm4WcKCU
 THOR=12D3KooWQuSeUa8PC4ndkFAwFtpzD4j5rgk2VugEArzsRZCsmtxa
@@ -30,5 +31,5 @@ case "$NAME" in
 	loki) FLAGS="--validator $(bootnodes odin thor)";;
 esac
 
-sed -i "s/CHAIN_NAME/$NAME/" /usr/lib/systemd/system/app.service
-sed -i "s/EXTRA_FLAGS/$FLAGS/" /usr/lib/systemd/system/app.service
+sed -i "s~CHAIN_NAME~$NAME~" /usr/lib/systemd/system/app.service
+sed -i "s~EXTRA_FLAGS~$FLAGS~" /usr/lib/systemd/system/app.service
