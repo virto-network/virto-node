@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build project
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
 
@@ -44,7 +44,7 @@ jobs:
 
   package:
     name: Codedeploy Node
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
       - uses: actions/download-artifact@v2
