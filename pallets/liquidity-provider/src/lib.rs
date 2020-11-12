@@ -2,18 +2,28 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
-use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch};
-use frame_system::ensure_signed;
-use orml_traits::{MultiCurrency, MultiReservableCurrency};
-use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
-use valiu_node_commons::{AccountRate, Asset, DistributionStrategy, OfferRate};
-
+mod crypto;
+mod liquidity_provider_balance;
 #[cfg(test)]
 mod mock;
+mod module_impl;
 #[cfg(test)]
 mod tests;
-mod transfer_handlers;
+
+use alloc::vec::Vec;
+use frame_support::{
+    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, traits::Get,
+};
+use frame_system::{
+    ensure_none, ensure_signed,
+    offchain::{AppCrypto, SendTransactionTypes, SigningTypes},
+};
+use orml_traits::{MultiCurrency, MultiReservableCurrency};
+use valiu_node_commons::{AccountRate, Asset, DistributionStrategy, OfferRate, PairPrice};
+
+pub use crypto::*;
+pub use liquidity_provider_balance::*;
+pub use module_impl::module_impl_offchain::*;
 
 type AccountRateTy<T> = AccountRate<<T as frame_system::Trait>::AccountId, Balance<T>>;
 type Balance<T> =
@@ -21,13 +31,17 @@ type Balance<T> =
 type OfferRateTy<T> = OfferRate<Balance<T>>;
 type ProviderMembers = pallet_membership::DefaultInstance;
 
-pub trait Trait: pallet_membership::Trait<ProviderMembers>
+pub trait Trait:
+    SendTransactionTypes<Call<Self>> + SigningTypes + pallet_membership::Trait<ProviderMembers>
 where
-    Balance<Self>: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + From<u8>,
+    Balance<Self>: LiquidityProviderBalance,
 {
     type Asset: MultiCurrency<Self::AccountId, Balance = Balance<Self>, CurrencyId = Asset>;
     type Collateral: MultiReservableCurrency<Self::AccountId, CurrencyId = Asset>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    type OffchainAuthority: AppCrypto<Self::Public, Self::Signature>;
+    type OffchainUnsignedGracePeriod: Get<Self::BlockNumber>;
+    type OffchainUnsignedInterval: Get<Self::BlockNumber>;
 }
 
 decl_event!(
@@ -63,20 +77,41 @@ decl_module! {
             asset: Asset,
             balance: Balance<T>,
             offer_rates: Vec<OfferRateTy<T>>
-        ) -> dispatch::DispatchResult
+        ) -> DispatchResult
         {
             match asset {
-                Asset::Usdv => return Err(crate::Error::<T>::MustNotBeUsdv.into()),
+                Asset::Usdv => Err(crate::Error::<T>::MustNotBeUsdv.into()),
                 Asset::Collateral(collateral) => {
                     let who = ensure_signed(origin)?;
-                    update_account_rates::<T>(&who, asset, offer_rates);
-                    do_attest::<T>(who.clone(), Asset::Usdv, balance)?;
+                    Self::update_account_rates(&who, asset, offer_rates);
+                    Self::do_attest(who.clone(), Asset::Usdv, balance)?;
                     T::Collateral::deposit(collateral.into(), &who, balance)?;
                     T::Collateral::reserve(collateral.into(), &who, balance)?;
                     Self::deposit_event(RawEvent::Attestation(who, collateral.into()));
                     Ok(())
+                },
+                Asset::Btc | Asset::Cop | Asset::Ves => {
+                    todo!()
                 }
             }
+        }
+
+        #[weight = 0]
+        pub fn submit_pair_prices(
+            origin,
+            pair_prices: Vec<PairPrice<Balance<T>>>,
+            _signature: T::Signature,
+        ) -> DispatchResult {
+            ensure_none(origin)?;
+            <PairPrices<T>>::mutate(|old_pair_prices| {
+                if Self::incoming_pair_prices_are_valid(&pair_prices) {
+                    old_pair_prices.clear();
+                    old_pair_prices.extend(pair_prices);
+                }
+            });
+            let current_block = <frame_system::Module<T>>::block_number();
+            <NextUnsignedAt<T>>::put(current_block + T::OffchainUnsignedInterval::get());
+            Ok(())
         }
 
         #[weight = 0]
@@ -85,11 +120,11 @@ decl_module! {
             to: <T as frame_system::Trait>::AccountId,
             to_amount: Balance<T>,
             ds: DistributionStrategy
-        ) -> dispatch::DispatchResult
+        ) -> DispatchResult
         {
             let from = ensure_signed(origin)?;
             match ds {
-                DistributionStrategy::Evenly => transfer_handlers::transfer_evenly::<T>(from, to, to_amount)?
+                DistributionStrategy::Evenly => Self::transfer_evenly(from, to, to_amount)?
             }
             Ok(())
         }
@@ -99,68 +134,27 @@ decl_module! {
             origin,
             asset: Asset,
             offer_rates: Vec<OfferRateTy<T>>
-        ) -> dispatch::DispatchResult
+        ) -> DispatchResult
         {
             let who = ensure_signed(origin)?;
-            update_account_rates::<T>(&who, asset, offer_rates);
+            Self::update_account_rates(&who, asset, offer_rates);
             Ok(())
+        }
+
+        fn offchain_worker(block_number: T::BlockNumber) {
+            let _ = Self::fetch_pair_prices_and_submit_tx(block_number);
         }
     }
 }
 
-impl<T> Module<T>
-where
-    T: Trait,
-{
-    pub fn account_rates(from_asset: &Asset, to_asset: &Asset) -> Vec<AccountRateTy<T>> {
-        <Offers<T>>::get(from_asset, to_asset)
-    }
-}
-
 decl_storage! {
-    trait Store for Module<T: Trait> as Tokens {
-        pub Offers get(fn accounts):
+    trait Store for Module<T: Trait> as LiquidityProviderStorage {
+        pub AccountRates get(fn account_rates):
             double_map hasher(twox_64_concat) Asset,
-            hasher(twox_64_concat) Asset => Vec<AccountRateTy<T>>
-    }
-}
+            hasher(twox_64_concat) Asset => Vec<AccountRateTy<T>>;
 
-#[inline]
-fn do_attest<T>(
-    from: <T as frame_system::Trait>::AccountId,
-    asset: Asset,
-    balance: Balance<T>,
-) -> dispatch::DispatchResult
-where
-    T: Trait,
-{
-    pallet_membership::Module::<T, ProviderMembers>::members()
-        .binary_search(&from)
-        .ok()
-        .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
-    T::Asset::deposit(asset, &from, balance)?;
-    Module::<T>::deposit_event(RawEvent::Attestation(from, asset));
-    Ok(())
-}
+        pub NextUnsignedAt get(fn next_unsigned_at): T::BlockNumber;
 
-#[inline]
-fn update_account_rates<T>(
-    from: &<T as frame_system::Trait>::AccountId,
-    asset: Asset,
-    offer_rates: Vec<OfferRateTy<T>>,
-) where
-    T: Trait,
-{
-    for offer_rate in offer_rates {
-        <Offers<T>>::mutate(asset, offer_rate.asset(), |account_rates| {
-            let idx = account_rates
-                .binary_search_by(|el| el.account().cmp(from))
-                .unwrap_or_else(|idx| idx);
-            if let Some(rslt) = account_rates.get_mut(idx) {
-                *rslt.rate_mut() = *offer_rate.rate();
-            } else {
-                account_rates.insert(idx, AccountRate::new(from.clone(), *offer_rate.rate()))
-            }
-        })
+        pub PairPrices get(fn prices): Vec<PairPrice<Balance<T>>>
     }
 }

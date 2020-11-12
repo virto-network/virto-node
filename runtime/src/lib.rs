@@ -22,7 +22,7 @@ use sp_runtime::traits::{
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, MultiSignature, MultiSigner,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -139,6 +139,8 @@ parameter_types! {
     /// Assume 10% of weight for average on_initialize calls.
     pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+    pub const OffchainUnsignedGracePeriod: u32 = 5;
+    pub const OffchainUnsignedInterval: u32 = 128;
     pub const TransactionByteFee: Balance = 1;
     pub const Version: RuntimeVersion = VERSION;
 }
@@ -325,8 +327,6 @@ impl_runtime_apis! {
     }
 }
 
-// Configure FRAME pallets to include in runtime.
-
 impl frame_system::Trait for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = ();
@@ -384,6 +384,19 @@ impl frame_system::Trait for Runtime {
     type AccountData = pallet_balances::AccountData<Balance>;
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
+}
+
+impl<LC> frame_system::offchain::SendTransactionTypes<LC> for Runtime
+where
+    Call: From<LC>,
+{
+    type Extrinsic = UncheckedExtrinsic;
+    type OverarchingCall = Call;
+}
+
+impl frame_system::offchain::SigningTypes for Runtime {
+    type Public = <Signature as Verify>::Signer;
+    type Signature = Signature;
 }
 
 impl pallet_aura::Trait for Runtime {
@@ -458,6 +471,9 @@ impl pallet_provider::Trait for Runtime {
     type Asset = orml_tokens::Module<Runtime>;
     type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
+    type OffchainAuthority = OffchainAppCrypto;
+    type OffchainUnsignedGracePeriod = OffchainUnsignedGracePeriod;
+    type OffchainUnsignedInterval = OffchainUnsignedInterval;
 }
 
 impl orml_tokens::Trait for Runtime {
@@ -467,6 +483,14 @@ impl orml_tokens::Trait for Runtime {
     type Event = Event;
     type OnReceived = ();
     type WeightInfo = ();
+}
+
+pub struct OffchainAppCrypto;
+
+impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for OffchainAppCrypto {
+    type GenericPublic = sp_runtime::app_crypto::sr25519::Public;
+    type GenericSignature = sp_runtime::app_crypto::sr25519::Signature;
+    type RuntimeAppPublic = pallet_provider::Public;
 }
 
 /// The version information used to identify this runtime when compiled natively.

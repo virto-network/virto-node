@@ -14,16 +14,22 @@ use core::fmt;
     parity_scale_codec::Encode,
 )]
 pub enum Asset {
+    Btc,
     Collateral(Collateral),
+    Cop,
     Usdv,
+    Ves,
 }
 
 impl Asset {
     #[inline]
     pub const fn as_str(&self) -> &'static str {
         match *self {
+            Self::Btc => "USDv",
             Self::Collateral(c) => c.as_str(),
+            Self::Cop => "COP",
             Self::Usdv => "USDv",
+            Self::Ves => "VES",
         }
     }
 }
