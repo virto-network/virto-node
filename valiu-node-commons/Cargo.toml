@@ -1,12 +1,18 @@
 [dependencies]
+arrayvec = { default-features = false, version = '0.5' }
+num-traits = { default-features = false, version = '0.2' }
 parity-scale-codec = { default-features = false, features = ['derive'], version = '1.0' }
 serde = { default-features = false, features = ['derive'], optional = true, version = '1.0' }
+sp-arithmetic = { default-features = false, version = '2.0' }
 
 [features]
 default = []
 std = [
+    'arrayvec/std',
+    'num-traits/std',
     'parity-scale-codec/std',
-    'serde'
+    'serde',
+    'sp-arithmetic/std',
 ]
 
 [package]

@@ -188,4 +188,5 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+    'valiu-node-commons/std',
 ]
