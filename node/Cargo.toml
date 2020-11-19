@@ -13,8 +13,8 @@ version = '2.0.0'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-frame-benchmarking = '2.0.0'
-frame-benchmarking-cli = '2.0.0'
+frame-benchmarking = { optional = true, version = '2.0.0' }
+frame-benchmarking-cli = { optional = true, version = '2.0.0' }
 jsonrpc-core = '15.0.0'
 pallet-membership = '2.0'
 pallet-transaction-payment-rpc = '2.0.0'
@@ -42,14 +42,19 @@ sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 structopt = '0.3.8'
 substrate-frame-rpc-system = '2.0.0'
-vln-runtime = { version = '2.0.0', path = '../runtime' }
+vln-runtime = { path = '../runtime', version = '2.0.0' }
 
 [build-dependencies]
 substrate-build-script-utils = '2.0.0'
 
 [features]
 default = []
-runtime-benchmarks = ['vln-runtime/runtime-benchmarks']
+native-runtime-benchmarks = ['runtime-benchmarks', 'vln-runtime/native-runtime-benchmarks']
+runtime-benchmarks = [
+    'frame-benchmarking-cli',
+    'frame-benchmarking',
+    'vln-runtime/runtime-benchmarks'
+]
 
 [[bin]]
 name = 'vln_node'

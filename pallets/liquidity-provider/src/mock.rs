@@ -1,15 +1,19 @@
-use crate::{Call, Module, Trait};
+mod test_extrinsic;
+
+use crate::{mock::test_extrinsic::TestXt, Call, DefaultWeightInfo, Module, Trait};
+use alloc::{boxed::Box, vec};
 use frame_support::{impl_outer_origin, ord_parameter_types, parameter_types, weights::Weight};
 use frame_system::{offchain::AppCrypto, EnsureSignedBy};
 use sp_core::{sr25519, H256};
 use sp_runtime::{
     generic::Header,
-    testing::TestXt,
-    traits::Verify,
-    traits::{BlakeTwo256, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup, Verify},
     Perbill,
 };
-use valiu_node_commons::Asset;
+use valiu_node_commons::{Asset, Collateral};
+
+pub const USD_COLLATERAL: Collateral = Collateral::Usd;
+pub const USD_ASSET: Asset = Asset::Collateral(USD_COLLATERAL);
 
 pub type Extrinsic = TestXt<Call<Test>, ()>;
 pub type ProviderMembers = pallet_membership::Module<Test, pallet_membership::DefaultInstance>;
@@ -104,6 +108,7 @@ impl Trait for Test {
     type OffchainAuthority = TestAuth;
     type OffchainUnsignedGracePeriod = OffchainUnsignedGracePeriod;
     type OffchainUnsignedInterval = OffchainUnsignedInterval;
+    type WeightInfo = DefaultWeightInfo;
 }
 
 pub struct TestAuth;
@@ -114,10 +119,6 @@ impl AppCrypto<<sr25519::Signature as Verify>::Signer, sr25519::Signature> for T
     type RuntimeAppPublic = crate::Public;
 }
 
-// Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-    frame_system::GenesisConfig::default()
-        .build_storage::<Test>()
-        .unwrap()
-        .into()
+pub fn root() -> sr25519::Public {
+    <sr25519::Public>::from_raw([0; 32])
 }

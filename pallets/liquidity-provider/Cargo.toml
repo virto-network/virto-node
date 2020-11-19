@@ -4,15 +4,24 @@ description = 'Mediums Ledger module'
 edition = '2018'
 homepage = 'https://github.com/valibre-org/node'
 license = 'Unlicense'
-name = 'pallet-provider'
+name = 'pallet-liquidity-provider'
 readme = 'README.md'
 repository = 'https://github.com/valibre-org/node'
 version = '0.1.0'
+
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
 default = ['std']
+native-runtime-benchmarks = ['frame-benchmarking/std', 'runtime-benchmarks', 'std']
+runtime-benchmarks = [
+    'frame-benchmarking',
+    'frame-system/runtime-benchmarks',
+    'orml-tokens',
+    'sp-std',
+    'parity-util-mem'
+]
 std = [
     'arrayvec/std',
     'frame-support/std',
@@ -31,18 +40,23 @@ std = [
 
 [dependencies]
 arrayvec = { default-features = false, version = '0.5' }
+frame-benchmarking = { default-features = false, optional = true, version = '2.0' }
 frame-support = { default-features = false, version = '2.0' }
 frame-system = { default-features = false, version = '2.0'  }
 lite-json = { default-features = false, version = '0.1' }
+orml-tokens = { default-features = false, optional = true, version = '0.3' }
 orml-traits = { default-features = false, version = '0.3' }
 pallet-membership = { default-features = false, version = '2.0' }
+parity-util-mem = { default-features = false, optional = true, version = '0.7' }
 parity-scale-codec = { default-features = false, features = ['derive'], version = '1.0' }
 sp-application-crypto = { default-features = false, version = '2.0' }
 sp-arithmetic = { default-features = false, version = '2.0' }
 sp-core = { default-features = false, version = '2.0' }
 sp-io = { default-features = false, version = '2.0' }
 sp-runtime = { default-features = false, version = '2.0' }
+sp-std = { default-features = false, optional = true, version = '2.0' }
 valiu-node-commons = { default-features = false, path = '../../valiu-node-commons' }
 
 [dev-dependencies]
 orml-tokens = { default-features = false, version = '0.3' }
+parity-util-mem = { default-features = false, version = '0.7' }

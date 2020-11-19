@@ -13,12 +13,19 @@ use std::sync::Arc;
 use std::time::Duration;
 use vln_runtime::{self, opaque::Block, RuntimeApi};
 
-// Our native executor instance.
+#[cfg(feature = "runtime-benchmarks")]
 native_executor_instance!(
-    pub Executor,
-    vln_runtime::api::dispatch,
-    vln_runtime::native_version,
-    frame_benchmarking::benchmarking::HostFunctions,
+  pub Executor,
+  vln_runtime::api::dispatch,
+  vln_runtime::native_version,
+  frame_benchmarking::benchmarking::HostFunctions,
+);
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+native_executor_instance!(
+  pub Executor,
+  vln_runtime::api::dispatch,
+  vln_runtime::native_version,
 );
 
 type PartialTy = sc_service::PartialComponents<

@@ -2,13 +2,16 @@
 
 extern crate alloc;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarks;
 mod crypto;
 mod liquidity_provider_balance;
-#[cfg(test)]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod mock;
 mod module_impl;
 #[cfg(test)]
 mod tests;
+mod weights;
 
 use alloc::vec::Vec;
 use frame_support::{
@@ -24,6 +27,7 @@ use valiu_node_commons::{AccountRate, Asset, DistributionStrategy, OfferRate, Pa
 pub use crypto::*;
 pub use liquidity_provider_balance::*;
 pub use module_impl::module_impl_offchain::*;
+pub use weights::*;
 
 type AccountRateTy<T> = AccountRate<<T as frame_system::Trait>::AccountId, Balance<T>>;
 type Balance<T> =
@@ -42,6 +46,7 @@ where
     type OffchainAuthority: AppCrypto<Self::Public, Self::Signature>;
     type OffchainUnsignedGracePeriod: Get<Self::BlockNumber>;
     type OffchainUnsignedInterval: Get<Self::BlockNumber>;
+    type WeightInfo: WeightInfo;
 }
 
 decl_event!(
@@ -57,7 +62,7 @@ decl_event!(
 
 decl_error! {
     pub enum Error for Module<T: Trait> {
-        MustNotBeUsdv,
+        MustBeCollateral,
         NoFunds
     }
 }
@@ -71,7 +76,7 @@ decl_module! {
 
         fn deposit_event() = default;
 
-        #[weight = 0]
+        #[weight = T::WeightInfo::attest()]
         pub fn attest(
             origin,
             asset: Asset,
@@ -80,7 +85,9 @@ decl_module! {
         ) -> DispatchResult
         {
             match asset {
-                Asset::Usdv => Err(crate::Error::<T>::MustNotBeUsdv.into()),
+                Asset::Btc | Asset::Cop | Asset::Usdv | Asset::Ves => {
+                    Err(crate::Error::<T>::MustBeCollateral.into())
+                },
                 Asset::Collateral(collateral) => {
                     let who = ensure_signed(origin)?;
                     Self::update_account_rates(&who, asset, offer_rates);
@@ -89,9 +96,6 @@ decl_module! {
                     T::Collateral::reserve(collateral.into(), &who, balance)?;
                     Self::deposit_event(RawEvent::Attestation(who, collateral.into()));
                     Ok(())
-                },
-                Asset::Btc | Asset::Cop | Asset::Ves => {
-                    todo!()
                 }
             }
         }
@@ -114,7 +118,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = T::WeightInfo::transfer()]
         pub fn transfer(
             origin,
             to: <T as frame_system::Trait>::AccountId,
@@ -129,7 +133,7 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 0]
+        #[weight = T::WeightInfo::update_offer_rates()]
         pub fn update_offer_rates(
             origin,
             asset: Asset,
