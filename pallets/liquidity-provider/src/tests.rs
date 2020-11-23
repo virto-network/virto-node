@@ -1,6 +1,6 @@
 use crate::{
     mock::{
-        new_test_ext, Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestProvider, Tokens,
+        root, Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestProvider, Tokens, USD_ASSET,
     },
     Call, OffchainPairPricesPayload,
 };
@@ -21,29 +21,9 @@ use valiu_node_commons::{
     AccountRate, Asset, Collateral, DistributionStrategy, OfferRate, PairPrice,
 };
 
-const USD_ASSET: Asset = Asset::Collateral(USD_COLLATERAL);
-const USD_COLLATERAL: Collateral = Collateral::Usd;
 const USDC_ASSET: Asset = Asset::Collateral(USDC_COLLATERAL);
 const USDC_COLLATERAL: Collateral = Collateral::Usdc;
 const USDV_ASSET: Asset = Asset::Usdv;
-
-fn alice() -> sr25519::Public {
-    <sr25519::Public>::from_raw({
-        let mut array = [0; 32];
-        array[31] = 2;
-        array
-    })
-}
-fn root() -> sr25519::Public {
-    <sr25519::Public>::from_raw([0; 32])
-}
-fn bob() -> sr25519::Public {
-    <sr25519::Public>::from_raw({
-        let mut array = [0; 32];
-        array[31] = 1;
-        array
-    })
-}
 
 #[test]
 fn attest_increases_usdv() {
@@ -211,7 +191,6 @@ fn usdv_transfer_also_transfers_collaterals() {
         let bob = bob();
 
         assert_ok!(ProviderMembers::add_member(Origin::signed(root()), alice));
-
         assert_ok!(ProviderMembers::add_member(Origin::signed(root()), bob));
 
         assert_ok!(TestProvider::attest(
@@ -266,4 +245,27 @@ fn parse_btc_usd_has_correct_behavior() {
         TestProvider::parse_btc_usd(r#"{"btc":{"btc":1,"usd":200},"usd":{"btc":2,"usd":1}}"#)
             .is_none()
     );
+}
+
+pub fn new_test_ext() -> sp_io::TestExternalities {
+    frame_system::GenesisConfig::default()
+        .build_storage::<Test>()
+        .unwrap()
+        .into()
+}
+
+fn alice() -> sr25519::Public {
+    <sr25519::Public>::from_raw({
+        let mut array = [0; 32];
+        array[31] = 2;
+        array
+    })
+}
+
+fn bob() -> sr25519::Public {
+    <sr25519::Public>::from_raw({
+        let mut array = [0; 32];
+        array[31] = 1;
+        array
+    })
 }

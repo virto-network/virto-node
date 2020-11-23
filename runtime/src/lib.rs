@@ -11,8 +11,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 pub mod opaque;
 
 use frame_system::EnsureRoot;
-use pallet_grandpa::fg_primitives;
-use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
+use pallet_grandpa::{
+    fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -147,7 +148,8 @@ parameter_types! {
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
-   pub enum Runtime where
+   pub enum Runtime
+   where
         Block = Block,
         NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
@@ -161,7 +163,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 
-        Provider: pallet_provider::{Call, Event<T>, Module, Storage},
+        LiquidityProvider: pallet_liquidity_provider::{Call, Event<T>, Module, Storage},
         ProviderMembers: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
         Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
     }
@@ -320,6 +322,7 @@ impl_runtime_apis! {
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+            add_benchmark!(params, batches, pallet_liquidity_provider, LiquidityProvider);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
@@ -467,13 +470,14 @@ impl pallet_membership::Trait for Runtime {
 }
 
 // Configure the pallet providers in pallets/providers.
-impl pallet_provider::Trait for Runtime {
+impl pallet_liquidity_provider::Trait for Runtime {
     type Asset = orml_tokens::Module<Runtime>;
     type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
     type OffchainAuthority = OffchainAppCrypto;
     type OffchainUnsignedGracePeriod = OffchainUnsignedGracePeriod;
     type OffchainUnsignedInterval = OffchainUnsignedInterval;
+    type WeightInfo = pallet_liquidity_provider::DefaultWeightInfo;
 }
 
 impl orml_tokens::Trait for Runtime {
@@ -490,7 +494,7 @@ pub struct OffchainAppCrypto;
 impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for OffchainAppCrypto {
     type GenericPublic = sp_runtime::app_crypto::sr25519::Public;
     type GenericSignature = sp_runtime::app_crypto::sr25519::Signature;
-    type RuntimeAppPublic = pallet_provider::Public;
+    type RuntimeAppPublic = pallet_liquidity_provider::Public;
 }
 
 /// The version information used to identify this runtime when compiled natively.
