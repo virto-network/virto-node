@@ -6,13 +6,14 @@ use alloc::{boxed::Box, vec, vec::Vec};
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
 use sp_core::sr25519;
-use valiu_node_commons::{Asset, Collateral, DistributionStrategy};
+use valiu_node_commons::{Asset, Collateral, DistributionStrategy, PairPrice};
 
 benchmarks! {
     where_clause {
         where
             <T as frame_system::Trait>::AccountId: AsRef<[u8; 32]>,
             <T as SigningTypes>::Signature: From<sr25519::Signature>,
+            <T as SigningTypes>::Signature: Default
     }
 
     _ {}
@@ -21,6 +22,16 @@ benchmarks! {
         let origin = gen_member_and_attest::<T>(USD_ASSET);
         let balance = Balance::<T>::from(100);
     }: attest(RawOrigin::Signed(origin), Asset::Collateral(Collateral::Usd), balance, Vec::new())
+    verify {
+    }
+
+    submit_pair_prices {
+        let pair_prices = vec![
+            PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 7.into(), 8.into()),
+            PairPrice::new([Asset::Btc, Asset::Ves], 9.into(), 10.into()),
+            PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 11.into(), 12.into()),
+        ];
+    }: submit_pair_prices(RawOrigin::None, pair_prices, Default::default())
     verify {
     }
 

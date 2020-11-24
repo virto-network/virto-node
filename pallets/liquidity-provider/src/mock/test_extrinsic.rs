@@ -102,7 +102,7 @@ where
 }
 
 impl<Call, Extra> fmt::Debug for TestXt<Call, Extra> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "TestXt({:?}, ...)",

@@ -41,7 +41,7 @@ impl SubstrateCli for Cli {
         env!("SUBSTRATE_CLI_IMPL_VERSION").into()
     }
 
-    fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+    fn load_spec(&self, id: &str) -> Result<Box<dyn ChainSpec>, String> {
         Ok(match id {
             "" | "local_testnet" => Box::new(chain_spec::local_testnet::chain_spec()?),
             "dev" => Box::new(chain_spec::dev::chain_spec()?),

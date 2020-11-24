@@ -2,28 +2,36 @@ use crate::{
     mock::{
         root, Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestProvider, Tokens, USD_ASSET,
     },
-    Call, OffchainPairPricesPayload,
+    Call, OffchainPairPricesPayload, PairPrices, OFFCHAIN_KEY_TYPE,
 };
 use alloc::vec;
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, storage::StorageValue};
 use frame_system::offchain::{SignedPayload, SigningTypes};
+use once_cell::sync::Lazy;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use parity_scale_codec::Decode;
+use parity_scale_codec::Encode;
+use parking_lot::RwLock;
 use sp_core::{
     offchain::{testing, OffchainExt, TransactionPoolExt},
     sr25519,
     testing::KeyStore,
-    traits::KeystoreExt,
+    traits::{BareCryptoStore, KeystoreExt},
 };
 use sp_io::TestExternalities;
 use sp_runtime::{traits::BadOrigin, RuntimeAppPublic};
+use std::sync::Arc;
 use valiu_node_commons::{
     AccountRate, Asset, Collateral, DistributionStrategy, OfferRate, PairPrice,
 };
 
+const SEED: Option<&str> =
+    Some("news slush supreme milk chapter athlete soap sausage put clutch what kitten/foo");
 const USDC_ASSET: Asset = Asset::Collateral(USDC_COLLATERAL);
 const USDC_COLLATERAL: Collateral = Collateral::Usdc;
 const USDV_ASSET: Asset = Asset::Usdv;
+
+static KEYSTORE: Lazy<Arc<RwLock<dyn BareCryptoStore>>> = Lazy::new(|| KeyStore::new());
 
 #[test]
 fn attest_increases_usdv() {
@@ -74,9 +82,6 @@ fn must_be_provider_to_attest() {
 #[test]
 fn offchain_worker_submits_unsigned_transaction_on_chain() {
     new_test_ext().execute_with(|| {
-        const SEED: Option<&str> =
-            Some("news slush supreme milk chapter athlete soap sausage put clutch what kitten/foo");
-
         let (offchain, offchain_state) = testing::TestOffchainExt::new();
 
         let (pool, pool_state) = testing::TestTransactionPoolExt::new();
@@ -185,6 +190,55 @@ fn rate_offers_are_modified_when_attesting_or_updating() {
 }
 
 #[test]
+fn update_offer_rates_overwrites_prices() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(<PairPrices<Test>>::get(), vec![]);
+
+        let key = KEYSTORE
+            .write()
+            .sr25519_generate_new(crate::Public::ID, None)
+            .unwrap()
+            .into();
+
+        let first = vec![
+            PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 1, 2),
+            PairPrice::new([Asset::Btc, Asset::Ves], 3, 4),
+            PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 5, 6),
+        ];
+        let first_sig = sr25519::Signature::from_slice(
+            &KEYSTORE
+                .read()
+                .sign_with(OFFCHAIN_KEY_TYPE, &key, &first.encode())
+                .unwrap(),
+        );
+        assert_ok!(TestProvider::submit_pair_prices(
+            Origin::none(),
+            first.clone(),
+            first_sig
+        ));
+        assert_eq!(<PairPrices<Test>>::get(), first);
+
+        let second = vec![
+            PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 7, 8),
+            PairPrice::new([Asset::Btc, Asset::Ves], 9, 10),
+            PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 11, 12),
+        ];
+        let second_sig = sr25519::Signature::from_slice(
+            &KEYSTORE
+                .read()
+                .sign_with(OFFCHAIN_KEY_TYPE, &key, &second.encode())
+                .unwrap(),
+        );
+        assert_ok!(TestProvider::submit_pair_prices(
+            Origin::none(),
+            second.clone(),
+            second_sig
+        ));
+        assert_eq!(<PairPrices<Test>>::get(), second);
+    });
+}
+
+#[test]
 fn usdv_transfer_also_transfers_collaterals() {
     new_test_ext().execute_with(|| {
         let alice = alice();
@@ -247,11 +301,39 @@ fn parse_btc_usd_has_correct_behavior() {
     );
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
-    frame_system::GenesisConfig::default()
+#[test]
+fn parse_usd_cop_has_correct_behavior() {
+    assert_eq!(
+        TestProvider::parse_usd_cop(
+            r#"
+        Stuff before
+        <div id="banner">
+            Te Compran <h3>$ 8</h3>
+            Te Venden <h3>$ 123</h3>
+        </div>
+        Stuff after
+        "#
+        ),
+        Some(PairPrice::new(
+            [Asset::Collateral(Collateral::Usd), Asset::Cop],
+            8,
+            123,
+        ))
+    );
+    assert!(
+        TestProvider::parse_usd_cop(r#"Te Compran <h3>$ 8</h3> Te Venden <h3>$ 123</h3>"#)
+            .is_none()
+    );
+    assert!(TestProvider::parse_usd_cop(r#"Te Compran $ 8 Te Venden $ 123"#).is_none());
+}
+
+pub fn new_test_ext() -> TestExternalities {
+    let mut t: TestExternalities = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap()
-        .into()
+        .into();
+    t.register_extension(KeystoreExt(Arc::clone(&KEYSTORE)));
+    t
 }
 
 fn alice() -> sr25519::Public {

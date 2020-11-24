@@ -1,4 +1,4 @@
-use crate::{Balance, Call, Module, NextUnsignedAt, Trait};
+use crate::{Balance, Call, Module, NextUnsignedAt, OffchainError, Trait};
 use alloc::{string::String, vec::Vec};
 use core::str;
 use frame_support::storage::StorageValue;
@@ -43,13 +43,14 @@ where
 
     pub(crate) fn fetch_pair_prices_and_submit_tx(
         block_number: T::BlockNumber,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), OffchainError> {
         let next_unsigned_at = <NextUnsignedAt<T>>::get();
         if next_unsigned_at > block_number {
-            return Err("Too early to send unsigned transaction");
+            return Err(OffchainError::TooEarlyToSendUnsignedTransaction);
         }
 
-        let pair_prices = Self::fetch_pair_prices().map_err(|_| "Failed to fetch price")?;
+        let pair_prices =
+            Self::fetch_pair_prices().map_err(|_| OffchainError::Other("Failed to fetch price"))?;
 
         let (_, result) = Signer::<T, T::OffchainAuthority>::any_account()
             .send_unsigned_transaction(
@@ -59,8 +60,8 @@ where
                 },
                 |payload, signature| Call::submit_pair_prices(payload.pair_prices, signature),
             )
-            .ok_or("No local accounts accounts available.")?;
-        result.map_err(|()| "Unable to submit transaction")?;
+            .ok_or(OffchainError::NoAccountAvailable)?;
+        result.map_err(|_| OffchainError::Other("Unable to submit transaction"))?;
         Ok(())
     }
 

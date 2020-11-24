@@ -9,18 +9,20 @@ mod liquidity_provider_balance;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod mock;
 mod module_impl;
+mod offchain_error;
 #[cfg(test)]
 mod tests;
 mod weights;
 
 use alloc::vec::Vec;
 use frame_support::{
-    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, traits::Get,
+    debug, decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, traits::Get,
 };
 use frame_system::{
     ensure_none, ensure_signed,
     offchain::{AppCrypto, SendTransactionTypes, SigningTypes},
 };
+use offchain_error::*;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use valiu_node_commons::{AccountRate, Asset, DistributionStrategy, OfferRate, PairPrice};
 
@@ -63,7 +65,7 @@ decl_event!(
 decl_error! {
     pub enum Error for Module<T: Trait> {
         MustBeCollateral,
-        NoFunds
+        NoFunds,
     }
 }
 
@@ -100,7 +102,7 @@ decl_module! {
             }
         }
 
-        #[weight = 0]
+        #[weight = T::WeightInfo::submit_pair_prices()]
         pub fn submit_pair_prices(
             origin,
             pair_prices: Vec<PairPrice<Balance<T>>>,
@@ -111,6 +113,9 @@ decl_module! {
                 if Self::incoming_pair_prices_are_valid(&pair_prices) {
                     old_pair_prices.clear();
                     old_pair_prices.extend(pair_prices);
+                }
+                else {
+                    debug::error!("Invalid pair prices");
                 }
             });
             let current_block = <frame_system::Module<T>>::block_number();
@@ -146,7 +151,9 @@ decl_module! {
         }
 
         fn offchain_worker(block_number: T::BlockNumber) {
-            let _ = Self::fetch_pair_prices_and_submit_tx(block_number);
+            if let Err(e) = Self::fetch_pair_prices_and_submit_tx(block_number) {
+                debug::error!("Offchain error: {}", e);
+            }
         }
     }
 }

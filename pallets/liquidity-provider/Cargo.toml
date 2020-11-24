@@ -58,5 +58,7 @@ sp-std = { default-features = false, optional = true, version = '2.0' }
 valiu-node-commons = { default-features = false, path = '../../valiu-node-commons' }
 
 [dev-dependencies]
+once_cell = { default-features = false, features = ['std'], version = '1.0' }
 orml-tokens = { default-features = false, version = '0.3' }
 parity-util-mem = { default-features = false, version = '0.7' }
+parking_lot = { default-features = false, version = '0.10' }

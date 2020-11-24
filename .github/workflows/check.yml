@@ -44,4 +44,4 @@ jobs:
           command: clippy
           args: --all-features -- -D warnings
 
-      - run: ./scripts/checks.sh
+      - run: ./scripts/tests.sh
