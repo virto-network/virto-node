@@ -5,6 +5,7 @@
 
 use frame_support::weights::{constants::RocksDbWeight as DbWeight, Weight};
 
+#[derive(Debug)]
 pub struct DefaultWeightInfo;
 
 impl WeightInfo for DefaultWeightInfo {
@@ -12,6 +13,11 @@ impl WeightInfo for DefaultWeightInfo {
         (163_972_000 as Weight)
             .saturating_add(DbWeight::get().reads(5 as Weight))
             .saturating_add(DbWeight::get().writes(4 as Weight))
+    }
+    fn submit_pair_prices() -> Weight {
+        (38_171_000 as Weight)
+            .saturating_add(DbWeight::get().reads(1 as Weight))
+            .saturating_add(DbWeight::get().writes(2 as Weight))
     }
     fn transfer() -> Weight {
         (74_911_000 as Weight).saturating_add(DbWeight::get().reads(2 as Weight))
@@ -23,6 +29,7 @@ impl WeightInfo for DefaultWeightInfo {
 
 pub trait WeightInfo {
     fn attest() -> Weight;
+    fn submit_pair_prices() -> Weight;
     fn transfer() -> Weight;
     fn update_offer_rates() -> Weight;
 }

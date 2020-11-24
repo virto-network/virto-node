@@ -489,6 +489,7 @@ impl orml_tokens::Trait for Runtime {
     type WeightInfo = ();
 }
 
+#[derive(Debug)]
 pub struct OffchainAppCrypto;
 
 impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for OffchainAppCrypto {
