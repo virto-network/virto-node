@@ -1,0 +1,24 @@
+[dependencies]
+parity-scale-codec = { default-features = false, features = ['derive', 'std'], version = '1.0' }
+substrate-subxt = { default-features = false, version = '0.13' }
+valiu-node-runtime-types = { default-features = false, features = ['std'], path = '../valiu-node-runtime-types' }
+
+[dev-dependencies]
+sp-keyring = { default-features = false, version = '2.0' }
+tokio = { default-features = false, features = ["macros", "rt-core"], version = '0.2' }
+
+[features]
+default = []
+_integration-tests = []
+
+[package]
+authors = ['The Valiu team']
+categories = ['configuration']
+description = 'Valiu node - Remote procedure calls'
+edition = '2018'
+keywords = ['blockchain', 'valiu']
+license = 'Unlicense'
+name = 'valiu-node-rpc'
+readme = 'README.md'
+repository = 'https://github.com/valibre-org/node'
+version = '0.1.0'

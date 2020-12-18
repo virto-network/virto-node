@@ -1,13 +1,5 @@
-use super::*;
-
-pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
-/// Opaque block type.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-/// Opaque block identifier type.
-pub type BlockId = generic::BlockId<Block>;
-/// Opaque block header type.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+use crate::{impl_opaque_keys, Aura, Grandpa};
+use alloc::vec::Vec;
 
 impl_opaque_keys! {
     pub struct SessionKeys {

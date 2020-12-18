@@ -9,7 +9,6 @@ export RUSTFLAGS='
     -D nonstandard_style
     -D rust_2018_compatibility
     -D rust_2018_idioms
-    -D unused_lifetimes
     -D unused_qualifications
     -D warnings
 '
@@ -18,8 +17,11 @@ test_package_with_feature() {
     local package=$1
     local features=$2
 
-    cargo test --manifest-path "${package}"/Cargo.toml --features "${features}" --no-default-features
+    cargo clippy --features $features --manifest-path $package/Cargo.toml
+    cargo test --features $features --manifest-path $package/Cargo.toml --no-default-features
 }
+
+cargo fmt --all -- --check
 
 test_package_with_feature valiu-node-commons default
 test_package_with_feature valiu-node-commons std
