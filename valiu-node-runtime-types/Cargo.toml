@@ -1,0 +1,29 @@
+[dependencies]
+frame-executive = { default-features = false, version = '2.0' }
+frame-system = { default-features = false, version = '2.0' }
+pallet-balances = { default-features = false, version = '2.0' }
+pallet-transaction-payment = { default-features = false, version = '2.0' }
+sp-core = { default-features = false, version = '2.0' }
+sp-runtime = { default-features = false, version = '2.0' }
+
+[features]
+default = []
+std = [
+    'frame-executive/std',
+    'frame-system/std',
+    'pallet-transaction-payment/std',
+    'sp-core/std',
+    'sp-runtime/std',
+]
+
+[package]
+authors = ['The Valiu team']
+categories = ['configuration']
+description = 'Valiu node - Runtime types'
+edition = '2018'
+keywords = ['blockchain', 'valiu']
+license = 'Unlicense'
+name = 'valiu-node-runtime-types'
+readme = 'README.md'
+repository = 'https://github.com/valibre-org/node'
+version = '0.1.0'

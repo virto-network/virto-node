@@ -8,8 +8,29 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub mod opaque;
+extern crate alloc;
 
+mod opaque {
+    use crate::{impl_opaque_keys, Aura, Grandpa};
+    use alloc::vec::Vec;
+
+    impl_opaque_keys! {
+        pub struct SessionKeys {
+            pub aura: Aura,
+            pub grandpa: Grandpa,
+        }
+    }
+}
+
+use alloc::{boxed::Box, vec::Vec};
+use frame_support::{
+    construct_runtime, parameter_types,
+    traits::{KeyOwnerProofSystem, Randomness},
+    weights::{
+        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+        IdentityFee, Weight,
+    },
+};
 use frame_system::EnsureRoot;
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -17,41 +38,22 @@ use pallet_grandpa::{
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{
-    BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating, Verify,
-};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
+    traits::{BlakeTwo256, Block as BlockT, IdentityLookup, NumberFor, Saturating, Verify},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, MultiSigner,
+    ApplyExtrinsicResult, MultiSignature, MultiSigner, Perbill,
 };
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use valiu_node_commons::Asset;
-
-// A few exports that help ease life for downstream crates.
-pub use frame_support::{
-    construct_runtime, parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness},
-    weights::{
-        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        IdentityFee, Weight,
-    },
-    RuntimeDebug, StorageValue,
+use valiu_node_runtime_types::{
+    AccountData, AccountId, Balance, BlockNumber, Hash, Index, Signature,
 };
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
 
-pub const DAYS: BlockNumber = HOURS * 24;
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+const MILLISECS_PER_BLOCK: u64 = 6000;
+const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     apis: RUNTIME_API_VERSIONS,
     authoring_version: 1,
@@ -62,72 +64,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
-pub type AccountIndex = u32;
-
-/// The address format for describing accounts.
-pub type Address = AccountId;
-
-/// Balance of an account.
-pub type Balance = u128;
-
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-/// BlockId type as expected by this runtime.
-pub type BlockId = generic::BlockId<Block>;
-
-/// An index to a block.
-pub type BlockNumber = u32;
-
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
-
-/// Digest item type.
-pub type DigestItem = generic::DigestItem<Hash>;
-
-/// Executive: handles dispatch to the various modules.
-pub type Executive = frame_executive::Executive<
-    Runtime,
-    Block,
-    frame_system::ChainContext<Runtime>,
-    Runtime,
-    AllModules,
->;
-
-/// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
-
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-
-/// Index of a transaction in the chain.
-pub type Index = u32;
-
-/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-pub type Signature = MultiSignature;
-
-/// The SignedExtension to the basic transaction logic.
-pub type SignedExtra = (
-    frame_system::CheckSpecVersion<Runtime>,
-    frame_system::CheckTxVersion<Runtime>,
-    frame_system::CheckGenesis<Runtime>,
-    frame_system::CheckEra<Runtime>,
-    frame_system::CheckNonce<Runtime>,
-    frame_system::CheckWeight<Runtime>,
-    pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-);
-
-/// A Block signed with a Justification
-pub type SignedBlock = generic::SignedBlock<Block>;
-
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type Block = valiu_node_runtime_types::Block<Call, Runtime>;
+type Executive = valiu_node_runtime_types::Executive<AllModules, Call, Runtime>;
+type UncheckedExtrinsic = valiu_node_runtime_types::UncheckedExtrinsic<Call, Runtime>;
 
 parameter_types! {
     pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get().saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
@@ -151,21 +90,20 @@ construct_runtime!(
    pub enum Runtime
    where
         Block = Block,
-        NodeBlock = opaque::Block,
+        NodeBlock = Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-        System: frame_system::{Module, Call, Config, Storage, Event<T>},
-        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-        Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Aura: pallet_aura::{Module, Config<T>, Inherent},
-        Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event},
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-        TransactionPayment: pallet_transaction_payment::{Module, Storage},
-        Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
-
+        Aura: pallet_aura::{Config<T>, Module, Inherent},
+        Balances: pallet_balances::{Call, Config<T>, Event<T>, Module, Storage},
+        Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
         LiquidityProvider: pallet_liquidity_provider::{Call, Event<T>, Module, Storage},
-        ProviderMembers: pallet_membership::{Module, Call, Storage, Event<T>, Config<T>},
-        Tokens: orml_tokens::{Module, Storage, Call, Event<T>, Config<T>},
+        ProviderMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
+        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Call, Module, Storage},
+        Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
+        System: frame_system::{Call, Config, Event<T>, Module, Storage},
+        Timestamp: pallet_timestamp::{Call, Module, Inherent, Storage},
+        Tokens: orml_tokens::{Config<T>, Event<T>, Module},
+        TransactionPayment: pallet_transaction_payment::{Module, Storage},
     }
 );
 
@@ -384,7 +322,7 @@ impl frame_system::Trait for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// The data to be stored in an account.
-    type AccountData = pallet_balances::AccountData<Balance>;
+    type AccountData = AccountData;
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
 }
