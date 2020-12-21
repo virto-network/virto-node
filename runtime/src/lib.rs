@@ -11,15 +11,15 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 extern crate alloc;
 
 mod opaque {
-    use alloc::vec::Vec;
     use crate::{impl_opaque_keys, Aura, Grandpa};
-    
+    use alloc::vec::Vec;
+
     impl_opaque_keys! {
         pub struct SessionKeys {
             pub aura: Aura,
             pub grandpa: Grandpa,
         }
-    }    
+    }
 }
 
 use alloc::{boxed::Box, vec::Vec};
