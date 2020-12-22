@@ -11,7 +11,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
 use std::sync::Arc;
-use valiu_node_runtime_types::{AccountId, Balance, Index, OpaqueBlock};
+use valiu_node_runtime_types::{AccountId, Index, OpaqueBlock};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -30,14 +30,13 @@ where
     C: ProvideRuntimeApi<OpaqueBlock>,
     C: Send + Sync + 'static,
     C::Api: BlockBuilder<OpaqueBlock>,
-    C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<OpaqueBlock, Balance>,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<OpaqueBlock, AccountId, Index>,
     P: TransactionPool + 'static,
 {
-    use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
     use substrate_frame_rpc_system::{FullSystem, SystemApi};
 
     let mut io = jsonrpc_core::IoHandler::default();
+
     let FullDeps {
         client,
         pool,
@@ -45,19 +44,10 @@ where
     } = deps;
 
     io.extend_with(SystemApi::to_delegate(FullSystem::new(
-        client.clone(),
+        client,
         pool,
         deny_unsafe,
     )));
-
-    io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-        client,
-    )));
-
-    // Extend this RPC with a custom API by using the following syntax.
-    // `YourRpcStruct` should have a reference to a client, which is needed
-    // to call into the runtime.
-    // `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
 
     io
 }

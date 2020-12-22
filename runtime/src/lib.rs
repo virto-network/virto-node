@@ -28,7 +28,7 @@ use frame_support::{
     traits::{KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-        IdentityFee, Weight,
+        Weight,
     },
 };
 use frame_system::EnsureRoot;
@@ -93,17 +93,15 @@ construct_runtime!(
         NodeBlock = Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
-        Aura: pallet_aura::{Config<T>, Module, Inherent},
-        Balances: pallet_balances::{Call, Config<T>, Event<T>, Module, Storage},
+        Aura: pallet_aura::{Config<T>, Inherent, Module},
         Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
         LiquidityProvider: pallet_liquidity_provider::{Call, Event<T>, Module, Storage},
         ProviderMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Call, Module, Storage},
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
-        Timestamp: pallet_timestamp::{Call, Module, Inherent, Storage},
+        Timestamp: pallet_timestamp::{Call, Inherent, Module, Storage},
         Tokens: orml_tokens::{Config<T>, Event<T>, Module},
-        TransactionPayment: pallet_transaction_payment::{Module, Storage},
     }
 );
 
@@ -222,15 +220,6 @@ impl_runtime_apis! {
         }
     }
 
-    impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
-        fn query_info(
-            uxt: <Block as BlockT>::Extrinsic,
-            len: u32,
-        ) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
-            TransactionPayment::query_info(uxt, len)
-        }
-    }
-
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn dispatch_benchmark(
@@ -258,7 +247,6 @@ impl_runtime_apis! {
             let params = (&config, &whitelist);
 
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-            add_benchmark!(params, batches, pallet_balances, Balances);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
             add_benchmark!(params, batches, pallet_liquidity_provider, LiquidityProvider);
 
@@ -369,26 +357,6 @@ impl pallet_timestamp::Trait for Runtime {
     type OnTimestampSet = Aura;
     type MinimumPeriod = MinimumPeriod;
     type WeightInfo = ();
-}
-
-impl pallet_balances::Trait for Runtime {
-    type MaxLocks = MaxLocks;
-    /// The type for recording an account's balance.
-    type Balance = Balance;
-    /// The ubiquitous event type.
-    type Event = Event;
-    type DustRemoval = ();
-    type ExistentialDeposit = ExistentialDeposit;
-    type AccountStore = System;
-    type WeightInfo = ();
-}
-
-impl pallet_transaction_payment::Trait for Runtime {
-    type Currency = Balances;
-    type OnTransactionPayment = ();
-    type TransactionByteFee = TransactionByteFee;
-    type WeightToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ();
 }
 
 impl pallet_sudo::Trait for Runtime {

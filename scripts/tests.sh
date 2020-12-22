@@ -17,11 +17,11 @@ test_package_with_feature() {
     local package=$1
     local features=$2
 
-    cargo clippy --features $features --manifest-path $package/Cargo.toml
     cargo test --features $features --manifest-path $package/Cargo.toml --no-default-features
 }
 
 cargo fmt --all -- --check
+cargo clippy --all-features
 
 test_package_with_feature valiu-node-commons default
 test_package_with_feature valiu-node-commons std

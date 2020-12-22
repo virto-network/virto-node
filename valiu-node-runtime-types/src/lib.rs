@@ -3,7 +3,6 @@
 use frame_system::{
     ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion, CheckWeight,
 };
-use pallet_transaction_payment::ChargeTransactionPayment;
 use sp_core::H256;
 use sp_runtime::{
     generic,
@@ -12,7 +11,7 @@ use sp_runtime::{
 };
 
 /// Account data
-pub type AccountData = pallet_balances::AccountData<Balance>;
+pub type AccountData = ();
 
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
@@ -81,7 +80,6 @@ pub type SignedExtra<R> = (
     CheckEra<R>,
     CheckNonce<R>,
     CheckWeight<R>,
-    ChargeTransactionPayment<R>,
 );
 
 /// Unchecked extrinsic type as expected by the runtime.
