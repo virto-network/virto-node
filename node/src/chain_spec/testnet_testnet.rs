@@ -19,8 +19,6 @@ const LOKI_GRANDPA_SS58: &str = "5ELokiYDQEjTGk1hDSKuVusyHyuYYa1e8JGEc7gfiY9f3ee
 pub fn chain_spec() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "WASM binary not available".to_string())?;
 
-    let endowed_accounts = vec![account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58)?];
-
     let initial_authorities = vec![
         (
             public_key_from_ss58::<AuraId>(ODIN_AURA_SS58)?,
@@ -44,7 +42,6 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         ChainType::Live,
         move || {
             GenesisConfigBuilder {
-                endowed_accounts: &endowed_accounts,
                 initial_authorities: &initial_authorities,
                 sudo_key: sudo_key.clone(),
                 wasm_binary,

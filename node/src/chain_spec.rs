@@ -10,15 +10,13 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use valiu_node_runtime_types::{AccountId, Signature};
 use vln_runtime::{
-    AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, SudoConfig, SystemConfig,
-    TokensConfig,
+    AuraConfig, GenesisConfig, GrandpaConfig, SudoConfig, SystemConfig, TokensConfig,
 };
 
 type AccountPublic = <Signature as Verify>::Signer;
 pub(crate) type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 struct GenesisConfigBuilder<'a> {
-    endowed_accounts: &'a [AccountId],
     initial_authorities: &'a [(AuraId, GrandpaId)],
     sudo_key: AccountId,
     wasm_binary: &'a [u8],
@@ -31,19 +29,14 @@ impl GenesisConfigBuilder<'_> {
                 code: self.wasm_binary.to_vec(),
                 changes_trie_config: Default::default(),
             }),
+            orml_tokens: Some(TokensConfig {
+                endowed_accounts: vec![],
+            }),
             pallet_aura: Some(AuraConfig {
                 authorities: self
                     .initial_authorities
                     .iter()
                     .map(|x| (x.0.clone()))
-                    .collect(),
-            }),
-            pallet_balances: Some(BalancesConfig {
-                balances: self
-                    .endowed_accounts
-                    .iter()
-                    .cloned()
-                    .map(|k| (k, 1 << 60))
                     .collect(),
             }),
             pallet_grandpa: Some(GrandpaConfig {
@@ -58,9 +51,6 @@ impl GenesisConfigBuilder<'_> {
                 phantom: Default::default(),
             }),
             pallet_sudo: Some(SudoConfig { key: self.sudo_key }),
-            orml_tokens: Some(TokensConfig {
-                endowed_accounts: vec![],
-            }),
         }
     }
 }

@@ -17,7 +17,6 @@ frame-benchmarking = { optional = true, version = '2.0.0' }
 frame-benchmarking-cli = { optional = true, version = '2.0.0' }
 jsonrpc-core = '15.0.0'
 pallet-membership = '2.0'
-pallet-transaction-payment-rpc = '2.0.0'
 sc-basic-authorship = '0.8.0'
 sc-cli = { version = '0.8.0', features = ['wasmtime'] }
 sc-client-api = '2.0.0'
