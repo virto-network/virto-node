@@ -1,5 +1,5 @@
 use crate::chain_spec::{
-    account_id_from_ss58, properties, public_key_from_ss58, ChainSpec, GenesisConfigBuilder,
+    account_id_from_ss58, public_key_from_ss58, ChainSpec, GenesisConfigBuilder,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -51,7 +51,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         vec![],
         None,
         Some("testnet"),
-        Some(properties()),
+        None,
         None,
     ))
 }

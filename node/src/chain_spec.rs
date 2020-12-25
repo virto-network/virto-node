@@ -2,7 +2,6 @@ pub(crate) mod dev;
 pub(crate) mod local_testnet;
 pub(crate) mod testnet_testnet;
 
-use sc_service::Properties;
 use serde_json::Map;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::Ss58Codec, Pair, Public};
@@ -77,13 +76,6 @@ fn get_from_seed<T: Public>(seed: &str) -> <T::Pair as Pair>::Public {
     T::Pair::from_string(&format!("//{}", seed), None)
         .expect("static values are valid; qed")
         .public()
-}
-
-fn properties() -> Properties {
-    let mut properties = Map::new();
-    properties.insert("tokenSymbol".into(), "USDv".into());
-    properties.insert("tokenDecimals".into(), 15.into());
-    properties
 }
 
 fn public_key_from_ss58<T: Public>(ss58: &str) -> Result<T, String> {
