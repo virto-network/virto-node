@@ -1,4 +1,4 @@
-# VLN Node
+# VLN Node ![Build](https://github.com/valibre-org/vln-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/valibre-org/vln-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
 A Substrate based blockchain node for the Valiu Liquidity Network
 
