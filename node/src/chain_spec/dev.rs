@@ -1,5 +1,5 @@
 use crate::chain_spec::{
-    authority_keys_from_seed, get_account_id_from_seed, properties, ChainSpec, GenesisConfigBuilder,
+    authority_keys_from_seed, get_account_id_from_seed, ChainSpec, GenesisConfigBuilder,
 };
 use sc_service::ChainType;
 use sp_core::sr25519;
@@ -23,7 +23,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         vec![],
         None,
         None,
-        Some(properties()),
+        None,
         None,
     ))
 }
