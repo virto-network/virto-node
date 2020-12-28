@@ -2,7 +2,6 @@ pub(crate) mod dev;
 pub(crate) mod local_testnet;
 pub(crate) mod testnet_testnet;
 
-use serde_json::Map;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::Ss58Codec, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
