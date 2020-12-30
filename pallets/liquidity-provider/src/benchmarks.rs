@@ -6,13 +6,13 @@ use alloc::{boxed::Box, vec, vec::Vec};
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
 use valiu_node_commons::{Asset, Collateral, DistributionStrategy, PairPrice};
-use valiu_node_runtime_types::AccountId;
+use valiu_node_runtime_types::{AccountId, Signature};
 
 benchmarks! {
     where_clause {
         where
             <T as frame_system::Trait>::AccountId: AsRef<[u8; 32]>,
-            <T as SigningTypes>::Signature: From<AccountId>,
+            <T as SigningTypes>::Signature: From<Signature>,
             <T as SigningTypes>::Signature: Default
     }
 

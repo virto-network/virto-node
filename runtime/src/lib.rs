@@ -1,7 +1,7 @@
-#![
+#![allow(
     // `construct_runtime` can't de "fixed"
-    allow(clippy::large_enum_variant)
-]
+    clippy::large_enum_variant
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 

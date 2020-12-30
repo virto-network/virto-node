@@ -1,3 +1,8 @@
+#![allow(
+    // substrate-subxt macros import some types behind the scenes
+    unused_qualifications
+)]
+
 mod liquidity_provider;
 mod membership;
 mod valiu_extra;

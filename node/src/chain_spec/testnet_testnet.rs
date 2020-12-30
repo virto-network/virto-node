@@ -43,7 +43,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         move || {
             GenesisConfigBuilder {
                 initial_authorities: &initial_authorities,
-                sudo_key: sudo_key.clone(),
+                sudo_key,
                 wasm_binary,
             }
             .build()

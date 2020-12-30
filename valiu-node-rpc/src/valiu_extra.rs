@@ -4,26 +4,28 @@ use sp_runtime::{
 };
 use substrate_subxt::{balances::Balances, system::System, SignedExtra};
 
+type ExtraTy<T> = (
+    CheckSpecVersion<T>,
+    CheckTxVersion<T>,
+    CheckGenesis<T>,
+    CheckEra<T>,
+    CheckNonce<T>,
+    CheckWeight<T>,
+);
+
 #[derive(Clone, Debug, Eq, PartialEq, parity_scale_codec::Decode, parity_scale_codec::Encode)]
 pub struct ValiuExtra<T: System> {
+    genesis_hash: T::Hash,
+    nonce: T::Index,
     spec_version: u32,
     tx_version: u32,
-    nonce: T::Index,
-    genesis_hash: T::Hash,
 }
 
 impl<T> SignedExtra<T> for ValiuExtra<T>
 where
     T: Balances + Clone + Eq + Send + Sync + System + fmt::Debug,
 {
-    type Extra = (
-        CheckSpecVersion<T>,
-        CheckTxVersion<T>,
-        CheckGenesis<T>,
-        CheckEra<T>,
-        CheckNonce<T>,
-        CheckWeight<T>,
-    );
+    type Extra = ExtraTy<T>;
 
     fn new(spec_version: u32, tx_version: u32, nonce: T::Index, genesis_hash: T::Hash) -> Self {
         Self {

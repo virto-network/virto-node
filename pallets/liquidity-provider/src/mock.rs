@@ -5,7 +5,7 @@ use alloc::{boxed::Box, vec};
 use frame_support::{impl_outer_origin, ord_parameter_types, parameter_types, weights::Weight};
 use frame_system::{offchain::AppCrypto, EnsureRoot};
 use sp_runtime::{
-    traits::{BlakeTwo256, IdentityLookup, Verify},
+    traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
 use valiu_node_commons::{Asset, Collateral};
