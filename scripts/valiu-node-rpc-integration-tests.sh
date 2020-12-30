@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-set -euxo pipefail
+set -uxo pipefail
 
 cargo build --release
 cargo test --manifest-path valiu-node-rpc/Cargo.toml --no-run
-cargo run --release -- --dev &
+cargo run --release -- --dev & node_pid=$!
 sleep 1
-cargo test --manifest-path valiu-node-rpc/Cargo.toml
-pkill vln_node
+cargo test --features _integration-tests --manifest-path valiu-node-rpc/Cargo.toml
+kill -9 $node_pid
