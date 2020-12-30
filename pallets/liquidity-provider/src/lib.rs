@@ -51,6 +51,13 @@ where
     type WeightInfo: WeightInfo;
 }
 
+decl_error! {
+    pub enum Error for Module<T: Trait> {
+        MustBeCollateral,
+        NoFunds,
+    }
+}
+
 decl_event!(
     pub enum Event<T>
     where
@@ -61,13 +68,6 @@ decl_event!(
         Transfer(AccountId, AccountId, Balance),
     }
 );
-
-decl_error! {
-    pub enum Error for Module<T: Trait> {
-        MustBeCollateral,
-        NoFunds,
-    }
-}
 
 decl_module! {
     pub struct Module<T: Trait> for enum Call

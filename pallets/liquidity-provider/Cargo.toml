@@ -62,3 +62,4 @@ once_cell = { default-features = false, features = ['std'], version = '1.0' }
 orml-tokens = { default-features = false, version = '0.3' }
 parity-util-mem = { default-features = false, version = '0.7' }
 parking_lot = { default-features = false, version = '0.10' }
+valiu-node-runtime-types = { default-features = false, path = '../../valiu-node-runtime-types' }
