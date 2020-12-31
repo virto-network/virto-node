@@ -1,5 +1,5 @@
 use crate::{LiquidityProvider, ProviderMembers, ValiuExtra};
-use substrate_subxt::{balances::Balances, system::System, Runtime};
+use substrate_subxt::{balances::Balances, sudo::Sudo, system::System, Runtime};
 use valiu_node_runtime_types::{
     AccountData, AccountId, Balance, BlockNumber, Hash, Hashing, Header, Index, OpaqueExtrinsic,
     Signature,
@@ -20,6 +20,8 @@ impl Runtime for ValiuRuntime {
     type Extra = ValiuExtra<Self>;
     type Signature = Signature;
 }
+
+impl Sudo for ValiuRuntime {}
 
 impl System for ValiuRuntime {
     type AccountData = AccountData;

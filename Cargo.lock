@@ -7897,6 +7897,7 @@ version = "0.1.0"
 dependencies = [
  "env_logger",
  "parity-scale-codec",
+ "sp-core",
  "sp-keyring",
  "sp-runtime",
  "substrate-subxt",
