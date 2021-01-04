@@ -24,7 +24,7 @@ use frame_system::{
 };
 use offchain_error::*;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
-use valiu_node_commons::{AccountRate, Asset, DistributionStrategy, OfferRate, PairPrice};
+use valiu_node_commons::{AccountRate, Asset, OfferRate, PairPrice};
 
 pub use crypto::*;
 pub use liquidity_provider_balance::*;
@@ -128,13 +128,10 @@ decl_module! {
             origin,
             to: <T as frame_system::Trait>::AccountId,
             to_amount: Balance<T>,
-            ds: DistributionStrategy
         ) -> DispatchResult
         {
             let from = ensure_signed(origin)?;
-            match ds {
-                DistributionStrategy::Evenly => Self::transfer_evenly(from, to, to_amount)?
-            }
+            Self::transfer_evenly(from, to, to_amount)?;
             Ok(())
         }
 

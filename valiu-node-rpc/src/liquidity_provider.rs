@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 use std::boxed::Box;
 use substrate_subxt::system::{System, SystemEventsDecoder};
-use valiu_node_commons::{Asset, DistributionStrategy, OfferRate};
+use valiu_node_commons::{Asset, OfferRate};
 use valiu_node_runtime_types::Balance;
 
 #[substrate_subxt::module]
@@ -32,5 +32,4 @@ pub struct TransferEvent<T: System> {
 pub struct TransferCall<T: LiquidityProvider> {
     pub to: <T as System>::AccountId,
     pub to_amount: Balance,
-    pub ds: DistributionStrategy,
 }

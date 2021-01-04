@@ -1,6 +1,5 @@
 use sp_keyring::AccountKeyring;
 use substrate_subxt::{extrinsic::PairSigner, sudo::SudoCallExt, ClientBuilder};
-use valiu_node_commons::DistributionStrategy;
 use valiu_node_rpc::{TransferCall, ValiuRuntime};
 
 #[tokio::test]
@@ -18,7 +17,6 @@ async fn transfer() {
         .encode(TransferCall {
             to: AccountKeyring::Bob.public(),
             to_amount: 0,
-            ds: DistributionStrategy::Evenly,
         })
         .unwrap();
 

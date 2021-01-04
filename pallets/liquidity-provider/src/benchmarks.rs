@@ -5,7 +5,7 @@ use crate::{
 use alloc::{boxed::Box, vec, vec::Vec};
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
-use valiu_node_commons::{Asset, Collateral, DistributionStrategy, PairPrice};
+use valiu_node_commons::{Asset, Collateral, PairPrice};
 use valiu_node_runtime_types::{AccountId, Signature};
 
 benchmarks! {
@@ -39,8 +39,7 @@ benchmarks! {
         let from = gen_member_and_attest::<T>(USD_ASSET);
         let to: T::AccountId = whitelisted_caller();
         let to_amount = Balance::<T>::from(100);
-        let ds = DistributionStrategy::Evenly;
-    }: transfer(RawOrigin::Signed(from), to, to_amount, ds)
+    }: transfer(RawOrigin::Signed(from), to, to_amount)
     verify {
     }
 

@@ -18,9 +18,7 @@ use sp_core::{
 use sp_io::TestExternalities;
 use sp_runtime::{traits::BadOrigin, RuntimeAppPublic};
 use std::sync::Arc;
-use valiu_node_commons::{
-    AccountRate, Asset, Collateral, DistributionStrategy, OfferRate, PairPrice,
-};
+use valiu_node_commons::{AccountRate, Asset, Collateral, OfferRate, PairPrice};
 use valiu_node_runtime_types::{AccountId, Signature};
 
 const SEED: Option<&str> =
@@ -258,12 +256,7 @@ fn usdv_transfer_also_transfers_collaterals() {
             Default::default()
         ));
 
-        assert_ok!(TestProvider::transfer(
-            Origin::signed(alice),
-            bob,
-            30,
-            DistributionStrategy::Evenly
-        ));
+        assert_ok!(TestProvider::transfer(Origin::signed(alice), bob, 30,));
 
         assert_eq!(Tokens::free_balance(USDV_ASSET, &alice), 70);
         assert_eq!(Tokens::free_balance(USDV_ASSET, &bob), 30);
