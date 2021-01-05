@@ -7,6 +7,7 @@ mod liquidity_provider;
 mod membership;
 mod valiu_extra;
 mod valiu_runtime;
+mod orml_tokens;
 
 pub use liquidity_provider::{
     AttestCall, AttestCallExt, AttestationEvent, LiquidityProvider, TransferCall, TransferCallExt,
@@ -15,3 +16,4 @@ pub use liquidity_provider::{
 pub use membership::{AddMemberCall, AddMemberCallExt, ProviderMembers};
 pub use valiu_extra::ValiuExtra;
 pub use valiu_runtime::ValiuRuntime;
+pub use orml_tokens::{TotalIssuanceStore, TotalIssuanceStoreExt, Tokens};

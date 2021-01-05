@@ -2,6 +2,7 @@
 
 pub mod attest;
 pub mod transfer;
+pub mod token_issuance;
 
 use sp_core::sr25519::Pair;
 use sp_keyring::AccountKeyring;

@@ -47,3 +47,10 @@ impl From<Collateral> for Asset {
         Asset::Collateral(from)
     }
 }
+
+impl Default for Asset {
+    #[inline]
+    fn default() -> Self {
+        Self::Btc
+    }
+}
