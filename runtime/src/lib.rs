@@ -1,7 +1,7 @@
-#![
+#![allow(
     // `construct_runtime` can't de "fixed"
-    allow(clippy::large_enum_variant)
-]
+    clippy::large_enum_variant
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![recursion_limit = "256"]
 
@@ -39,17 +39,15 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
-    create_runtime_str, generic, impl_opaque_keys,
-    traits::{BlakeTwo256, Block as BlockT, IdentityLookup, NumberFor, Saturating, Verify},
+    create_runtime_str, impl_opaque_keys,
+    traits::{Block as BlockT, IdentityLookup, NumberFor, Saturating},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, MultiSigner, Perbill,
+    ApplyExtrinsicResult, Perbill,
 };
-#[cfg(feature = "std")]
-use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use valiu_node_commons::Asset;
 use valiu_node_runtime_types::{
-    AccountData, AccountId, Balance, BlockNumber, Hash, Index, Signature,
+    AccountData, AccountId, Balance, BlockNumber, Hash, Hashing, Header, Index, Signature,
 };
 
 const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -107,16 +105,16 @@ construct_runtime!(
 
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
-        fn version() -> RuntimeVersion {
-            VERSION
-        }
-
         fn execute_block(block: Block) {
             Executive::execute_block(block)
         }
 
         fn initialize_block(header: &<Block as BlockT>::Header) {
             Executive::initialize_block(header)
+        }
+
+        fn version() -> RuntimeVersion {
+            VERSION
         }
     }
 
@@ -131,19 +129,19 @@ impl_runtime_apis! {
             Executive::apply_extrinsic(extrinsic)
         }
 
+        fn check_inherents(
+            block: Block,
+            data: sp_inherents::InherentData,
+        ) -> sp_inherents::CheckInherentsResult {
+            data.check_extrinsics(&block)
+        }
+
         fn finalize_block() -> <Block as BlockT>::Header {
             Executive::finalize_block()
         }
 
         fn inherent_extrinsics(data: sp_inherents::InherentData) -> Vec<<Block as BlockT>::Extrinsic> {
             data.create_extrinsics()
-        }
-
-        fn check_inherents(
-            block: Block,
-            data: sp_inherents::InherentData,
-        ) -> sp_inherents::CheckInherentsResult {
-            data.check_extrinsics(&block)
         }
 
         fn random_seed() -> <Block as BlockT>::Hash {
@@ -167,28 +165,38 @@ impl_runtime_apis! {
     }
 
     impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-        fn slot_duration() -> u64 {
-            Aura::slot_duration()
-        }
-
         fn authorities() -> Vec<AuraId> {
             Aura::authorities()
+        }
+
+        fn slot_duration() -> u64 {
+            Aura::slot_duration()
         }
     }
 
     impl sp_session::SessionKeys<Block> for Runtime {
-        fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-            opaque::SessionKeys::generate(seed)
-        }
-
         fn decode_session_keys(
             encoded: Vec<u8>,
         ) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
             opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
         }
+
+        fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+            opaque::SessionKeys::generate(seed)
+        }
     }
 
     impl fg_primitives::GrandpaApi<Block> for Runtime {
+        fn generate_key_ownership_proof(
+            _set_id: fg_primitives::SetId,
+            _authority_id: GrandpaId,
+        ) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+            // NOTE: this is the only implementation possible since we've
+            // defined our key owner proof type as a bottom type (i.e. a type
+            // with no values).
+            None
+        }
+
         fn grandpa_authorities() -> GrandpaAuthorityList {
             Grandpa::grandpa_authorities()
         }
@@ -200,16 +208,6 @@ impl_runtime_apis! {
             >,
             _key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
         ) -> Option<()> {
-            None
-        }
-
-        fn generate_key_ownership_proof(
-            _set_id: fg_primitives::SetId,
-            _authority_id: GrandpaId,
-        ) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-            // NOTE: this is the only implementation possible since we've
-            // defined our key owner proof type as a bottom type (i.e. a type
-            // with no values).
             None
         }
     }
@@ -257,62 +255,55 @@ impl_runtime_apis! {
 }
 
 impl frame_system::Trait for Runtime {
+    type AccountData = AccountData;
+    type AccountId = AccountId;
+    /// Portion of the block weight that is available to all normal transactions.
+    type AvailableBlockRatio = AvailableBlockRatio;
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = ();
-    /// The identifier used to distinguish between accounts.
-    type AccountId = AccountId;
-    /// The aggregated dispatch type that is available for extrinsics.
-    type Call = Call;
-    /// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-    type Lookup = IdentityLookup<AccountId>;
-    /// The index type for storing how many extrinsics an account has signed.
-    type Index = Index;
-    /// The index type for blocks.
-    type BlockNumber = BlockNumber;
-    /// The type for hashing blocks and tries.
-    type Hash = Hash;
-    /// The hashing algorithm used.
-    type Hashing = BlakeTwo256;
-    /// The header type.
-    type Header = generic::Header<BlockNumber, BlakeTwo256>;
-    /// The ubiquitous event type.
-    type Event = Event;
-    /// The ubiquitous origin type.
-    type Origin = Origin;
-    /// Maximum number of block number to block hash mappings to keep (oldest pruned first).
-    type BlockHashCount = BlockHashCount;
-    /// Maximum weight of each block.
-    type MaximumBlockWeight = MaximumBlockWeight;
-    /// The weight of database operations that the runtime can invoke.
-    type DbWeight = RocksDbWeight;
     /// The weight of the overhead invoked on the block import process, independent of the
     /// extrinsics included in that block.
     type BlockExecutionWeight = BlockExecutionWeight;
+    /// Maximum number of block number to block hash mappings to keep (oldest pruned first).
+    type BlockHashCount = BlockHashCount;
+    type BlockNumber = BlockNumber;
+    /// The aggregated dispatch type that is available for extrinsics.
+    type Call = Call;
+    /// The weight of database operations that the runtime can invoke.
+    type DbWeight = RocksDbWeight;
+    /// The ubiquitous event type.
+    type Event = Event;
     /// The base weight of any extrinsic processed by the runtime, independent of the
     /// logic of that extrinsic. (Signature verification, nonce increment, fee, etc...)
     type ExtrinsicBaseWeight = ExtrinsicBaseWeight;
+    type Hash = Hash;
+    type Hashing = Hashing;
+    type Header = Header;
+    type Index = Index;
+    /// The lookup mechanism to get account ID from whatever is passed in dispatchers.
+    type Lookup = IdentityLookup<AccountId>;
+    /// Maximum size of all encoded transactions (in bytes) that are allowed in one block.
+    type MaximumBlockLength = MaximumBlockLength;
+    /// Maximum weight of each block.
+    type MaximumBlockWeight = MaximumBlockWeight;
     /// The maximum weight that a single extrinsic of `Normal` dispatch class can have,
     /// idependent of the logic of that extrinsics. (Roughly max block weight - average on
     /// initialize cost).
     type MaximumExtrinsicWeight = MaximumExtrinsicWeight;
-    /// Maximum size of all encoded transactions (in bytes) that are allowed in one block.
-    type MaximumBlockLength = MaximumBlockLength;
-    /// Portion of the block weight that is available to all normal transactions.
-    type AvailableBlockRatio = AvailableBlockRatio;
-    /// Version of the runtime.
-    type Version = Version;
+    /// What to do if an account is fully reaped from the system.
+    type OnKilledAccount = ();
+    /// What to do if a new account is created.
+    type OnNewAccount = ();
+    /// The ubiquitous origin type.
+    type Origin = Origin;
     /// Converts a module to the index of the module in `construct_runtime!`.
     ///
     /// This type is being generated by `construct_runtime!`.
     type PalletInfo = PalletInfo;
-    /// What to do if a new account is created.
-    type OnNewAccount = ();
-    /// What to do if an account is fully reaped from the system.
-    type OnKilledAccount = ();
-    /// The data to be stored in an account.
-    type AccountData = AccountData;
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
+    /// Version of the runtime.
+    type Version = Version;
 }
 
 impl<LC> frame_system::offchain::SendTransactionTypes<LC> for Runtime
@@ -324,7 +315,7 @@ where
 }
 
 impl frame_system::offchain::SigningTypes for Runtime {
-    type Public = <Signature as Verify>::Signer;
+    type Public = AccountId;
     type Signature = Signature;
 }
 
@@ -333,26 +324,26 @@ impl pallet_aura::Trait for Runtime {
 }
 
 impl pallet_grandpa::Trait for Runtime {
-    type Event = Event;
     type Call = Call;
 
-    type KeyOwnerProofSystem = ();
+    type Event = Event;
 
-    type KeyOwnerProof =
-        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+    type HandleEquivocation = ();
 
     type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         GrandpaId,
     )>>::IdentificationTuple;
 
-    type HandleEquivocation = ();
+    type KeyOwnerProof =
+        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+
+    type KeyOwnerProofSystem = ();
 
     type WeightInfo = ();
 }
 
 impl pallet_timestamp::Trait for Runtime {
-    /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
     type OnTimestampSet = Aura;
     type MinimumPeriod = MinimumPeriod;
@@ -360,19 +351,19 @@ impl pallet_timestamp::Trait for Runtime {
 }
 
 impl pallet_sudo::Trait for Runtime {
-    type Event = Event;
     type Call = Call;
+    type Event = Event;
 }
 
 impl pallet_membership::Trait for Runtime {
-    type Event = Event;
     type AddOrigin = EnsureRoot<AccountId>;
-    type RemoveOrigin = EnsureRoot<AccountId>;
-    type SwapOrigin = EnsureRoot<AccountId>;
-    type ResetOrigin = EnsureRoot<AccountId>;
-    type PrimeOrigin = EnsureRoot<AccountId>;
-    type MembershipInitialized = ();
+    type Event = Event;
     type MembershipChanged = ();
+    type MembershipInitialized = ();
+    type PrimeOrigin = EnsureRoot<AccountId>;
+    type RemoveOrigin = EnsureRoot<AccountId>;
+    type ResetOrigin = EnsureRoot<AccountId>;
+    type SwapOrigin = EnsureRoot<AccountId>;
 }
 
 // Configure the pallet providers in pallets/providers.
@@ -398,16 +389,16 @@ impl orml_tokens::Trait for Runtime {
 #[derive(Debug)]
 pub struct OffchainAppCrypto;
 
-impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for OffchainAppCrypto {
-    type GenericPublic = sp_runtime::app_crypto::sr25519::Public;
-    type GenericSignature = sp_runtime::app_crypto::sr25519::Signature;
+impl frame_system::offchain::AppCrypto<AccountId, Signature> for OffchainAppCrypto {
+    type GenericPublic = AccountId;
+    type GenericSignature = Signature;
     type RuntimeAppPublic = pallet_liquidity_provider::Public;
 }
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
-pub fn native_version() -> NativeVersion {
-    NativeVersion {
+pub fn native_version() -> sp_version::NativeVersion {
+    sp_version::NativeVersion {
         can_author_with: Default::default(),
         runtime_version: VERSION,
     }

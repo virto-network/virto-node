@@ -3,17 +3,18 @@ mod test_extrinsic;
 use crate::{mock::test_extrinsic::TestXt, Call, DefaultWeightInfo, Module, Trait};
 use alloc::{boxed::Box, vec};
 use frame_support::{impl_outer_origin, ord_parameter_types, parameter_types, weights::Weight};
-use frame_system::{offchain::AppCrypto, EnsureSignedBy};
-use sp_core::{sr25519, H256};
+use frame_system::{offchain::AppCrypto, EnsureRoot};
 use sp_runtime::{
-    generic::Header,
-    traits::{BlakeTwo256, IdentityLookup, Verify},
+    traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
 use valiu_node_commons::{Asset, Collateral};
+use valiu_node_runtime_types::{
+    AccountData, AccountId, Balance, BlockNumber, Hash, Header, Index, Signature,
+};
 
-pub const USD_COLLATERAL: Collateral = Collateral::Usd;
 pub const USD_ASSET: Asset = Asset::Collateral(USD_COLLATERAL);
+pub const USD_COLLATERAL: Collateral = Collateral::Usd;
 
 pub type Extrinsic = TestXt<Call<Test>, ()>;
 pub type ProviderMembers = pallet_membership::Module<Test, pallet_membership::DefaultInstance>;
@@ -25,38 +26,38 @@ impl_outer_origin! {
 }
 
 ord_parameter_types! {
-    pub const Root: sr25519::Public = <sr25519::Public>::from_raw([0; 32]);
+    pub const Root: AccountId = <AccountId>::from_raw([0; 32]);
 }
 
 parameter_types! {
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
-    pub const BlockHashCount: u64 = 250;
+    pub const BlockHashCount: BlockNumber = 250;
     pub const MaximumBlockLength: u32 = 2 * 1024;
     pub const MaximumBlockWeight: Weight = 1024;
-    pub const OffchainUnsignedGracePeriod: u64 = 5;
-    pub const OffchainUnsignedInterval: u64 = 128;
+    pub const OffchainUnsignedGracePeriod: u32 = 5;
+    pub const OffchainUnsignedInterval: u32 = 128;
 }
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 
 impl frame_system::Trait for Test {
-    type AccountData = ();
-    type AccountId = sr25519::Public;
+    type AccountData = AccountData;
+    type AccountId = AccountId;
     type AvailableBlockRatio = AvailableBlockRatio;
     type BaseCallFilter = ();
     type BlockExecutionWeight = ();
     type BlockHashCount = BlockHashCount;
-    type BlockNumber = u128;
+    type BlockNumber = BlockNumber;
     type Call = ();
     type DbWeight = ();
     type Event = ();
     type ExtrinsicBaseWeight = ();
-    type Hash = H256;
+    type Hash = Hash;
     type Hashing = BlakeTwo256;
-    type Header = Header<u128, BlakeTwo256>;
-    type Index = u64;
-    type Lookup = IdentityLookup<Self::AccountId>;
+    type Header = Header;
+    type Index = Index;
+    type Lookup = IdentityLookup<AccountId>;
     type MaximumBlockLength = MaximumBlockLength;
     type MaximumBlockWeight = MaximumBlockWeight;
     type MaximumExtrinsicWeight = MaximumBlockWeight;
@@ -77,13 +78,13 @@ where
 }
 
 impl frame_system::offchain::SigningTypes for Test {
-    type Public = <sr25519::Signature as Verify>::Signer;
-    type Signature = sr25519::Signature;
+    type Public = AccountId;
+    type Signature = Signature;
 }
 
 impl orml_tokens::Trait for Test {
-    type Amount = i128;
-    type Balance = u128;
+    type Amount = i64;
+    type Balance = Balance;
     type CurrencyId = Asset;
     type Event = ();
     type OnReceived = ();
@@ -91,14 +92,14 @@ impl orml_tokens::Trait for Test {
 }
 
 impl pallet_membership::Trait<pallet_membership::DefaultInstance> for Test {
-    type AddOrigin = EnsureSignedBy<Root, sr25519::Public>;
+    type AddOrigin = EnsureRoot<AccountId>;
     type Event = ();
     type MembershipChanged = ();
     type MembershipInitialized = ();
-    type PrimeOrigin = EnsureSignedBy<Root, sr25519::Public>;
-    type RemoveOrigin = EnsureSignedBy<Root, sr25519::Public>;
-    type ResetOrigin = EnsureSignedBy<Root, sr25519::Public>;
-    type SwapOrigin = EnsureSignedBy<Root, sr25519::Public>;
+    type PrimeOrigin = EnsureRoot<AccountId>;
+    type RemoveOrigin = EnsureRoot<AccountId>;
+    type ResetOrigin = EnsureRoot<AccountId>;
+    type SwapOrigin = EnsureRoot<AccountId>;
 }
 
 impl Trait for Test {
@@ -113,12 +114,8 @@ impl Trait for Test {
 
 pub struct TestAuth;
 
-impl AppCrypto<<sr25519::Signature as Verify>::Signer, sr25519::Signature> for TestAuth {
-    type GenericPublic = sr25519::Public;
-    type GenericSignature = sr25519::Signature;
+impl AppCrypto<AccountId, Signature> for TestAuth {
+    type GenericPublic = AccountId;
+    type GenericSignature = Signature;
     type RuntimeAppPublic = crate::Public;
-}
-
-pub fn root() -> sr25519::Public {
-    <sr25519::Public>::from_raw([0; 32])
 }

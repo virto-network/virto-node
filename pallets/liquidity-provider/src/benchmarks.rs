@@ -1,18 +1,18 @@
 use crate::{
-    mock::{root, Origin, ProviderMembers, TestProvider, USD_ASSET},
+    mock::{Origin, ProviderMembers, TestProvider, USD_ASSET},
     Balance, Call, Module, Trait,
 };
 use alloc::{boxed::Box, vec, vec::Vec};
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
-use sp_core::sr25519;
-use valiu_node_commons::{Asset, Collateral, DistributionStrategy, PairPrice};
+use valiu_node_commons::{Asset, Collateral, PairPrice};
+use valiu_node_runtime_types::{AccountId, Signature};
 
 benchmarks! {
     where_clause {
         where
             <T as frame_system::Trait>::AccountId: AsRef<[u8; 32]>,
-            <T as SigningTypes>::Signature: From<sr25519::Signature>,
+            <T as SigningTypes>::Signature: From<Signature>,
             <T as SigningTypes>::Signature: Default
     }
 
@@ -39,8 +39,7 @@ benchmarks! {
         let from = gen_member_and_attest::<T>(USD_ASSET);
         let to: T::AccountId = whitelisted_caller();
         let to_amount = Balance::<T>::from(100);
-        let ds = DistributionStrategy::Evenly;
-    }: transfer(RawOrigin::Signed(from), to, to_amount, ds)
+    }: transfer(RawOrigin::Signed(from), to, to_amount)
     verify {
     }
 
@@ -51,14 +50,14 @@ benchmarks! {
     }
 }
 
-fn gen_member<T>() -> (T::AccountId, sr25519::Public)
+fn gen_member<T>() -> (T::AccountId, AccountId)
 where
     <T as frame_system::Trait>::AccountId: AsRef<[u8; 32]>,
     T: Trait,
 {
     let from: T::AccountId = whitelisted_caller();
-    let from_public = sr25519::Public::from_raw(*from.as_ref());
-    ProviderMembers::add_member(Origin::signed(root()), from_public).unwrap();
+    let from_public = AccountId::from_raw(*from.as_ref());
+    ProviderMembers::add_member(Origin::root(), from_public).unwrap();
     (from, from_public)
 }
 
