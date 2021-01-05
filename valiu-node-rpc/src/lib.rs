@@ -1,9 +1,17 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![allow(
+    // substrate-subxt macros import some types behind the scenes
+    unused_qualifications
+)]
 
-extern crate alloc;
-
+mod liquidity_provider;
 mod membership;
+mod valiu_extra;
 mod valiu_runtime;
 
-pub use membership::{AddMemberCall, Membership};
+pub use liquidity_provider::{
+    AttestCall, AttestCallExt, AttestationEvent, LiquidityProvider, TransferCall, TransferCallExt,
+    TransferEvent,
+};
+pub use membership::{AddMemberCall, AddMemberCallExt, ProviderMembers};
+pub use valiu_extra::ValiuExtra;
 pub use valiu_runtime::ValiuRuntime;

@@ -1,7 +1,5 @@
 use crate::{
-    mock::{
-        root, Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestProvider, Tokens, USD_ASSET,
-    },
+    mock::{Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestProvider, Tokens, USD_ASSET},
     Call, OffchainPairPricesPayload, PairPrices, OFFCHAIN_KEY_TYPE,
 };
 use alloc::vec;
@@ -14,16 +12,14 @@ use parity_scale_codec::Encode;
 use parking_lot::RwLock;
 use sp_core::{
     offchain::{testing, OffchainExt, TransactionPoolExt},
-    sr25519,
     testing::KeyStore,
     traits::{BareCryptoStore, KeystoreExt},
 };
 use sp_io::TestExternalities;
 use sp_runtime::{traits::BadOrigin, RuntimeAppPublic};
 use std::sync::Arc;
-use valiu_node_commons::{
-    AccountRate, Asset, Collateral, DistributionStrategy, OfferRate, PairPrice,
-};
+use valiu_node_commons::{AccountRate, Asset, Collateral, OfferRate, PairPrice};
+use valiu_node_runtime_types::{AccountId, Signature};
 
 const SEED: Option<&str> =
     Some("news slush supreme milk chapter athlete soap sausage put clutch what kitten/foo");
@@ -38,7 +34,7 @@ fn attest_increases_usdv() {
     new_test_ext().execute_with(|| {
         let alice = alice();
 
-        assert_ok!(ProviderMembers::add_member(Origin::signed(root()), alice));
+        assert_ok!(ProviderMembers::add_member(Origin::root(), alice));
         assert_ok!(TestProvider::attest(
             Origin::signed(alice),
             USDC_ASSET,
@@ -69,7 +65,7 @@ fn must_be_provider_to_attest() {
             pallet_membership::Error::<Test, crate::ProviderMembers>::NotMember
         );
 
-        assert_ok!(ProviderMembers::add_member(Origin::signed(root()), alice));
+        assert_ok!(ProviderMembers::add_member(Origin::root(), alice));
         assert_ok!(TestProvider::attest(
             Origin::signed(alice),
             USDC_ASSET,
@@ -158,7 +154,7 @@ fn rate_offers_are_modified_when_attesting_or_updating() {
     new_test_ext().execute_with(|| {
         let alice = alice();
 
-        assert_ok!(ProviderMembers::add_member(Origin::signed(root()), alice));
+        assert_ok!(ProviderMembers::add_member(Origin::root(), alice));
 
         let mut offers = vec![OfferRate::new(USDC_ASSET, 123)];
 
@@ -205,7 +201,7 @@ fn update_offer_rates_overwrites_prices() {
             PairPrice::new([Asset::Btc, Asset::Ves], 3, 4),
             PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 5, 6),
         ];
-        let first_sig = sr25519::Signature::from_slice(
+        let first_sig = Signature::from_slice(
             &KEYSTORE
                 .read()
                 .sign_with(OFFCHAIN_KEY_TYPE, &key, &first.encode())
@@ -223,7 +219,7 @@ fn update_offer_rates_overwrites_prices() {
             PairPrice::new([Asset::Btc, Asset::Ves], 9, 10),
             PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 11, 12),
         ];
-        let second_sig = sr25519::Signature::from_slice(
+        let second_sig = Signature::from_slice(
             &KEYSTORE
                 .read()
                 .sign_with(OFFCHAIN_KEY_TYPE, &key, &second.encode())
@@ -244,8 +240,8 @@ fn usdv_transfer_also_transfers_collaterals() {
         let alice = alice();
         let bob = bob();
 
-        assert_ok!(ProviderMembers::add_member(Origin::signed(root()), alice));
-        assert_ok!(ProviderMembers::add_member(Origin::signed(root()), bob));
+        assert_ok!(ProviderMembers::add_member(Origin::root(), alice));
+        assert_ok!(ProviderMembers::add_member(Origin::root(), bob));
 
         assert_ok!(TestProvider::attest(
             Origin::signed(alice),
@@ -260,12 +256,7 @@ fn usdv_transfer_also_transfers_collaterals() {
             Default::default()
         ));
 
-        assert_ok!(TestProvider::transfer(
-            Origin::signed(alice),
-            bob,
-            30,
-            DistributionStrategy::Evenly
-        ));
+        assert_ok!(TestProvider::transfer(Origin::signed(alice), bob, 30,));
 
         assert_eq!(Tokens::free_balance(USDV_ASSET, &alice), 70);
         assert_eq!(Tokens::free_balance(USDV_ASSET, &bob), 30);
@@ -336,16 +327,16 @@ pub fn new_test_ext() -> TestExternalities {
     t
 }
 
-fn alice() -> sr25519::Public {
-    <sr25519::Public>::from_raw({
+fn alice() -> AccountId {
+    <AccountId>::from_raw({
         let mut array = [0; 32];
         array[31] = 2;
         array
     })
 }
 
-fn bob() -> sr25519::Public {
-    <sr25519::Public>::from_raw({
+fn bob() -> AccountId {
+    <AccountId>::from_raw({
         let mut array = [0; 32];
         array[31] = 1;
         array
