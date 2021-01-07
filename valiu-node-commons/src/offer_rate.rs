@@ -3,6 +3,7 @@ use crate::Asset;
 #[derive(
     Clone,
     Debug,
+    Default,
     Eq,
     Ord,
     PartialEq,

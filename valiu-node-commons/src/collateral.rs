@@ -16,3 +16,10 @@ create_enum_with_aux_fns!(
         Usdc -> "USDC",
     }
 );
+
+impl Default for Collateral {
+    #[inline]
+    fn default() -> Self {
+        Self::Usd
+    }
+}
