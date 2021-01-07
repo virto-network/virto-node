@@ -12,13 +12,14 @@ use sp_runtime::{
 };
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode)]
-pub struct TestXt<Call, Extra> {
-    pub signature: Option<(u64, Extra)>,
+pub struct TestXt<AccountId, Call, Extra> {
     pub call: Call,
+    pub signature: Option<(AccountId, Extra)>,
 }
 
-impl<Origin, Call, Extra> Applyable for TestXt<Call, Extra>
+impl<AccountId, Call, Extra, Origin> Applyable for TestXt<AccountId, Call, Extra>
 where
+    AccountId: Send + Sync,
     Call: 'static
         + Clone
         + Codec
@@ -28,8 +29,8 @@ where
         + Send
         + Sized
         + Sync,
-    Extra: SignedExtension<AccountId = u64, Call = Call>,
-    Origin: From<Option<u64>>,
+    Extra: SignedExtension<AccountId = AccountId, Call = Call>,
+    Origin: From<Option<AccountId>>,
 {
     type Call = Call;
 
@@ -59,7 +60,7 @@ where
     }
 }
 
-impl<Call, Context, Extra> Checkable<Context> for TestXt<Call, Extra>
+impl<AccountId, Call, Context, Extra> Checkable<Context> for TestXt<AccountId, Call, Extra>
 where
     Call: Codec + Sync + Send,
 {
@@ -69,12 +70,12 @@ where
     }
 }
 
-impl<Call, Extra> Extrinsic for TestXt<Call, Extra>
+impl<AccountId, Call, Extra> Extrinsic for TestXt<AccountId, Call, Extra>
 where
     Call: Codec + Sync + Send,
 {
     type Call = Call;
-    type SignaturePayload = (u64, Extra);
+    type SignaturePayload = (AccountId, Extra);
 
     fn is_signed(&self) -> Option<bool> {
         Some(self.signature.is_some())
@@ -89,7 +90,7 @@ where
 }
 
 #[cfg(feature = "serde")]
-impl<Call, Extra> Serialize for TestXt<Call, Extra>
+impl<AccountId, Call, Extra> Serialize for TestXt<AccountId, Call, Extra>
 where
     TestXt<Call, Extra>: Encode,
 {
@@ -101,7 +102,10 @@ where
     }
 }
 
-impl<Call, Extra> fmt::Debug for TestXt<Call, Extra> {
+impl<AccountId, Call, Extra> fmt::Debug for TestXt<AccountId, Call, Extra>
+where
+    AccountId: fmt::Debug,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -111,4 +115,4 @@ impl<Call, Extra> fmt::Debug for TestXt<Call, Extra> {
     }
 }
 
-parity_util_mem::malloc_size_of_is_0!(any: TestXt<Call, Extra>);
+parity_util_mem::malloc_size_of_is_0!(any: TestXt<AccountId, Call, Extra>);

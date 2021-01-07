@@ -2,7 +2,7 @@ use core::{fmt, marker::PhantomData};
 use sp_runtime::{
     generic::Era, traits::SignedExtension, transaction_validity::TransactionValidityError,
 };
-use substrate_subxt::{balances::Balances, system::System, SignedExtra};
+use substrate_subxt::{system::System, SignedExtra};
 
 type ExtraTy<T> = (
     CheckSpecVersion<T>,
@@ -23,7 +23,7 @@ pub struct ValiuExtra<T: System> {
 
 impl<T> SignedExtra<T> for ValiuExtra<T>
 where
-    T: Balances + Clone + Eq + Send + Sync + System + fmt::Debug,
+    T: Clone + Eq + Send + Sync + System + fmt::Debug,
 {
     type Extra = ExtraTy<T>;
 
@@ -50,7 +50,7 @@ where
 
 impl<T> SignedExtension for ValiuExtra<T>
 where
-    T: Balances + Clone + Eq + Send + Sync + System + fmt::Debug,
+    T: Clone + Eq + Send + Sync + System + fmt::Debug,
 {
     const IDENTIFIER: &'static str = "ValiuExtra";
 
@@ -73,7 +73,7 @@ where
 {
     const IDENTIFIER: &'static str = "CheckSpecVersion";
 
-    type AccountId = u64;
+    type AccountId = T::AccountId;
     type AdditionalSigned = u32;
     type Call = ();
     type Pre = ();
@@ -92,7 +92,7 @@ where
 {
     const IDENTIFIER: &'static str = "CheckTxVersion";
 
-    type AccountId = u64;
+    type AccountId = T::AccountId;
     type AdditionalSigned = u32;
     type Call = ();
     type Pre = ();
@@ -111,7 +111,7 @@ where
 {
     const IDENTIFIER: &'static str = "CheckGenesis";
 
-    type AccountId = u64;
+    type AccountId = T::AccountId;
     type AdditionalSigned = T::Hash;
     type Call = ();
     type Pre = ();
@@ -130,7 +130,7 @@ where
 {
     const IDENTIFIER: &'static str = "CheckEra";
 
-    type AccountId = u64;
+    type AccountId = T::AccountId;
     type AdditionalSigned = T::Hash;
     type Call = ();
     type Pre = ();
@@ -149,7 +149,7 @@ where
 {
     const IDENTIFIER: &'static str = "CheckNonce";
 
-    type AccountId = u64;
+    type AccountId = T::AccountId;
     type AdditionalSigned = ();
     type Call = ();
     type Pre = ();
@@ -168,7 +168,7 @@ where
 {
     const IDENTIFIER: &'static str = "CheckWeight";
 
-    type AccountId = u64;
+    type AccountId = T::AccountId;
     type AdditionalSigned = ();
     type Call = ();
     type Pre = ();

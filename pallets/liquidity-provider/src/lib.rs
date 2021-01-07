@@ -46,7 +46,6 @@ where
     type Collateral: MultiReservableCurrency<Self::AccountId, CurrencyId = Asset>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     type OffchainAuthority: AppCrypto<Self::Public, Self::Signature>;
-    type OffchainUnsignedGracePeriod: Get<Self::BlockNumber>;
     type OffchainUnsignedInterval: Get<Self::BlockNumber>;
     type WeightInfo: WeightInfo;
 }
@@ -65,6 +64,7 @@ decl_event!(
         Balance = Balance<T>,
     {
         Attestation(AccountId, Asset),
+        Members(Vec<AccountId>),
         Transfer(AccountId, AccountId, Balance),
     }
 );
@@ -100,6 +100,14 @@ decl_module! {
                     Ok(())
                 }
             }
+        }
+
+        #[weight = T::WeightInfo::members()]
+        pub fn members(origin) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            let members = pallet_membership::Module::<T, ProviderMembers>::members();
+            Self::deposit_event(RawEvent::Members(members));
+            Ok(())
         }
 
         #[weight = T::WeightInfo::submit_pair_prices()]

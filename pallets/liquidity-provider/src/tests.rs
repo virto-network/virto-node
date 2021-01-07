@@ -1,14 +1,15 @@
 use crate::{
-    mock::{Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestProvider, Tokens, USD_ASSET},
+    mock::{
+        Extrinsic, Origin, ProviderMembers, Test, TestAuth, TestEvent, TestProvider, Tokens,
+        USD_ASSET,
+    },
     Call, OffchainPairPricesPayload, PairPrices, OFFCHAIN_KEY_TYPE,
 };
-use alloc::vec;
 use frame_support::{assert_noop, assert_ok, storage::StorageValue};
 use frame_system::offchain::{SignedPayload, SigningTypes};
 use once_cell::sync::Lazy;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
-use parity_scale_codec::Decode;
-use parity_scale_codec::Encode;
+use parity_scale_codec::{Decode, Encode};
 use parking_lot::RwLock;
 use sp_core::{
     offchain::{testing, OffchainExt, TransactionPoolExt},
@@ -29,6 +30,8 @@ const USDV_ASSET: Asset = Asset::Usdv;
 
 static KEYSTORE: Lazy<Arc<RwLock<dyn BareCryptoStore>>> = Lazy::new(|| KeyStore::new());
 
+type System = frame_system::Module<Test>;
+
 #[test]
 fn attest_increases_usdv() {
     new_test_ext().execute_with(|| {
@@ -45,6 +48,18 @@ fn attest_increases_usdv() {
         assert_eq!(Tokens::reserved_balance(USDC_ASSET, &alice), 123);
         assert_eq!(Tokens::free_balance(USDV_ASSET, &alice), 123);
         assert_eq!(Tokens::total_issuance(USDC_ASSET), 123);
+    });
+}
+
+#[test]
+fn members_return_an_event_with_the_list_of_inserted_members() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+        let alice = alice();
+        assert_ok!(ProviderMembers::add_member(Origin::root(), alice));
+        assert_ok!(TestProvider::members(Origin::signed(alice)));
+        let event = TestEvent::pallet_liquidity_provider(crate::RawEvent::Members(vec![alice]));
+        assert!(System::events().iter().any(|e| e.event == event));
     });
 }
 
