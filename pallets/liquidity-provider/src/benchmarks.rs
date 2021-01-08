@@ -25,6 +25,12 @@ benchmarks! {
     verify {
     }
 
+    members {
+        let (origin, _) = gen_member::<T>();
+    }: members(RawOrigin::Signed(origin))
+    verify {
+    }
+
     submit_pair_prices {
         let pair_prices = vec![
             PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 7.into(), 8.into()),

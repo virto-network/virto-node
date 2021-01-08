@@ -1,19 +1,19 @@
-use crate::{LiquidityProvider, ProviderMembers, ValiuExtra, Tokens};
-use substrate_subxt::{balances::Balances, sudo::Sudo, system::System, Runtime};
+use crate::{LiquidityProvider, ProviderMembers, Tokens, ValiuExtra};
+use substrate_subxt::{sudo::Sudo, system::System, Runtime};
+use valiu_node_commons::{Asset, Collateral};
 use valiu_node_runtime_types::{
-    AccountData, AccountId, Balance, BlockNumber, Hash, Hashing, Header, Index, OpaqueExtrinsic,
-    Signature,
+    AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
+    OpaqueExtrinsic, Signature,
 };
 use valiu_node_commons::Asset;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ValiuRuntime;
 
-impl Balances for ValiuRuntime {
-    type Balance = Balance;
+impl LiquidityProvider for ValiuRuntime {
+    type Asset = Asset;
+    type Collateral = Collateral;
 }
-
-impl LiquidityProvider for ValiuRuntime {}
 
 impl ProviderMembers for ValiuRuntime {}
 
@@ -40,4 +40,10 @@ impl System for ValiuRuntime {
     type Hashing = Hashing;
     type Header = Header;
     type Index = Index;
+}
+
+impl Tokens for ValiuRuntime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = Asset;
 }

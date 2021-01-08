@@ -14,13 +14,14 @@ use sp_runtime::{
 /// The data to be stored in an account.
 pub type AccountData = ();
 
-/// Some way of identifying an account on the chain. We intentionally make it equivalent
-/// to the public key of our transaction signing scheme.
+/// Some way of identifying an account on the chain.
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
-/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
-/// never know...
+/// The type for looking up accounts.
 pub type AccountIndex = u32;
+
+/// Signed version of Balance.
+pub type Amount = i64;
 
 /// Balance of an account.
 pub type Balance = u64;
@@ -54,6 +55,12 @@ pub type Header = generic::Header<BlockNumber, Hashing>;
 
 /// The index type for storing how many extrinsics an account has signed.
 pub type Index = u32;
+
+/// Maximum block length.
+pub type MaximumBlockLength = u32;
+
+//// Interval between blocks to avoid unsigned flood
+pub type OffchainUnsignedInterval = u32;
 
 /// Opaque block type.
 pub type OpaqueBlock = generic::Block<Header, OpaqueExtrinsic>;

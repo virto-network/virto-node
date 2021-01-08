@@ -9,8 +9,7 @@ use sc_finality_grandpa::{
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_inherents::InherentDataProviders;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use valiu_node_runtime_types::OpaqueBlock;
 use vln_runtime::{self, RuntimeApi};
 

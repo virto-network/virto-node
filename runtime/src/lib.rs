@@ -47,7 +47,7 @@ use sp_runtime::{
 use sp_version::RuntimeVersion;
 use valiu_node_commons::Asset;
 use valiu_node_runtime_types::{
-    AccountData, AccountId, Balance, BlockNumber, Hash, Hashing, Header, Index, Signature,
+    AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index, Signature,
 };
 
 const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -75,10 +75,9 @@ parameter_types! {
     /// We allow for 2 seconds of compute with a 6 second average block time.
     pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
     /// Assume 10% of weight for average on_initialize calls.
-    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
+    pub const MaximumBlockLength: valiu_node_runtime_types::MaximumBlockLength = 5 * 1024 * 1024;
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-    pub const OffchainUnsignedGracePeriod: u32 = 5;
-    pub const OffchainUnsignedInterval: u32 = 128;
+    pub const OffchainUnsignedInterval: valiu_node_runtime_types::OffchainUnsignedInterval = 128;
     pub const TransactionByteFee: Balance = 1;
     pub const Version: RuntimeVersion = VERSION;
 }
@@ -228,7 +227,7 @@ impl_runtime_apis! {
             use frame_system_benchmarking::Module as SystemBench;
             impl frame_system_benchmarking::Trait for Runtime {}
 
-            let whitelist: Vec<TrackedStorageKey> = vec![
+            let whitelist: Vec<TrackedStorageKey> = alloc::vec![
                 // Block Number
                 hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
                 // Total Issuance
@@ -372,13 +371,12 @@ impl pallet_liquidity_provider::Trait for Runtime {
     type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
     type OffchainAuthority = OffchainAppCrypto;
-    type OffchainUnsignedGracePeriod = OffchainUnsignedGracePeriod;
     type OffchainUnsignedInterval = OffchainUnsignedInterval;
     type WeightInfo = pallet_liquidity_provider::DefaultWeightInfo;
 }
 
 impl orml_tokens::Trait for Runtime {
-    type Amount = i64;
+    type Amount = Amount;
     type Balance = Balance;
     type CurrencyId = Asset;
     type Event = Event;

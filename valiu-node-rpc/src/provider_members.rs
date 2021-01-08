@@ -1,4 +1,3 @@
-use std::boxed::Box;
 use substrate_subxt::system::{System, SystemEventsDecoder};
 
 #[substrate_subxt::module]
