@@ -271,7 +271,7 @@ fn usdv_transfer_also_transfers_collaterals() {
             Default::default()
         ));
 
-        assert_ok!(TestProvider::transfer(Origin::signed(alice), bob, 30,));
+        assert_ok!(TestProvider::transfer(Origin::signed(alice), bob, 30));
 
         assert_eq!(Tokens::free_balance(USDV_ASSET, &alice), 70);
         assert_eq!(Tokens::free_balance(USDV_ASSET, &bob), 30);
@@ -331,6 +331,16 @@ fn parse_usd_cop_has_correct_behavior() {
             .is_none()
     );
     assert!(TestProvider::parse_usd_cop(r#"Te Compran $ 8 Te Venden $ 123"#).is_none());
+}
+
+#[test]
+fn transfer_must_be_greater_than_zero() {
+    new_test_ext().execute_with(|| {
+        assert_noop!(
+            TestProvider::transfer(Origin::signed(alice()), bob(), 0),
+            crate::Error::<Test>::TransferMustBeGreaterThanZero
+        );
+    });
 }
 
 pub fn new_test_ext() -> TestExternalities {
