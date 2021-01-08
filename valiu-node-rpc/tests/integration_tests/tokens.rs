@@ -1,7 +1,7 @@
 #![cfg(feature = "_integration-tests")]
-use substrate_subxt::{ClientBuilder};
-use valiu_node_rpc::{TotalIssuanceStoreExt, ValiuRuntime};
+use substrate_subxt::ClientBuilder;
 use valiu_node_commons::Asset;
+use valiu_node_rpc::{TotalIssuanceStoreExt, ValiuRuntime};
 
 #[tokio::test]
 async fn token_issuance() {

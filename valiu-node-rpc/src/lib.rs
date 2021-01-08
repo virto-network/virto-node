@@ -16,6 +16,8 @@ pub use liquidity_provider::{
 pub use provider_members::{
     AddMemberCall, AddMemberCallExt, ProviderMembers, ProviderMembersEventsDecoder,
 };
-pub use tokens::{Tokens, TokensEventsDecoder, TransferredEvent, TotalIssuanceStore, TotalIssuanceStoreExt};
+pub use tokens::{
+    Tokens, TokensEventsDecoder, TotalIssuanceStore, TotalIssuanceStoreExt, TransferredEvent,
+};
 pub use valiu_extra::ValiuExtra;
 pub use valiu_runtime::ValiuRuntime;
