@@ -1,21 +1,33 @@
 #![cfg(feature = "_integration-tests")]
 
-pub mod attest;
-pub mod transfer;
+mod add_bob_as_a_member;
+mod attest;
+mod members;
+mod transfer;
 
 use sp_core::sr25519::Pair;
 use sp_keyring::AccountKeyring;
-use substrate_subxt::{extrinsic::PairSigner, sudo::SudoCallExt, Client};
-use valiu_node_rpc::{AddMemberCall, ValiuRuntime};
+use substrate_subxt::{extrinsic::PairSigner, Client, ClientBuilder};
+use valiu_node_rpc::ValiuRuntime;
 
-async fn add_bob_as_a_member(
-    cb: &mut Client<ValiuRuntime>,
-    signer: &PairSigner<ValiuRuntime, Pair>,
+#[tokio::test]
+async fn sequential_tests() {
+    members::members().await;
+
+    let (alice_pair, bob_pair, mut client) = initial().await;
+    add_bob_as_a_member::add_bob_as_a_member(&mut client, &alice_pair).await;
+    attest::attest(&mut client, &bob_pair).await;
+    transfer::transfer(&mut client, &alice_pair, &bob_pair).await;
+}
+
+async fn initial() -> (
+    PairSigner<ValiuRuntime, Pair>,
+    PairSigner<ValiuRuntime, Pair>,
+    Client<ValiuRuntime>,
 ) {
-    let encoded = cb
-        .encode(AddMemberCall {
-            who: AccountKeyring::Bob.public(),
-        })
-        .unwrap();
-    let _ = cb.sudo_and_watch(signer, &encoded).await;
+    let _ = env_logger::builder().is_test(true).try_init();
+    let alice_pair = PairSigner::new(AccountKeyring::Alice.pair());
+    let bob_pair = PairSigner::new(AccountKeyring::Bob.pair());
+    let client = ClientBuilder::<ValiuRuntime>::new().build().await.unwrap();
+    (alice_pair, bob_pair, client)
 }

@@ -1,6 +1,4 @@
-use crate::{
-    AccountRate, AccountRates, Balance, Module, OfferRateTy, ProviderMembers, RawEvent, Trait,
-};
+use crate::{AccountRate, AccountRates, Balance, Module, OfferRateTy, ProviderMembers, Trait};
 use alloc::vec::Vec;
 use frame_support::{dispatch::DispatchResult, StorageDoubleMap};
 use orml_traits::MultiCurrency;
@@ -21,7 +19,6 @@ where
             .ok()
             .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
         T::Asset::deposit(asset, &from, balance)?;
-        Module::<T>::deposit_event(RawEvent::Attestation(from, asset));
         Ok(())
     }
 
