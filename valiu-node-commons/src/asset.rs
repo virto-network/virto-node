@@ -34,6 +34,13 @@ impl Asset {
     }
 }
 
+impl Default for Asset {
+    #[inline]
+    fn default() -> Self {
+        Self::Btc
+    }
+}
+
 impl fmt::Display for Asset {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -45,12 +52,5 @@ impl From<Collateral> for Asset {
     #[inline]
     fn from(from: Collateral) -> Self {
         Asset::Collateral(from)
-    }
-}
-
-impl Default for Asset {
-    #[inline]
-    fn default() -> Self {
-        Self::Btc
     }
 }
