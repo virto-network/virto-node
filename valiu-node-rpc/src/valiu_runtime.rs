@@ -5,7 +5,6 @@ use valiu_node_runtime_types::{
     AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
     OpaqueExtrinsic, Signature,
 };
-use valiu_node_commons::Asset;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ValiuRuntime;
@@ -16,12 +15,6 @@ impl LiquidityProvider for ValiuRuntime {
 }
 
 impl ProviderMembers for ValiuRuntime {}
-
-impl Tokens for ValiuRuntime {
-    type Amount = i64;
-    type Balance = Balance;
-    type CurrencyId = Asset;
-}
 
 impl Runtime for ValiuRuntime {
     type Extra = ValiuExtra<Self>;
