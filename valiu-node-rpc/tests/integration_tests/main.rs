@@ -3,6 +3,7 @@
 mod add_bob_as_a_member;
 mod attest;
 mod members;
+mod tokens;
 mod transfer;
 
 use sp_core::sr25519::Pair;
