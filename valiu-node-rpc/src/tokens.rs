@@ -17,3 +17,10 @@ pub struct TransferredEvent<T: Tokens> {
     pub to: <T as System>::AccountId,
     pub amount: T::Balance,
 }
+
+#[derive(Clone, Debug, PartialEq, parity_scale_codec::Encode, substrate_subxt::Store)]
+pub struct TotalIssuanceStore<T: Tokens> {
+    #[store(returns = T::Balance)]
+    /// CurrencyId to retrieve the issuance.
+    pub currency_id: T::CurrencyId,
+}

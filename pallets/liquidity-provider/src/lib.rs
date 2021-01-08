@@ -24,6 +24,7 @@ use frame_system::{
 };
 use offchain_error::*;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
+use sp_runtime::traits::Zero;
 use valiu_node_commons::{AccountRate, Asset, OfferRate, PairPrice};
 
 pub use crypto::*;
@@ -54,6 +55,7 @@ decl_error! {
     pub enum Error for Module<T: Trait> {
         MustBeCollateral,
         NoFunds,
+        TransferMustBeGreaterThanZero
     }
 }
 
@@ -139,6 +141,9 @@ decl_module! {
         ) -> DispatchResult
         {
             let from = ensure_signed(origin)?;
+            if to_amount.is_zero() {
+                return Err(crate::Error::<T>::TransferMustBeGreaterThanZero.into());
+            }
             Self::transfer_evenly(from, to, to_amount)?;
             Ok(())
         }

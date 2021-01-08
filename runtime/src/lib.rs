@@ -98,7 +98,7 @@ construct_runtime!(
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
         Timestamp: pallet_timestamp::{Call, Inherent, Module, Storage},
-        Tokens: orml_tokens::{Config<T>, Event<T>, Module},
+        Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
     }
 );
 
