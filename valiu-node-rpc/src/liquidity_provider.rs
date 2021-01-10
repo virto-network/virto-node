@@ -2,7 +2,7 @@ use crate::{ProviderMembers, ProviderMembersEventsDecoder, Tokens, TokensEventsD
 use core::marker::PhantomData;
 use parity_scale_codec::{Decode, Encode};
 use substrate_subxt::system::{System, SystemEventsDecoder};
-use valiu_node_commons::{Asset, OfferRate};
+use valiu_node_commons::{AccountRate, Asset, OfferRate};
 
 #[substrate_subxt::module]
 pub trait LiquidityProvider: ProviderMembers + System + Tokens {
@@ -45,4 +45,11 @@ pub struct TransferEvent<T: LiquidityProvider> {
 pub struct TransferCall<T: LiquidityProvider> {
     pub to: <T as System>::AccountId,
     pub to_amount: <T as Tokens>::Balance,
+}
+
+#[derive(Clone, Debug, PartialEq, parity_scale_codec::Encode, substrate_subxt::Store)]
+pub struct AccountRatesStore<T: LiquidityProvider> {
+    #[store(returns = Vec<AccountRate<<T as System>::AccountId, <T as Tokens>::Balance>>)]
+    pub buy: T::Asset,
+    pub sell: T::Asset,
 }

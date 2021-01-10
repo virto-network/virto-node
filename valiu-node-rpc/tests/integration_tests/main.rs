@@ -2,6 +2,7 @@
 
 mod add_bob_as_a_member;
 mod attest;
+mod liquidity_provider_rpc;
 mod members;
 mod tokens;
 mod transfer;
