@@ -10,8 +10,8 @@ mod valiu_extra;
 mod valiu_runtime;
 
 pub use liquidity_provider::{
-    AttestCall, AttestCallExt, LiquidityProvider, MembersCall, MembersCallExt, MembersEvent,
-    TransferCall, TransferCallExt, TransferEvent,
+    AccountRatesStore, AccountRatesStoreExt, AttestCall, AttestCallExt, LiquidityProvider,
+    MembersCall, MembersCallExt, MembersEvent, TransferCall, TransferCallExt, TransferEvent,
 };
 pub use provider_members::{
     AddMemberCall, AddMemberCallExt, ProviderMembers, ProviderMembersEventsDecoder,
