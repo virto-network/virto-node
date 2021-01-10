@@ -9,7 +9,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
 use std::sync::Arc;
-use valiu_node_runtime_types::{AccountId, Index, OpaqueBlock};
+use valiu_node_commons::runtime::{AccountId, Index, OpaqueBlock};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {

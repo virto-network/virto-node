@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+//! This module tries to group all common types used across different run-times.
 
 use frame_system::{
     ChainContext, CheckEra, CheckGenesis, CheckNonce, CheckSpecVersion, CheckTxVersion, CheckWeight,

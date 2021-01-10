@@ -4,7 +4,7 @@ use crate::chain_spec::{
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use valiu_node_runtime_types::AccountId;
+use valiu_node_commons::runtime::AccountId;
 use vln_runtime::WASM_BINARY;
 
 const ODIN_AURA_SS58: &str = "5DodinBNh59Ew9bvRfoDmj1j1QXzPhvHqk5w6jpdAfq7DHZd";

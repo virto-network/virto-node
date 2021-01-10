@@ -3875,7 +3875,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "valiu-node-commons",
- "valiu-node-runtime-types",
 ]
 
 [[package]]
@@ -7858,10 +7857,14 @@ name = "valiu-node-commons"
 version = "0.1.0"
 dependencies = [
  "arrayvec 0.5.2",
+ "frame-executive",
+ "frame-system",
  "num-traits",
  "parity-scale-codec",
  "serde",
  "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7876,18 +7879,6 @@ dependencies = [
  "substrate-subxt",
  "tokio 0.2.24",
  "valiu-node-commons",
- "valiu-node-runtime-types",
-]
-
-[[package]]
-name = "valiu-node-runtime-types"
-version = "0.1.0"
-dependencies = [
- "frame-executive",
- "frame-system",
- "parity-scale-codec",
- "sp-core",
- "sp-runtime",
 ]
 
 [[package]]
@@ -7948,7 +7939,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "syn",
- "valiu-node-runtime-types",
+ "valiu-node-commons",
  "vln-runtime",
 ]
 
@@ -7985,7 +7976,6 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder-runner",
  "valiu-node-commons",
- "valiu-node-runtime-types",
 ]
 
 [[package]]

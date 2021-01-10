@@ -1,6 +1,6 @@
 use crate::Asset;
-use arrayvec::ArrayString;
 
+/// A pair compares the value of one asset (base) to another asset (quote).
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(
     Clone,
@@ -18,28 +18,22 @@ pub struct Pair {
 }
 
 impl Pair {
+    /// Creates a new instance from a given `base` and `quote`.
     #[inline]
     pub const fn new(base: Asset, quote: Asset) -> Self {
         Self { base, quote }
     }
 
+    /// Base
     #[inline]
     pub const fn base(&self) -> Asset {
         self.base
     }
 
+    /// Quote
     #[inline]
     pub const fn quote(&self) -> Asset {
         self.quote
-    }
-
-    #[inline]
-    pub fn to_string(&self) -> ArrayString<[u8; 11]> {
-        let mut s = ArrayString::new();
-        s.push_str(self.base.as_str());
-        s.push('-');
-        s.push_str(self.quote.as_str());
-        s
     }
 }
 

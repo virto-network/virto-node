@@ -7,5 +7,4 @@ members = [
     'pallets/liquidity-provider',
     'runtime',
     'valiu-node-rpc',
-    'valiu-node-runtime-types',
 ]

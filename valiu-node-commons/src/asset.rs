@@ -1,6 +1,7 @@
 use crate::Collateral;
 use core::fmt;
 
+/// A resource or valuable thing.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(
     Clone,
@@ -22,6 +23,7 @@ pub enum Asset {
 }
 
 impl Asset {
+    /// String representation
     #[inline]
     pub const fn as_str(&self) -> &'static str {
         match *self {

@@ -19,8 +19,10 @@ use sp_core::{
 use sp_io::TestExternalities;
 use sp_runtime::{traits::BadOrigin, RuntimeAppPublic};
 use std::sync::Arc;
-use valiu_node_commons::{AccountRate, Asset, Collateral, OfferRate, PairPrice};
-use valiu_node_runtime_types::{AccountId, Signature};
+use valiu_node_commons::{
+    runtime::{AccountId, Signature},
+    AccountRate, Asset, Collateral, OfferRate, PairPrice,
+};
 
 const SEED: Option<&str> =
     Some("news slush supreme milk chapter athlete soap sausage put clutch what kitten/foo");

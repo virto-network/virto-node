@@ -1,9 +1,11 @@
 use crate::{LiquidityProvider, ProviderMembers, Tokens, ValiuExtra};
 use substrate_subxt::{sudo::Sudo, system::System, Runtime};
-use valiu_node_commons::{Asset, Collateral};
-use valiu_node_runtime_types::{
-    AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
-    OpaqueExtrinsic, Signature,
+use valiu_node_commons::{
+    runtime::{
+        AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
+        OpaqueExtrinsic, Signature,
+    },
+    Asset, Collateral,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]

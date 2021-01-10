@@ -5,8 +5,10 @@ use crate::{
 use alloc::{boxed::Box, vec, vec::Vec};
 use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
-use valiu_node_commons::{Asset, Collateral, PairPrice};
-use valiu_node_runtime_types::{AccountId, Signature};
+use valiu_node_commons::{
+    runtime::{AccountId, Signature},
+    Asset, Collateral, PairPrice,
+};
 
 benchmarks! {
     where_clause {

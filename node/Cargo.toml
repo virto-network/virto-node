@@ -42,7 +42,7 @@ sp-transaction-pool = '2.0.0'
 structopt = '0.3.8'
 substrate-frame-rpc-system = '2.0.0'
 syn = '=1.0.57'
-valiu-node-runtime-types = { features = ['std'], path = '../valiu-node-runtime-types' }
+valiu-node-commons = { features = ['std'], path = '../valiu-node-commons' }
 vln-runtime = { path = '../runtime', version = '2.0.0' }
 
 [build-dependencies]

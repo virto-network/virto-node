@@ -1,4 +1,5 @@
 create_enum_with_aux_fns!(
+    /// An asset that backs or can be used as a security for other assets
     #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
     #[derive(
         Clone,
