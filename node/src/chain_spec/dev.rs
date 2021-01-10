@@ -2,7 +2,7 @@ use crate::chain_spec::{
     authority_keys_from_seed, get_account_id_from_seed, ChainSpec, GenesisConfigBuilder,
 };
 use sc_service::ChainType;
-use valiu_node_runtime_types::AccountId;
+use valiu_node_commons::runtime::AccountId;
 use vln_runtime::WASM_BINARY;
 
 pub fn chain_spec() -> Result<ChainSpec, String> {

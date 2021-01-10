@@ -3,7 +3,6 @@ parity-scale-codec = { default-features = false, features = ['derive', 'std'], v
 sp-runtime = { default-features = false, features = ["std"], version = '2.0' }
 substrate-subxt = { default-features = false, version = '0.13' }
 valiu-node-commons = { default-features = false, features = ['std'], path = '../valiu-node-commons' }
-valiu-node-runtime-types = { default-features = false, features = ['std'], path = '../valiu-node-runtime-types' }
 
 [dev-dependencies]
 env_logger = { default-features = false, version = '0.7' }

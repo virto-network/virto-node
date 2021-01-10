@@ -10,7 +10,7 @@ use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_inherents::InherentDataProviders;
 use std::{sync::Arc, time::Duration};
-use valiu_node_runtime_types::OpaqueBlock;
+use valiu_node_commons::runtime::OpaqueBlock;
 use vln_runtime::{self, RuntimeApi};
 
 #[cfg(feature = "runtime-benchmarks")]

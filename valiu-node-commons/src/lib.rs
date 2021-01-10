@@ -1,7 +1,13 @@
+//! Valiu Node - Commons
+//!
+//! Common structures shared between the different Valiu node projects.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
 mod macros;
+
+pub mod runtime;
 
 mod account_rate;
 mod asset;

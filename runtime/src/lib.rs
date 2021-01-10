@@ -45,9 +45,12 @@ use sp_runtime::{
     ApplyExtrinsicResult, Perbill,
 };
 use sp_version::RuntimeVersion;
-use valiu_node_commons::Asset;
-use valiu_node_runtime_types::{
-    AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index, Signature,
+use valiu_node_commons::{
+    runtime::{
+        AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
+        Signature,
+    },
+    Asset,
 };
 
 const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -62,9 +65,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-pub type Block = valiu_node_runtime_types::Block<Call, Runtime>;
-type Executive = valiu_node_runtime_types::Executive<AllModules, Call, Runtime>;
-type UncheckedExtrinsic = valiu_node_runtime_types::UncheckedExtrinsic<Call, Runtime>;
+pub type Block = valiu_node_commons::runtime::Block<Call, Runtime>;
+type Executive = valiu_node_commons::runtime::Executive<AllModules, Call, Runtime>;
+type UncheckedExtrinsic = valiu_node_commons::runtime::UncheckedExtrinsic<Call, Runtime>;
 
 parameter_types! {
     pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get().saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
@@ -75,9 +78,9 @@ parameter_types! {
     /// We allow for 2 seconds of compute with a 6 second average block time.
     pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
     /// Assume 10% of weight for average on_initialize calls.
-    pub const MaximumBlockLength: valiu_node_runtime_types::MaximumBlockLength = 5 * 1024 * 1024;
+    pub const MaximumBlockLength: valiu_node_commons::runtime::MaximumBlockLength = 5 * 1024 * 1024;
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-    pub const OffchainUnsignedInterval: valiu_node_runtime_types::OffchainUnsignedInterval = 128;
+    pub const OffchainUnsignedInterval: valiu_node_commons::runtime::OffchainUnsignedInterval = 128;
     pub const TransactionByteFee: Balance = 1;
     pub const Version: RuntimeVersion = VERSION;
 }

@@ -6,7 +6,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::Ss58Codec, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use valiu_node_runtime_types::{AccountId, Signature};
+use valiu_node_commons::runtime::{AccountId, Signature};
 use vln_runtime::{
     AuraConfig, GenesisConfig, GrandpaConfig, SudoConfig, SystemConfig, TokensConfig,
 };

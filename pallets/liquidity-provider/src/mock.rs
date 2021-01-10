@@ -11,9 +11,11 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     Perbill,
 };
-use valiu_node_commons::{Asset, Collateral};
-use valiu_node_runtime_types::{
-    AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Header, Index, Signature,
+use valiu_node_commons::{
+    runtime::{
+        AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Header, Index, Signature,
+    },
+    Asset, Collateral,
 };
 
 pub const USD_ASSET: Asset = Asset::Collateral(USD_COLLATERAL);
@@ -44,9 +46,9 @@ ord_parameter_types! {
 parameter_types! {
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
     pub const BlockHashCount: BlockNumber = 250;
-    pub const MaximumBlockLength: valiu_node_runtime_types::MaximumBlockLength = 2 * 1024;
+    pub const MaximumBlockLength: valiu_node_commons::runtime::MaximumBlockLength = 2 * 1024;
     pub const MaximumBlockWeight: Weight = 1024;
-    pub const OffchainUnsignedInterval: valiu_node_runtime_types::OffchainUnsignedInterval = 128;
+    pub const OffchainUnsignedInterval: valiu_node_commons::runtime::OffchainUnsignedInterval = 128;
 }
 
 #[derive(Clone, Eq, PartialEq)]

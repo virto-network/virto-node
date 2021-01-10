@@ -23,9 +23,6 @@ test_package_with_feature() {
 cargo fmt --all -- --check
 cargo clippy --all-features
 
-test_package_with_feature valiu-node-runtime-types std
-
-test_package_with_feature valiu-node-commons default
 test_package_with_feature valiu-node-commons std
 
 test_package_with_feature valiu-node-rpc default

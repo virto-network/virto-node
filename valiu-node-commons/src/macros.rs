@@ -16,6 +16,7 @@ macro_rules! create_enum_with_aux_fns {
         }
 
         impl $name {
+            /// String representation
             #[inline]
             pub const fn as_str(&self) -> &'static str {
                 match *self {
@@ -23,11 +24,13 @@ macro_rules! create_enum_with_aux_fns {
                 }
             }
 
+            /// The number of variants
             #[inline]
             pub const fn len() -> usize {
                 count_idents!($($variant)*)
             }
 
+            /// An array that contains all variants
             #[inline]
             pub const fn variants() -> [Self; Self::len()] {
                 [$(Self::$variant,)*]

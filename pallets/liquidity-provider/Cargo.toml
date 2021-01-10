@@ -36,7 +36,6 @@ std = [
     'sp-io/std',
     'sp-runtime/std',
     'valiu-node-commons/std',
-    'valiu-node-runtime-types/std'
 ]
 
 [dependencies]
@@ -57,7 +56,6 @@ sp-io = { default-features = false, version = '2.0' }
 sp-runtime = { default-features = false, version = '2.0' }
 sp-std = { default-features = false, optional = true, version = '2.0' }
 valiu-node-commons = { default-features = false, path = '../../valiu-node-commons' }
-valiu-node-runtime-types = { default-features = false, path = '../../valiu-node-runtime-types' }
 
 [dev-dependencies]
 once_cell = { default-features = false, features = ['std'], version = '1.0' }
