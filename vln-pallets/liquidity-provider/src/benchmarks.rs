@@ -22,7 +22,7 @@ benchmarks! {
 
     attest {
         let origin = gen_member_and_attest::<T>(USD_ASSET);
-        let balance = Balance::<T>::from(100);
+        let balance = Balance::<T>::from(100u32);
     }: attest(RawOrigin::Signed(origin), Asset::Collateral(Collateral::Usd), balance, Vec::new())
     verify {
     }
@@ -35,9 +35,9 @@ benchmarks! {
 
     submit_pair_prices {
         let pair_prices = vec![
-            PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 7.into(), 8.into()),
-            PairPrice::new([Asset::Btc, Asset::Ves], 9.into(), 10.into()),
-            PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 11.into(), 12.into()),
+            PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 7u32.into(), 8u32.into()),
+            PairPrice::new([Asset::Btc, Asset::Ves], 9u32.into(), 10u32.into()),
+            PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 11u32.into(), 12u32.into()),
         ];
     }: submit_pair_prices(RawOrigin::None, pair_prices, Default::default())
     verify {
@@ -46,7 +46,7 @@ benchmarks! {
     transfer {
         let from = gen_member_and_attest::<T>(USD_ASSET);
         let to: T::AccountId = whitelisted_caller();
-        let to_amount = Balance::<T>::from(100);
+        let to_amount = Balance::<T>::from(100u32);
     }: transfer(RawOrigin::Signed(from), to, to_amount)
     verify {
     }
