@@ -104,7 +104,7 @@ where
 
         let mut actually_transfered: Balance<T> = Balance::<T>::zero();
         let mut last_actually_transfered: Balance<T> = Balance::<T>::zero();
-        let hundred = Balance::<T>::from(100);
+        let hundred = Balance::<T>::from(100u32);
         let pct = wants_to_transfer
             .checked_mul(&hundred)?
             .checked_div(&total_collaterals)?;
