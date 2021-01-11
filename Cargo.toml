@@ -3,8 +3,9 @@ panic = 'unwind'
 
 [workspace]
 members = [
-    'node',
-    'pallets/liquidity-provider',
-    'runtime',
-    'valiu-node-rpc',
+    'vln-commons',
+    'vln-node',
+    'vln-pallets/liquidity-provider',
+    'vln-rpc',
+    'vln-runtime',
 ]
