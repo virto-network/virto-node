@@ -53,7 +53,7 @@ jobs:
       - name: Create app.zip
         uses: montudor/action-zip@v0.1.0
         with:
-          args: zip -rj app . -i target/release/vln_node .codedeploy/*
+          args: zip -rj app target/release/vln_node .codedeploy/*
       - name: S3 Upload
         uses: hannut91/aws-cli@1.18.65
         with:
