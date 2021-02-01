@@ -25,8 +25,6 @@ cargo clippy --all-features
 
 test_package_with_feature vln-commons std
 
-test_package_with_feature vln-rpc default
-
 test_package_with_feature vln-pallets/liquidity-provider native-runtime-benchmarks
 test_package_with_feature vln-pallets/liquidity-provider std
 

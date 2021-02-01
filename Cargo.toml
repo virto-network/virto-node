@@ -6,6 +6,5 @@ members = [
     'vln-commons',
     'vln-node',
     'vln-pallets/liquidity-provider',
-    'vln-rpc',
     'vln-runtime',
 ]
