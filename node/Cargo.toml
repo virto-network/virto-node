@@ -41,8 +41,8 @@ sp-runtime = '2.0.0'
 sp-transaction-pool = '2.0.0'
 structopt = '0.3.8'
 substrate-frame-rpc-system = '2.0.0'
-vln-commons = { features = ['std'], path = '../vln-commons' }
-vln-runtime = { path = '../vln-runtime', version = '2.0.0' }
+vln-commons = { features = ['std'], path = '../commons' }
+vln-runtime = { path = '../runtime', version = '2.0.0' }
 
 [build-dependencies]
 substrate-build-script-utils = '2.0.0'

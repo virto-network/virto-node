@@ -3746,31 +3746,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-liquidity-provider"
-version = "0.1.0"
-dependencies = [
- "arrayvec 0.5.2",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "lite-json",
- "once_cell 1.5.2",
- "orml-tokens",
- "orml-traits",
- "pallet-membership",
- "parity-scale-codec",
- "parity-util-mem",
- "parking_lot 0.10.2",
- "sp-application-crypto",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "vln-commons",
-]
-
-[[package]]
 name = "pallet-membership"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3852,6 +3827,31 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-timestamp",
+]
+
+[[package]]
+name = "pallet-vln-liquidity"
+version = "0.1.0"
+dependencies = [
+ "arrayvec 0.5.2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "lite-json",
+ "once_cell 1.5.2",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-membership",
+ "parity-scale-codec",
+ "parity-util-mem",
+ "parking_lot 0.10.2",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "vln-commons",
 ]
 
 [[package]]
@@ -7643,11 +7643,11 @@ dependencies = [
  "orml-tokens",
  "pallet-aura",
  "pallet-grandpa",
- "pallet-liquidity-provider",
  "pallet-membership",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-timestamp",
+ "pallet-vln-liquidity",
  "parity-scale-codec",
  "serde",
  "sp-api",

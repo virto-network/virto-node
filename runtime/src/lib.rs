@@ -95,7 +95,7 @@ construct_runtime!(
     {
         Aura: pallet_aura::{Config<T>, Inherent, Module},
         Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
-        LiquidityProvider: pallet_liquidity_provider::{Call, Event<T>, Module, Storage},
+        LiquidityProvider: pallet_vln_liquidity::{Call, Event<T>, Module, Storage},
         ProviderMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Call, Module, Storage},
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
@@ -248,7 +248,7 @@ impl_runtime_apis! {
 
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-            add_benchmark!(params, batches, pallet_liquidity_provider, LiquidityProvider);
+            add_benchmark!(params, batches, pallet_vln_liquidity, LiquidityProvider);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
@@ -369,13 +369,13 @@ impl pallet_membership::Trait for Runtime {
 }
 
 // Configure the pallet providers in pallets/providers.
-impl pallet_liquidity_provider::Trait for Runtime {
+impl pallet_vln_liquidity::Trait for Runtime {
     type Asset = orml_tokens::Module<Runtime>;
     type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
     type OffchainAuthority = OffchainAppCrypto;
     type OffchainUnsignedInterval = OffchainUnsignedInterval;
-    type WeightInfo = pallet_liquidity_provider::DefaultWeightInfo;
+    type WeightInfo = pallet_vln_liquidity::DefaultWeightInfo;
 }
 
 impl orml_tokens::Trait for Runtime {
@@ -393,7 +393,7 @@ pub struct OffchainAppCrypto;
 impl frame_system::offchain::AppCrypto<AccountId, Signature> for OffchainAppCrypto {
     type GenericPublic = AccountId;
     type GenericSignature = Signature;
-    type RuntimeAppPublic = pallet_liquidity_provider::Public;
+    type RuntimeAppPublic = pallet_vln_liquidity::Public;
 }
 
 /// The version information used to identify this runtime when compiled natively.

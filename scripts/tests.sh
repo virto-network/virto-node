@@ -23,13 +23,13 @@ test_package_with_feature() {
 cargo fmt --all -- --check
 cargo clippy --all-features
 
-test_package_with_feature vln-commons std
+test_package_with_feature commons std
 
-test_package_with_feature vln-pallets/liquidity-provider native-runtime-benchmarks
-test_package_with_feature vln-pallets/liquidity-provider std
+test_package_with_feature pallets/liquidity native-runtime-benchmarks
+test_package_with_feature pallets/liquidity std
 
-test_package_with_feature vln-runtime native-runtime-benchmarks
-test_package_with_feature vln-runtime std
+test_package_with_feature runtime native-runtime-benchmarks
+test_package_with_feature runtime std
 
-test_package_with_feature vln-node default
-test_package_with_feature vln-node native-runtime-benchmarks
+test_package_with_feature node default
+test_package_with_feature node native-runtime-benchmarks
