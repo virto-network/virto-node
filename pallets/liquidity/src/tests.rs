@@ -79,7 +79,7 @@ fn must_be_provider_to_attest() {
 
         assert_noop!(
             TestProvider::attest(Origin::signed(alice), USDC_ASSET, 123, Default::default()),
-            pallet_membership::Error::<Test, crate::ProviderMembers>::NotMember
+            pallet_membership::Error::<Test, crate::LiquidityMembers>::NotMember
         );
 
         assert_ok!(ProviderMembers::add_member(Origin::root(), alice));

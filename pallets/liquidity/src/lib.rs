@@ -5,7 +5,6 @@ extern crate alloc;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
 mod crypto;
-mod liquidity_provider_balance;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod mock;
 mod module_impl;
@@ -24,11 +23,11 @@ use frame_system::{
 };
 use offchain_error::*;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
+use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
 use sp_runtime::traits::Zero;
 use vln_commons::{AccountRate, Asset, OfferRate, PairPrice};
 
 pub use crypto::*;
-pub use liquidity_provider_balance::*;
 pub use module_impl::module_impl_offchain::*;
 pub use weights::*;
 
@@ -36,10 +35,10 @@ type AccountRateTy<T> = AccountRate<<T as frame_system::Trait>::AccountId, Balan
 type Balance<T> =
     <<T as Trait>::Collateral as MultiCurrency<<T as frame_system::Trait>::AccountId>>::Balance;
 type OfferRateTy<T> = OfferRate<Balance<T>>;
-type ProviderMembers = pallet_membership::DefaultInstance;
+type LiquidityMembers = pallet_membership::DefaultInstance;
 
 pub trait Trait:
-    SendTransactionTypes<Call<Self>> + SigningTypes + pallet_membership::Trait<ProviderMembers>
+    SendTransactionTypes<Call<Self>> + SigningTypes + pallet_membership::Trait<LiquidityMembers>
 where
     Balance<Self>: LiquidityProviderBalance,
 {
@@ -107,7 +106,7 @@ decl_module! {
         #[weight = T::WeightInfo::members()]
         pub fn members(origin) -> DispatchResult {
             let _ = ensure_signed(origin)?;
-            let members = pallet_membership::Module::<T, ProviderMembers>::members();
+            let members = pallet_membership::Module::<T, LiquidityMembers>::members();
             Self::deposit_event(RawEvent::Members(members));
             Ok(())
         }
@@ -178,4 +177,14 @@ decl_storage! {
 
         pub PairPrices get(fn prices): Vec<PairPrice<Balance<T>>>
     }
+}
+
+pub trait LiquidityProviderBalance:
+    CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + From<u32>
+{
+}
+
+impl<T> LiquidityProviderBalance for T where
+    T: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + From<u32>
+{
 }

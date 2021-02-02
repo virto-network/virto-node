@@ -95,8 +95,8 @@ construct_runtime!(
     {
         Aura: pallet_aura::{Config<T>, Inherent, Module},
         Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
-        LiquidityProvider: pallet_vln_liquidity::{Call, Event<T>, Module, Storage},
-        ProviderMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
+        Liquidity: pallet_vln_liquidity::{Call, Event<T>, Module, Storage},
+        LiquidityMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Call, Module, Storage},
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
@@ -248,7 +248,7 @@ impl_runtime_apis! {
 
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-            add_benchmark!(params, batches, pallet_vln_liquidity, LiquidityProvider);
+            add_benchmark!(params, batches, pallet_vln_liquidity, Liquidity);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)

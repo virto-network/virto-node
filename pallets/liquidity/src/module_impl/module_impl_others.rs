@@ -1,4 +1,4 @@
-use crate::{AccountRate, AccountRates, Balance, Module, OfferRateTy, ProviderMembers, Trait};
+use crate::{AccountRate, AccountRates, Balance, LiquidityMembers, Module, OfferRateTy, Trait};
 use alloc::vec::Vec;
 use frame_support::{dispatch::DispatchResult, StorageDoubleMap};
 use orml_traits::MultiCurrency;
@@ -14,10 +14,10 @@ where
         asset: Asset,
         balance: Balance<T>,
     ) -> DispatchResult {
-        pallet_membership::Module::<T, ProviderMembers>::members()
+        pallet_membership::Module::<T, LiquidityMembers>::members()
             .binary_search(&from)
             .ok()
-            .ok_or(pallet_membership::Error::<T, ProviderMembers>::NotMember)?;
+            .ok_or(pallet_membership::Error::<T, LiquidityMembers>::NotMember)?;
         T::Asset::deposit(asset, &from, balance)?;
         Ok(())
     }
