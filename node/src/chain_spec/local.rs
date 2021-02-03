@@ -10,7 +10,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
 
     Ok(ChainSpec::from_genesis(
         "Local Testnet",
-        "local_testnet",
+        "local",
         ChainType::Local,
         move || {
             GenesisConfigBuilder {

@@ -37,8 +37,8 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
     let sudo_key = account_id_from_ss58::<AccountId>(ODIN_AURA_SS58)?;
 
     Ok(ChainSpec::from_genesis(
-        "Testnet Testnet",
-        "testnet_testnet",
+        "Testnet",
+        "testnet",
         ChainType::Live,
         move || {
             GenesisConfigBuilder {

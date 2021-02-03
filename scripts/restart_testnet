@@ -1,0 +1,60 @@
+#!/bin/bash
+# Requires valiu's password manager, access to relevant vault, VPN access to the
+# testnet VPC plus ssh access to execute commands from the validator nodes
+
+set -e
+
+CHAIN=testnet
+ODIN=${ODIN:-10.0.13.232}
+THOR=${THOR:-10.0.18.145}
+LOKI=${LOKI:-10.0.29.175}
+VLN_NODE=${VLN_NODE:-10.0.24.130}
+
+declare -A validators=( [odin]=$ODIN [thor]=$THOR [loki]=$LOKI )
+
+# fail early if not logged in to 1password
+op get vault Blockchain > /dev/null
+
+fetch_key_file() {
+	cat <<< $(op get document --vault Blockchain "$1_$2.json" | jq -c | jq -Rr @sh)
+}
+
+restart_node_remotely() {
+	local NODE=$1
+	local HOST=$2
+
+	aura_key=$(fetch_key_file $NODE aura)
+	gran_key=$(fetch_key_file $NODE gran)
+
+	ssh -tt $HOST CHAIN=$CHAIN AURA=$aura_key GRAN=$gran_key 'bash -s --' <<-'ENDSSH'
+	sudo systemctl stop app
+	sudo /valiu/vln_node purge-chain -y --base-path /valiu/data/db --chain $CHAIN
+	insert_key() { curl localhost:8080 -H 'Content-Type: application/json' -d "$1" ; }
+
+	sudo /valiu/vln_node --base-path /valiu/data/db --chain $CHAIN \
+		--validator --rpc-port 8080 --rpc-methods Unsafe --no-prometheus &
+	sleep 3
+
+	insert_key $AURA
+	insert_key $GRAN
+
+	sudo killall vln_node
+	sudo systemctl start app
+	exit
+ENDSSH
+}
+
+echo "🛠️ Restartin full-node"
+ssh -tt $VLN_NODE CHAIN=$CHAIN 'bash -s --' <<'ENDSSH'
+sudo systemctl stop app
+sudo /valiu/vln_node purge-chain -y --base-path /valiu/data/db --chain $CHAIN || true
+sudo systemctl start app
+exit
+ENDSSH
+
+for node in "${!validators[@]}"; do
+	echo "🛠️ Restarting validator $node"
+	host=${validators[$node]}
+	restart_node_remotely $node $host 
+done
+

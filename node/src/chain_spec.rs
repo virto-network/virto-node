@@ -1,6 +1,6 @@
 pub(crate) mod dev;
-pub(crate) mod local_testnet;
-pub(crate) mod testnet_testnet;
+pub(crate) mod local;
+pub(crate) mod testnet;
 
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::Ss58Codec, Pair, Public};
