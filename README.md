@@ -185,6 +185,6 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 
 ## Polkadot-js UI
 
-The [polkadot-js UI](https://polkadot.js.org/apps) UI can be used to interact with the dock network through a locally running node. 
+The [polkadot-js UI](https://polkadot.js.org/apps) UI can be used to interact with the vln-node. 
 Some custom types will need to be specified in the `Settings > Developer` section of the UI. The definitions for these types 
-can currently be found in the [types.json](types.json) file. These same types are used in the [SDK](https://github.com/docknetwork/sdk/blob/master/src/types.json) as well. 
+can currently be found in the [types.json](types.json) file.
