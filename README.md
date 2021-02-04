@@ -37,19 +37,19 @@ cargo build --release
 Purge any existing dev chain state:
 
 ```bash
-./target/release/node purge-chain --dev
+./target/release/vln_node purge-chain --dev
 ```
 
 Start a dev chain:
 
 ```bash
-./target/release/node --dev
+./target/release/vln_node --dev
 ```
 
 Or, start a dev chain with detailed logging:
 
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node -lruntime=debug --dev
+RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/vln_node -lruntime=debug --dev
 ```
 
 ### Multi-Node Local Testnet
@@ -136,7 +136,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/node --help
+./target/release/vln_node --help
 ```
 
 ### Runtime
@@ -183,3 +183,8 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 -   Trait: The `Trait` configuration interface is used to define the types and parameters upon which
     a FRAME pallet depends.
 
+## Polkadot-js UI
+
+The [polkadot-js UI](https://polkadot.js.org/apps) UI can be used to interact with the dock network through a locally running node. 
+Some custom types will need to be specified in the `Settings > Developer` section of the UI. The definitions for these types 
+can currently be found in the [types.json](types.json) file. These same types are used in the [SDK](https://github.com/docknetwork/sdk/blob/master/src/types.json) as well. 
