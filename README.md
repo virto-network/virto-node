@@ -1,6 +1,6 @@
 # VLN Node ![Build](https://github.com/valibre-org/vln-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/valibre-org/vln-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-A Substrate based blockchain node for the Valiu Liquidity Network
+A Substrate based blockchain node for the **Valiu Liquidity Network**, a blockchain where liquidity providers of fiat and crypto assets like [Valiu](https://www.valiu.com/en) come together to enable regular non crypto-savy users convert their local currency easily to *Valiu Dollars(USDv)*, a stable-coin backed by other USD pegged assets to protect them from their home country's volatile economy. To close the cycle, liquidity providers in different countries allow for an easy and decentralized way to cash-out USDv remittances without the final receipient being exposed to the complexities of the cryptocurrency world.
 
 ## Local Development
 
@@ -93,7 +93,7 @@ cargo run -- \
 
 Execute `cargo run -- --help` to learn more about the node's CLI options.
 
-## Template Structure
+## Project Structure
 
 A Substrate project such as this consists of a number of components that are spread across a few
 directories.
