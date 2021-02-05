@@ -9,12 +9,15 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "WASM binary not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
-        "Development",
-        "dev",
-        ChainType::Development,
+        "Local Testnet",
+        "local",
+        ChainType::Local,
         move || {
             GenesisConfigBuilder {
-                initial_authorities: &[authority_keys_from_seed("Alice")],
+                initial_authorities: &[
+                    authority_keys_from_seed("Alice"),
+                    authority_keys_from_seed("Bob"),
+                ],
                 sudo_key: get_account_id_from_seed::<AccountId>("Alice"),
                 wasm_binary,
             }

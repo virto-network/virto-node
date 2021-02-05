@@ -7,10 +7,8 @@ Restart=always
 Environment="RUST_LOG=warn"
 ExecStart=/valiu/vln_node \
 	--base-path /valiu/data/db \
-	--chain testnet_testnet \
-	--name vln-CHAIN_NAME \
-	--ws-port 80 \
-	--rpc-port 8080 \
+	--chain CHAIN_NAME \
+	--name vln-NODE_NAME \
 	--no-telemetry \
 	--no-prometheus EXTRA_FLAGS
 StandardOutput=syslog

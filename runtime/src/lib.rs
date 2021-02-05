@@ -45,9 +45,12 @@ use sp_runtime::{
     ApplyExtrinsicResult, Perbill,
 };
 use sp_version::RuntimeVersion;
-use valiu_node_commons::Asset;
-use valiu_node_runtime_types::{
-    AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index, Signature,
+use vln_commons::{
+    runtime::{
+        AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
+        Signature,
+    },
+    Asset,
 };
 
 const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -62,9 +65,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-pub type Block = valiu_node_runtime_types::Block<Call, Runtime>;
-type Executive = valiu_node_runtime_types::Executive<AllModules, Call, Runtime>;
-type UncheckedExtrinsic = valiu_node_runtime_types::UncheckedExtrinsic<Call, Runtime>;
+pub type Block = vln_commons::runtime::Block<Call, Runtime>;
+type Executive = vln_commons::runtime::Executive<AllModules, Call, Runtime>;
+type UncheckedExtrinsic = vln_commons::runtime::UncheckedExtrinsic<Call, Runtime>;
 
 parameter_types! {
     pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get().saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
@@ -75,9 +78,9 @@ parameter_types! {
     /// We allow for 2 seconds of compute with a 6 second average block time.
     pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
     /// Assume 10% of weight for average on_initialize calls.
-    pub const MaximumBlockLength: valiu_node_runtime_types::MaximumBlockLength = 5 * 1024 * 1024;
+    pub const MaximumBlockLength: vln_commons::runtime::MaximumBlockLength = 5 * 1024 * 1024;
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-    pub const OffchainUnsignedInterval: valiu_node_runtime_types::OffchainUnsignedInterval = 128;
+    pub const OffchainUnsignedInterval: vln_commons::runtime::OffchainUnsignedInterval = 128;
     pub const TransactionByteFee: Balance = 1;
     pub const Version: RuntimeVersion = VERSION;
 }
@@ -92,8 +95,8 @@ construct_runtime!(
     {
         Aura: pallet_aura::{Config<T>, Inherent, Module},
         Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
-        LiquidityProvider: pallet_liquidity_provider::{Call, Event<T>, Module, Storage},
-        ProviderMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
+        Liquidity: pallet_vln_liquidity::{Call, Event<T>, Module, Storage},
+        LiquidityMembers: pallet_membership::{Call, Config<T>, Event<T>, Module},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Call, Module, Storage},
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
@@ -245,7 +248,7 @@ impl_runtime_apis! {
 
             add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
             add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-            add_benchmark!(params, batches, pallet_liquidity_provider, LiquidityProvider);
+            add_benchmark!(params, batches, pallet_vln_liquidity, Liquidity);
 
             if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
             Ok(batches)
@@ -366,13 +369,13 @@ impl pallet_membership::Trait for Runtime {
 }
 
 // Configure the pallet providers in pallets/providers.
-impl pallet_liquidity_provider::Trait for Runtime {
+impl pallet_vln_liquidity::Trait for Runtime {
     type Asset = orml_tokens::Module<Runtime>;
     type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
     type OffchainAuthority = OffchainAppCrypto;
     type OffchainUnsignedInterval = OffchainUnsignedInterval;
-    type WeightInfo = pallet_liquidity_provider::DefaultWeightInfo;
+    type WeightInfo = pallet_vln_liquidity::DefaultWeightInfo;
 }
 
 impl orml_tokens::Trait for Runtime {
@@ -390,7 +393,7 @@ pub struct OffchainAppCrypto;
 impl frame_system::offchain::AppCrypto<AccountId, Signature> for OffchainAppCrypto {
     type GenericPublic = AccountId;
     type GenericSignature = Signature;
-    type RuntimeAppPublic = pallet_liquidity_provider::Public;
+    type RuntimeAppPublic = pallet_vln_liquidity::Public;
 }
 
 /// The version information used to identify this runtime when compiled natively.

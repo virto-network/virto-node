@@ -23,15 +23,10 @@ test_package_with_feature() {
 cargo fmt --all -- --check
 cargo clippy --all-features
 
-test_package_with_feature valiu-node-runtime-types std
+test_package_with_feature commons std
 
-test_package_with_feature valiu-node-commons default
-test_package_with_feature valiu-node-commons std
-
-test_package_with_feature valiu-node-rpc default
-
-test_package_with_feature pallets/liquidity-provider native-runtime-benchmarks
-test_package_with_feature pallets/liquidity-provider std
+test_package_with_feature pallets/liquidity native-runtime-benchmarks
+test_package_with_feature pallets/liquidity std
 
 test_package_with_feature runtime native-runtime-benchmarks
 test_package_with_feature runtime std
