@@ -15,5 +15,11 @@
         "Usdc"
       ]
     },
-    "CurrencyId": "Asset"
+    "CurrencyId": "Asset",
+    "Destination": {
+      "_enum": {
+        "Bank" : "Hash",
+        "Vln" : "AccountId"
+      }
+    }
   }
