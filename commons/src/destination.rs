@@ -24,28 +24,27 @@ pub enum Destination<AccountId> {
     Bank(BankTransactionCid),
 }
 
-impl <AccountId> Destination<AccountId> {
+impl<AccountId> Destination<AccountId> {
     /// String representation
     #[inline]
     pub const fn as_str(&self) -> &'static str {
         match self {
             Self::Vln(_inner) => "Vln",
-            Self::Bank(_inner) => "Bank"
+            Self::Bank(_inner) => "Bank",
         }
     }
 }
 
-impl <AccountId : Default> Default for Destination<AccountId> {
+impl<AccountId: Default> Default for Destination<AccountId> {
     #[inline]
     fn default() -> Self {
         Self::Vln(Default::default())
     }
 }
 
-impl <AccountId> fmt::Display for Destination<AccountId> {
+impl<AccountId> fmt::Display for Destination<AccountId> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
 }
-

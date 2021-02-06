@@ -25,7 +25,7 @@ use offchain_error::*;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
 use sp_runtime::traits::Zero;
-use vln_commons::{AccountRate, Asset, OfferRate, PairPrice, Destination};
+use vln_commons::{AccountRate, Asset, Destination, OfferRate, PairPrice};
 
 pub use crypto::*;
 pub use module_impl::module_impl_offchain::*;

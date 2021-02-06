@@ -15,14 +15,14 @@ use sp_core::{
     offchain::{testing, OffchainExt, TransactionPoolExt},
     testing::KeyStore,
     traits::{BareCryptoStore, KeystoreExt},
-    H256
+    H256,
 };
 use sp_io::TestExternalities;
 use sp_runtime::{traits::BadOrigin, RuntimeAppPublic};
 use std::sync::Arc;
 use vln_commons::{
     runtime::{AccountId, Signature},
-    AccountRate, Asset, Collateral, OfferRate, PairPrice, Destination
+    AccountRate, Asset, Collateral, Destination, OfferRate, PairPrice,
 };
 
 const SEED: Option<&str> =
@@ -274,7 +274,11 @@ fn usdv_transfer_also_transfers_collaterals() {
             Default::default()
         ));
 
-        assert_ok!(TestProvider::transfer(Origin::signed(alice), Destination::Vln(bob), 30));
+        assert_ok!(TestProvider::transfer(
+            Origin::signed(alice),
+            Destination::Vln(bob),
+            30
+        ));
 
         assert_eq!(Tokens::free_balance(USDV_ASSET, &alice), 70);
         assert_eq!(Tokens::free_balance(USDV_ASSET, &bob), 30);
@@ -347,9 +351,8 @@ fn transfer_must_be_greater_than_zero() {
 }
 
 #[test]
-fn transfer_destinations_work_as_expected(){
+fn transfer_destinations_work_as_expected() {
     new_test_ext().execute_with(|| {
-
         // transfer to vln address should work - this has been tested above - skip here
 
         // transfer to bank destination should reject with error
