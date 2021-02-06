@@ -7,7 +7,7 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
 use vln_commons::{
     runtime::{AccountId, Signature},
-    Asset, Collateral, PairPrice,
+    Asset, Collateral, Destination, PairPrice,
 };
 
 benchmarks! {
@@ -47,7 +47,7 @@ benchmarks! {
         let from = gen_member_and_attest::<T>(USD_ASSET);
         let to: T::AccountId = whitelisted_caller();
         let to_amount = Balance::<T>::from(100u32);
-    }: transfer(RawOrigin::Signed(from), to, to_amount)
+    }: transfer(RawOrigin::Signed(from), Destination::Vln(to), to_amount)
     verify {
     }
 
