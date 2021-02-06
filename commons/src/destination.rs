@@ -1,7 +1,6 @@
 use core::fmt;
 use crate::runtime::AccountId;
 
-pub type BtcTransactionId = [u8; 32];
 pub type BankTransactionId = [u8; 32];
 
 /// Identifier for different destinations on VLN
@@ -20,8 +19,6 @@ pub type BankTransactionId = [u8; 32];
 pub enum Destination {
     // type to denote destinations on vln blockchain
     Vln(AccountId),
-    // type to denote transactions on the bitcoin blockchain
-    Btc(BtcTransactionId),
     // type to denote off chain bank transfer transations
     Bank(BankTransactionId),
 }
@@ -32,7 +29,6 @@ impl Destination {
     pub const fn as_str(&self) -> &'static str {
         match *self {
             Self::Vln(_inner) => "Vln",
-            Self::Btc(_inner) => "Btc",
             Self::Bank(_inner) => "Bank"
         }
     }
