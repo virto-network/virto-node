@@ -136,7 +136,7 @@ decl_module! {
         #[weight = T::WeightInfo::transfer()]
         pub fn transfer(
             origin,
-            to: Destination,
+            to: Destination<<T as frame_system::Trait>::AccountId>,
             to_amount: Balance<T>,
         ) -> DispatchResult
         {
@@ -151,6 +151,7 @@ decl_module! {
                     Self::transfer_evenly(from, to_address.into(), to_amount)?;
                     Ok(())
                 }
+                // skip all other destinations for now
                 _ => Err(crate::Error::<T>::DestinationNotSupported.into())
             }
         }

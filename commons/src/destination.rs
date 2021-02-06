@@ -1,7 +1,8 @@
 use core::fmt;
-use crate::runtime::AccountId;
+use sp_core::H256;
 
-pub type BankTransactionId = [u8; 32];
+// BankTransactionCid should hold a sha256 cid from ipfs
+pub type BankTransactionCid = H256;
 
 /// Identifier for different destinations on VLN
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -16,32 +17,32 @@ pub type BankTransactionId = [u8; 32];
     parity_scale_codec::Decode,
     parity_scale_codec::Encode,
 )]
-pub enum Destination {
+pub enum Destination<AccountId> {
     // type to denote destinations on vln blockchain
     Vln(AccountId),
     // type to denote off chain bank transfer transations
-    Bank(BankTransactionId),
+    Bank(BankTransactionCid),
 }
 
-impl Destination {
+impl <AccountId> Destination<AccountId> {
     /// String representation
     #[inline]
     pub const fn as_str(&self) -> &'static str {
-        match *self {
+        match self {
             Self::Vln(_inner) => "Vln",
             Self::Bank(_inner) => "Bank"
         }
     }
 }
 
-impl Default for Destination {
+impl <AccountId : Default> Default for Destination<AccountId> {
     #[inline]
     fn default() -> Self {
         Self::Vln(Default::default())
     }
 }
 
-impl fmt::Display for Destination {
+impl <AccountId> fmt::Display for Destination<AccountId> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
