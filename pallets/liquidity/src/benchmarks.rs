@@ -7,7 +7,7 @@ use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_system::{offchain::SigningTypes, RawOrigin};
 use vln_commons::{
     runtime::{AccountId, Signature},
-    Asset, Collateral, PairPrice, Destination
+    Asset, Collateral, Destination, PairPrice,
 };
 
 benchmarks! {
