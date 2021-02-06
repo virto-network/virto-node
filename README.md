@@ -1,6 +1,6 @@
 # VLN Node ![Build](https://github.com/valibre-org/vln-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/valibre-org/vln-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-A Substrate based blockchain node for the Valiu Liquidity Network
+A Substrate based blockchain node for the **Valiu Liquidity Network**, a blockchain where liquidity providers of fiat and crypto assets like [Valiu](https://www.valiu.com/en) come together to enable regular non crypto-savy users convert their local currency easily to *Valiu Dollars(USDv)*, a stable-coin backed by other USD pegged assets to protect them from their home country's volatile economy. To close the cycle, liquidity providers in different countries allow for an easy and decentralized way to cash-out USDv remittances without the final receipient being exposed to the complexities of the cryptocurrency world.
 
 ## Local Development
 
@@ -37,19 +37,19 @@ cargo build --release
 Purge any existing dev chain state:
 
 ```bash
-./target/release/node purge-chain --dev
+./target/release/vln_node purge-chain --dev
 ```
 
 Start a dev chain:
 
 ```bash
-./target/release/node --dev
+./target/release/vln_node --dev
 ```
 
 Or, start a dev chain with detailed logging:
 
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node -lruntime=debug --dev
+RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/vln_node -lruntime=debug --dev
 ```
 
 ### Multi-Node Local Testnet
@@ -93,7 +93,7 @@ cargo run -- \
 
 Execute `cargo run -- --help` to learn more about the node's CLI options.
 
-## Template Structure
+## Project Structure
 
 A Substrate project such as this consists of a number of components that are spread across a few
 directories.
@@ -136,7 +136,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/node --help
+./target/release/vln_node --help
 ```
 
 ### Runtime
@@ -183,3 +183,8 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 -   Trait: The `Trait` configuration interface is used to define the types and parameters upon which
     a FRAME pallet depends.
 
+## Polkadot-js UI
+
+The [polkadot-js UI](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fvln.valiu.dev) UI can be used to interact with the vln-node. 
+Some custom types will need to be specified in the `Settings > Developer` section of the UI. The definitions for these types 
+can currently be found in the [types.json](types.json) file.
