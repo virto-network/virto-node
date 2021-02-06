@@ -148,7 +148,7 @@ decl_module! {
                     if to_amount.is_zero() {
                         return Err(crate::Error::<T>::TransferMustBeGreaterThanZero.into());
                     }
-                    Self::transfer_evenly(from, to_address.into(), to_amount)?;
+                    Self::transfer_evenly(from, to_address, to_amount)?;
                     Ok(())
                 }
                 // skip all other destinations for now
