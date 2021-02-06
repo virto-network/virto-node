@@ -1,8 +1,8 @@
 use core::fmt;
 use sp_core::H256;
 
-// BankTransactionCid should hold a sha256 cid from ipfs
-pub type BankTransactionCid = H256;
+// BankDetailsCid should hold a sha256 cid from ipfs
+pub type BankDetailsCid = H256;
 
 /// Identifier for different destinations on VLN
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -21,7 +21,7 @@ pub enum Destination<AccountId> {
     // type to denote destinations on vln blockchain
     Vln(AccountId),
     // type to denote off chain bank transfer transations
-    Bank(BankTransactionCid),
+    Bank(BankDetailsCid),
 }
 
 impl<AccountId> Destination<AccountId> {
