@@ -1,0 +1,25 @@
+{
+    "Address": "AccountId",
+    "Asset": {
+      "_enum": {
+        "Btc": null,
+        "Collateral": "Collateral",
+        "Cop": null,
+        "Usdv": null,
+        "Ves": null
+      }
+    },
+    "Collateral": {
+      "_enum": [
+        "Usd",
+        "Usdc"
+      ]
+    },
+    "CurrencyId": "Asset",
+    "Destination": {
+      "_enum": {
+        "Bank" : "Hash",
+        "Vln" : "AccountId"
+      }
+    }
+  }
