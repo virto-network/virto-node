@@ -25,7 +25,7 @@ use offchain_error::*;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
 use sp_runtime::traits::Zero;
-use vln_commons::{AccountRate, Asset, OfferRate, PairPrice};
+use vln_commons::{AccountRate, Asset, Destination, OfferRate, PairPrice};
 
 pub use crypto::*;
 pub use module_impl::module_impl_offchain::*;
@@ -54,7 +54,8 @@ decl_error! {
     pub enum Error for Module<T: Trait> {
         MustBeCollateral,
         NoFunds,
-        TransferMustBeGreaterThanZero
+        TransferMustBeGreaterThanZero,
+        DestinationNotSupported
     }
 }
 
@@ -135,16 +136,24 @@ decl_module! {
         #[weight = T::WeightInfo::transfer()]
         pub fn transfer(
             origin,
-            to: <T as frame_system::Trait>::AccountId,
+            to: Destination<<T as frame_system::Trait>::AccountId>,
             to_amount: Balance<T>,
         ) -> DispatchResult
         {
-            let from = ensure_signed(origin)?;
-            if to_amount.is_zero() {
-                return Err(crate::Error::<T>::TransferMustBeGreaterThanZero.into());
+            // process transfer based on the destination type
+            match to {
+                // preform onchain transfer for vln address
+                Destination::Vln(to_address) => {
+                    let from = ensure_signed(origin)?;
+                    if to_amount.is_zero() {
+                        return Err(crate::Error::<T>::TransferMustBeGreaterThanZero.into());
+                    }
+                    Self::transfer_evenly(from, to_address, to_amount)?;
+                    Ok(())
+                }
+                // skip all other destinations for now
+                _ => Err(crate::Error::<T>::DestinationNotSupported.into())
             }
-            Self::transfer_evenly(from, to, to_amount)?;
-            Ok(())
         }
 
         #[weight = T::WeightInfo::update_offer_rates()]
