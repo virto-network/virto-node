@@ -6,20 +6,25 @@ use alloc::{boxed::Box, vec};
 use frame_support::{
     impl_outer_event, impl_outer_origin, ord_parameter_types, parameter_types, weights::Weight,
 };
-use frame_system::{offchain::AppCrypto, EnsureRoot};
+use frame_system::EnsureRoot;
 use sp_runtime::{
+    testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
+    traits::{IdentifyAccount, Verify},
     Perbill,
 };
-use vln_commons::{
-    runtime::{
-        AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Header, Index, Signature,
-    },
-    Asset, Collateral,
-};
+use vln_commons::{Asset, Collateral};
 
 pub const USD_ASSET: Asset = Asset::Collateral(USD_COLLATERAL);
 pub const USD_COLLATERAL: Collateral = Collateral::Usd;
+
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type Signature = sp_core::sr25519::Signature;
+type BlockNumber = u64;
+type Amount = i64;
+type Balance = u64;
+type Hash = sp_core::H256;
+type Index = u32;
 
 pub type Extrinsic = TestXt<AccountId, Call<Test>, ()>;
 pub type ProviderMembers = pallet_membership::Module<Test, pallet_membership::DefaultInstance>;
@@ -46,16 +51,15 @@ ord_parameter_types! {
 parameter_types! {
     pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
     pub const BlockHashCount: BlockNumber = 250;
-    pub const MaximumBlockLength: vln_commons::runtime::MaximumBlockLength = 2 * 1024;
+    pub const MaximumBlockLength: u32 = 2 * 1024;
     pub const MaximumBlockWeight: Weight = 1024;
-    pub const OffchainUnsignedInterval: vln_commons::runtime::OffchainUnsignedInterval = 128;
 }
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 
 impl frame_system::Trait for Test {
-    type AccountData = AccountData;
+    type AccountData = ();
     type AccountId = AccountId;
     type AvailableBlockRatio = AvailableBlockRatio;
     type BaseCallFilter = ();
@@ -90,11 +94,6 @@ where
     type OverarchingCall = Call<Test>;
 }
 
-impl frame_system::offchain::SigningTypes for Test {
-    type Public = AccountId;
-    type Signature = Signature;
-}
-
 impl orml_tokens::Trait for Test {
     type Amount = Amount;
     type Balance = Balance;
@@ -119,15 +118,5 @@ impl Trait for Test {
     type Asset = Tokens;
     type Collateral = Tokens;
     type Event = TestEvent;
-    type OffchainAuthority = TestAuth;
-    type OffchainUnsignedInterval = OffchainUnsignedInterval;
     type WeightInfo = DefaultWeightInfo;
-}
-
-pub struct TestAuth;
-
-impl AppCrypto<AccountId, Signature> for TestAuth {
-    type GenericPublic = AccountId;
-    type GenericSignature = Signature;
-    type RuntimeAppPublic = crate::Public;
 }

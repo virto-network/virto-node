@@ -16,11 +16,6 @@ impl WeightInfo for DefaultWeightInfo {
     fn members() -> Weight {
         (34_129_000_u64).saturating_add(DbWeight::get().reads(1_u64))
     }
-    fn submit_pair_prices() -> Weight {
-        (38_171_000_u64)
-            .saturating_add(DbWeight::get().reads(1_u64))
-            .saturating_add(DbWeight::get().writes(2_u64))
-    }
     fn transfer() -> Weight {
         (74_911_000_u64).saturating_add(DbWeight::get().reads(2_u64))
     }
@@ -32,7 +27,6 @@ impl WeightInfo for DefaultWeightInfo {
 pub trait WeightInfo {
     fn attest() -> Weight;
     fn members() -> Weight;
-    fn submit_pair_prices() -> Weight;
     fn transfer() -> Weight;
     fn update_offer_rates() -> Weight;
 }
