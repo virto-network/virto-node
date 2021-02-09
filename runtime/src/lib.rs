@@ -40,7 +40,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, impl_opaque_keys,
-    traits::{Block as BlockT, IdentityLookup, NumberFor, Saturating},
+    traits::{BlakeTwo256, Block as BlockT, IdentityLookup, NumberFor, Saturating},
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, Perbill,
 };
@@ -50,7 +50,7 @@ use vln_commons::{
         AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
         Signature,
     },
-    Asset,
+    Asset, ProxyType,
 };
 
 const MILLISECS_PER_BLOCK: u64 = 6000;
@@ -101,7 +101,8 @@ construct_runtime!(
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
         Timestamp: pallet_timestamp::{Call, Inherent, Module, Storage},
-        Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+        Tokens: orml_tokens::{Call, Config<T>, Event<T>, Module, Storage},
+        Proxy: pallet_proxy::{Call, Event<T>, Module, Storage}
     }
 );
 
@@ -385,6 +386,29 @@ impl orml_tokens::Trait for Runtime {
     type Event = Event;
     type OnReceived = ();
     type WeightInfo = ();
+}
+
+parameter_types! {
+    pub const ProxyDepositBase: u64 = 1;
+    pub const ProxyDepositFactor: u64 = 1;
+    pub const MaxProxies: u16 = 4;
+    pub const MaxPending: u32 = 2;
+    pub const AnnouncementDepositBase: u64 = 1;
+    pub const AnnouncementDepositFactor: u64 = 1;
+}
+impl pallet_proxy::Trait for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type Currency = orml_tokens::Module<Runtime>;
+    type ProxyType = ProxyType;
+    type ProxyDepositBase = ProxyDepositBase;
+    type ProxyDepositFactor = ProxyDepositFactor;
+    type MaxProxies = MaxProxies;
+    type WeightInfo = ();
+    type CallHasher = BlakeTwo256;
+    type MaxPending = MaxPending;
+    type AnnouncementDepositBase = AnnouncementDepositBase;
+    type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
 #[derive(Debug)]
