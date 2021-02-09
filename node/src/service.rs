@@ -10,8 +10,7 @@ use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_inherents::InherentDataProviders;
 use std::{sync::Arc, time::Duration};
-use vln_commons::runtime::OpaqueBlock;
-use vln_runtime::{self, RuntimeApi};
+use vln_runtime::{self, opaque::Block, RuntimeApi};
 
 #[cfg(feature = "runtime-benchmarks")]
 native_executor_instance!(
@@ -32,31 +31,31 @@ type PartialTy = sc_service::PartialComponents<
     FullClient,
     FullBackend,
     FullSelectChain,
-    sp_consensus::DefaultImportQueue<OpaqueBlock, FullClient>,
-    sc_transaction_pool::FullPool<OpaqueBlock, FullClient>,
+    sp_consensus::DefaultImportQueue<Block, FullClient>,
+    sc_transaction_pool::FullPool<Block, FullClient>,
     (
         sc_consensus_aura::AuraBlockImport<
-            OpaqueBlock,
+            Block,
             FullClient,
             sc_finality_grandpa::GrandpaBlockImport<
                 FullBackend,
-                OpaqueBlock,
+                Block,
                 FullClient,
                 FullSelectChain,
             >,
             AuraPair,
         >,
-        sc_finality_grandpa::LinkHalf<OpaqueBlock, FullClient, FullSelectChain>,
+        sc_finality_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
     ),
 >;
-type FullClient = sc_service::TFullClient<OpaqueBlock, RuntimeApi, Executor>;
-type FullBackend = sc_service::TFullBackend<OpaqueBlock>;
-type FullSelectChain = sc_consensus::LongestChain<FullBackend, OpaqueBlock>;
+type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
+type FullBackend = sc_service::TFullBackend<Block>;
+type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
 /// Builds a new service for a light client.
 pub fn new_light(config: Configuration) -> Result<TaskManager, ServiceError> {
     let (client, backend, keystore, mut task_manager, on_demand) =
-        sc_service::new_light_parts::<OpaqueBlock, RuntimeApi, Executor>(&config)?;
+        sc_service::new_light_parts::<Block, RuntimeApi, Executor>(&config)?;
 
     let transaction_pool = Arc::new(sc_transaction_pool::BasicPool::new_light(
         config.transaction_pool.clone(),
@@ -139,7 +138,7 @@ pub fn new_partial(config: &Configuration) -> Result<PartialTy, ServiceError> {
     let inherent_data_providers = sp_inherents::InherentDataProviders::new();
 
     let (client, backend, keystore, task_manager) =
-        sc_service::new_full_parts::<OpaqueBlock, RuntimeApi, Executor>(&config)?;
+        sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
     let client = Arc::new(client);
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());

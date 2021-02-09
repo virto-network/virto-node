@@ -9,7 +9,7 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
 use std::sync::Arc;
-use vln_commons::runtime::{AccountId, Index, OpaqueBlock};
+use vln_runtime::{opaque::Block, AccountId, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -24,11 +24,11 @@ pub struct FullDeps<C, P> {
 /// Instantiate all full RPC extensions.
 pub fn create_full<C, P>(deps: FullDeps<C, P>) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
 where
-    C: HeaderBackend<OpaqueBlock> + HeaderMetadata<OpaqueBlock, Error = BlockChainError> + 'static,
-    C: ProvideRuntimeApi<OpaqueBlock>,
+    C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+    C: ProvideRuntimeApi<Block>,
     C: Send + Sync + 'static,
-    C::Api: BlockBuilder<OpaqueBlock>,
-    C::Api: substrate_frame_rpc_system::AccountNonceApi<OpaqueBlock, AccountId, Index>,
+    C::Api: BlockBuilder<Block>,
+    C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     P: TransactionPool + 'static,
 {
     use substrate_frame_rpc_system::{FullSystem, SystemApi};

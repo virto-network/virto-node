@@ -4,18 +4,16 @@ use crate::{
 };
 use alloc::{boxed::Box, vec, vec::Vec};
 use frame_benchmarking::{benchmarks, whitelisted_caller};
-use frame_system::{offchain::SigningTypes, RawOrigin};
-use vln_commons::{
-    runtime::{AccountId, Signature},
-    Asset, Collateral, Destination, PairPrice,
-};
+use frame_system::RawOrigin;
+use sp_runtime::traits::{IdentifyAccount, Verify};
+use vln_commons::{Asset, Collateral, Destination};
+
+type AccountId = <<sp_core::sr25519::Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 benchmarks! {
     where_clause {
         where
             <T as frame_system::Trait>::AccountId: AsRef<[u8; 32]>,
-            <T as SigningTypes>::Signature: From<Signature>,
-            <T as SigningTypes>::Signature: Default
     }
 
     _ {}
@@ -30,16 +28,6 @@ benchmarks! {
     members {
         let (origin, _) = gen_member::<T>();
     }: members(RawOrigin::Signed(origin))
-    verify {
-    }
-
-    submit_pair_prices {
-        let pair_prices = vec![
-            PairPrice::new([Asset::Btc, Asset::Collateral(Collateral::Usd)], 7u32.into(), 8u32.into()),
-            PairPrice::new([Asset::Btc, Asset::Ves], 9u32.into(), 10u32.into()),
-            PairPrice::new([Asset::Collateral(Collateral::Usd), Asset::Cop], 11u32.into(), 12u32.into()),
-        ];
-    }: submit_pair_prices(RawOrigin::None, pair_prices, Default::default())
     verify {
     }
 
