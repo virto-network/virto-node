@@ -7659,6 +7659,7 @@ name = "vln-commons"
 version = "0.1.0"
 dependencies = [
  "arrayvec 0.5.2",
+ "frame-support",
  "num-traits",
  "parity-scale-codec",
  "serde",
