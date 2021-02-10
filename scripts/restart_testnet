@@ -5,10 +5,10 @@
 set -e
 
 CHAIN=testnet
-ODIN=${ODIN:-10.0.13.232}
-THOR=${THOR:-10.0.18.145}
-LOKI=${LOKI:-10.0.29.175}
-VLN_NODE=${VLN_NODE:-10.0.24.130}
+ODIN=${ODIN:-10.0.9.249}
+THOR=${THOR:-10.0.16.10}
+LOKI=${LOKI:-10.0.27.15}
+VLN_NODE=${VLN_NODE:-10.0.25.72}
 
 declare -A validators=( [odin]=$ODIN [thor]=$THOR [loki]=$LOKI )
 
@@ -44,7 +44,7 @@ restart_node_remotely() {
 ENDSSH
 }
 
-echo "🛠️ Restartin full-node"
+echo "🛠️ Restartig full-node"
 ssh -tt $VLN_NODE CHAIN=$CHAIN 'bash -s --' <<'ENDSSH'
 sudo systemctl stop app
 sudo /valiu/vln_node purge-chain -y --base-path /valiu/data/db --chain $CHAIN || true

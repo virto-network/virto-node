@@ -7,8 +7,6 @@
 #[macro_use]
 mod macros;
 
-pub mod runtime;
-
 mod account_rate;
 mod asset;
 mod collateral;

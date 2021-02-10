@@ -10,18 +10,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 
-mod opaque {
-    use crate::{impl_opaque_keys, Aura, Grandpa};
-    use alloc::vec::Vec;
-
-    impl_opaque_keys! {
-        pub struct SessionKeys {
-            pub aura: Aura,
-            pub grandpa: Grandpa,
-        }
-    }
-}
-
 use alloc::{boxed::Box, vec::Vec};
 use frame_support::{
     construct_runtime, parameter_types,
@@ -37,24 +25,75 @@ use pallet_grandpa::{
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, sr25519, OpaqueMetadata};
 use sp_runtime::{
-    create_runtime_str, impl_opaque_keys,
-    traits::{BlakeTwo256, Block as BlockT, IdentityLookup, NumberFor, Saturating},
+    create_runtime_str, generic, impl_opaque_keys,
+    traits::{
+        BlakeTwo256, Block as BlockT, IdentifyAccount, IdentityLookup, NumberFor, Saturating,
+        Verify,
+    },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, Perbill,
 };
 use sp_version::RuntimeVersion;
-use vln_commons::{
-    runtime::{
-        AccountData, AccountId, Amount, Balance, BlockNumber, Hash, Hashing, Header, Index,
-        Signature,
-    },
-    Asset, ProxyType,
-};
 
-const MILLISECS_PER_BLOCK: u64 = 6000;
-const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+use vln_commons::{Asset, ProxyType};
+
+/// The address format for describing accounts
+pub type Address = AccountId;
+
+/// Some way of identifying an account on the chain.
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+/// Signed version of Balance.
+pub type Amount = i64;
+
+/// Balance of an account.
+pub type Balance = u64;
+
+/// An index to a block.
+pub type BlockNumber = u64;
+
+/// The type for hashing blocks and tries.
+pub type Hash = sp_core::H256;
+
+/// The hashing algorithm used.
+pub type Hashing = BlakeTwo256;
+
+/// The header type.
+pub type Header = generic::Header<BlockNumber, Hashing>;
+
+/// The index type for storing how many extrinsics an account has signed.
+pub type Index = u32;
+
+/// Signature
+pub type Signature = sr25519::Signature;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem<Hash>;
+
+/// Used by the CLI to to instantiate machinery that doesn't need to know
+/// the specifics of the runtime.
+pub mod opaque {
+    use super::*;
+
+    pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+    /// Opaque block header type.
+    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+    /// Opaque block type.
+    pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+    //// Opaque block identifier type.
+    //pub type BlockId = generic::BlockId<Block>;
+
+    impl_opaque_keys! {
+        pub struct SessionKeys {
+            pub aura: Aura,
+            pub grandpa: Grandpa,
+        }
+    }
+}
+
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     apis: RUNTIME_API_VERSIONS,
     authoring_version: 1,
@@ -65,9 +104,36 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-pub type Block = vln_commons::runtime::Block<Call, Runtime>;
-type Executive = vln_commons::runtime::Executive<AllModules, Call, Runtime>;
-type UncheckedExtrinsic = vln_commons::runtime::UncheckedExtrinsic<Call, Runtime>;
+const MILLISECS_PER_BLOCK: u64 = 6000;
+const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
+/// Block type as expected by this runtime.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+/// A Block signed with a Justification
+pub type SignedBlock = generic::SignedBlock<Block>;
+/// BlockId type as expected by this runtime.
+pub type BlockId = generic::BlockId<Block>;
+/// The SignedExtension to the basic transaction logic.
+pub type SignedExtra = (
+    frame_system::CheckSpecVersion<Runtime>,
+    frame_system::CheckTxVersion<Runtime>,
+    frame_system::CheckGenesis<Runtime>,
+    frame_system::CheckEra<Runtime>,
+    frame_system::CheckNonce<Runtime>,
+    frame_system::CheckWeight<Runtime>,
+);
+/// Extrinsic type that has already been checked.
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+/// Unchecked extrinsic type as expected by this runtime.
+type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+/// Executive: handles dispatch to the various modules.
+type Executive = frame_executive::Executive<
+    Runtime,
+    Block,
+    frame_system::ChainContext<Runtime>,
+    Runtime,
+    AllModules,
+>;
 
 parameter_types! {
     pub MaximumExtrinsicWeight: Weight = AvailableBlockRatio::get().saturating_sub(Perbill::from_percent(10)) * MaximumBlockWeight::get();
@@ -78,9 +144,8 @@ parameter_types! {
     /// We allow for 2 seconds of compute with a 6 second average block time.
     pub const MaximumBlockWeight: Weight = 2 * WEIGHT_PER_SECOND;
     /// Assume 10% of weight for average on_initialize calls.
-    pub const MaximumBlockLength: vln_commons::runtime::MaximumBlockLength = 5 * 1024 * 1024;
+    pub const MaximumBlockLength: u32 = 5 * 1024 * 1024;
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-    pub const OffchainUnsignedInterval: vln_commons::runtime::OffchainUnsignedInterval = 128;
     pub const TransactionByteFee: Balance = 1;
     pub const Version: RuntimeVersion = VERSION;
 }
@@ -90,7 +155,7 @@ construct_runtime!(
    pub enum Runtime
    where
         Block = Block,
-        NodeBlock = Block,
+        NodeBlock = opaque::Block,
         UncheckedExtrinsic = UncheckedExtrinsic
     {
         Aura: pallet_aura::{Config<T>, Inherent, Module},
@@ -258,7 +323,7 @@ impl_runtime_apis! {
 }
 
 impl frame_system::Trait for Runtime {
-    type AccountData = AccountData;
+    type AccountData = ();
     type AccountId = AccountId;
     /// Portion of the block weight that is available to all normal transactions.
     type AvailableBlockRatio = AvailableBlockRatio;
@@ -307,19 +372,6 @@ impl frame_system::Trait for Runtime {
     type SystemWeightInfo = ();
     /// Version of the runtime.
     type Version = Version;
-}
-
-impl<LC> frame_system::offchain::SendTransactionTypes<LC> for Runtime
-where
-    Call: From<LC>,
-{
-    type Extrinsic = UncheckedExtrinsic;
-    type OverarchingCall = Call;
-}
-
-impl frame_system::offchain::SigningTypes for Runtime {
-    type Public = AccountId;
-    type Signature = Signature;
 }
 
 impl pallet_aura::Trait for Runtime {
@@ -374,8 +426,6 @@ impl pallet_vln_liquidity::Trait for Runtime {
     type Asset = orml_tokens::Module<Runtime>;
     type Collateral = orml_tokens::Module<Runtime>;
     type Event = Event;
-    type OffchainAuthority = OffchainAppCrypto;
-    type OffchainUnsignedInterval = OffchainUnsignedInterval;
     type WeightInfo = pallet_vln_liquidity::DefaultWeightInfo;
 }
 
@@ -409,15 +459,6 @@ impl pallet_proxy::Trait for Runtime {
     type MaxPending = MaxPending;
     type AnnouncementDepositBase = AnnouncementDepositBase;
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
-}
-
-#[derive(Debug)]
-pub struct OffchainAppCrypto;
-
-impl frame_system::offchain::AppCrypto<AccountId, Signature> for OffchainAppCrypto {
-    type GenericPublic = AccountId;
-    type GenericSignature = Signature;
-    type RuntimeAppPublic = pallet_vln_liquidity::Public;
 }
 
 /// The version information used to identify this runtime when compiled natively.
