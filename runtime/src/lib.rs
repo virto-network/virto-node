@@ -389,17 +389,17 @@ impl orml_tokens::Trait for Runtime {
 }
 
 parameter_types! {
-    pub const ProxyDepositBase: u64 = 1;
-    pub const ProxyDepositFactor: u64 = 1;
+    pub const ProxyDepositBase: Balance = 1;
+    pub const ProxyDepositFactor: Balance = 1;
     pub const MaxProxies: u16 = 4;
     pub const MaxPending: u32 = 2;
-    pub const AnnouncementDepositBase: u64 = 1;
-    pub const AnnouncementDepositFactor: u64 = 1;
+    pub const AnnouncementDepositBase: Balance = 1;
+    pub const AnnouncementDepositFactor: Balance = 1;
 }
 impl pallet_proxy::Trait for Runtime {
     type Event = Event;
     type Call = Call;
-    type Currency = orml_tokens::Module<Runtime>;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, ()>;
     type ProxyType = ProxyType;
     type ProxyDepositBase = ProxyDepositBase;
     type ProxyDepositFactor = ProxyDepositFactor;
