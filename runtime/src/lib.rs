@@ -167,7 +167,7 @@ construct_runtime!(
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
         Timestamp: pallet_timestamp::{Call, Inherent, Module, Storage},
         Tokens: orml_tokens::{Call, Config<T>, Event<T>, Module, Storage},
-        Proxy: pallet_proxy::{Call, Event<T>, Module, Storage}
+        Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
     }
 );
 
