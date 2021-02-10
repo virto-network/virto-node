@@ -445,11 +445,12 @@ parameter_types! {
     pub const MaxPending: u32 = 2;
     pub const AnnouncementDepositBase: Balance = 1;
     pub const AnnouncementDepositFactor: Balance = 1;
+    pub const GetTokenId: Asset = Asset::Usdv;
 }
 impl pallet_proxy::Trait for Runtime {
     type Event = Event;
     type Call = Call;
-    type Currency = orml_tokens::CurrencyAdapter<Runtime, ()>;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetTokenId>;
     type ProxyType = ProxyType;
     type ProxyDepositBase = ProxyDepositBase;
     type ProxyDepositFactor = ProxyDepositFactor;
