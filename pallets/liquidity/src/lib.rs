@@ -4,31 +4,21 @@ extern crate alloc;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
-mod crypto;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod mock;
 mod module_impl;
-mod offchain_error;
 #[cfg(test)]
 mod tests;
 mod weights;
 
 use alloc::vec::Vec;
-use frame_support::{
-    debug, decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, traits::Get,
-};
-use frame_system::{
-    ensure_none, ensure_signed,
-    offchain::{AppCrypto, SendTransactionTypes, SigningTypes},
-};
-use offchain_error::*;
+use frame_support::{decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult};
+use frame_system::ensure_signed;
 use orml_traits::{MultiCurrency, MultiReservableCurrency};
 use sp_arithmetic::traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
 use sp_runtime::traits::Zero;
 use vln_commons::{AccountRate, Asset, Destination, OfferRate, PairPrice};
 
-pub use crypto::*;
-pub use module_impl::module_impl_offchain::*;
 pub use weights::*;
 
 type AccountRateTy<T> = AccountRate<<T as frame_system::Trait>::AccountId, Balance<T>>;
@@ -37,16 +27,13 @@ type Balance<T> =
 type OfferRateTy<T> = OfferRate<Balance<T>>;
 type LiquidityMembers = pallet_membership::DefaultInstance;
 
-pub trait Trait:
-    SendTransactionTypes<Call<Self>> + SigningTypes + pallet_membership::Trait<LiquidityMembers>
+pub trait Trait: pallet_membership::Trait<LiquidityMembers>
 where
     Balance<Self>: LiquidityProviderBalance,
 {
     type Asset: MultiCurrency<Self::AccountId, Balance = Balance<Self>, CurrencyId = Asset>;
     type Collateral: MultiReservableCurrency<Self::AccountId, CurrencyId = Asset>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-    type OffchainAuthority: AppCrypto<Self::Public, Self::Signature>;
-    type OffchainUnsignedInterval: Get<Self::BlockNumber>;
     type WeightInfo: WeightInfo;
 }
 
@@ -112,27 +99,6 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = T::WeightInfo::submit_pair_prices()]
-        pub fn submit_pair_prices(
-            origin,
-            pair_prices: Vec<PairPrice<Balance<T>>>,
-            _signature: T::Signature,
-        ) -> DispatchResult {
-            ensure_none(origin)?;
-            <PairPrices<T>>::mutate(|old_pair_prices| {
-                if Self::incoming_pair_prices_are_valid(&pair_prices) {
-                    old_pair_prices.clear();
-                    old_pair_prices.extend(pair_prices);
-                }
-                else {
-                    debug::error!("Invalid pair prices");
-                }
-            });
-            let current_block = <frame_system::Module<T>>::block_number();
-            <NextUnsignedAt<T>>::put(current_block + T::OffchainUnsignedInterval::get());
-            Ok(())
-        }
-
         #[weight = T::WeightInfo::transfer()]
         pub fn transfer(
             origin,
@@ -166,12 +132,6 @@ decl_module! {
             let who = ensure_signed(origin)?;
             Self::update_account_rates(&who, asset, offer_rates);
             Ok(())
-        }
-
-        fn offchain_worker(block_number: T::BlockNumber) {
-            if let Err(e) = Self::fetch_pair_prices_and_submit_tx(block_number) {
-                debug::error!("Offchain error: {}", e);
-            }
         }
     }
 }

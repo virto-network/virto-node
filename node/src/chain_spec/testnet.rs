@@ -3,8 +3,8 @@ use crate::chain_spec::{
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_core::sr25519;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use vln_commons::runtime::AccountId;
 use vln_runtime::WASM_BINARY;
 
 const ODIN_AURA_SS58: &str = "5DodinBNh59Ew9bvRfoDmj1j1QXzPhvHqk5w6jpdAfq7DHZd";
@@ -34,8 +34,6 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         ),
     ];
 
-    let sudo_key = account_id_from_ss58::<AccountId>(ODIN_AURA_SS58)?;
-
     Ok(ChainSpec::from_genesis(
         "Testnet",
         "testnet",
@@ -43,7 +41,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         move || {
             GenesisConfigBuilder {
                 initial_authorities: &initial_authorities,
-                sudo_key,
+                sudo_key: account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58).unwrap(),
                 wasm_binary,
             }
             .build()

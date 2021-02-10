@@ -6,9 +6,9 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::Ss58Codec, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use vln_commons::runtime::{AccountId, Signature};
 use vln_runtime::{
-    AuraConfig, GenesisConfig, GrandpaConfig, SudoConfig, SystemConfig, TokensConfig,
+    AccountId, AuraConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
+    TokensConfig,
 };
 
 type AccountPublic = <Signature as Verify>::Signer;
