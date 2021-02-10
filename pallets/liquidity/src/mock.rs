@@ -1,7 +1,5 @@
-mod test_extrinsic;
-
 use crate as pallet_liquidity_provider;
-use crate::{mock::test_extrinsic::TestXt, Call, DefaultWeightInfo, Module, Trait};
+use crate::{DefaultWeightInfo, Module, Trait};
 use alloc::{boxed::Box, vec};
 use frame_support::{
     impl_outer_event, impl_outer_origin, ord_parameter_types, parameter_types, weights::Weight,
@@ -26,7 +24,6 @@ type Balance = u64;
 type Hash = sp_core::H256;
 type Index = u32;
 
-pub type Extrinsic = TestXt<AccountId, Call<Test>, ()>;
 pub type ProviderMembers = pallet_membership::Module<Test, pallet_membership::DefaultInstance>;
 pub type TestProvider = Module<Test>;
 pub type Tokens = orml_tokens::Module<Test>;
@@ -84,14 +81,6 @@ impl frame_system::Trait for Test {
     type PalletInfo = ();
     type SystemWeightInfo = ();
     type Version = ();
-}
-
-impl<LC> frame_system::offchain::SendTransactionTypes<LC> for Test
-where
-    Call<Test>: From<LC>,
-{
-    type Extrinsic = Extrinsic;
-    type OverarchingCall = Call<Test>;
 }
 
 impl orml_tokens::Trait for Test {

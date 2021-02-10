@@ -26,7 +26,6 @@ std = [
     'arrayvec/std',
     'frame-support/std',
     'frame-system/std',
-    'lite-json/std',
     'orml-traits/std',
     'pallet-membership/std',
     'parity-scale-codec/std',
@@ -43,7 +42,6 @@ arrayvec = { default-features = false, version = '0.5' }
 frame-benchmarking = { default-features = false, optional = true, version = '2.0' }
 frame-support = { default-features = false, version = '2.0' }
 frame-system = { default-features = false, version = '2.0'  }
-lite-json = { default-features = false, version = '0.1' }
 orml-tokens = { default-features = false, optional = true, version = '0.3' }
 orml-traits = { default-features = false, version = '0.3' }
 pallet-membership = { default-features = false, version = '2.0' }
