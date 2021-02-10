@@ -36,7 +36,8 @@ use sp_runtime::{
     ApplyExtrinsicResult, Perbill,
 };
 use sp_version::RuntimeVersion;
-use vln_commons::Asset;
+
+use vln_commons::{Asset, ProxyType};
 
 /// The address format for describing accounts
 pub type Address = AccountId;
@@ -165,7 +166,8 @@ construct_runtime!(
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
         Timestamp: pallet_timestamp::{Call, Inherent, Module, Storage},
-        Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+        Tokens: orml_tokens::{Call, Config<T>, Event<T>, Module, Storage},
+        Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
     }
 );
 
@@ -434,6 +436,30 @@ impl orml_tokens::Trait for Runtime {
     type Event = Event;
     type OnReceived = ();
     type WeightInfo = ();
+}
+
+parameter_types! {
+    pub const ProxyDepositBase: Balance = 1;
+    pub const ProxyDepositFactor: Balance = 1;
+    pub const MaxProxies: u16 = 4;
+    pub const MaxPending: u32 = 2;
+    pub const AnnouncementDepositBase: Balance = 1;
+    pub const AnnouncementDepositFactor: Balance = 1;
+    pub const GetTokenId: Asset = Asset::Usdv;
+}
+impl pallet_proxy::Trait for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetTokenId>;
+    type ProxyType = ProxyType;
+    type ProxyDepositBase = ProxyDepositBase;
+    type ProxyDepositFactor = ProxyDepositFactor;
+    type MaxProxies = MaxProxies;
+    type WeightInfo = ();
+    type CallHasher = BlakeTwo256;
+    type MaxPending = MaxPending;
+    type AnnouncementDepositBase = AnnouncementDepositBase;
+    type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
 /// The version information used to identify this runtime when compiled natively.
