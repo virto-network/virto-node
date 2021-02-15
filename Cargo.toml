@@ -5,6 +5,9 @@ panic = 'unwind'
 members = [
     'commons',
     'node',
-    'pallets/liquidity',
     'runtime',
 ]
+
+[patch.crates-io]
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library.git" }

@@ -27,7 +27,7 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }} 
       - uses: actions-rs/toolchain@v1 
         with:
-          toolchain: nightly-2020-10-01
+          toolchain: nightly-2021-02-17
           target: wasm32-unknown-unknown 
       - uses: actions-rs/cargo@v1
         with:

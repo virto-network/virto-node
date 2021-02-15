@@ -16,7 +16,7 @@ jobs:
           override: true
           profile: minimal
           target: wasm32-unknown-unknown
-          toolchain: nightly-2020-10-01
+          toolchain: nightly-2021-02-17
 
       - name: Cache cargo directories
         uses: actions/cache@v2
@@ -31,17 +31,5 @@ jobs:
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }} 
-
-      - name: Rustfmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-      - name: Clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-features -- -D warnings
 
       - run: ./scripts/tests.sh

@@ -20,7 +20,6 @@ runtime-benchmarks = [
     'frame-system/runtime-benchmarks',
     'orml-tokens',
     'sp-std',
-    'parity-util-mem'
 ]
 std = [
     'arrayvec/std',
@@ -38,25 +37,23 @@ std = [
 ]
 
 [dependencies]
-arrayvec = { default-features = false, version = '0.5' }
-frame-benchmarking = { default-features = false, optional = true, version = '2.0' }
-frame-support = { default-features = false, version = '2.0' }
-frame-system = { default-features = false, version = '2.0'  }
-orml-tokens = { default-features = false, optional = true, version = '0.3' }
-orml-traits = { default-features = false, version = '0.3' }
-pallet-membership = { default-features = false, version = '2.0' }
-parity-scale-codec = { default-features = false, features = ['derive'], version = '1.0' }
-parity-util-mem = { default-features = false, optional = true, version = '0.7' }
-sp-application-crypto = { default-features = false, version = '2.0' }
-sp-arithmetic = { default-features = false, version = '2.0' }
-sp-core = { default-features = false, version = '2.0' }
-sp-io = { default-features = false, version = '2.0' }
-sp-runtime = { default-features = false, version = '2.0' }
-sp-std = { default-features = false, optional = true, version = '2.0' }
+arrayvec = { default-features = false, version = "0.5.2" }
+frame-benchmarking = { default-features = false, optional = true, version = "3.0.0" }
+frame-support = { default-features = false, version = "3.0.0" }
+frame-system = { default-features = false, version = "3.0.0" }
+orml-tokens = { default-features = false, optional = true, version = "0.4.0" }
+orml-traits = { default-features = false, version = "0.4.0" }
+pallet-membership = { default-features = false, version = "3.0.0" }
+parity-scale-codec = { default-features = false, features = ['derive'], version = "2.0.0" }
+sp-application-crypto = { default-features = false, version = "3.0.0" }
+sp-arithmetic = { default-features = false, version = "3.0.0" }
+sp-core = { default-features = false, version = "3.0.0" }
+sp-io = { default-features = false, version = "3.0.0" }
+sp-runtime = { default-features = false, version = "3.0.0" }
+sp-std = { default-features = false, optional = true, version = "3.0.0" }
 vln-commons = { default-features = false, path = '../../commons' }
 
 [dev-dependencies]
-once_cell = { default-features = false, features = ['std'], version = '1.0' }
-orml-tokens = { default-features = false, version = '0.3' }
-parity-util-mem = { default-features = false, version = '0.7' }
-parking_lot = { default-features = false, version = '0.10' }
+once_cell = { default-features = false, features = ['std'], version = "1.5.2" }
+orml-tokens = { default-features = false, version = "0.4.0" }
+parking_lot = { default-features = false, version = "0.11.1" }
