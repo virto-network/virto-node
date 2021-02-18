@@ -6,6 +6,10 @@ members = [
     'commons',
     'node',
     'runtime',
+    'pallets/foreign_asset',
+    'pallets/backed_asset',
+    'pallets/swaps',
+    'pallets/transfers',
 ]
 
 [patch.crates-io]
