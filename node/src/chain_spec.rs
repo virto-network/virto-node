@@ -27,9 +27,6 @@ impl GenesisConfigBuilder<'_> {
                 code: self.wasm_binary.to_vec(),
                 changes_trie_config: Default::default(),
             }),
-            orml_tokens: Some(TokensConfig {
-                endowed_accounts: vec![],
-            }),
             pallet_aura: Some(AuraConfig {
                 authorities: self
                     .initial_authorities
@@ -44,11 +41,10 @@ impl GenesisConfigBuilder<'_> {
                     .map(|x| (x.1.clone(), 1))
                     .collect(),
             }),
-            pallet_membership: Some(pallet_membership::GenesisConfig {
-                members: vec![],
-                phantom: Default::default(),
-            }),
             pallet_sudo: Some(SudoConfig { key: self.sudo_key }),
+            orml_tokens: Some(TokensConfig {
+                endowed_accounts: vec![],
+            }),
         }
     }
 }
