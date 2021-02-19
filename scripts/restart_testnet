@@ -1,25 +1,27 @@
 #!/bin/bash
-# Requires valiu's password manager, access to relevant vault, VPN access to the
-# testnet VPC plus ssh access to execute commands from the validator nodes
+# Not so fast human! first you need to meet a handful of requirements:
+# Be valiuable, aws cli with the right set of credentials, password manager cli and team credentials,
+# access to relevant vault, VPN access to the right VPC plus ssh access to the nodes that will be restarted
 
 set -e
 
-CHAIN=testnet
-ODIN=${ODIN:-10.0.9.249}
-THOR=${THOR:-10.0.16.10}
-LOKI=${LOKI:-10.0.27.15}
-VLN_NODE=${VLN_NODE:-10.0.25.72}
-
-declare -A validators=( [odin]=$ODIN [thor]=$THOR [loki]=$LOKI )
+CHAIN=${1:-testnet}
 
 # fail early if not logged in to 1password
 op get vault Blockchain > /dev/null
+
+aws_ec2_node_ip() {
+	local APPLICATION=$1
+	aws ec2 describe-instances --filters "Name=tag:Application,Values=$APPLICATION" Name=instance-state-name,Values=running \
+		--query 'Reservations[*].Instances[*].{NetworkInterfaces:PrivateIpAddress,Name:Tags[?Key==`Host`]|[0].Value}' \
+		| jq -r '.[] | "\(.[0].Name) \(.[0].NetworkInterfaces)"'
+}
 
 fetch_key_file() {
 	cat <<< $(op get document --vault Blockchain "$1_$2.json" | jq -c | jq -Rr @sh)
 }
 
-restart_node_remotely() {
+clean_validator_remotely() {
 	local NODE=$1
 	local HOST=$2
 
@@ -39,22 +41,30 @@ restart_node_remotely() {
 	insert_key $GRAN
 
 	sudo killall vln_node
-	sudo systemctl start app
 	exit
 ENDSSH
 }
 
-echo "🛠️ Restartig full-node"
-ssh -tt $VLN_NODE CHAIN=$CHAIN 'bash -s --' <<'ENDSSH'
+read -a full_node <<< $(aws_ec2_node_ip valiu_vln)
+echo "Cleaning full-node ${full_node[0]}(${full_node[1]})"
+ssh -tt ${full_node[1]} CHAIN=$CHAIN 'bash -s --' <<'ENDSSH'
 sudo systemctl stop app
 sudo /valiu/vln_node purge-chain -y --base-path /valiu/data/db --chain $CHAIN || true
-sudo systemctl start app
 exit
 ENDSSH
 
-for node in "${!validators[@]}"; do
-	echo "🛠️ Restarting validator $node"
-	host=${validators[$node]}
-	restart_node_remotely $node $host 
-done
+validators=$(aws_ec2_node_ip blockchain)
+while read -r node; do
+	node=($node)
+	echo "Cleaning validator ${node[0]}(${node[1]})"
+	clean_validator_remotely ${node[0]} ${node[1]}
+done <<< $validators
 
+echo Restarting full node
+ssh -n ${full_node[1]} "sudo systemctl start app && exit"
+
+while read -r node; do
+	node=($node)
+	echo "Restarting validator ${node[0]}"
+	ssh -n ${node[1]} "sudo systemctl start app && exit"
+done <<< $validators
