@@ -1,12 +1,12 @@
 [package]
 authors = ["Daniel Olano <daniel@olanod.com>"]
 edition = '2018'
-name = "vln-swaps"
+name = "vln-human-swap"
 version = "0.1.0"
 license = "Unlicense"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
-description = "A pallet for swapping any two assets"
+homepage = "https://github.com/valibre-org/vln-node/"
+repository = "https://github.com/valibre-org/vln-node/"
+description = "A pallet for swapping on-chain with off-chain assets"
 readme = "README.md"
 
 [package.metadata.docs.rs]

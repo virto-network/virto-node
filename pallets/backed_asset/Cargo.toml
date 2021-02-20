@@ -4,8 +4,8 @@ edition = '2018'
 name = "vln-backed-asset"
 version = "0.1.0"
 license = "Unlicense"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
+homepage = "https://github.com/valibre-org/vln-node/"
+repository = "https://github.com/valibre-org/vln-node/"
 description = "An asset backed by one or more similar assets"
 readme = "README.md"
 

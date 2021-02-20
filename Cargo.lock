@@ -3639,10 +3639,12 @@ checksum = "77af24da69f9d9341038eba93a073b1fdaaa1b788221b00a69bce9e762cb32de"
 [[package]]
 name = "orml-tokens"
 version = "0.4.0"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git#bdc0e4ca0bae7e8d8d80dae3b04ba99312d0d0b2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0321e56f921689c6c78bf2b68e3deb03172065ca8f306d4d8432d09c3569bb9d"
 dependencies = [
  "frame-support",
  "frame-system",
+ "funty",
  "orml-traits",
  "parity-scale-codec",
  "serde",
@@ -3653,9 +3655,11 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.0"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git#bdc0e4ca0bae7e8d8d80dae3b04ba99312d0d0b2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18dd4788a7b96709d23081b1a33a5b8477cf25833f20b27b19908d5babdfe7ab"
 dependencies = [
  "frame-support",
+ "funty",
  "impl-trait-for-tuples 0.1.3",
  "num-traits",
  "orml-utilities",
@@ -3669,9 +3673,11 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.0"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library.git#bdc0e4ca0bae7e8d8d80dae3b04ba99312d0d0b2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f84d1a0ce4c65a8695cf8c41895c6161d2345214a4a413e674478f6a37968db"
 dependencies = [
  "frame-support",
+ "funty",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -7821,6 +7827,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "vln-human-swap"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "vln-node"
 version = "2.0.0"
 dependencies = [
@@ -7889,20 +7908,11 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "vln-backed-asset",
  "vln-commons",
-]
-
-[[package]]
-name = "vln-swaps"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
+ "vln-foreign-asset",
+ "vln-human-swap",
+ "vln-transfers",
 ]
 
 [[package]]

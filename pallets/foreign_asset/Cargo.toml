@@ -4,9 +4,9 @@ edition = '2018'
 name = "vln-foreign-asset"
 version = "0.1.0"
 license = "Unlicense"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
-description = "Off-chain assets that attesters claim to have"
+homepage = "https://github.com/valibre-org/vln-node/"
+repository = "https://github.com/valibre-org/vln-node/"
+description = "Off-chain assets tokenized by an attester"
 readme = "README.md"
 
 [package.metadata.docs.rs]

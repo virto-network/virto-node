@@ -235,7 +235,23 @@ impl pallet_proxy::Config for Runtime {
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
-// Create the runtime by composing the FRAME pallets that were previously configured.
+impl vln_foreign_asset::Config for Runtime {
+    type Event = Event;
+}
+
+type UsdvInstance = vln_backed_asset::Instance1;
+impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+    type Event = Event;
+}
+
+impl vln_human_swap::Config for Runtime {
+    type Event = Event;
+}
+
+impl vln_transfers::Config for Runtime {
+    type Event = Event;
+}
+
 construct_runtime! {
    pub enum Runtime
    where
@@ -251,6 +267,10 @@ construct_runtime! {
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
         Tokens: orml_tokens::{Call, Config<T>, Event<T>, Module, Storage},
         Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+        ForeignAssets: vln_foreign_asset::{Event<T>, Module, Storage},
+        Usdv: vln_backed_asset::<Instance1>::{Event<T>, Module, Storage},
+        Swaps: vln_human_swap::{Event<T>, Module, Storage},
+        Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
     }
 }
 
@@ -269,7 +289,7 @@ pub type SignedExtra = (
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
-    frame_system::CheckEra<Runtime>,
+    frame_system::CheckMortality<Runtime>,
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
 );
@@ -285,6 +305,7 @@ type Executive = frame_executive::Executive<
     Runtime,
     AllModules,
 >;
+
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
         fn execute_block(block: Block) {
