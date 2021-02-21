@@ -1,20 +1,20 @@
 [dependencies]
-arrayvec = { default-features = false, version = '0.5' }
-num-traits = { default-features = false, version = '0.2' }
-parity-scale-codec = { default-features = false, features = ['derive'], version = '1.0' }
-serde = { default-features = false, features = ['derive'], optional = true, version = '1.0' }
-sp-core = { default-features = false, version = '2.0' }
-frame-support = { default-features = false, version = '2.0' }
+arrayvec = { default-features = false, version = "0.5.2" }
+frame-support = { default-features = false, version = "3.0.0" }
+num-traits = { default-features = false, version = "0.2.14" }
+parity-scale-codec = { default-features = false, features = ['derive'], version = "2.0.0" }
+serde = { default-features = false, features = ['derive'], optional = true, version = "1.0.123" }
+sp-core = { default-features = false, version = "3.0.0" }
 
 [features]
 default = []
 std = [
     'arrayvec/std',
     'num-traits/std',
+    'frame-support/std',
     'parity-scale-codec/std',
     'serde',
     'sp-core/std',
-    'frame-support/std',
 ]
 
 [package]

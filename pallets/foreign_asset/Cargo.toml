@@ -1,0 +1,32 @@
+[package]
+authors = ["Daniel Olano <daniel@olanod.com>"]
+edition = '2018'
+name = "vln-foreign-asset"
+version = "0.1.0"
+license = "Unlicense"
+homepage = "https://substrate.dev"
+repository = "https://github.com/paritytech/substrate/"
+description = "Off-chain assets that attesters claim to have"
+readme = "README.md"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
+frame-support = { default-features = false, version = "3.0.0" }
+frame-system = { default-features = false, version = "3.0.0" }
+
+[dev-dependencies]
+serde = { version = "1.0.101" }
+sp-core = { default-features = false, version = "3.0.0" }
+sp-io = { default-features = false, version = "3.0.0" }
+sp-runtime = { default-features = false, version = "3.0.0" }
+
+[features]
+default = ['std']
+std = [
+	'codec/std',
+	'frame-support/std',
+	'frame-system/std'
+]

@@ -3,20 +3,17 @@ use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 pub struct Cli {
-    #[structopt(flatten)]
-    pub run: RunCmd,
-
     #[structopt(subcommand)]
     pub subcommand: Option<Subcommand>,
+
+    #[structopt(flatten)]
+    pub run: RunCmd,
 }
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-    /// The custom benchmark subcommmand benchmarking runtime pallets.
-    #[cfg(feature = "runtime-benchmarks")]
-    #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
-    Benchmark(frame_benchmarking_cli::BenchmarkCmd),
-
+    /// Key management cli utilities
+    Key(sc_cli::KeySubcommand),
     /// Build a chain specification.
     BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -37,4 +34,9 @@ pub enum Subcommand {
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
+
+    /// The custom benchmark subcommmand benchmarking runtime pallets.
+    #[cfg(feature = "runtime-benchmarks")]
+    #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
+    Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }
