@@ -1,6 +1,7 @@
 use crate as foreign_asset;
 use frame_support::parameter_types;
 use frame_system as system;
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -17,7 +18,8 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
-        TemplateModule: foreign_asset::{Module, Call, Storage, Event<T>},
+        Assets: foreign_asset::{Module, Call, Storage, Event<T>},
+        Tokens: orml_tokens::{Module, Event<T>},
     }
 );
 
@@ -51,8 +53,22 @@ impl system::Config for Test {
     type SS58Prefix = SS58Prefix;
 }
 
+parameter_type_with_key! {
+    pub ExistentialDeposits: |currency_id: ()| -> u32 { 0 };
+}
+impl orml_tokens::Config for Test {
+    type Amount = i64;
+    type Balance = u32;
+    type CurrencyId = ();
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDeposits;
+    type OnDust = ();
+    type WeightInfo = ();
+}
+
 impl foreign_asset::Config for Test {
     type Event = Event;
+    type Assets = Tokens;
 }
 
 // Build genesis storage according to the mock runtime.

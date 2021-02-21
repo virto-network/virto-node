@@ -237,6 +237,7 @@ impl pallet_proxy::Config for Runtime {
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
+    type Assets = Tokens;
 }
 
 type UsdvInstance = vln_backed_asset::Instance1;
