@@ -7794,11 +7794,15 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "orml-tokens",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7907,6 +7911,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
