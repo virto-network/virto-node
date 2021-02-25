@@ -7804,18 +7804,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vln-commons"
-version = "0.1.0"
-dependencies = [
- "arrayvec 0.5.2",
- "frame-support",
- "num-traits",
- "parity-scale-codec",
- "serde",
- "sp-core",
-]
-
-[[package]]
 name = "vln-foreign-asset"
 version = "0.1.0"
 dependencies = [
@@ -7880,6 +7868,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vln-primitives"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+]
+
+[[package]]
 name = "vln-runtime"
 version = "2.0.0"
 dependencies = [
@@ -7914,9 +7911,9 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "vln-backed-asset",
- "vln-commons",
  "vln-foreign-asset",
  "vln-human-swap",
+ "vln-primitives",
  "vln-transfers",
 ]
 

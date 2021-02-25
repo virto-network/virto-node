@@ -1,0 +1,24 @@
+[package]
+authors = ['The VLN team']
+categories = ['configuration']
+description = 'Valiu Liquidity Network - Primitives'
+edition = '2018'
+keywords = ['blockchain', 'valiu']
+license = 'Unlicense'
+name = 'vln-primitives'
+readme = 'README.md'
+repository = 'https://github.com/valibre-org/node'
+version = '0.1.0'
+
+[dependencies]
+parity-scale-codec = { default-features = false, features = ['derive'], version = "2.0.0" }
+serde = { default-features = false, features = ['derive'], optional = true, version = "1.0.123" }
+sp-arithmetic = { default-features = false, version = "3.0.0" }
+
+[features]
+default = []
+std = [
+    'sp-arithmetic/std',
+    'parity-scale-codec/std',
+    'serde',
+]

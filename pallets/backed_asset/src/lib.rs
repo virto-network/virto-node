@@ -8,6 +8,7 @@ mod mock;
 mod tests;
 
 pub mod primitives {
+    // NOTE We should be able to make our module generic over any kind of `PerThing`
     pub type Share = sp_runtime::Permill;
 }
 

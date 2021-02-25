@@ -20,6 +20,7 @@ use orml_traits::parameter_type_with_key;
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
+use proxy_type::ProxyType;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, sr25519, OpaqueMetadata};
@@ -33,8 +34,9 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
+use vln_primitives::Asset;
 
-use vln_commons::{Asset, ProxyType};
+mod proxy_type;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -165,19 +167,14 @@ impl pallet_aura::Config for Runtime {
 impl pallet_grandpa::Config for Runtime {
     type Call = Call;
     type Event = Event;
-
     type KeyOwnerProofSystem = ();
-
     type KeyOwnerProof =
         <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-
     type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
         KeyTypeId,
         GrandpaId,
     )>>::IdentificationTuple;
-
     type HandleEquivocation = ();
-
     type WeightInfo = ();
 }
 

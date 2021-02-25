@@ -43,7 +43,7 @@ sp-session = { default-features = false, version = "3.0.0" }
 sp-std = { default-features = false, version = "3.0.0" }
 sp-transaction-pool = { default-features = false, version = "3.0.0" }
 sp-version = { default-features = false, version = "3.0.0" }
-vln-commons = { default-features = false, path = '../commons' }
+vln-primitives = { default-features = false, path = '../primitives' }
 vln-foreign-asset = { default-features = false, path = '../pallets/foreign_asset' }
 vln-backed-asset = { default-features = false, path = '../pallets/backed_asset' }
 vln-human-swap = { default-features = false, path = '../pallets/human_swap' }
@@ -90,7 +90,7 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
-    'vln-commons/std',
+    'vln-primitives/std',
     'vln-foreign-asset/std',
     'vln-backed-asset/std',
     'vln-human-swap/std',
