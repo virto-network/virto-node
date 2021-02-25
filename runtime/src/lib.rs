@@ -250,6 +250,7 @@ impl vln_human_swap::Config for Runtime {
 
 impl vln_transfers::Config for Runtime {
     type Event = Event;
+    type Assets = Tokens;
 }
 
 construct_runtime! {
