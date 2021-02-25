@@ -245,7 +245,6 @@ impl vln_backed_asset::Config<UsdvInstance> for Runtime {
     type Event = Event;
     type Collateral = Tokens;
     type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-    type Balance = Balance;
 }
 
 impl vln_human_swap::Config for Runtime {
