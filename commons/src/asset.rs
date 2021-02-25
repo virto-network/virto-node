@@ -14,11 +14,8 @@ use core::fmt;
     parity_scale_codec::Encode,
 )]
 pub enum Asset {
-    Btc,
     Collateral(Collateral),
-    Cop,
     Usdv,
-    Ves,
 }
 
 impl Asset {
@@ -26,11 +23,8 @@ impl Asset {
     #[inline]
     pub const fn as_str(&self) -> &'static str {
         match *self {
-            Self::Btc => "USDv",
             Self::Collateral(c) => c.as_str(),
-            Self::Cop => "COP",
             Self::Usdv => "USDv",
-            Self::Ves => "VES",
         }
     }
 }
@@ -38,7 +32,7 @@ impl Asset {
 impl Default for Asset {
     #[inline]
     fn default() -> Self {
-        Self::Btc
+        Self::Usdv
     }
 }
 
@@ -71,7 +65,6 @@ create_enum_with_aux_fns!(
         parity_scale_codec::Encode,
     )]
     pub enum Collateral {
-        Usd -> "USD",
         Usdc -> "USDC",
     }
 );
@@ -79,6 +72,6 @@ create_enum_with_aux_fns!(
 impl Default for Collateral {
     #[inline]
     fn default() -> Self {
-        Self::Usd
+        Self::Usdc
     }
 }

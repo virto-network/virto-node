@@ -11,7 +11,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 
-use alloc::{boxed::Box, vec::Vec};
 use frame_support::{
     construct_runtime, parameter_types,
     traits::{KeyOwnerProofSystem, Randomness},
@@ -32,6 +31,7 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, Perbill,
 };
+use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 
 use vln_commons::{Asset, ProxyType};
@@ -218,12 +218,12 @@ parameter_types! {
     pub const MaxPending: u32 = 2;
     pub const AnnouncementDepositBase: Balance = 1;
     pub const AnnouncementDepositFactor: Balance = 1;
-    pub const GetTokenId: Asset = Asset::Usdv;
+    pub const GetUsdvId: Asset = Asset::Usdv;
 }
 impl pallet_proxy::Config for Runtime {
     type Event = Event;
     type Call = Call;
-    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetTokenId>;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
     type ProxyType = ProxyType;
     type ProxyDepositBase = ProxyDepositBase;
     type ProxyDepositFactor = ProxyDepositFactor;
@@ -235,7 +235,27 @@ impl pallet_proxy::Config for Runtime {
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
-// Create the runtime by composing the FRAME pallets that were previously configured.
+impl vln_foreign_asset::Config for Runtime {
+    type Event = Event;
+    type Assets = Tokens;
+}
+
+type UsdvInstance = vln_backed_asset::Instance1;
+impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+    type Event = Event;
+    type Collateral = Tokens;
+    type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+    type Balance = Balance;
+}
+
+impl vln_human_swap::Config for Runtime {
+    type Event = Event;
+}
+
+impl vln_transfers::Config for Runtime {
+    type Event = Event;
+}
+
 construct_runtime! {
    pub enum Runtime
    where
@@ -249,8 +269,12 @@ construct_runtime! {
         Aura: pallet_aura::{Config<T>, Module},
         Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
-        Tokens: orml_tokens::{Call, Config<T>, Event<T>, Module, Storage},
+        Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
         Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+        ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
+        Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+        Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
+        Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
     }
 }
 
@@ -269,7 +293,7 @@ pub type SignedExtra = (
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
-    frame_system::CheckEra<Runtime>,
+    frame_system::CheckMortality<Runtime>,
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
 );
@@ -285,6 +309,7 @@ type Executive = frame_executive::Executive<
     Runtime,
     AllModules,
 >;
+
 impl_runtime_apis! {
     impl sp_api::Core<Block> for Runtime {
         fn execute_block(block: Block) {
