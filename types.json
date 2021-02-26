@@ -1,5 +1,6 @@
 {
-    "Address": "AccountId",
+    "Address": "MultiAddress",
+    "LookupSource": "MultiAddress",
     "Asset": {
       "_enum": {
         "Collateral": "Collateral",

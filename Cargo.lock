@@ -7798,23 +7798,9 @@ dependencies = [
  "orml-traits",
  "parity-scale-codec",
  "serde",
- "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "vln-commons"
-version = "0.1.0"
-dependencies = [
- "arrayvec 0.5.2",
- "frame-support",
- "num-traits",
- "parity-scale-codec",
- "serde",
- "sp-core",
 ]
 
 [[package]]
@@ -7882,6 +7868,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vln-primitives"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+]
+
+[[package]]
 name = "vln-runtime"
 version = "2.0.0"
 dependencies = [
@@ -7916,9 +7911,9 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "vln-backed-asset",
- "vln-commons",
  "vln-foreign-asset",
  "vln-human-swap",
+ "vln-primitives",
  "vln-transfers",
 ]
 
@@ -7928,6 +7923,8 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "orml-tokens",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-core",

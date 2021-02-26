@@ -73,7 +73,6 @@ impl backed_asset::Config for Test {
     type Event = Event;
     type Collateral = Tokens;
     type BaseCurrency = orml_tokens::CurrencyAdapter<Test, ()>;
-    type Balance = Balance;
 }
 
 pub fn new_test_with_accounts(

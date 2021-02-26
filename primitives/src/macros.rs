@@ -2,15 +2,23 @@
 macro_rules! count_idents {
     ($($idents:ident)*) => {0usize $(+ replace_expr!($idents 1usize))*};
 }
+// Erases `$_i` and returns `$sub`
+macro_rules! replace_expr {
+    ($_i:ident $sub:expr) => {
+        $sub
+    };
+}
 
-macro_rules! create_enum_with_aux_fns {
+macro_rules! enum_with_aux_fns {
     (
-        $(#[$mac:meta])*
+        $(#[$meta:meta])*
         $v:vis enum $name:ident {
-          $($variant:ident -> $variant_name:literal,)*
+          $($variant:ident = $variant_name:literal,)*
         }
     ) => {
-        $(#[$mac])*
+        $(#[$meta])*
+        #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+        #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, codec::Decode, codec::Encode)]
         $v enum $name {
           $($variant,)*
         }
@@ -37,18 +45,19 @@ macro_rules! create_enum_with_aux_fns {
             }
         }
 
-        impl core::fmt::Display for Collateral {
+        impl core::fmt::Display for $name {
             #[inline]
             fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 write!(f, "{}", self.as_str())
             }
         }
+
+        impl Default for $name {
+            #[inline]
+            fn default() -> Self {
+                Self::variants()[0]
+            }
+        }
     }
 }
 
-// Erases `$_i` and returns `$sub`
-macro_rules! replace_expr {
-    ($_i:ident $sub:expr) => {
-        $sub
-    };
-}

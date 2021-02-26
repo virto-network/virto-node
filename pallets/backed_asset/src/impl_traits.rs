@@ -4,7 +4,7 @@ use sp_runtime::DispatchError;
 
 // Allow backed-asset to be used as a Currency wrapping the underlying base currency
 impl<T: Config<I>, I: 'static> Currency<T::AccountId> for Pallet<T, I> {
-    type Balance = T::Balance;
+    type Balance = <T::BaseCurrency as Currency<T::AccountId>>::Balance;
     type PositiveImbalance = <T::BaseCurrency as Currency<T::AccountId>>::PositiveImbalance;
     type NegativeImbalance = <T::BaseCurrency as Currency<T::AccountId>>::NegativeImbalance;
 

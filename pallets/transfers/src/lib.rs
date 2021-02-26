@@ -1,43 +1,63 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
+use codec::FullCodec;
+use frame_support::traits::Currency;
+use orml_traits::MultiCurrency;
+
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
+pub mod primitives {}
+
+pub trait CurrencyPair<T: Config>: FullCodec {
+    type Origin: Currency<T::AccountId>;
+    type Destination: Currency<T::AccountId>;
+}
+impl<T: Config, P, Q> CurrencyPair<T> for (P, Q)
+where
+    P: Currency<T::AccountId> + FullCodec,
+    Q: Currency<T::AccountId> + FullCodec,
+{
+    type Origin = P;
+    type Destination = Q;
+}
+
 #[frame_support::pallet]
 pub mod pallet {
+    use super::*;
     use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
     use frame_system::pallet_prelude::*;
+    use sp_runtime::traits::StaticLookup;
+
+    type BalanceOf<T> =
+        <<T as Config>::Assets as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+    type CurrencyIdOf<T> = <<T as Config>::Assets as MultiCurrency<
+        <T as frame_system::Config>::AccountId,
+    >>::CurrencyId;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type Assets: MultiCurrency<Self::AccountId>;
     }
 
     #[pallet::pallet]
     #[pallet::generate_store(pub(super) trait Store)]
     pub struct Pallet<T>(_);
 
-    #[pallet::storage]
-    #[pallet::getter(fn something)]
-    pub type Something<T> = StorageValue<_, u32>;
-
     #[pallet::event]
-    #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    //#[pallet::metadata(T::AccountId = "AccountId")]
-    pub enum Event<T: Config> {
-        /// Event documentation should end with an array that provides descriptive names for event
-        /// parameters. [something, who]
-        SomethingStored(u32, T::AccountId),
-    }
+    //#[pallet::generate_deposit(pub(super) fn deposit_event)]
+    #[pallet::metadata(T::AccountId = "AccountId")]
+    pub enum Event<T: Config> {}
 
     #[pallet::error]
     pub enum Error<T> {
-        /// Error names should be descriptive.
-        SomeError,
+        /// Transfers are not enabled yet.
+        NotImplemented,
     }
 
     #[pallet::hooks]
@@ -45,16 +65,18 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// An example dispatchable that takes a singles value as a parameter, writes the value to
-        /// storage and emits an event. This function must be dispatched by a signed extrinsic.
+        /// A flexible transfer mechanism that allows sending assets to an accout with a different
+        /// currency that might even be outside of the chain.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResultWithPostInfo {
-            let who = ensure_signed(origin)?;
-
-            <Something<T>>::put(something);
-
-            Self::deposit_event(Event::SomethingStored(something, who));
-            Ok(().into())
+        pub fn transfer(
+            origin: OriginFor<T>,
+            _from_currency: CurrencyIdOf<T>,
+            _to_currency: CurrencyIdOf<T>,
+            _to: <T::Lookup as StaticLookup>::Source,
+            _to_value: BalanceOf<T>,
+        ) -> DispatchResultWithPostInfo {
+            let _who = ensure_signed(origin)?;
+            Err(Error::<T>::NotImplemented.into())
         }
     }
 }

@@ -1,12 +1,17 @@
 use crate::mock::*;
-use frame_support::assert_ok;
+use frame_support::assert_noop;
+
+const ALICE: AccountId = 1;
+const BOB: AccountId = 2;
+const COIN_A: CurrencyId = 1;
+const COIN_B: CurrencyId = 2;
 
 #[test]
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {
-        // Dispatch a signed extrinsic.
-        assert_ok!(TemplateModule::do_something(Origin::signed(1), 42));
-        // Read pallet storage and assert an expected result.
-        assert_eq!(TemplateModule::something(), Some(42));
+        assert_noop!(
+            Transfers::transfer(Origin::signed(ALICE), COIN_A, COIN_B, BOB, 10),
+            crate::Error::<Test>::NotImplemented
+        );
     });
 }

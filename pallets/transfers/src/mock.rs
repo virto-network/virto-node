@@ -1,6 +1,7 @@
 use crate as transfers;
 use frame_support::parameter_types;
 use frame_system as system;
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -9,6 +10,9 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+pub type AccountId = u8;
+pub type CurrencyId = u8;
+pub type Balance = u32;
 
 frame_support::construct_runtime!(
     pub enum Test where
@@ -17,7 +21,8 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
-        TemplateModule: transfers::{Module, Call, Storage, Event<T>},
+        Tokens: orml_tokens::{Module, Call, Storage, Event<T>},
+        Transfers: transfers::{Module, Call, Storage, Event<T>},
     }
 );
 
@@ -37,7 +42,7 @@ impl system::Config for Test {
     type BlockNumber = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
-    type AccountId = u64;
+    type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
     type Event = Event;
@@ -51,8 +56,22 @@ impl system::Config for Test {
     type SS58Prefix = SS58Prefix;
 }
 
+parameter_type_with_key! {
+    pub ExistentialDeposits: |_id: CurrencyId| -> Balance { 0 };
+}
+impl orml_tokens::Config for Test {
+    type Amount = i64;
+    type Balance = Balance;
+    type CurrencyId = CurrencyId;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDeposits;
+    type OnDust = ();
+    type WeightInfo = ();
+}
+
 impl transfers::Config for Test {
     type Event = Event;
+    type Assets = Tokens;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -8,7 +8,8 @@ mod mock;
 mod tests;
 
 pub mod primitives {
-    pub type Share = sp_arithmetic::Permill;
+    // NOTE We should be able to make our module generic over any kind of `PerThing`
+    pub type Share = sp_runtime::Permill;
 }
 
 #[frame_support::pallet]
@@ -16,7 +17,6 @@ pub mod pallet {
     use super::*;
     use primitives::*;
 
-    use codec::FullCodec;
     use frame_support::{
         dispatch::{DispatchResult, DispatchResultWithPostInfo},
         pallet_prelude::*,
@@ -24,24 +24,20 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
-    use sp_arithmetic::traits::{AtLeast32BitUnsigned, Zero};
-    use sp_std::fmt::Debug;
+    use sp_runtime::traits::Zero;
 
     type CurrencyIdOf<T, I> = <<T as Config<I>>::Collateral as MultiCurrency<
         <T as frame_system::Config>::AccountId,
     >>::CurrencyId;
+    type BalanceOf<T, I> = <<T as Config<I>>::BaseCurrency as Currency<
+        <T as frame_system::Config>::AccountId,
+    >>::Balance;
 
     #[pallet::config]
     pub trait Config<I: 'static = ()>: frame_system::Config {
-        type Collateral: MultiReservableCurrency<Self::AccountId, Balance = Self::Balance>;
-        type BaseCurrency: Currency<Self::AccountId, Balance = Self::Balance>;
+        type Collateral: MultiReservableCurrency<Self::AccountId, Balance = BalanceOf<Self, I>>;
+        type BaseCurrency: Currency<Self::AccountId>;
         type Event: From<Event<Self, I>> + IsType<<Self as frame_system::Config>::Event>;
-        type Balance: AtLeast32BitUnsigned
-            + FullCodec
-            + Copy
-            + MaybeSerializeDeserialize
-            + Debug
-            + Default;
     }
 
     #[pallet::pallet]
@@ -79,7 +75,7 @@ pub mod pallet {
         pub fn mint(
             origin: OriginFor<T>,
             collateral: CurrencyIdOf<T, I>,
-            amount: T::Balance,
+            amount: BalanceOf<T, I>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             ensure!(!amount.is_zero(), Error::<T, I>::InvalidAmount);
@@ -101,7 +97,7 @@ pub mod pallet {
         fn update_account_shares(
             who: &T::AccountId,
             collateral: CurrencyIdOf<T, I>,
-            amount: T::Balance,
+            amount: BalanceOf<T, I>,
         ) -> DispatchResult {
             if !AccountShare::<T, I>::contains_key(who, collateral) {
                 AccountShare::<T, I>::insert(who, collateral, Share::zero());
@@ -121,7 +117,7 @@ pub mod pallet {
 
         fn collateral_prices(
             who: &T::AccountId,
-        ) -> impl Iterator<Item = (CurrencyIdOf<T, I>, T::Balance)> {
+        ) -> impl Iterator<Item = (CurrencyIdOf<T, I>, BalanceOf<T, I>)> {
             let total = Self::free_balance(who);
             AccountShare::<T, I>::iter_prefix(who).map(move |(c, s)| (c, s * total))
         }
