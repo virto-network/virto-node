@@ -19,6 +19,7 @@ use crate::cli::{Cli, Subcommand};
 use crate::{chain_spec, service};
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+use vln_runtime::Block;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
