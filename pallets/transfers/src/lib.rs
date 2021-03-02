@@ -1,3 +1,6 @@
+#![allow(unused_qualifications)] // this should be removed once implementation is done
+#![allow(missing_debug_implementations)] // this should be removed once implementation is done
+#![allow(clippy::all)] // this should be removed once implementation is done
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 

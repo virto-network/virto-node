@@ -9,8 +9,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-extern crate alloc;
-
 use frame_support::{
     construct_runtime, parameter_types,
     traits::{KeyOwnerProofSystem, Randomness},
@@ -432,7 +430,7 @@ impl_runtime_apis! {
             use frame_system_benchmarking::Module as SystemBench;
             impl frame_system_benchmarking::Config for Runtime {}
 
-            let whitelist: Vec<TrackedStorageKey> = alloc::vec![
+            let whitelist: Vec<TrackedStorageKey> = vec![
                 // Block Number
                 hex_literal::hex!("26aa394eea5630e07c48ae0c9558cef702a5c1b19ab7a04f536c519aca4983ac").to_vec().into(),
                 // Total Issuance

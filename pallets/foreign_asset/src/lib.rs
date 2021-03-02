@@ -1,3 +1,6 @@
+#![allow(unused_qualifications)]
+#![allow(missing_debug_implementations)]
+#![allow(clippy::all)]
 #![cfg_attr(not(feature = "std"), no_std)]
 use orml_traits::{MultiCurrency, MultiLockableCurrency};
 pub use pallet::*;

@@ -1,3 +1,6 @@
+#![allow(unused_qualifications)]
+#![allow(missing_debug_implementations)]
+#![allow(clippy::all)]
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
