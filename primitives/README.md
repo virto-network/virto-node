@@ -37,4 +37,4 @@ pub enum Fiat {
 
 #### Usdv
 
-This is the default asset of VLN.
+This is the default asset of the VLN. USDv is backed by a combination of on-chain and foreign assets pegged to the US Dollar provided by liquidity providers of the VLN.
