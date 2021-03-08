@@ -253,6 +253,23 @@ impl vln_transfers::Config for Runtime {
     type Assets = Tokens;
 }
 
+parameter_types! {
+    pub const MinimumCount: u32 = 3;
+    pub const ExpiresIn: u32 = 600;
+    pub RootOperatorAccountId: AccountId = Sudo::key();
+}
+
+impl orml_oracle::Config for Runtime {
+    type Event = Event;
+    type OnNewData = ();
+    type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
+    type Time = Timestamp;
+    type OracleKey = Asset;
+    type OracleValue = u64;
+    type RootOperatorAccountId = RootOperatorAccountId;
+    type WeightInfo = ();
+}
+
 construct_runtime! {
    pub enum Runtime
    where
@@ -272,6 +289,7 @@ construct_runtime! {
         Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
         Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
         Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
+        Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
     }
 }
 
