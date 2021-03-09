@@ -30,7 +30,7 @@ use sp_runtime::{
         AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify, Zero,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, Perbill,
+    ApplyExtrinsicResult, Perbill, FixedU128
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
@@ -265,7 +265,7 @@ impl orml_oracle::Config for Runtime {
     type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
     type Time = Timestamp;
     type OracleKey = Asset;
-    type OracleValue = u64;
+    type OracleValue = FixedU128;
     type RootOperatorAccountId = RootOperatorAccountId;
     type WeightInfo = ();
 }
