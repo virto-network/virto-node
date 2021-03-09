@@ -60,4 +60,3 @@ macro_rules! enum_with_aux_fns {
         }
     }
 }
-
