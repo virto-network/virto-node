@@ -26,5 +26,5 @@
   "CurrencyIdOf": "Asset",
   "Share": "u32",
   "OracleKey": "Asset",
-  "OracleValue": "u32"
+  "OracleValue": "FixedU128"
 }
