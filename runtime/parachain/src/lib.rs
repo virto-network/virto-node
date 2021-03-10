@@ -30,11 +30,41 @@ use sp_runtime::{
         AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify, Zero,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, Perbill, FixedU128
+    ApplyExtrinsicResult, FixedU128, Perbill,
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 use vln_primitives::Asset;
+
+// XCM imports
+use frame_system::limits::{BlockLength, BlockWeights};
+use polkadot_parachain::primitives::Sibling;
+use xcm::v0::{Junction, MultiLocation, NetworkId};
+use xcm_builder::{
+    AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
+    SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+    SovereignSignedViaLocation,
+};
+use xcm_executor::{
+    traits::{IsConcrete, NativeAsset},
+    Config, XcmExecutor,
+};
+
+// A few exports that help ease life for downstream crates.
+pub use frame_support::{
+    construct_runtime, parameter_types,
+    traits::{KeyOwnerProofSystem, Randomness},
+    weights::{
+        constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+        DispatchClass, IdentityFee, Weight,
+    },
+    StorageValue,
+};
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_timestamp::Call as TimestampCall;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{Perbill, Permill};
 
 mod proxy_type;
 
@@ -55,31 +85,28 @@ pub type Hash = sp_core::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
-/// Used by the CLI to to instantiate machinery that doesn't need to know
-/// the specifics of the runtime.
+/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+/// the specifics of the runtime. They can then be made to be agnostic over specific formats
+/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+/// to even the core data structures.
 pub mod opaque {
     use super::*;
 
     pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
-    /// Opaque block header type.
-    pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
     /// Opaque block type.
     pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-    //// Opaque block identifier type.
-    //pub type BlockId = generic::BlockId<Block>;
+
+    pub type SessionHandlers = ();
 
     impl_opaque_keys! {
-        pub struct SessionKeys {
-            pub aura: Aura,
-            pub grandpa: Grandpa,
-        }
+        pub struct SessionKeys {}
     }
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("VLN"),
-    impl_name: create_runtime_str!("vln-node"),
+    impl_name: create_runtime_str!("vln-parachain"),
     authoring_version: 1,
     spec_version: 1,
     impl_version: 1,
@@ -90,6 +117,20 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 const MILLISECS_PER_BLOCK: u64 = 3000;
 const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
+// Time is measured by number of blocks.
+pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
+pub const HOURS: BlockNumber = MINUTES * 60;
+pub const DAYS: BlockNumber = HOURS * 24;
+
+// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
+pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
+
+#[derive(codec::Encode, codec::Decode)]
+pub enum XCMPMessage<XAccountId, XBalance> {
+    /// Transfer tokens to the given account from the Parachain account.
+    TransferToken(XAccountId, XBalance),
+}
+
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
 pub fn native_version() -> sp_version::NativeVersion {
@@ -99,25 +140,48 @@ pub fn native_version() -> sp_version::NativeVersion {
     }
 }
 
+/// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
+/// This is used to limit the maximal weight of a single extrinsic.
+const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
+/// by  Operational  extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+/// We allow for 2 seconds of compute with a 6 second average block time.
+const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
 
 parameter_types! {
+    pub const BlockHashCount: BlockNumber = 250;
     pub const Version: RuntimeVersion = VERSION;
-    pub const BlockHashCount: BlockNumber = 2400;
-    /// We allow for 2 seconds of compute with a 6 second average block time.
-    pub BlockWeights: frame_system::limits::BlockWeights = frame_system::limits::BlockWeights
-        ::with_sensible_defaults(2 * WEIGHT_PER_SECOND, NORMAL_DISPATCH_RATIO);
-    pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
-        ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+    pub RuntimeBlockLength: BlockLength =
+        BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+    pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+        .base_block(BlockExecutionWeight::get())
+        .for_class(DispatchClass::all(), |weights| {
+            weights.base_extrinsic = ExtrinsicBaseWeight::get();
+        })
+        .for_class(DispatchClass::Normal, |weights| {
+            weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+        })
+        .for_class(DispatchClass::Operational, |weights| {
+            weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+            // Operational transactions have some extra reserved space, so that they
+            // are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+            weights.reserved = Some(
+                MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
+            );
+        })
+        .avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+        .build_or_panic();
     pub const SS58Prefix: u8 = 42;
 }
+
 impl frame_system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = ();
     /// Block & extrinsics weights: base values and limits.
-    type BlockWeights = BlockWeights;
+    type BlockWeights = RuntimeBlockWeights;
     /// The maximum length of a block (in bytes).
-    type BlockLength = BlockLength;
+    type BlockLength = RuntimeBlockLength;
     /// The identifier used to distinguish between accounts.
     type AccountId = AccountId;
     /// The aggregated dispatch type that is available for extrinsics.
@@ -160,24 +224,6 @@ impl frame_system::Config for Runtime {
     type SS58Prefix = SS58Prefix;
 }
 
-impl pallet_aura::Config for Runtime {
-    type AuthorityId = AuraId;
-}
-
-impl pallet_grandpa::Config for Runtime {
-    type Call = Call;
-    type Event = Event;
-    type KeyOwnerProofSystem = ();
-    type KeyOwnerProof =
-        <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
-    type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
-        KeyTypeId,
-        GrandpaId,
-    )>>::IdentificationTuple;
-    type HandleEquivocation = ();
-    type WeightInfo = ();
-}
-
 parameter_types! {
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
@@ -193,81 +239,143 @@ impl pallet_sudo::Config for Runtime {
     type Event = Event;
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |currency_id: Asset| -> Balance {
-        Zero::zero()
-    };
-}
-impl orml_tokens::Config for Runtime {
-    type Amount = Amount;
-    type Balance = Balance;
-    type CurrencyId = Asset;
+// parameter_type_with_key! {
+//     pub ExistentialDeposits: |currency_id: Asset| -> Balance {
+//         Zero::zero()
+//     };
+// }
+// impl orml_tokens::Config for Runtime {
+//     type Amount = Amount;
+//     type Balance = Balance;
+//     type CurrencyId = Asset;
+//     type Event = Event;
+//     type ExistentialDeposits = ExistentialDeposits;
+//     type OnDust = orml_tokens::BurnDust<Runtime>;
+//     type WeightInfo = ();
+// }
+
+// parameter_types! {
+//     pub const ProxyDepositBase: Balance = 1;
+//     pub const ProxyDepositFactor: Balance = 1;
+//     pub const MaxProxies: u16 = 4;
+//     pub const MaxPending: u32 = 2;
+//     pub const AnnouncementDepositBase: Balance = 1;
+//     pub const AnnouncementDepositFactor: Balance = 1;
+//     pub const GetUsdvId: Asset = Asset::Usdv;
+// }
+// impl pallet_proxy::Config for Runtime {
+//     type Event = Event;
+//     type Call = Call;
+//     type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+//     type ProxyType = ProxyType;
+//     type ProxyDepositBase = ProxyDepositBase;
+//     type ProxyDepositFactor = ProxyDepositFactor;
+//     type MaxProxies = MaxProxies;
+//     type WeightInfo = ();
+//     type CallHasher = BlakeTwo256;
+//     type MaxPending = MaxPending;
+//     type AnnouncementDepositBase = AnnouncementDepositBase;
+//     type AnnouncementDepositFactor = AnnouncementDepositFactor;
+// }
+
+// impl vln_foreign_asset::Config for Runtime {
+//     type Event = Event;
+//     type Assets = Tokens;
+// }
+
+// type UsdvInstance = vln_backed_asset::Instance1;
+// impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+//     type Event = Event;
+//     type Collateral = Tokens;
+//     type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+// }
+
+// impl vln_human_swap::Config for Runtime {
+//     type Event = Event;
+// }
+
+// impl vln_transfers::Config for Runtime {
+//     type Event = Event;
+//     type Assets = Tokens;
+// }
+
+// parameter_types! {
+//     pub const MinimumCount: u32 = 3;
+//     pub const ExpiresIn: u32 = 600;
+//     pub RootOperatorAccountId: AccountId = Sudo::key();
+// }
+
+// impl orml_oracle::Config for Runtime {
+//     type Event = Event;
+//     type OnNewData = ();
+//     type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
+//     type Time = Timestamp;
+//     type OracleKey = Asset;
+//     type OracleValue = FixedU128;
+//     type RootOperatorAccountId = RootOperatorAccountId;
+//     type WeightInfo = ();
+// }
+
+impl cumulus_pallet_parachain_system::Config for Runtime {
     type Event = Event;
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::BurnDust<Runtime>;
-    type WeightInfo = ();
+    type OnValidationData = ();
+    type SelfParaId = parachain_info::Module<Runtime>;
+    type DownwardMessageHandlers = ();
+    type HrmpMessageHandlers = ();
 }
 
+impl parachain_info::Config for Runtime {}
+
 parameter_types! {
-    pub const ProxyDepositBase: Balance = 1;
-    pub const ProxyDepositFactor: Balance = 1;
-    pub const MaxProxies: u16 = 4;
-    pub const MaxPending: u32 = 2;
-    pub const AnnouncementDepositBase: Balance = 1;
-    pub const AnnouncementDepositFactor: Balance = 1;
-    pub const GetUsdvId: Asset = Asset::Usdv;
+    pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+    pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
+    pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();
+    pub Ancestry: MultiLocation = Junction::Parachain {
+        id: ParachainInfo::parachain_id().into()
+    }.into();
 }
-impl pallet_proxy::Config for Runtime {
-    type Event = Event;
+
+type LocationConverter = (
+    ParentIsDefault<AccountId>,
+    SiblingParachainConvertsVia<Sibling, AccountId>,
+    AccountId32Aliases<RococoNetwork, AccountId>,
+);
+
+type LocalAssetTransactor = CurrencyAdapter<
+    // Use this currency:
+    Balances,
+    // Use this currency when it is a fungible asset matching the given location or name:
+    IsConcrete<RococoLocation>,
+    // Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
+    LocationConverter,
+    // Our chain's account ID type (we can't get away without mentioning it explicitly):
+    AccountId,
+>;
+
+type LocalOriginConverter = (
+    SovereignSignedViaLocation<LocationConverter, Origin>,
+    RelayChainAsNative<RelayChainOrigin, Origin>,
+    SiblingParachainAsNative<cumulus_pallet_xcm_handler::Origin, Origin>,
+    SignedAccountId32AsNative<RococoNetwork, Origin>,
+);
+
+pub struct XcmConfig;
+impl Config for XcmConfig {
     type Call = Call;
-    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-    type ProxyType = ProxyType;
-    type ProxyDepositBase = ProxyDepositBase;
-    type ProxyDepositFactor = ProxyDepositFactor;
-    type MaxProxies = MaxProxies;
-    type WeightInfo = ();
-    type CallHasher = BlakeTwo256;
-    type MaxPending = MaxPending;
-    type AnnouncementDepositBase = AnnouncementDepositBase;
-    type AnnouncementDepositFactor = AnnouncementDepositFactor;
+    type XcmSender = XcmHandler;
+    // How to withdraw and deposit an asset.
+    type AssetTransactor = LocalAssetTransactor;
+    type OriginConverter = LocalOriginConverter;
+    type IsReserve = NativeAsset;
+    type IsTeleporter = ();
+    type LocationInverter = LocationInverter<Ancestry>;
 }
 
-impl vln_foreign_asset::Config for Runtime {
+impl cumulus_pallet_xcm_handler::Config for Runtime {
     type Event = Event;
-    type Assets = Tokens;
-}
-
-type UsdvInstance = vln_backed_asset::Instance1;
-impl vln_backed_asset::Config<UsdvInstance> for Runtime {
-    type Event = Event;
-    type Collateral = Tokens;
-    type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-}
-
-impl vln_human_swap::Config for Runtime {
-    type Event = Event;
-}
-
-impl vln_transfers::Config for Runtime {
-    type Event = Event;
-    type Assets = Tokens;
-}
-
-parameter_types! {
-    pub const MinimumCount: u32 = 3;
-    pub const ExpiresIn: u32 = 600;
-    pub RootOperatorAccountId: AccountId = Sudo::key();
-}
-
-impl orml_oracle::Config for Runtime {
-    type Event = Event;
-    type OnNewData = ();
-    type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
-    type Time = Timestamp;
-    type OracleKey = Asset;
-    type OracleValue = FixedU128;
-    type RootOperatorAccountId = RootOperatorAccountId;
-    type WeightInfo = ();
+    type XcmExecutor = XcmExecutor<XcmConfig>;
+    type UpwardMessageSender = ParachainSystem;
+    type HrmpMessageSender = ParachainSystem;
 }
 
 construct_runtime! {
@@ -280,16 +388,17 @@ construct_runtime! {
         System: frame_system::{Call, Config, Event<T>, Module, Storage},
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Call, Module, Storage},
         Timestamp: pallet_timestamp::{Call, Inherent, Module, Storage},
-        Aura: pallet_aura::{Config<T>, Module},
-        Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
         Sudo: pallet_sudo::{Call, Config<T>, Event<T>, Module, Storage},
-        Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
-        Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
-        ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
-        Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
-        Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
-        Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
-        Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
+        ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
+        ParachainInfo: parachain_info::{Module, Storage, Config},
+        //XcmHandler: cumulus_pallet_xcm_handler::{Module, Event<T>, Origin},
+        //Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+        //Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+        //ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
+        //Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+        //Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
+        //Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
+        //Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
     }
 }
 
@@ -308,6 +417,7 @@ pub type SignedExtra = (
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
+    frame_system::CheckEra<Runtime>,
     frame_system::CheckMortality<Runtime>,
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
@@ -386,16 +496,6 @@ impl_runtime_apis! {
         }
     }
 
-    impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
-        fn authorities() -> Vec<AuraId> {
-            Aura::authorities()
-        }
-
-        fn slot_duration() -> u64 {
-            Aura::slot_duration()
-        }
-    }
-
     impl sp_session::SessionKeys<Block> for Runtime {
         fn decode_session_keys(
             encoded: Vec<u8>,
@@ -405,32 +505,6 @@ impl_runtime_apis! {
 
         fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
             opaque::SessionKeys::generate(seed)
-        }
-    }
-
-    impl fg_primitives::GrandpaApi<Block> for Runtime {
-        fn generate_key_ownership_proof(
-            _set_id: fg_primitives::SetId,
-            _authority_id: GrandpaId,
-        ) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
-            // NOTE: this is the only implementation possible since we've
-            // defined our key owner proof type as a bottom type (i.e. a type
-            // with no values).
-            None
-        }
-
-        fn grandpa_authorities() -> GrandpaAuthorityList {
-            Grandpa::grandpa_authorities()
-        }
-
-        fn submit_report_equivocation_unsigned_extrinsic(
-            _equivocation_proof: fg_primitives::EquivocationProof<
-                <Block as BlockT>::Hash,
-                NumberFor<Block>,
-            >,
-            _key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
-        ) -> Option<()> {
-            None
         }
     }
 
@@ -475,3 +549,5 @@ impl_runtime_apis! {
         }
     }
 }
+
+cumulus_pallet_parachain_system::register_validate_block!(Block, Executive);

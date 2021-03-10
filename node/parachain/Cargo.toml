@@ -41,18 +41,17 @@ sp-runtime = "3.0.0"
 sp-transaction-pool = "3.0.0"
 structopt = "0.3.21"
 substrate-frame-rpc-system = "3.0.0"
-vln-runtime = { path = '../../runtime/standalone', version = '2.0.0' }
+vln-parachain-runtime = { path = '../../runtime/parachain', version = '2.0.0' }
 
 [build-dependencies]
 substrate-build-script-utils = "3.0.0"
 
 [features]
 default = []
-native-runtime-benchmarks = ['runtime-benchmarks', 'vln-runtime/native-runtime-benchmarks']
 runtime-benchmarks = [
     'frame-benchmarking-cli',
     'frame-benchmarking',
-    'vln-runtime/runtime-benchmarks'
+    'vln-parachain-runtime/runtime-benchmarks'
 ]
 
 [[bin]]
