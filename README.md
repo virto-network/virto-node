@@ -26,9 +26,26 @@ Once the development environment is set up, build the node. This command will bu
 [Wasm](https://substrate.dev/docs/en/knowledgebase/advanced/executor#wasm-execution) and
 [native](https://substrate.dev/docs/en/knowledgebase/advanced/executor#native-execution) code:
 
+Please note that we have two different runtimes
+* `vln-node` - The standalone "validator" node runtime
+* `vln-parachain` - The parachain-compliant "collator" node runtime which runs on Rococo
+
+For development, we recommend to run the `vln-node`.
+
 ```bash
-cargo build --release
+# build in debug mode
+cargo build -p $RUNTIME
+
+# build in release mode 
+cargo build --release -p $RUNTIME
+
+# build the standalone vln node
+cargo build --release -p vln-node
+
+# build the vln-parachain collator node 
+cargo build --release -p vln-parachain
 ```
+
 
 ## Run
 

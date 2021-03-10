@@ -1,0 +1,100 @@
+[package]
+authors = ['Daniel Olano <daniel@olanod.com>']
+edition = '2018'
+homepage = 'https://github.com/valibre-org/node'
+license = 'Unlicense'
+name = 'vln-runtime'
+repository = 'https://github.com/valibre-org/node'
+version = '2.0.0'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[build-dependencies]
+substrate-wasm-builder = { default-features = false, version = "4.0.0" }
+
+[dependencies]
+frame-benchmarking = { default-features = false, optional = true, version = "3.0.0" }
+frame-executive = { default-features = false, version = "3.0.0" }
+frame-support = { default-features = false, version = "3.0.0" }
+frame-system = { default-features = false, version = "3.0.0" }
+frame-system-benchmarking = { default-features = false, optional = true, version = "3.0.0" }
+frame-system-rpc-runtime-api = { default-features = false, version = "3.0.0" }
+hex-literal = { default-features = false, optional = true, version = "0.3.1" }
+orml-tokens = { default-features = false, version = "0.4.0" }
+orml-traits = { default-features = false, version = "0.4.0" }
+orml-oracle = { default-features = false, version = "0.4.0" }
+pallet-aura = { default-features = false, version = "3.0.0" }
+pallet-grandpa = { default-features = false, version = "3.0.0" }
+pallet-membership = { default-features = false, version = "3.0.0" }
+pallet-proxy = { default-features = false, version = "3.0.0" }
+pallet-randomness-collective-flip = { default-features = false, version = "3.0.0" }
+pallet-sudo = { default-features = false, version = "3.0.0" }
+pallet-timestamp = { default-features = false, version = "3.0.0" }
+parity-scale-codec = { default-features = false, features = ['derive'], version = "2.0.0" }
+serde = { default-features = false, features = ['derive'], optional = true, version = "1.0.123" }
+sp-api = { default-features = false, version = "3.0.0" }
+sp-block-builder = { default-features = false, version = "3.0.0" }
+sp-consensus-aura = { default-features = false, version = "0.9.0" }
+sp-core = { default-features = false, version = "3.0.0" }
+sp-inherents = { default-features = false, version = "3.0.0" }
+sp-offchain = { default-features = false, version = "3.0.0" }
+sp-runtime = { default-features = false, version = "3.0.0" }
+sp-session = { default-features = false, version = "3.0.0" }
+sp-std = { default-features = false, version = "3.0.0" }
+sp-transaction-pool = { default-features = false, version = "3.0.0" }
+sp-version = { default-features = false, version = "3.0.0" }
+vln-primitives = { default-features = false, path = '../../primitives' }
+vln-foreign-asset = { default-features = false, path = '../../pallets/foreign_asset' }
+vln-backed-asset = { default-features = false, path = '../../pallets/backed_asset' }
+vln-human-swap = { default-features = false, path = '../../pallets/human_swap' }
+vln-transfers = { default-features = false, path = '../../pallets/transfers' }
+
+[features]
+default = ['std']
+native-runtime-benchmarks = [
+    'runtime-benchmarks',
+    'std',
+]
+runtime-benchmarks = [
+    'frame-benchmarking',
+    'frame-support/runtime-benchmarks',
+    'frame-system-benchmarking',
+    'frame-system/runtime-benchmarks',
+    'hex-literal',
+    'pallet-timestamp/runtime-benchmarks',
+    'sp-runtime/runtime-benchmarks',
+]
+std = [
+    'frame-executive/std',
+    'frame-support/std',
+    'frame-system-rpc-runtime-api/std',
+    'frame-system/std',
+    'orml-tokens/std',
+    'orml-oracle/std',
+    'pallet-aura/std',
+    'pallet-grandpa/std',
+    'pallet-membership/std',
+    'pallet-proxy/std',
+    'pallet-randomness-collective-flip/std',
+    'pallet-sudo/std',
+    'pallet-timestamp/std',
+    'parity-scale-codec/std',
+    'serde',
+    'sp-api/std',
+    'sp-block-builder/std',
+    'sp-consensus-aura/std',
+    'sp-core/std',
+    'sp-inherents/std',
+    'sp-offchain/std',
+    'sp-runtime/std',
+    'sp-session/std',
+    'sp-std/std',
+    'sp-transaction-pool/std',
+    'sp-version/std',
+    'vln-primitives/std',
+    'vln-foreign-asset/std',
+    'vln-backed-asset/std',
+    'vln-human-swap/std',
+    'vln-transfers/std',
+]
