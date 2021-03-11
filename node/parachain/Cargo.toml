@@ -224,5 +224,5 @@ runtime-benchmarks = [
 ]
 
 [[bin]]
-name = 'vln-parachain'
+name = 'vln_parachain'
 path = 'src/main.rs'
