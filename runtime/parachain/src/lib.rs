@@ -16,9 +16,14 @@ use sp_runtime::{
 	transaction_validity::{TransactionValidity, TransactionSource},
 };
 use sp_runtime::traits::{
-	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount,
+	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, Zero
 };
 use sp_api::impl_runtime_apis;
+//use orml_traits::parameter_type_with_key;
+
+//use vln_primitives::Asset;
+mod proxy_type;
+use proxy_type::ProxyType;
 
 // XCM imports
 use polkadot_parachain::primitives::Sibling;
@@ -66,6 +71,9 @@ pub type AccountIndex = u32;
 /// Balance of an account.
 pub type Balance = u128;
 
+/// Signed version of Balance.
+pub type Amount = i64;
+
 /// Index of a transaction in the chain.
 pub type Index = u32;
 
@@ -95,8 +103,8 @@ pub mod opaque {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("cumulus-test-parachain"),
-	impl_name: create_runtime_str!("cumulus-test-parachain"),
+    spec_name: create_runtime_str!("VLN"),
+    impl_name: create_runtime_str!("vln-parachain"),
 	authoring_version: 1,
 	spec_version: 100,
 	impl_version: 1,
@@ -169,7 +177,7 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 35; //https://github.com/paritytech/substrate/pull/7776
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -236,37 +244,86 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 // parameter_types! {
-// 	pub const ExistentialDeposit: u128 = 500;
-// 	pub const MaxLocks: u32 = 50;
+//     pub const ProxyDepositBase: Balance = 1;
+//     pub const ProxyDepositFactor: Balance = 1;
+//     pub const MaxProxies: u16 = 4;
+//     pub const MaxPending: u32 = 2;
+//     pub const AnnouncementDepositBase: Balance = 1;
+//     pub const AnnouncementDepositFactor: Balance = 1;
+//     pub const GetUsdvId: Asset = Asset::Usdv;
 // }
-
-// impl pallet_balances::Config for Runtime {
-// 	type MaxLocks = MaxLocks;
-// 	/// The type for recording an account's balance.
-// 	type Balance = Balance;
-// 	/// The ubiquitous event type.
-// 	type Event = Event;
-// 	type DustRemoval = ();
-// 	type ExistentialDeposit = ExistentialDeposit;
-// 	type AccountStore = System;
-// 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-// }
-
-// parameter_types! {
-// 	pub const TransactionByteFee: Balance = 1;
-// }
-
-// impl pallet_transaction_payment::Config for Runtime {
-// 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-// 	type TransactionByteFee = TransactionByteFee;
-// 	type WeightToFee = IdentityFee<Balance>;
-// 	type FeeMultiplierUpdate = ();
+// impl pallet_proxy::Config for Runtime {
+//     type Event = Event;
+//     type Call = Call;
+//     type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+//     type ProxyType = ProxyType;
+//     type ProxyDepositBase = ProxyDepositBase;
+//     type ProxyDepositFactor = ProxyDepositFactor;
+//     type MaxProxies = MaxProxies;
+//     type WeightInfo = ();
+//     type CallHasher = BlakeTwo256;
+//     type MaxPending = MaxPending;
+//     type AnnouncementDepositBase = AnnouncementDepositBase;
+//     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 // }
 
 impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
+
+// parameter_type_with_key! {
+//     pub ExistentialDeposits: |currency_id: Asset| -> Balance {
+//         Zero::zero()
+//     };
+// }
+// impl orml_tokens::Config for Runtime {
+//     type Amount = Amount;
+//     type Balance = Balance;
+//     type CurrencyId = Asset;
+//     type Event = Event;
+//     type ExistentialDeposits = ExistentialDeposits;
+//     type OnDust = orml_tokens::BurnDust<Runtime>;
+//     type WeightInfo = ();
+// }
+
+// impl vln_foreign_asset::Config for Runtime {
+//     type Event = Event;
+//     type Assets = Tokens;
+// }
+
+// type UsdvInstance = vln_backed_asset::Instance1;
+// impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+//     type Event = Event;
+//     type Collateral = Tokens;
+//     type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+// }
+
+// impl vln_human_swap::Config for Runtime {
+//     type Event = Event;
+// }
+
+// impl vln_transfers::Config for Runtime {
+//     type Event = Event;
+//     type Assets = Tokens;
+// }
+
+// parameter_types! {
+//     pub const MinimumCount: u32 = 3;
+//     pub const ExpiresIn: u32 = 600;
+//     pub RootOperatorAccountId: AccountId = Sudo::key();
+// }
+
+// impl orml_oracle::Config for Runtime {
+//     type Event = Event;
+//     type OnNewData = ();
+//     type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
+//     type Time = Timestamp;
+//     type OracleKey = Asset;
+//     type OracleValue = FixedU128;
+//     type RootOperatorAccountId = RootOperatorAccountId;
+//     type WeightInfo = ();
+// }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
@@ -344,14 +401,18 @@ construct_runtime!(
 	{
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		//Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
 		ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
-		//TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		ParachainInfo: parachain_info::{Module, Storage, Config},
+		//Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+		//Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+		//ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
+        //Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+        //Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
+        //Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
+        //Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
 		//XcmHandler: cumulus_pallet_xcm_handler::{Module, Event<T>, Origin},
-		//TemplateModule: template::{Module, Call, Storage, Event<T>},
 	}
 );
 
@@ -374,7 +435,6 @@ pub type SignedExtra = (
 	frame_system::CheckMortality<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	//pallet_transaction_payment::ChargeTransactionPayment<Runtime>
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -468,21 +528,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	// impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
-	// 	fn query_info(
-	// 		uxt: <Block as BlockT>::Extrinsic,
-	// 		len: u32,
-	// 	) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
-	// 		TransactionPayment::query_info(uxt, len)
-	// 	}
-	// 	fn query_fee_details(
-	// 		uxt: <Block as BlockT>::Extrinsic,
-	// 		len: u32,
-	// 	) -> pallet_transaction_payment::FeeDetails<Balance> {
-	// 		TransactionPayment::query_fee_details(uxt, len)
-	// 	}
-	// }
-
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn dispatch_benchmark(
@@ -510,7 +555,6 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

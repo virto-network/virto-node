@@ -123,13 +123,6 @@ fn testnet_genesis(
                 .to_vec(),
             changes_trie_config: Default::default(),
         },
-        // pallet_balances: vln_parachain_runtime::BalancesConfig {
-        //     balances: endowed_accounts
-        //         .iter()
-        //         .cloned()
-        //         .map(|k| (k, 1 << 60))
-        //         .collect(),
-        // },
         pallet_sudo: vln_parachain_runtime::SudoConfig { key: root_key },
         parachain_info: vln_parachain_runtime::ParachainInfoConfig { parachain_id: id },
     }

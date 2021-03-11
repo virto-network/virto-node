@@ -49,6 +49,8 @@ cargo build --release -p vln-parachain
 
 ## Run
 
+[Refer this doc](./docs/Parachain.md) on how to run VLN parachain
+
 ### Single Node Development Chain
 
 Purge any existing dev chain state:
