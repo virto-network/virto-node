@@ -8,8 +8,8 @@ use frame_support::{traits::InstanceFilter, RuntimeDebug};
     PartialEq,
     Ord,
     PartialOrd,
-    parity_scale_codec::Decode,
-    parity_scale_codec::Encode,
+    codec::Decode,
+    codec::Encode,
     RuntimeDebug,
 )]
 pub enum ProxyType {
