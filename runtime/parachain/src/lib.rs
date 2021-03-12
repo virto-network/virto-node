@@ -1,3 +1,8 @@
+#![allow(
+    clippy::large_enum_variant,
+    clippy::from_over_into,
+    missing_debug_implementations
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -8,9 +13,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
-};
+use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -23,17 +26,6 @@ use sp_version::RuntimeVersion;
 
 // XCM imports
 use frame_system::limits::{BlockLength, BlockWeights};
-use polkadot_parachain::primitives::Sibling;
-use xcm::v0::{Junction, MultiLocation, NetworkId};
-use xcm_builder::{
-    AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
-    SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-    SovereignSignedViaLocation,
-};
-use xcm_executor::{
-    traits::{IsConcrete, NativeAsset},
-    Config, XcmExecutor,
-};
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -127,7 +119,7 @@ pub const DAYS: BlockNumber = HOURS * 24;
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
 #[derive(codec::Encode, codec::Decode)]
-pub enum XCMPMessage<XAccountId, XBalance> {
+pub enum XcmpMessage<XAccountId, XBalance> {
     /// Transfer tokens to the given account from the Parachain account.
     TransferToken(XAccountId, XBalance),
 }
