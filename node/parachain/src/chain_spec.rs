@@ -50,18 +50,7 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         // ID
         "dev",
         ChainType::Local,
-        move || {
-            testnet_genesis(
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                ],
-                id,
-            )
-        },
+        move || testnet_genesis(get_account_id_from_seed::<sr25519::Public>("Alice"), id),
         vec![],
         None,
         None,
@@ -80,26 +69,7 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
         // ID
         "local_testnet",
         ChainType::Local,
-        move || {
-            testnet_genesis(
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
-                id,
-            )
-        },
+        move || testnet_genesis(get_account_id_from_seed::<sr25519::Public>("Alice"), id),
         vec![],
         None,
         None,
@@ -111,10 +81,7 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
     )
 }
 
-fn testnet_genesis(
-    root_key: AccountId,
-    id: ParaId,
-) -> vln_parachain_runtime::GenesisConfig {
+fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_parachain_runtime::GenesisConfig {
     vln_parachain_runtime::GenesisConfig {
         frame_system: vln_parachain_runtime::SystemConfig {
             code: vln_parachain_runtime::WASM_BINARY

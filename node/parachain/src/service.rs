@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity, clippy::clone_on_copy)]
 use cumulus_client_consensus_relay_chain::{
     build_relay_chain_consensus, BuildRelayChainConsensusParams,
 };
