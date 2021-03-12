@@ -1,5 +1,4 @@
 use core::fmt;
-use parity_scale_codec as codec;
 
 /// A resource or valuable thing.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]

@@ -20,7 +20,6 @@ use orml_traits::parameter_type_with_key;
 use pallet_grandpa::{
     fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
 };
-use proxy_type::ProxyType;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, sr25519, OpaqueMetadata};
@@ -34,9 +33,7 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
-use vln_primitives::Asset;
-
-mod proxy_type;
+use vln_primitives::{ Asset, ProxyType };
 
 /// An index to a block.
 pub type BlockNumber = u32;

@@ -22,8 +22,6 @@ use sp_api::impl_runtime_apis;
 use orml_traits::parameter_type_with_key;
 
 use vln_primitives::Asset;
-mod proxy_type;
-use proxy_type::ProxyType;
 
 // XCM imports
 use polkadot_parachain::primitives::Sibling;

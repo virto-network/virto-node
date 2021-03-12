@@ -8,6 +8,9 @@
 mod macros;
 mod asset;
 
+mod proxy_type;
+
+pub use proxy_type::ProxyType;
 pub use asset::*;
 
 pub type Share = sp_arithmetic::Permill;
