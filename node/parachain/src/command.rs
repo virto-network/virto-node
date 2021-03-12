@@ -1,5 +1,7 @@
 #![allow(
     clippy::all, // this file is a copy/paste of substrate template
+    unused_qualifications,
+    missing_debug_implementations
 )]
 use crate::{
     chain_spec,
