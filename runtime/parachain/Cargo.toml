@@ -51,13 +51,14 @@ cumulus-pallet-xcm-handler = {git = "https://github.com/paritytech/cumulus", def
 polkadot-parachain = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
 
 # Vln dependencies
-# orml-tokens = { default-features = false, version = "0.4.0" }
-# orml-traits = { default-features = false, version = "0.4.0" }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev"}
 # orml-oracle = { default-features = false, version = "0.4.0" }
 # pallet-proxy = { default-features = false, version = "3.0.0" }
 
-# # Local dependencies
-# vln-primitives = { default-features = false, path = '../../primitives' }
+# Local dependencies
+vln-primitives = { default-features = false, path = '../../primitives' }
 # vln-foreign-asset = { default-features = false, path = '../../pallets/foreign_asset' }
 # vln-backed-asset = { default-features = false, path = '../../pallets/backed_asset' }
 # vln-human-swap = { default-features = false, path = '../../pallets/human_swap' }
@@ -101,10 +102,12 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"cumulus-pallet-xcm-handler/std",
-	# 'orml-tokens/std',
+	'orml-xtokens/std',
+	'orml-tokens/std',
     # 'orml-oracle/std',
 	# 'pallet-proxy/std',
-	# 'vln-primitives/std',
+	'vln-primitives/std',
+	'orml-traits/std',
     # 'vln-foreign-asset/std',
     # 'vln-backed-asset/std',
     # 'vln-human-swap/std',
