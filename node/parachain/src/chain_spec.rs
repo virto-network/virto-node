@@ -113,7 +113,6 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 
 fn testnet_genesis(
     root_key: AccountId,
-    endowed_accounts: Vec<AccountId>,
     id: ParaId,
 ) -> vln_parachain_runtime::GenesisConfig {
     vln_parachain_runtime::GenesisConfig {
