@@ -1,2 +1,3 @@
 .static/
 target/
+.DS_Store

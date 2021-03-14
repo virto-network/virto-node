@@ -3,11 +3,14 @@ panic = 'unwind'
 
 [workspace]
 members = [
-    'node',
+    'node/standalone',
+    'node/parachain',
     'pallets/backed_asset',
     'pallets/foreign_asset',
     'pallets/human_swap',
     'pallets/transfers',
     'primitives',
-    'runtime',
+    'runtime/standalone',
+    'runtime/parachain'
 ]
+

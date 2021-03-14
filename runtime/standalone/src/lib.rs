@@ -9,8 +9,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-extern crate alloc;
-
 use frame_support::{
     construct_runtime, parameter_types,
     traits::{KeyOwnerProofSystem, Randomness},
@@ -30,7 +28,7 @@ use sp_runtime::{
         AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, Verify, Zero,
     },
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, Perbill, FixedU128
+    ApplyExtrinsicResult, FixedU128, Perbill,
 };
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
