@@ -33,7 +33,7 @@ branch = 'rococo-v1'
 version = '3.0.0'
 
 [dependencies.vln-parachain-runtime]
-path = '../../runtime/parachain'
+path = '../../runtime/'
 version = '2.0.0'
 
 [dependencies.pallet-transaction-payment-rpc]

@@ -24,6 +24,26 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+mod proxy_type;
+use orml_traits::parameter_type_with_key;
+use proxy_type::ProxyType;
+use vln_primitives::Asset;
+
+#[cfg(feature = "standalone")]
+use standalone_use::*;
+#[cfg(feature = "standalone")]
+mod standalone_use {
+    pub use pallet_grandpa::{
+        fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+    };
+    pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+    pub use sp_core::sr25519;
+    pub use sp_runtime::{
+        traits::{NumberFor, Zero},
+        FixedU128,
+    };
+}
+
 // XCM imports
 use frame_system::limits::{BlockLength, BlockWeights};
 
@@ -46,7 +66,11 @@ pub use sp_runtime::{Perbill, Permill};
 pub type BlockNumber = u32;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+#[cfg(not(feature = "standalone"))]
 pub type Signature = MultiSignature;
+
+#[cfg(feature = "standalone")]
+pub type Signature = sr25519::Signature;
 
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
@@ -82,19 +106,18 @@ pub mod opaque {
 
     /// Opaque block type.
     pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+}
 
-    pub type SessionHandlers = ();
-
-    impl_opaque_keys! {
-        pub struct SessionKeys {}
-    }
+#[cfg(not(feature = "standalone"))]
+impl_opaque_keys! {
+    pub struct SessionKeys {}
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("VLN"),
-    impl_name: create_runtime_str!("vln-parachain"),
+    impl_name: create_runtime_str!("vln-runtime"),
     authoring_version: 1,
-    spec_version: 100,
+    spec_version: 1,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -106,7 +129,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const MILLISECS_PER_BLOCK: u64 = 3000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -118,11 +141,11 @@ pub const DAYS: BlockNumber = HOURS * 24;
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
-#[derive(codec::Encode, codec::Decode)]
-pub enum XcmpMessage<XAccountId, XBalance> {
-    /// Transfer tokens to the given account from the Parachain account.
-    TransferToken(XAccountId, XBalance),
-}
+// #[derive(codec::Encode, codec::Decode)]
+// pub enum XcmpMessage<XAccountId, XBalance> {
+//     /// Transfer tokens to the given account from the Parachain account.
+//     TransferToken(XAccountId, XBalance),
+// }
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -165,7 +188,7 @@ parameter_types! {
         })
         .avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
         .build_or_panic();
-    pub const SS58Prefix: u8 = 35; //https://github.com/paritytech/substrate/pull/7776
+    pub const SS58Prefix: u8 = 42;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -236,31 +259,170 @@ impl pallet_sudo::Config for Runtime {
     type Call = Call;
 }
 
-impl cumulus_pallet_parachain_system::Config for Runtime {
-    type Event = Event;
-    type OnValidationData = ();
-    type SelfParaId = parachain_info::Module<Runtime>;
-    type DownwardMessageHandlers = ();
-    type HrmpMessageHandlers = ();
+#[cfg(feature = "standalone")]
+pub use standalone_impl::*;
+
+#[cfg(feature = "standalone")]
+mod standalone_impl {
+    use super::*;
+
+    impl_opaque_keys! {
+        pub struct SessionKeys {
+            pub aura: Aura,
+            pub grandpa: Grandpa,
+        }
+    }
+
+    impl pallet_aura::Config for Runtime {
+        type AuthorityId = AuraId;
+    }
+
+    impl pallet_grandpa::Config for Runtime {
+        type Call = Call;
+        type Event = Event;
+        type KeyOwnerProofSystem = ();
+        type KeyOwnerProof =
+            <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(KeyTypeId, GrandpaId)>>::Proof;
+        type KeyOwnerIdentification = <Self::KeyOwnerProofSystem as KeyOwnerProofSystem<(
+            KeyTypeId,
+            GrandpaId,
+        )>>::IdentificationTuple;
+        type HandleEquivocation = ();
+        type WeightInfo = ();
+    }
+
+    parameter_type_with_key! {
+        pub ExistentialDeposits: |currency_id: Asset| -> Balance {
+            Zero::zero()
+        };
+    }
+    impl orml_tokens::Config for Runtime {
+        type Amount = Amount;
+        type Balance = Balance;
+        type CurrencyId = Asset;
+        type Event = Event;
+        type ExistentialDeposits = ExistentialDeposits;
+        type OnDust = orml_tokens::BurnDust<Runtime>;
+        type WeightInfo = ();
+    }
+
+    parameter_types! {
+        pub const ProxyDepositBase: Balance = 1;
+        pub const ProxyDepositFactor: Balance = 1;
+        pub const MaxProxies: u16 = 4;
+        pub const MaxPending: u32 = 2;
+        pub const AnnouncementDepositBase: Balance = 1;
+        pub const AnnouncementDepositFactor: Balance = 1;
+        pub const GetUsdvId: Asset = Asset::Usdv;
+    }
+    impl pallet_proxy::Config for Runtime {
+        type Event = Event;
+        type Call = Call;
+        type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+        type ProxyType = ProxyType;
+        type ProxyDepositBase = ProxyDepositBase;
+        type ProxyDepositFactor = ProxyDepositFactor;
+        type MaxProxies = MaxProxies;
+        type WeightInfo = ();
+        type CallHasher = BlakeTwo256;
+        type MaxPending = MaxPending;
+        type AnnouncementDepositBase = AnnouncementDepositBase;
+        type AnnouncementDepositFactor = AnnouncementDepositFactor;
+    }
+
+    impl vln_foreign_asset::Config for Runtime {
+        type Event = Event;
+        type Assets = Tokens;
+    }
+
+    type UsdvInstance = vln_backed_asset::Instance1;
+    impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+        type Event = Event;
+        type Collateral = Tokens;
+        type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+    }
+
+    impl vln_human_swap::Config for Runtime {
+        type Event = Event;
+    }
+
+    impl vln_transfers::Config for Runtime {
+        type Event = Event;
+        type Assets = Tokens;
+    }
+
+    parameter_types! {
+        pub const MinimumCount: u32 = 3;
+        pub const ExpiresIn: u32 = 600;
+        pub RootOperatorAccountId: AccountId = Sudo::key();
+    }
+
+    impl orml_oracle::Config for Runtime {
+        type Event = Event;
+        type OnNewData = ();
+        type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
+        type Time = Timestamp;
+        type OracleKey = Asset;
+        type OracleValue = FixedU128;
+        type RootOperatorAccountId = RootOperatorAccountId;
+        type WeightInfo = ();
+    }
 }
 
-impl parachain_info::Config for Runtime {}
+#[cfg(not(feature = "standalone"))]
+pub use parachain_impl::*;
+#[cfg(not(feature = "standalone"))]
+mod parachain_impl {
+    use super::*;
 
-// Create the runtime by composing the FRAME pallets that were previously configured.
-construct_runtime!(
-    pub enum Runtime where
-        Block = Block,
-        NodeBlock = opaque::Block,
-        UncheckedExtrinsic = UncheckedExtrinsic,
-    {
-        System: frame_system::{Module, Call, Storage, Config, Event<T>},
-        Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
-        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-        ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
-        ParachainInfo: parachain_info::{Module, Storage, Config},
+    impl cumulus_pallet_parachain_system::Config for Runtime {
+        type Event = Event;
+        type OnValidationData = ();
+        type SelfParaId = parachain_info::Module<Runtime>;
+        type DownwardMessageHandlers = ();
+        type HrmpMessageHandlers = ();
     }
-);
+
+    impl parachain_info::Config for Runtime {}
+}
+
+macro_rules! construct_vln_runtime {
+	($( $modules:tt )*) => {
+            // Create the runtime by composing the FRAME pallets that were previously configured.
+            construct_runtime!{
+                pub enum Runtime where
+                    Block = Block,
+                    NodeBlock = opaque::Block,
+                    UncheckedExtrinsic = UncheckedExtrinsic,
+                {
+                    System: frame_system::{Module, Call, Storage, Config, Event<T>},
+                    Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+                    RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+                    $($modules)*
+                    Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+                }
+            }
+    }
+}
+
+#[cfg(feature = "standalone")]
+construct_vln_runtime! {
+    Aura: pallet_aura::{Config<T>, Module},
+    Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
+    Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
+    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+    Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
+    Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
+    Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
+}
+
+#[cfg(not(feature = "standalone"))]
+construct_vln_runtime! {
+    ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
+    ParachainInfo: parachain_info::{Module, Storage, Config},
+}
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
@@ -278,7 +440,6 @@ pub type SignedExtra = (
     frame_system::CheckTxVersion<Runtime>,
     frame_system::CheckGenesis<Runtime>,
     frame_system::CheckEra<Runtime>,
-    frame_system::CheckMortality<Runtime>,
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
 );
@@ -358,13 +519,51 @@ impl_runtime_apis! {
 
     impl sp_session::SessionKeys<Block> for Runtime {
         fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-            opaque::SessionKeys::generate(seed)
+            SessionKeys::generate(seed)
         }
 
         fn decode_session_keys(
             encoded: Vec<u8>,
         ) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
-            opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+            SessionKeys::decode_into_raw_public_keys(&encoded)
+        }
+    }
+
+    #[cfg(feature = "standalone")]
+    impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
+        fn authorities() -> Vec<AuraId> {
+            Aura::authorities()
+        }
+
+        fn slot_duration() -> u64 {
+            Aura::slot_duration()
+        }
+    }
+
+    #[cfg(feature = "standalone")]
+    impl fg_primitives::GrandpaApi<Block> for Runtime {
+        fn generate_key_ownership_proof(
+            _set_id: fg_primitives::SetId,
+            _authority_id: GrandpaId,
+        ) -> Option<fg_primitives::OpaqueKeyOwnershipProof> {
+            // NOTE: this is the only implementation possible since we've
+            // defined our key owner proof type as a bottom type (i.e. a type
+            // with no values).
+            None
+        }
+
+        fn grandpa_authorities() -> GrandpaAuthorityList {
+            Grandpa::grandpa_authorities()
+        }
+
+        fn submit_report_equivocation_unsigned_extrinsic(
+            _equivocation_proof: fg_primitives::EquivocationProof<
+                <Block as BlockT>::Hash,
+                NumberFor<Block>,
+            >,
+            _key_owner_proof: fg_primitives::OpaqueKeyOwnershipProof,
+        ) -> Option<()> {
+            None
         }
     }
 
@@ -409,4 +608,5 @@ impl_runtime_apis! {
     }
 }
 
+#[cfg(not(feature = "standalone"))]
 cumulus_pallet_parachain_system::register_validate_block!(Runtime, Executive);
