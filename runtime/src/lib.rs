@@ -13,7 +13,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero};
+use sp_runtime::traits::{
+    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
+};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -38,10 +40,7 @@ mod standalone_use {
     };
     pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
     pub use sp_core::sr25519;
-    pub use sp_runtime::{
-        traits::NumberFor,
-        FixedU128,
-    };
+    pub use sp_runtime::{traits::NumberFor, FixedU128};
 }
 
 // XCM imports
@@ -272,6 +271,31 @@ impl orml_tokens::Config for Runtime {
     type WeightInfo = ();
 }
 
+parameter_types! {
+    pub const ProxyDepositBase: Balance = 1;
+    pub const ProxyDepositFactor: Balance = 1;
+    pub const MaxProxies: u16 = 4;
+    pub const MaxPending: u32 = 2;
+    pub const AnnouncementDepositBase: Balance = 1;
+    pub const AnnouncementDepositFactor: Balance = 1;
+    pub const GetUsdvId: Asset = Asset::Usdv;
+}
+
+impl pallet_proxy::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+    type ProxyType = ProxyType;
+    type ProxyDepositBase = ProxyDepositBase;
+    type ProxyDepositFactor = ProxyDepositFactor;
+    type MaxProxies = MaxProxies;
+    type WeightInfo = ();
+    type CallHasher = BlakeTwo256;
+    type MaxPending = MaxPending;
+    type AnnouncementDepositBase = AnnouncementDepositBase;
+    type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -302,31 +326,6 @@ mod standalone_impl {
         )>>::IdentificationTuple;
         type HandleEquivocation = ();
         type WeightInfo = ();
-    }
-
-    parameter_types! {
-        pub const ProxyDepositBase: Balance = 1;
-        pub const ProxyDepositFactor: Balance = 1;
-        pub const MaxProxies: u16 = 4;
-        pub const MaxPending: u32 = 2;
-        pub const AnnouncementDepositBase: Balance = 1;
-        pub const AnnouncementDepositFactor: Balance = 1;
-        pub const GetUsdvId: Asset = Asset::Usdv;
-    }
-    
-    impl pallet_proxy::Config for Runtime {
-        type Event = Event;
-        type Call = Call;
-        type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-        type ProxyType = ProxyType;
-        type ProxyDepositBase = ProxyDepositBase;
-        type ProxyDepositFactor = ProxyDepositFactor;
-        type MaxProxies = MaxProxies;
-        type WeightInfo = ();
-        type CallHasher = BlakeTwo256;
-        type MaxPending = MaxPending;
-        type AnnouncementDepositBase = AnnouncementDepositBase;
-        type AnnouncementDepositFactor = AnnouncementDepositFactor;
     }
 
     impl vln_foreign_asset::Config for Runtime {
@@ -397,9 +396,10 @@ macro_rules! construct_vln_runtime {
                     System: frame_system::{Module, Call, Storage, Config, Event<T>},
                     Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
                     RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-                    $($modules)*
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
                     Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+                    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+                    $($modules)*
                 }
             }
     }
@@ -409,7 +409,6 @@ macro_rules! construct_vln_runtime {
 construct_vln_runtime! {
     Aura: pallet_aura::{Config<T>, Module},
     Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
-    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
     Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
