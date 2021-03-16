@@ -113,7 +113,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("VLN"),
     impl_name: create_runtime_str!("vln-runtime"),
     authoring_version: 1,
-    spec_version: 1,
+    spec_version: 100, // >100 recommended for compatiblity https://github.com/polkadot-js/api/blob/master/CHANGELOG.md
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
