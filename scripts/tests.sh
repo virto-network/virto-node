@@ -26,7 +26,7 @@ cargo clippy -p vln-parachain # testing seperately since feature flags leads to 
 
 # NOTE: After update there's an issue of a dependency not compiling to WASM
 #test_package_with_feature runtime native-runtime-benchmarks
-test_package_with_feature runtime/standalone std
+test_package_with_feature runtime std
 
 test_package_with_feature node/standalone default
 #test_package_with_feature node native-runtime-benchmarks
