@@ -1,13 +1,8 @@
 {
-  "Address": "MultiAddress",
-  "LookupSource": "MultiAddress",
-  "BlockNumber": "u32",
-  "Index": "u32",
-  "Balance": "u64",
   "Asset": {
     "_enum": {
       "Collateral": "Collateral",
-      "Fiat":"Fiat",
+      "Fiat": "Fiat",
       "Usdv": null
     }
   },
@@ -23,8 +18,7 @@
     ]
   },
   "CurrencyId": "Asset",
-  "CurrencyIdOf": "Asset",
-  "Share": "u32",
   "OracleKey": "Asset",
-  "OracleValue": "FixedU128"
+  "OracleValue": "FixedU128",
+  "CurrencyIdOf": "Asset"
 }
