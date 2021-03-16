@@ -14,12 +14,12 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
-};
+    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero
+    };
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature,
+    ApplyExtrinsicResult, MultiSignature, FixedU128
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -40,7 +40,7 @@ mod standalone_use {
     };
     pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
     pub use sp_core::sr25519;
-    pub use sp_runtime::{traits::NumberFor, FixedU128};
+    pub use sp_runtime::traits::NumberFor;
 }
 
 // XCM imports
@@ -296,6 +296,44 @@ impl pallet_proxy::Config for Runtime {
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+impl vln_foreign_asset::Config for Runtime {
+    type Event = Event;
+    type Assets = Tokens;
+}
+
+type UsdvInstance = vln_backed_asset::Instance1;
+impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+    type Event = Event;
+    type Collateral = Tokens;
+    type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+}
+
+impl vln_human_swap::Config for Runtime {
+    type Event = Event;
+}
+
+impl vln_transfers::Config for Runtime {
+    type Event = Event;
+    type Assets = Tokens;
+}
+
+parameter_types! {
+    pub const MinimumCount: u32 = 3;
+    pub const ExpiresIn: u32 = 600;
+    pub RootOperatorAccountId: AccountId = Sudo::key();
+}
+
+impl orml_oracle::Config for Runtime {
+    type Event = Event;
+    type OnNewData = ();
+    type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
+    type Time = Timestamp;
+    type OracleKey = Asset;
+    type OracleValue = FixedU128;
+    type RootOperatorAccountId = RootOperatorAccountId;
+    type WeightInfo = ();
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -325,44 +363,6 @@ mod standalone_impl {
             GrandpaId,
         )>>::IdentificationTuple;
         type HandleEquivocation = ();
-        type WeightInfo = ();
-    }
-
-    impl vln_foreign_asset::Config for Runtime {
-        type Event = Event;
-        type Assets = Tokens;
-    }
-
-    type UsdvInstance = vln_backed_asset::Instance1;
-    impl vln_backed_asset::Config<UsdvInstance> for Runtime {
-        type Event = Event;
-        type Collateral = Tokens;
-        type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-    }
-
-    impl vln_human_swap::Config for Runtime {
-        type Event = Event;
-    }
-
-    impl vln_transfers::Config for Runtime {
-        type Event = Event;
-        type Assets = Tokens;
-    }
-
-    parameter_types! {
-        pub const MinimumCount: u32 = 3;
-        pub const ExpiresIn: u32 = 600;
-        pub RootOperatorAccountId: AccountId = Sudo::key();
-    }
-
-    impl orml_oracle::Config for Runtime {
-        type Event = Event;
-        type OnNewData = ();
-        type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
-        type Time = Timestamp;
-        type OracleKey = Asset;
-        type OracleValue = FixedU128;
-        type RootOperatorAccountId = RootOperatorAccountId;
         type WeightInfo = ();
     }
 }
@@ -397,8 +397,16 @@ macro_rules! construct_vln_runtime {
                     Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
                     RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+                    
+                    // vln dependencies
                     Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+                    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
+                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+                    Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
+                    Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
+                    Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
+                    
                     $($modules)*
                 }
             }
@@ -409,11 +417,6 @@ macro_rules! construct_vln_runtime {
 construct_vln_runtime! {
     Aura: pallet_aura::{Config<T>, Module},
     Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
-    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
-    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
-    Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
-    Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
-    Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
 }
 
 #[cfg(not(feature = "standalone"))]
