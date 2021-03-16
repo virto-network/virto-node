@@ -23,7 +23,7 @@ use sc_service::{
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
-use vln_parachain_runtime::Block;
+use vln_runtime::Block;
 
 fn load_spec(
     id: &str,
@@ -74,7 +74,7 @@ impl SubstrateCli for Cli {
     }
 
     fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        &vln_parachain_runtime::VERSION
+        &vln_runtime::VERSION
     }
 }
 

@@ -16,13 +16,13 @@ use sp_core::Pair;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 use std::sync::Arc;
-use vln_parachain_runtime::{opaque::Block, RuntimeApi};
+use vln_runtime::{opaque::Block, RuntimeApi};
 
 // Native executor instance.
 native_executor_instance!(
     pub Executor,
-    vln_parachain_runtime::api::dispatch,
-    vln_parachain_runtime::native_version,
+    vln_runtime::api::dispatch,
+    vln_runtime::native_version,
 );
 
 /// Starts a `ServiceBuilder` for a full service.

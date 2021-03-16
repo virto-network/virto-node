@@ -14,11 +14,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+#![allow(clippy::unused_unit, unused_qualifications)]
 use crate::cli::{Cli, Subcommand};
 use crate::{chain_spec, service};
 use sc_cli::{ChainSpec, Role, RuntimeVersion, SubstrateCli};
 use sc_service::PartialComponents;
+use vln_runtime::Block;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -45,10 +46,10 @@ impl SubstrateCli for Cli {
         2017
     }
 
-    fn load_spec(&self, id: &str) -> Result<Box<dyn ChainSpec>, String> {
+    fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
-            "" | "local" => Box::new(chain_spec::local::chain_spec()?),
             "dev" => Box::new(chain_spec::dev::chain_spec()?),
+            "" | "local" => Box::new(chain_spec::local::chain_spec()?),
             "testnet" => Box::new(chain_spec::testnet::chain_spec()?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(
                 std::path::PathBuf::from(path),
@@ -133,7 +134,6 @@ pub fn run() -> sc_cli::Result<()> {
                 Ok((cmd.run(client, backend), task_manager))
             })
         }
-        #[cfg(feature = "runtime-benchmarks")]
         Some(Subcommand::Benchmark(cmd)) => {
             if cfg!(feature = "runtime-benchmarks") {
                 let runner = cli.create_runner(cmd)?;

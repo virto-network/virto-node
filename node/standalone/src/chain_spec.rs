@@ -23,37 +23,37 @@ struct GenesisConfigBuilder<'a> {
 impl GenesisConfigBuilder<'_> {
     fn build(self) -> GenesisConfig {
         GenesisConfig {
-            frame_system: Some(SystemConfig {
+            frame_system: SystemConfig {
                 code: self.wasm_binary.to_vec(),
                 changes_trie_config: Default::default(),
-            }),
-            pallet_aura: Some(AuraConfig {
+            },
+            pallet_aura: AuraConfig {
                 authorities: self
                     .initial_authorities
                     .iter()
                     .map(|x| (x.0.clone()))
                     .collect(),
-            }),
-            pallet_grandpa: Some(GrandpaConfig {
+            },
+            pallet_grandpa: GrandpaConfig {
                 authorities: self
                     .initial_authorities
                     .iter()
                     .map(|x| (x.1.clone(), 1))
                     .collect(),
-            }),
-            pallet_sudo: Some(SudoConfig { key: self.sudo_key }),
-            orml_tokens: Some(TokensConfig {
+            },
+            pallet_sudo: SudoConfig { key: self.sudo_key },
+            orml_tokens: TokensConfig {
                 endowed_accounts: vec![],
-            }),
+            },
         }
     }
 }
 
-fn account_id_from_ss58<T: Public>(ss58: &str) -> Result<AccountId, String>
+fn account_id_from_ss58<T: Public>(ss58: &str) -> AccountId
 where
     AccountPublic: From<T>,
 {
-    Ok(AccountPublic::from(public_key_from_ss58(ss58)?).into_account())
+    AccountPublic::from(public_key_from_ss58::<T>(ss58)).into_account()
 }
 
 fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
@@ -73,6 +73,6 @@ fn get_from_seed<T: Public>(seed: &str) -> <T::Pair as Pair>::Public {
         .public()
 }
 
-fn public_key_from_ss58<T: Public>(ss58: &str) -> Result<T, String> {
-    Ss58Codec::from_string(ss58).map_err(|_| "Couldn't generate public key from ss58 string".into())
+fn public_key_from_ss58<T: Public>(ss58: &str) -> T {
+    Ss58Codec::from_string(ss58).unwrap()
 }

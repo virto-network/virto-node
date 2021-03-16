@@ -2,15 +2,7 @@ use frame_support::{traits::InstanceFilter, RuntimeDebug};
 
 /// Proxy type enum lists the type of calls that are supported by the proxy pallet
 #[derive(
-    Copy,
-    Clone,
-    Eq,
-    PartialEq,
-    Ord,
-    PartialOrd,
-    parity_scale_codec::Decode,
-    parity_scale_codec::Encode,
-    RuntimeDebug,
+    Copy, Clone, Eq, PartialEq, Ord, PartialOrd, codec::Decode, codec::Encode, RuntimeDebug,
 )]
 pub enum ProxyType {
     Any,

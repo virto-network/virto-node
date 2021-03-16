@@ -3,7 +3,7 @@ authors = ['Daniel Olano <daniel@olanod.com>']
 edition = '2018'
 homepage = 'https://github.com/valibre-org/node'
 license = 'Unlicense'
-name = 'vln-parachain-runtime'
+name = 'vln-runtime'
 repository = 'https://github.com/valibre-org/node'
 version = '2.0.0'
 
@@ -39,6 +39,9 @@ pallet-timestamp = {git = "https://github.com/paritytech/substrate", default-fea
 frame-benchmarking = {git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "rococo-v1", version = '3.0.0'}
 frame-system-benchmarking = {git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "rococo-v1", version = '3.0.0'}
 frame-system-rpc-runtime-api = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1", version = '3.0.0'}
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '0.9.0' }
+pallet-grandpa = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
+pallet-aura = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 
 # Cumulus dependencies
 cumulus-pallet-parachain-system = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
@@ -51,17 +54,17 @@ cumulus-pallet-xcm-handler = {git = "https://github.com/paritytech/cumulus", def
 polkadot-parachain = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
 
 # Vln dependencies
-# orml-tokens = { default-features = false, version = "0.4.0" }
-# orml-traits = { default-features = false, version = "0.4.0" }
-# orml-oracle = { default-features = false, version = "0.4.0" }
-# pallet-proxy = { default-features = false, version = "3.0.0" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+orml-oracle = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 
-# # Local dependencies
-# vln-primitives = { default-features = false, path = '../../primitives' }
-# vln-foreign-asset = { default-features = false, path = '../../pallets/foreign_asset' }
-# vln-backed-asset = { default-features = false, path = '../../pallets/backed_asset' }
-# vln-human-swap = { default-features = false, path = '../../pallets/human_swap' }
-# vln-transfers = { default-features = false, path = '../../pallets/transfers' }
+# Local dependencies
+vln-primitives = { default-features = false, path = '../primitives' }
+vln-foreign-asset = { default-features = false, path = '../pallets/foreign_asset' }
+vln-backed-asset = { default-features = false, path = '../pallets/backed_asset' }
+vln-human-swap = { default-features = false, path = '../pallets/human_swap' }
+vln-transfers = { default-features = false, path = '../pallets/transfers' }
 
 [features]
 default = ['std']
@@ -87,10 +90,13 @@ std = [
 	"sp-session/std",
 	"sp-block-builder/std",
 	"sp-transaction-pool/std",
-	"sp-inherents/std",
+	'pallet-aura/std',
 	"frame-support/std",
 	"frame-executive/std",
 	"frame-system/std",
+	"frame-system-rpc-runtime-api/std",
+	"sp-consensus-aura/std",
+	"pallet-grandpa/std",
 	"pallet-randomness-collective-flip/std",
 	"pallet-timestamp/std",
 	"pallet-sudo/std",
@@ -101,13 +107,13 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"cumulus-pallet-xcm-handler/std",
-	# 'orml-tokens/std',
-    # 'orml-oracle/std',
-	# 'pallet-proxy/std',
-	# 'vln-primitives/std',
-    # 'vln-foreign-asset/std',
-    # 'vln-backed-asset/std',
-    # 'vln-human-swap/std',
-    # 'vln-transfers/std',
+	'orml-tokens/std',
+    'orml-oracle/std',
+	'pallet-proxy/std',
+	'vln-primitives/std',
+    'vln-foreign-asset/std',
+    'vln-backed-asset/std',
+    'vln-human-swap/std',
+    'vln-transfers/std',
 ]
-
+standalone = []

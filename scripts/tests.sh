@@ -21,11 +21,12 @@ test_package_with_feature() {
 }
 
 cargo fmt --all -- --check
-cargo clippy
+cargo clippy --exclude vln-parachain --workspace
+cargo clippy -p vln-parachain # testing seperately since feature flags leads to conflict
 
 # NOTE: After update there's an issue of a dependency not compiling to WASM
 #test_package_with_feature runtime native-runtime-benchmarks
-test_package_with_feature runtime/standalone std
+test_package_with_feature runtime std
 
 test_package_with_feature node/standalone default
 #test_package_with_feature node native-runtime-benchmarks

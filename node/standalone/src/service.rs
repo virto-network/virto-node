@@ -1,37 +1,34 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
-
+#![allow(clippy::all, unused_qualifications)]
 use sc_client_api::{ExecutorProvider, RemoteBackend};
+use sc_consensus_aura::{ImportQueueParams, StartAuraParams};
 use sc_executor::native_executor_instance;
 pub use sc_executor::NativeExecutor;
 use sc_finality_grandpa::SharedVoterState;
 use sc_keystore::LocalKeystore;
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager};
+use sc_telemetry::TelemetrySpan;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_inherents::InherentDataProviders;
 use std::sync::Arc;
 use std::time::Duration;
 use vln_runtime::{self, opaque::Block, RuntimeApi};
 
-#[cfg(feature = "runtime-benchmarks")]
+// Our native executor instance.
 native_executor_instance!(
-  pub Executor,
-  vln_runtime::api::dispatch,
-  vln_runtime::native_version,
-  frame_benchmarking::benchmarking::HostFunctions,
-);
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-native_executor_instance!(
-  pub Executor,
-  vln_runtime::api::dispatch,
-  vln_runtime::native_version,
+    pub Executor,
+    vln_runtime::api::dispatch,
+    vln_runtime::native_version,
+    frame_benchmarking::benchmarking::HostFunctions,
 );
 
 type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
-type ServiceResult = Result<
+pub fn new_partial(
+    config: &Configuration,
+) -> Result<
     sc_service::PartialComponents<
         FullClient,
         FullBackend,
@@ -54,15 +51,13 @@ type ServiceResult = Result<
         ),
     >,
     ServiceError,
->;
-
-pub fn new_partial(config: &Configuration) -> ServiceResult {
+> {
     if config.keystore_remote.is_some() {
-        return Err(ServiceError::Other(
-            "Remote Keystores are not supported.".to_string(),
-        ));
+        return Err(ServiceError::Other(format!(
+            "Remote Keystores are not supported."
+        )));
     }
-    let inherent_data_providers = sp_inherents::InherentDataProviders::new();
+    let inherent_data_providers = InherentDataProviders::new();
 
     let (client, backend, keystore_container, task_manager) =
         sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
@@ -89,16 +84,20 @@ pub fn new_partial(config: &Configuration) -> ServiceResult {
         client.clone(),
     );
 
-    let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
-        sc_consensus_aura::slot_duration(&*client)?,
-        aura_block_import.clone(),
-        Some(Box::new(grandpa_block_import)),
-        client.clone(),
-        inherent_data_providers.clone(),
-        &task_manager.spawn_handle(),
-        config.prometheus_registry(),
-        sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
-    )?;
+    let import_queue =
+        sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
+            block_import: aura_block_import.clone(),
+            justification_import: Some(Box::new(grandpa_block_import.clone())),
+            client: client.clone(),
+            inherent_data_providers: inherent_data_providers.clone(),
+            spawner: &task_manager.spawn_essential_handle(),
+            can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(
+                client.executor().clone(),
+            ),
+            slot_duration: sc_consensus_aura::slot_duration(&*client)?,
+            registry: config.prometheus_registry(),
+            check_for_equivocation: Default::default(),
+        })?;
 
     Ok(sc_service::PartialComponents {
         client,
@@ -113,7 +112,7 @@ pub fn new_partial(config: &Configuration) -> ServiceResult {
     })
 }
 
-fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
+fn remote_keystore(_url: &String) -> Result<Arc<LocalKeystore>, &'static str> {
     // FIXME: here would the concrete keystore be built,
     //        must return a concrete type (NOT `LocalKeystore`) that
     //        implements `CryptoStore` and `SyncCryptoStore`
@@ -194,6 +193,9 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         })
     };
 
+    let telemetry_span = TelemetrySpan::new();
+    let _telemetry_span_entered = telemetry_span.enter();
+
     let (_rpc_handlers, telemetry_connection_notifier) =
         sc_service::spawn_tasks(sc_service::SpawnTasksParams {
             network: network.clone(),
@@ -208,10 +210,11 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             network_status_sinks,
             system_rpc_tx,
             config,
+            telemetry_span: Some(telemetry_span.clone()),
         })?;
 
     if role.is_authority() {
-        let proposer = sc_basic_authorship::ProposerFactory::new(
+        let proposer_factory = sc_basic_authorship::ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
             transaction_pool,
@@ -221,18 +224,20 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         let can_author_with =
             sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
 
-        let aura = sc_consensus_aura::start_aura::<_, _, _, _, _, AuraPair, _, _, _, _>(
-            sc_consensus_aura::slot_duration(&*client)?,
-            client.clone(),
-            select_chain,
-            block_import,
-            proposer,
-            network.clone(),
-            inherent_data_providers,
-            force_authoring,
-            backoff_authoring_blocks,
-            keystore_container.sync_keystore(),
-            can_author_with,
+        let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _>(
+            StartAuraParams {
+                slot_duration: sc_consensus_aura::slot_duration(&*client)?,
+                client: client.clone(),
+                select_chain,
+                block_import,
+                proposer_factory,
+                inherent_data_providers: inherent_data_providers.clone(),
+                force_authoring,
+                backoff_authoring_blocks,
+                keystore: keystore_container.sync_keystore(),
+                can_author_with,
+                sync_oracle: network.clone(),
+            },
         )?;
 
         // the AURA authoring task is considered essential, i.e. if it
@@ -257,7 +262,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         name: Some(name),
         observer_enabled: false,
         keystore,
-        is_authority: role.is_network_authority(),
+        is_authority: role.is_authority(),
     };
 
     if enable_grandpa {
@@ -312,7 +317,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
     let (grandpa_block_import, _) = sc_finality_grandpa::block_import(
         client.clone(),
         &(client.clone() as Arc<_>),
-        select_chain,
+        select_chain.clone(),
     )?;
 
     let aura_block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
@@ -320,16 +325,18 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         client.clone(),
     );
 
-    let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _, _>(
-        sc_consensus_aura::slot_duration(&*client)?,
-        aura_block_import,
-        Some(Box::new(grandpa_block_import)),
-        client.clone(),
-        InherentDataProviders::new(),
-        &task_manager.spawn_handle(),
-        config.prometheus_registry(),
-        sp_consensus::NeverCanAuthor,
-    )?;
+    let import_queue =
+        sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
+            block_import: aura_block_import.clone(),
+            justification_import: Some(Box::new(grandpa_block_import.clone())),
+            client: client.clone(),
+            inherent_data_providers: InherentDataProviders::new(),
+            spawner: &task_manager.spawn_essential_handle(),
+            can_author_with: sp_consensus::NeverCanAuthor,
+            slot_duration: sc_consensus_aura::slot_duration(&*client)?,
+            registry: config.prometheus_registry(),
+            check_for_equivocation: Default::default(),
+        })?;
 
     let (network, network_status_sinks, system_rpc_tx, network_starter) =
         sc_service::build_network(sc_service::BuildNetworkParams {
@@ -352,6 +359,9 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         );
     }
 
+    let telemetry_span = TelemetrySpan::new();
+    let _telemetry_span_entered = telemetry_span.enter();
+
     sc_service::spawn_tasks(sc_service::SpawnTasksParams {
         remote_blockchain: Some(backend.remote_blockchain()),
         transaction_pool,
@@ -365,6 +375,7 @@ pub fn new_light(mut config: Configuration) -> Result<TaskManager, ServiceError>
         network,
         network_status_sinks,
         system_rpc_tx,
+        telemetry_span: Some(telemetry_span.clone()),
     })?;
 
     network_starter.start_network();
