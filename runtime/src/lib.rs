@@ -13,7 +13,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify};
+use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -39,7 +39,7 @@ mod standalone_use {
     pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
     pub use sp_core::sr25519;
     pub use sp_runtime::{
-        traits::{NumberFor, Zero},
+        traits::NumberFor,
         FixedU128,
     };
 }
@@ -66,11 +66,7 @@ pub use sp_runtime::{Perbill, Permill};
 pub type BlockNumber = u32;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
-#[cfg(not(feature = "standalone"))]
 pub type Signature = MultiSignature;
-
-#[cfg(feature = "standalone")]
-pub type Signature = sr25519::Signature;
 
 /// Some way of identifying an account on the chain. We intentionally make it equivalent
 /// to the public key of our transaction signing scheme.
@@ -106,6 +102,7 @@ pub mod opaque {
 
     /// Opaque block type.
     pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+    pub type BlockId = generic::BlockId<Block>;
 }
 
 #[cfg(not(feature = "standalone"))]
@@ -259,6 +256,22 @@ impl pallet_sudo::Config for Runtime {
     type Call = Call;
 }
 
+parameter_type_with_key! {
+    pub ExistentialDeposits: |currency_id: Asset| -> Balance {
+        Zero::zero()
+    };
+}
+
+impl orml_tokens::Config for Runtime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = Asset;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDeposits;
+    type OnDust = orml_tokens::BurnDust<Runtime>;
+    type WeightInfo = ();
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -291,21 +304,6 @@ mod standalone_impl {
         type WeightInfo = ();
     }
 
-    parameter_type_with_key! {
-        pub ExistentialDeposits: |currency_id: Asset| -> Balance {
-            Zero::zero()
-        };
-    }
-    impl orml_tokens::Config for Runtime {
-        type Amount = Amount;
-        type Balance = Balance;
-        type CurrencyId = Asset;
-        type Event = Event;
-        type ExistentialDeposits = ExistentialDeposits;
-        type OnDust = orml_tokens::BurnDust<Runtime>;
-        type WeightInfo = ();
-    }
-
     parameter_types! {
         pub const ProxyDepositBase: Balance = 1;
         pub const ProxyDepositFactor: Balance = 1;
@@ -315,6 +313,7 @@ mod standalone_impl {
         pub const AnnouncementDepositFactor: Balance = 1;
         pub const GetUsdvId: Asset = Asset::Usdv;
     }
+    
     impl pallet_proxy::Config for Runtime {
         type Event = Event;
         type Call = Call;
@@ -400,6 +399,7 @@ macro_rules! construct_vln_runtime {
                     RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
                     $($modules)*
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+                    Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
                 }
             }
     }
@@ -409,7 +409,6 @@ macro_rules! construct_vln_runtime {
 construct_vln_runtime! {
     Aura: pallet_aura::{Config<T>, Module},
     Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
-    Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
     Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
     Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},

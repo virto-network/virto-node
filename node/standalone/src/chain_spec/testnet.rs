@@ -21,16 +21,16 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
 
     let initial_authorities = vec![
         (
-            public_key_from_ss58::<AuraId>(ODIN_AURA_SS58)?,
-            public_key_from_ss58::<GrandpaId>(ODIN_GRANDPA_SS58)?,
+            public_key_from_ss58::<AuraId>(ODIN_AURA_SS58),
+            public_key_from_ss58::<GrandpaId>(ODIN_GRANDPA_SS58),
         ),
         (
-            public_key_from_ss58::<AuraId>(THOR_AURA_SS58)?,
-            public_key_from_ss58::<GrandpaId>(THOR_GRANDPA_SS58)?,
+            public_key_from_ss58::<AuraId>(THOR_AURA_SS58),
+            public_key_from_ss58::<GrandpaId>(THOR_GRANDPA_SS58),
         ),
         (
-            public_key_from_ss58::<AuraId>(LOKI_AURA_SS58)?,
-            public_key_from_ss58::<GrandpaId>(LOKI_GRANDPA_SS58)?,
+            public_key_from_ss58::<AuraId>(LOKI_AURA_SS58),
+            public_key_from_ss58::<GrandpaId>(LOKI_GRANDPA_SS58),
         ),
     ];
 
@@ -41,7 +41,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         move || {
             GenesisConfigBuilder {
                 initial_authorities: &initial_authorities,
-                sudo_key: account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58).unwrap(),
+                sudo_key: account_id_from_ss58::<sr25519::Public>(ODIN_AURA_SS58),
                 wasm_binary,
             }
             .build()

@@ -4,10 +4,10 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use vln_parachain_runtime::{AccountId, Signature};
+use vln_runtime::{AccountId, Signature};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<vln_parachain_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -81,15 +81,18 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
     )
 }
 
-fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_parachain_runtime::GenesisConfig {
-    vln_parachain_runtime::GenesisConfig {
-        frame_system: vln_parachain_runtime::SystemConfig {
-            code: vln_parachain_runtime::WASM_BINARY
+fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfig {
+    vln_runtime::GenesisConfig {
+        frame_system: vln_runtime::SystemConfig {
+            code: vln_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
                 .to_vec(),
             changes_trie_config: Default::default(),
         },
-        pallet_sudo: vln_parachain_runtime::SudoConfig { key: root_key },
-        parachain_info: vln_parachain_runtime::ParachainInfoConfig { parachain_id: id },
+        pallet_sudo: vln_runtime::SudoConfig { key: root_key },
+        parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
+        orml_tokens: vln_runtime::TokensConfig {
+            endowed_accounts: vec![],
+        },
     }
 }
