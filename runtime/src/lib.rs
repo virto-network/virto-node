@@ -14,12 +14,12 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero
-    };
+    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
+};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, MultiSignature, FixedU128
+    ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -119,13 +119,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     transaction_version: 1,
 };
 
-/// This determines the average expected block time that we are targetting.
-/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
-/// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
-/// up by `pallet_aura` to implement `fn slot_duration()`.
-///
-/// Change this to adjust the block time.
+#[cfg(feature = "standalone")]
 pub const MILLISECS_PER_BLOCK: u64 = 3000;
+
+#[cfg(not(feature = "standalone"))]
+pub const MILLISECS_PER_BLOCK: u64 = 6000; // ensure to align with relay chain - 6sec for rococo/ksm/polkadot
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -397,7 +395,7 @@ macro_rules! construct_vln_runtime {
                     Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
                     RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
-                    
+
                     // vln dependencies
                     Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
@@ -406,7 +404,7 @@ macro_rules! construct_vln_runtime {
                     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
-                    
+
                     $($modules)*
                 }
             }
