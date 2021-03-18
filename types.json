@@ -20,5 +20,9 @@
   "CurrencyId": "Asset",
   "OracleKey": "Asset",
   "OracleValue": "FixedU128",
-  "CurrencyIdOf": "Asset"
+  "CurrencyIdOf": "Asset",
+  "XCurrencyId": {
+    "chain_id": "ChainId",
+    "currency_id": "Asset"
+  }
 }

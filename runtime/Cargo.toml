@@ -58,6 +58,8 @@ orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
 orml-oracle = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
 
 # Local dependencies
 vln-primitives = { default-features = false, path = '../primitives' }
@@ -115,5 +117,7 @@ std = [
     'vln-backed-asset/std',
     'vln-human-swap/std',
     'vln-transfers/std',
+	'orml-xtokens/std',
+	'orml-xcm-support/std'
 ]
 standalone = []
