@@ -8,7 +8,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{
     AccountId, AuraConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    TokensConfig,
+    TokensCollateralInstanceConfig, TokensGeneralInstanceConfig
 };
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -42,7 +42,10 @@ impl GenesisConfigBuilder<'_> {
                     .collect(),
             },
             pallet_sudo: SudoConfig { key: self.sudo_key },
-            orml_tokens: TokensConfig {
+            orml_tokens_Instance1: TokensGeneralInstanceConfig {
+                endowed_accounts: vec![],
+            },
+            orml_tokens_Instance2: TokensCollateralInstanceConfig {
                 endowed_accounts: vec![],
             },
         }

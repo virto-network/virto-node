@@ -29,7 +29,8 @@ use sp_version::RuntimeVersion;
 mod proxy_type;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
-use vln_primitives::Asset;
+use vln_primitives::{Asset, Collateral};
+use orml_tokens::CurrencyAdapter;
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -259,13 +260,31 @@ parameter_type_with_key! {
     };
 }
 
-impl orml_tokens::Config for Runtime {
+type GeneralInstance = orml_tokens::Instance1;
+impl orml_tokens::Config<GeneralInstance> for Runtime {
     type Amount = Amount;
     type Balance = Balance;
     type CurrencyId = Asset;
     type Event = Event;
     type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::BurnDust<Runtime>;
+    type OnDust = ();
+    type WeightInfo = ();
+}
+
+parameter_type_with_key! {
+    pub ExistentialDepositsCollateral: |currency_id: Collateral| -> Balance {
+        Zero::zero()
+    };
+}
+
+type CollateralInstance = orml_tokens::Instance2;
+impl orml_tokens::Config<CollateralInstance> for Runtime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = Collateral;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDepositsCollateral;
+    type OnDust = ();
     type WeightInfo = ();
 }
 
@@ -282,7 +301,7 @@ parameter_types! {
 impl pallet_proxy::Config for Runtime {
     type Event = Event;
     type Call = Call;
-    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+    type Currency = TokensGeneralInstance::CurrencyAdapter<Runtime, GetUsdvId>;
     type ProxyType = ProxyType;
     type ProxyDepositBase = ProxyDepositBase;
     type ProxyDepositFactor = ProxyDepositFactor;
@@ -296,15 +315,15 @@ impl pallet_proxy::Config for Runtime {
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
-    type Assets = Tokens;
+    type Assets = TokensCollateralInstance;
 }
 
-type UsdvInstance = vln_backed_asset::Instance1;
-impl vln_backed_asset::Config<UsdvInstance> for Runtime {
-    type Event = Event;
-    type Collateral = Tokens;
-    type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-}
+// type UsdvInstance = vln_backed_asset::Instance1;
+// impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+//     type Event = Event;
+//     type Collateral = Tokens;
+//     type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+// }
 
 impl vln_human_swap::Config for Runtime {
     type Event = Event;
@@ -312,7 +331,7 @@ impl vln_human_swap::Config for Runtime {
 
 impl vln_transfers::Config for Runtime {
     type Event = Event;
-    type Assets = Tokens;
+    type Assets = TokensCollateralInstance;
 }
 
 parameter_types! {
@@ -397,10 +416,11 @@ macro_rules! construct_vln_runtime {
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
                     // vln dependencies
-                    Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+                    TokensGeneralInstance: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
+                    TokensCollateralInstance: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
                     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
-                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+                    //Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
                     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
