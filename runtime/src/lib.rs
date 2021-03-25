@@ -288,34 +288,34 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
     type WeightInfo = ();
 }
 
-parameter_types! {
-    pub const ProxyDepositBase: Balance = 1;
-    pub const ProxyDepositFactor: Balance = 1;
-    pub const MaxProxies: u16 = 4;
-    pub const MaxPending: u32 = 2;
-    pub const AnnouncementDepositBase: Balance = 1;
-    pub const AnnouncementDepositFactor: Balance = 1;
-    pub const GetUsdvId: Asset = Asset::Usdv;
-}
+// parameter_types! {
+//     pub const ProxyDepositBase: Balance = 1;
+//     pub const ProxyDepositFactor: Balance = 1;
+//     pub const MaxProxies: u16 = 4;
+//     pub const MaxPending: u32 = 2;
+//     pub const AnnouncementDepositBase: Balance = 1;
+//     pub const AnnouncementDepositFactor: Balance = 1;
+//     pub const GetUsdvId: Asset = Asset::Usdv;
+// }
 
-impl pallet_proxy::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
-    type Currency = TokensGeneralInstance::CurrencyAdapter<Runtime, GetUsdvId>;
-    type ProxyType = ProxyType;
-    type ProxyDepositBase = ProxyDepositBase;
-    type ProxyDepositFactor = ProxyDepositFactor;
-    type MaxProxies = MaxProxies;
-    type WeightInfo = ();
-    type CallHasher = BlakeTwo256;
-    type MaxPending = MaxPending;
-    type AnnouncementDepositBase = AnnouncementDepositBase;
-    type AnnouncementDepositFactor = AnnouncementDepositFactor;
-}
+// impl pallet_proxy::Config for Runtime {
+//     type Event = Event;
+//     type Call = Call;
+//     type Currency = TokensGeneralInstance::CurrencyAdapter<Runtime, GetUsdvId>;
+//     type ProxyType = ProxyType;
+//     type ProxyDepositBase = ProxyDepositBase;
+//     type ProxyDepositFactor = ProxyDepositFactor;
+//     type MaxProxies = MaxProxies;
+//     type WeightInfo = ();
+//     type CallHasher = BlakeTwo256;
+//     type MaxPending = MaxPending;
+//     type AnnouncementDepositBase = AnnouncementDepositBase;
+//     type AnnouncementDepositFactor = AnnouncementDepositFactor;
+// }
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
-    type Assets = TokensCollateralInstance;
+    type Assets = TokensGeneralInstance;
 }
 
 // type UsdvInstance = vln_backed_asset::Instance1;
@@ -418,7 +418,7 @@ macro_rules! construct_vln_runtime {
                     // vln dependencies
                     TokensGeneralInstance: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
                     TokensCollateralInstance: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
-                    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+                    //Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
                     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
                     //Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
                     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
