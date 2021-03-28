@@ -91,7 +91,10 @@ fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfi
         },
         pallet_sudo: vln_runtime::SudoConfig { key: root_key },
         parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
-        orml_tokens: vln_runtime::TokensConfig {
+        orml_tokens_Instance1: vln_runtime::TokensConfig {
+            endowed_accounts: vec![],
+        },
+        orml_tokens_Instance2: vln_runtime::CollateralConfig {
             endowed_accounts: vec![],
         },
     }

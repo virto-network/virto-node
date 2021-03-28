@@ -30,7 +30,7 @@ mod proxy_type;
 use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
-use vln_primitives::{Asset, Collateral};
+use vln_primitives::{Asset, Collateral as CollateralType};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -266,7 +266,7 @@ impl orml_tokens::Config<GeneralInstance> for Runtime {
 }
 
 parameter_type_with_key! {
-    pub ExistentialDepositsCollateral: |currency_id: Collateral| -> Balance {
+    pub ExistentialDepositsCollateral: |currency_id: CollateralType| -> Balance {
         Zero::zero()
     };
 }
@@ -275,7 +275,7 @@ type CollateralInstance = orml_tokens::Instance2;
 impl orml_tokens::Config<CollateralInstance> for Runtime {
     type Amount = Amount;
     type Balance = Balance;
-    type CurrencyId = Collateral;
+    type CurrencyId = CollateralType;
     type Event = Event;
     type ExistentialDeposits = ExistentialDepositsCollateral;
     type OnDust = ();
@@ -309,7 +309,7 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
-    type Assets = TokensGeneralInstance;
+    type Assets = Tokens;
 }
 
 // type UsdvInstance = vln_backed_asset::Instance1;
@@ -325,7 +325,7 @@ impl vln_human_swap::Config for Runtime {
 
 impl vln_transfers::Config for Runtime {
     type Event = Event;
-    type Assets = TokensCollateralInstance;
+    type Assets = Collateral;
 }
 
 parameter_types! {
@@ -410,8 +410,8 @@ macro_rules! construct_vln_runtime {
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
                     // vln dependencies
-                    TokensGeneralInstance: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
-                    TokensCollateralInstance: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
+                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
+                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
                     //Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
                     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
                     //Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
