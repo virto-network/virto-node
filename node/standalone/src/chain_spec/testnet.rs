@@ -35,7 +35,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
     ];
 
     Ok(ChainSpec::from_genesis(
-        "Testnet",
+        "VLN Testnet",
         "testnet",
         ChainType::Live,
         move || {

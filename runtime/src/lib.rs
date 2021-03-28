@@ -27,10 +27,10 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
+use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
 use vln_primitives::{Asset, Collateral};
-use orml_tokens::CurrencyAdapter;
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -135,12 +135,6 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-// #[derive(codec::Encode, codec::Decode)]
-// pub enum XcmpMessage<XAccountId, XBalance> {
-//     /// Transfer tokens to the given account from the Parachain account.
-//     TransferToken(XAccountId, XBalance),
-// }
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]

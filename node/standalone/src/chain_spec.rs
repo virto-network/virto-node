@@ -8,7 +8,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{
     AccountId, AuraConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    TokensCollateralInstanceConfig, TokensGeneralInstanceConfig
+    TokensCollateralInstanceConfig, TokensGeneralInstanceConfig,
 };
 
 type AccountPublic = <Signature as Verify>::Signer;
