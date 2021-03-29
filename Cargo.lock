@@ -4209,7 +4209,7 @@ dependencies = [
 [[package]]
 name = "orml-oracle"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library?branch=instantiable_tokens_pallet#4e818d7c54946c33b1019f890e93a49a76bea51e"
+source = "git+https://github.com/valibre-org/open-runtime-module-library?rev=9d63434#9d63434f498c3e4ec376065fa1ca64250f2cac62"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4227,7 +4227,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library?branch=instantiable_tokens_pallet#4e818d7c54946c33b1019f890e93a49a76bea51e"
+source = "git+https://github.com/valibre-org/open-runtime-module-library?rev=9d63434#9d63434f498c3e4ec376065fa1ca64250f2cac62"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4242,7 +4242,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library?branch=instantiable_tokens_pallet#4e818d7c54946c33b1019f890e93a49a76bea51e"
+source = "git+https://github.com/valibre-org/open-runtime-module-library?rev=9d63434#9d63434f498c3e4ec376065fa1ca64250f2cac62"
 dependencies = [
  "frame-support",
  "funty",
@@ -4259,7 +4259,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library?branch=instantiable_tokens_pallet#4e818d7c54946c33b1019f890e93a49a76bea51e"
+source = "git+https://github.com/valibre-org/open-runtime-module-library?rev=9d63434#9d63434f498c3e4ec376065fa1ca64250f2cac62"
 dependencies = [
  "frame-support",
  "funty",

@@ -261,7 +261,7 @@ impl orml_tokens::Config<GeneralInstance> for Runtime {
     type CurrencyId = Asset;
     type Event = Event;
     type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = ();
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
     type WeightInfo = ();
 }
 
@@ -278,46 +278,46 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
     type CurrencyId = CollateralType;
     type Event = Event;
     type ExistentialDeposits = ExistentialDepositsCollateral;
-    type OnDust = ();
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
     type WeightInfo = ();
 }
 
-// parameter_types! {
-//     pub const ProxyDepositBase: Balance = 1;
-//     pub const ProxyDepositFactor: Balance = 1;
-//     pub const MaxProxies: u16 = 4;
-//     pub const MaxPending: u32 = 2;
-//     pub const AnnouncementDepositBase: Balance = 1;
-//     pub const AnnouncementDepositFactor: Balance = 1;
-//     pub const GetUsdvId: Asset = Asset::Usdv;
-// }
+parameter_types! {
+    pub const ProxyDepositBase: Balance = 1;
+    pub const ProxyDepositFactor: Balance = 1;
+    pub const MaxProxies: u16 = 4;
+    pub const MaxPending: u32 = 2;
+    pub const AnnouncementDepositBase: Balance = 1;
+    pub const AnnouncementDepositFactor: Balance = 1;
+    pub const GetUsdvId: Asset = Asset::Usdv;
+}
 
-// impl pallet_proxy::Config for Runtime {
-//     type Event = Event;
-//     type Call = Call;
-//     type Currency = TokensGeneralInstance::CurrencyAdapter<Runtime, GetUsdvId>;
-//     type ProxyType = ProxyType;
-//     type ProxyDepositBase = ProxyDepositBase;
-//     type ProxyDepositFactor = ProxyDepositFactor;
-//     type MaxProxies = MaxProxies;
-//     type WeightInfo = ();
-//     type CallHasher = BlakeTwo256;
-//     type MaxPending = MaxPending;
-//     type AnnouncementDepositBase = AnnouncementDepositBase;
-//     type AnnouncementDepositFactor = AnnouncementDepositFactor;
-// }
+impl pallet_proxy::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type Currency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
+    type ProxyType = ProxyType;
+    type ProxyDepositBase = ProxyDepositBase;
+    type ProxyDepositFactor = ProxyDepositFactor;
+    type MaxProxies = MaxProxies;
+    type WeightInfo = ();
+    type CallHasher = BlakeTwo256;
+    type MaxPending = MaxPending;
+    type AnnouncementDepositBase = AnnouncementDepositBase;
+    type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
     type Assets = Tokens;
 }
 
-// type UsdvInstance = vln_backed_asset::Instance1;
-// impl vln_backed_asset::Config<UsdvInstance> for Runtime {
-//     type Event = Event;
-//     type Collateral = Tokens;
-//     type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
-// }
+type UsdvInstance = vln_backed_asset::Instance1;
+impl vln_backed_asset::Config<UsdvInstance> for Runtime {
+    type Event = Event;
+    type Collateral = Tokens;
+    type BaseCurrency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
+}
 
 impl vln_human_swap::Config for Runtime {
     type Event = Event;
@@ -412,9 +412,9 @@ macro_rules! construct_vln_runtime {
                     // vln dependencies
                     Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
                     Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
-                    //Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
+                    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
                     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
-                    //Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
+                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
                     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
