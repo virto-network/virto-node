@@ -311,7 +311,7 @@ impl pallet_proxy::Config for Runtime {
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
-    type Assets = Tokens;
+    type Assets = Collateral;
     type Whitelist = Whitelist;
 }
 
@@ -328,7 +328,7 @@ impl vln_human_swap::Config for Runtime {
 
 impl vln_transfers::Config for Runtime {
     type Event = Event;
-    type Assets = Collateral;
+    type Assets = Tokens;
 }
 
 parameter_types! {

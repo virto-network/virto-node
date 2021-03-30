@@ -73,6 +73,7 @@ pub mod pallet {
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotInWhitelist);
             // Assuming attested assets can't be transfered since moving them
             // to a different owner doesn't mean they moved in the real world
+            T::Assets::deposit(currency, &who, amount)?;
             T::Assets::set_lock(LOCK_ID, currency, &who, amount)?;
             Self::deposit_event(Event::Attestation(who, currency));
             Ok(().into())
