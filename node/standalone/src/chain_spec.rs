@@ -51,7 +51,7 @@ impl GenesisConfigBuilder<'_> {
                 endowed_accounts: vec![],
             },
             pallet_membership: WhitelistConfig {
-                members: vec![self.sudo_key.clone()],
+                members: vec![self.sudo_key],
                 phantom: Default::default(),
             },
         }
