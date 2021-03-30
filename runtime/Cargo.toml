@@ -54,9 +54,9 @@ cumulus-pallet-xcm-handler = {git = "https://github.com/paritytech/cumulus", def
 polkadot-parachain = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
 
 # Vln dependencies
-orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false, rev = "9d63434" }
-orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false, rev = "9d63434" }
-orml-oracle = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false, rev = "9d63434" }
+orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-oracle = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 
