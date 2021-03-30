@@ -22,6 +22,8 @@ use sp_runtime::{
     ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
 use sp_std::prelude::*;
+use frame_system::{ EnsureRoot };
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -310,6 +312,7 @@ impl pallet_proxy::Config for Runtime {
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
     type Assets = Tokens;
+    type Whitelist = pallet_collective::EnsureMember<AccountId>;
 }
 
 type UsdvInstance = vln_backed_asset::Instance1;
@@ -343,6 +346,34 @@ impl orml_oracle::Config for Runtime {
     type OracleValue = FixedU128;
     type RootOperatorAccountId = RootOperatorAccountId;
     type WeightInfo = ();
+}
+
+impl pallet_membership::Config for Runtime {
+	type Event = Event;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type RemoveOrigin = EnsureRoot<AccountId>;
+	type SwapOrigin = EnsureRoot<AccountId>;
+	type ResetOrigin = EnsureRoot<AccountId>;
+	type PrimeOrigin = EnsureRoot<AccountId>;
+	type MembershipInitialized = Whitelist;
+	type MembershipChanged = Whitelist;
+}
+
+parameter_types! {
+	pub const MotionDuration: BlockNumber = 7 * DAYS;
+	pub const MaxProposals: u32 = 100;
+	pub const MaxMembers: u32 = 100;
+}
+
+impl pallet_collective::Config for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = MotionDuration;
+	type MaxProposals = MaxProposals;
+	type MaxMembers = MaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = ();
 }
 
 #[cfg(feature = "standalone")]
@@ -410,6 +441,8 @@ macro_rules! construct_vln_runtime {
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
                     // vln dependencies
+                    Whitelist: pallet_collective::{Call, Origin<T>, Module, Storage, Event<T>, Config<T>},
+                    WhitelistMembership: pallet_membership::{Call, Storage, Module, Event<T>, Config<T>},
                     Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
                     Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
@@ -418,7 +451,6 @@ macro_rules! construct_vln_runtime {
                     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
-
                     $($modules)*
                 }
             }

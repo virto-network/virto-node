@@ -24,7 +24,7 @@ fungible assets system.
 
 ## GenesisConfig
 
-The foreign_asset pallet does not depend on the `GenesisConfig`
+The backed asset pallet does not depend on the `GenesisConfig`
 
 
 License: Apache-2.0

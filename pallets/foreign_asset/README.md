@@ -7,6 +7,7 @@ Foreign assets are any off-chain crypto or fiat asset that an attester claims to
 - Attestor: Any external user/company that provides liquidity to VLN. The permission to be an attestor will initially be restricted via a whitelist, but will be opened up in future to all users.
 - [Asset](../../primitives/README.md##Asset): Onchain record of a crypto/fiat asset that the attesttor claims to posses. This asset is represented using the [tokens-pallet](https://github.com/stanly-johnson/open-runtime-module-library/tree/master/tokens) and is locked upon minting (cannot be transferred onchain).
 - Mint: The process of creating an asset on VLN by an attestor claim.
+- Whitelist: Origin permitted to call the attestation extrinsic, must be a member of the whitelist collective.
 
 ## Interface
 
