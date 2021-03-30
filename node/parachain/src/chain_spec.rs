@@ -89,7 +89,9 @@ fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfi
                 .to_vec(),
             changes_trie_config: Default::default(),
         },
-        pallet_sudo: vln_runtime::SudoConfig { key: root_key.clone() },
+        pallet_sudo: vln_runtime::SudoConfig {
+            key: root_key.clone(),
+        },
         parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
         orml_tokens_Instance1: vln_runtime::TokensConfig {
             endowed_accounts: vec![],
@@ -97,10 +99,9 @@ fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfi
         orml_tokens_Instance2: vln_runtime::CollateralConfig {
             endowed_accounts: vec![],
         },
-        pallet_collective: Default::default(),
-        pallet_membership: vln_runtime::WhitelistMembershipConfig {
+        pallet_membership: vln_runtime::WhitelistConfig {
             members: vec![root_key],
-            phantom: Default::default()
+            phantom: Default::default(),
         },
     }
 }
