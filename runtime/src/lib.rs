@@ -47,6 +47,29 @@ mod standalone_use {
 }
 
 // XCM imports
+#[cfg(not(feature = "standalone"))]
+use parachain_use::*;
+#[cfg(not(feature = "standalone"))]
+mod parachain_use {
+    pub use frame_system::EnsureRoot;
+    pub use orml_xcm_support::XcmHandler as XcmHandlerT;
+    pub use polkadot_parachain::primitives::Sibling;
+    pub use sp_runtime::{
+        traits::{Convert, Identity},
+        DispatchResult,
+    };
+    pub use xcm::v0::{Junction, MultiLocation, NetworkId, Xcm};
+    pub use xcm_builder::{
+        AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
+        SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+        SovereignSignedViaLocation,
+    };
+    pub use xcm_executor::{
+        traits::{IsConcrete, NativeAsset},
+        Config, XcmExecutor,
+    };
+}
+
 use frame_system::limits::{BlockLength, BlockWeights};
 
 // A few exports that help ease life for downstream crates.
@@ -407,6 +430,89 @@ mod parachain_impl {
     }
 
     impl parachain_info::Config for Runtime {}
+
+    parameter_types! {
+        pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+        pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
+        pub const GetUsdvId: Asset = Asset::Usdv;
+        pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();
+        pub Ancestry: MultiLocation = Junction::Parachain {
+            id: ParachainInfo::parachain_id().into()
+        }.into();
+    }
+
+    type LocationConverter = (
+        ParentIsDefault<AccountId>,
+        SiblingParachainConvertsVia<Sibling, AccountId>,
+        AccountId32Aliases<RococoNetwork, AccountId>,
+    );
+
+    type LocalAssetTransactor = CurrencyAdapter<
+        // Use this currency:
+        orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>,
+        // Use this currency when it is a fungible asset matching the given location or name:
+        IsConcrete<RococoLocation>,
+        // Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
+        LocationConverter,
+        // Our chain's account ID type (we can't get away without mentioning it explicitly):
+        AccountId,
+    >;
+
+    type LocalOriginConverter = (
+        SovereignSignedViaLocation<LocationConverter, Origin>,
+        RelayChainAsNative<RelayChainOrigin, Origin>,
+        SiblingParachainAsNative<cumulus_pallet_xcm_handler::Origin, Origin>,
+        SignedAccountId32AsNative<RococoNetwork, Origin>,
+    );
+
+    pub struct XcmConfig;
+    impl Config for XcmConfig {
+        type Call = Call;
+        type XcmSender = XcmHandler;
+        // How to withdraw and deposit an asset.
+        type AssetTransactor = LocalAssetTransactor;
+        type OriginConverter = LocalOriginConverter;
+        type IsReserve = NativeAsset;
+        type IsTeleporter = ();
+        type LocationInverter = LocationInverter<Ancestry>;
+    }
+
+    impl cumulus_pallet_xcm_handler::Config for Runtime {
+        type Event = Event;
+        type XcmExecutor = XcmExecutor<XcmConfig>;
+        type UpwardMessageSender = ParachainSystem;
+        type HrmpMessageSender = ParachainSystem;
+        type SendXcmOrigin = EnsureRoot<AccountId>;
+        type AccountIdConverter = LocationConverter;
+    }
+
+    parameter_types! {
+        pub const GetRelayChainId: NetworkId = NetworkId::Polkadot;
+    }
+
+    pub struct AccountId32Convert;
+    impl Convert<AccountId, [u8; 32]> for AccountId32Convert {
+        fn convert(account_id: AccountId) -> [u8; 32] {
+            account_id.into()
+        }
+    }
+
+    pub struct HandleXcm;
+    impl XcmHandlerT<AccountId> for HandleXcm {
+        fn execute_xcm(origin: AccountId, xcm: Xcm) -> DispatchResult {
+            XcmHandler::execute_xcm(origin, xcm)
+        }
+    }
+
+    impl orml_xtokens::Config for Runtime {
+        type Event = Event;
+        type Balance = Balance;
+        type ToRelayChainBalance = Identity;
+        type AccountId32Convert = AccountId32Convert;
+        type RelayChainNetworkId = GetRelayChainId;
+        type ParaId = ParachainInfo;
+        type XcmHandler = HandleXcm;
+    }
 }
 
 macro_rules! construct_vln_runtime {
@@ -449,6 +555,8 @@ construct_vln_runtime! {
 construct_vln_runtime! {
     ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
     ParachainInfo: parachain_info::{Module, Storage, Config},
+    XcmHandler: cumulus_pallet_xcm_handler::{Module, Call, Event<T>, Origin},
+    XTokens: orml_xtokens::{Module, Storage, Call, Event<T>},
 }
 
 /// The address format for describing accounts.
