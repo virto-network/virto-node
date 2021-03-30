@@ -447,9 +447,9 @@ mod parachain_impl {
         AccountId32Aliases<RococoNetwork, AccountId>,
     );
 
-    type LocalAssetTransactor = CurrencyAdapter<
+    type LocalAssetTransactor = xcm_builder::CurrencyAdapter<
         // Use this currency:
-        orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>,
+        orml_tokens::CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>,
         // Use this currency when it is a fungible asset matching the given location or name:
         IsConcrete<RococoLocation>,
         // Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
