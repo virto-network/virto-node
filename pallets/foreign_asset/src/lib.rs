@@ -16,7 +16,9 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+    use frame_support::{
+        dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
+    };
     use frame_system::pallet_prelude::*;
     use orml_traits::LockIdentifier;
 
@@ -30,6 +32,7 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type Assets: MultiLockableCurrency<Self::AccountId>;
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type Whitelist: Contains<Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -46,7 +49,10 @@ pub mod pallet {
     }
 
     #[pallet::error]
-    pub enum Error<T> {}
+    pub enum Error<T> {
+        // Account is not part of membership pallet
+        NotInWhitelist,
+    }
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
@@ -56,6 +62,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         /// Attest the existance of an asset off-chain in a permissioned way
+        /// The dispatch origin of this call must be a member of `Whitelist`
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn attest(
             origin: OriginFor<T>,
@@ -63,12 +70,11 @@ pub mod pallet {
             amount: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-
-            T::Assets::deposit(currency, &who, amount)?;
+            ensure!(T::Whitelist::contains(&who), Error::<T>::NotInWhitelist);
             // Assuming attested assets can't be transfered since moving them
             // to a different owner doesn't mean they moved in the real world
+            T::Assets::deposit(currency, &who, amount)?;
             T::Assets::set_lock(LOCK_ID, currency, &who, amount)?;
-
             Self::deposit_event(Event::Attestation(who, currency));
             Ok(().into())
         }

@@ -11,6 +11,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
@@ -22,14 +23,16 @@ use sp_runtime::{
     ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
 use sp_std::prelude::*;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
+use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
-use vln_primitives::Asset;
+use vln_primitives::{Asset, Collateral as CollateralType};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -134,12 +137,6 @@ pub const DAYS: BlockNumber = HOURS * 24;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
-// #[derive(codec::Encode, codec::Decode)]
-// pub enum XcmpMessage<XAccountId, XBalance> {
-//     /// Transfer tokens to the given account from the Parachain account.
-//     TransferToken(XAccountId, XBalance),
-// }
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -259,13 +256,31 @@ parameter_type_with_key! {
     };
 }
 
-impl orml_tokens::Config for Runtime {
+type GeneralInstance = orml_tokens::Instance1;
+impl orml_tokens::Config<GeneralInstance> for Runtime {
     type Amount = Amount;
     type Balance = Balance;
     type CurrencyId = Asset;
     type Event = Event;
     type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::BurnDust<Runtime>;
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
+    type WeightInfo = ();
+}
+
+parameter_type_with_key! {
+    pub ExistentialDepositsCollateral: |currency_id: CollateralType| -> Balance {
+        Zero::zero()
+    };
+}
+
+type CollateralInstance = orml_tokens::Instance2;
+impl orml_tokens::Config<CollateralInstance> for Runtime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = CollateralType;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDepositsCollateral;
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
     type WeightInfo = ();
 }
 
@@ -282,7 +297,7 @@ parameter_types! {
 impl pallet_proxy::Config for Runtime {
     type Event = Event;
     type Call = Call;
-    type Currency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+    type Currency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
     type ProxyType = ProxyType;
     type ProxyDepositBase = ProxyDepositBase;
     type ProxyDepositFactor = ProxyDepositFactor;
@@ -296,14 +311,15 @@ impl pallet_proxy::Config for Runtime {
 
 impl vln_foreign_asset::Config for Runtime {
     type Event = Event;
-    type Assets = Tokens;
+    type Assets = Collateral;
+    type Whitelist = Whitelist;
 }
 
 type UsdvInstance = vln_backed_asset::Instance1;
 impl vln_backed_asset::Config<UsdvInstance> for Runtime {
     type Event = Event;
     type Collateral = Tokens;
-    type BaseCurrency = orml_tokens::CurrencyAdapter<Runtime, GetUsdvId>;
+    type BaseCurrency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
 }
 
 impl vln_human_swap::Config for Runtime {
@@ -330,6 +346,17 @@ impl orml_oracle::Config for Runtime {
     type OracleValue = FixedU128;
     type RootOperatorAccountId = RootOperatorAccountId;
     type WeightInfo = ();
+}
+
+impl pallet_membership::Config for Runtime {
+    type Event = Event;
+    type AddOrigin = EnsureRoot<AccountId>;
+    type RemoveOrigin = EnsureRoot<AccountId>;
+    type SwapOrigin = EnsureRoot<AccountId>;
+    type ResetOrigin = EnsureRoot<AccountId>;
+    type PrimeOrigin = EnsureRoot<AccountId>;
+    type MembershipInitialized = ();
+    type MembershipChanged = ();
 }
 
 #[cfg(feature = "standalone")]
@@ -397,14 +424,15 @@ macro_rules! construct_vln_runtime {
                     Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 
                     // vln dependencies
-                    Tokens: orml_tokens::{Config<T>, Event<T>, Module, Storage},
+                    Whitelist: pallet_membership::{Call, Storage, Module, Event<T>, Config<T>},
+                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
+                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
                     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
                     Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
                     Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
-
                     $($modules)*
                 }
             }

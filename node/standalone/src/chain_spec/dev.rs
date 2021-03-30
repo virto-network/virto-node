@@ -9,7 +9,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "WASM binary not available".to_string())?;
 
     Ok(ChainSpec::from_genesis(
-        "Development",
+        "VLN Development",
         "dev",
         ChainType::Development,
         move || {

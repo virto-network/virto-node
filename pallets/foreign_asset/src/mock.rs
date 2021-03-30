@@ -1,6 +1,7 @@
 use crate as foreign_asset;
 use frame_support::parameter_types;
 use frame_system as system;
+use frame_system::EnsureRoot;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
@@ -10,6 +11,7 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+pub type AccountId = u64;
 
 frame_support::construct_runtime!(
     pub enum Test where
@@ -20,6 +22,7 @@ frame_support::construct_runtime!(
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
         Assets: foreign_asset::{Module, Call, Storage, Event<T>},
         Tokens: orml_tokens::{Module, Event<T>},
+        Whitelist: pallet_membership::{Call, Storage, Module, Event<T>, Config<T>},
     }
 );
 
@@ -39,7 +42,7 @@ impl system::Config for Test {
     type BlockNumber = u64;
     type Hash = H256;
     type Hashing = BlakeTwo256;
-    type AccountId = u64;
+    type AccountId = AccountId;
     type Lookup = IdentityLookup<Self::AccountId>;
     type Header = Header;
     type Event = Event;
@@ -69,12 +72,32 @@ impl orml_tokens::Config for Test {
 impl foreign_asset::Config for Test {
     type Event = Event;
     type Assets = Tokens;
+    type Whitelist = Whitelist;
+}
+
+impl pallet_membership::Config for Test {
+    type Event = Event;
+    type AddOrigin = EnsureRoot<AccountId>;
+    type RemoveOrigin = EnsureRoot<AccountId>;
+    type SwapOrigin = EnsureRoot<AccountId>;
+    type ResetOrigin = EnsureRoot<AccountId>;
+    type PrimeOrigin = EnsureRoot<AccountId>;
+    type MembershipInitialized = ();
+    type MembershipChanged = ();
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default()
+    let mut t = system::GenesisConfig::default()
         .build_storage::<Test>()
-        .unwrap()
-        .into()
+        .unwrap();
+
+    pallet_membership::GenesisConfig::<Test> {
+        members: vec![10],
+        ..Default::default()
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    t.into()
 }

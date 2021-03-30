@@ -4209,7 +4209,7 @@ dependencies = [
 [[package]]
 name = "orml-oracle"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#8d7e29744d13697b7ea2b31f57605bade1000ebc"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4227,7 +4227,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#8d7e29744d13697b7ea2b31f57605bade1000ebc"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4242,7 +4242,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#8d7e29744d13697b7ea2b31f57605bade1000ebc"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "frame-support",
  "funty",
@@ -4259,7 +4259,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#8d7e29744d13697b7ea2b31f57605bade1000ebc"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "frame-support",
  "funty",
@@ -10175,6 +10175,7 @@ dependencies = [
  "frame-system",
  "orml-tokens",
  "orml-traits",
+ "pallet-membership",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -10316,6 +10317,7 @@ dependencies = [
  "orml-traits",
  "pallet-aura",
  "pallet-grandpa",
+ "pallet-membership",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
