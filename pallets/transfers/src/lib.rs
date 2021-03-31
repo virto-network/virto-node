@@ -34,7 +34,7 @@ where
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+    use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
     use sp_runtime::traits::StaticLookup;
 
@@ -75,13 +75,16 @@ pub mod pallet {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn transfer(
             origin: OriginFor<T>,
-            _from_currency: CurrencyIdOf<T>,
-            _to_currency: CurrencyIdOf<T>,
-            _to: <T::Lookup as StaticLookup>::Source,
-            _to_value: BalanceOf<T>,
-        ) -> DispatchResultWithPostInfo {
-            let _who = ensure_signed(origin)?;
-            Err(Error::<T>::NotImplemented.into())
+            from_currency: CurrencyIdOf<T>,
+            to_currency: CurrencyIdOf<T>,
+            to: <T::Lookup as StaticLookup>::Source,
+            to_value: BalanceOf<T>,
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+            let dest = T::Lookup::lookup(to)?;
+            // currently only supports same asset transfer
+            ensure!(from_currency == to_currency, Error::<T>::NotImplemented);
+            T::Assets::transfer(from_currency, &sender, &dest, to_value)
         }
     }
 }

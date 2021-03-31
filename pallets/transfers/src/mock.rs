@@ -1,5 +1,5 @@
 use crate as transfers;
-use frame_support::parameter_types;
+use frame_support::{parameter_types, traits::GenesisBuild};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -21,7 +21,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Module, Call, Config, Storage, Event<T>},
-        Tokens: orml_tokens::{Module, Call, Storage, Event<T>},
+        Tokens: orml_tokens::{Module, Call, Config<T>, Storage, Event<T>},
         Transfers: transfers::{Module, Call, Storage, Event<T>},
     }
 );
@@ -76,8 +76,15 @@ impl transfers::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default()
+    let mut t = system::GenesisConfig::default()
         .build_storage::<Test>()
-        .unwrap()
-        .into()
+        .unwrap();
+
+    orml_tokens::GenesisConfig::<Test> {
+        endowed_accounts: vec![(1,1,10)],
+    }
+    .assimilate_storage(&mut t)
+    .unwrap();
+
+    t.into()
 }
