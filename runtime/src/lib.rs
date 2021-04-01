@@ -254,6 +254,7 @@ impl frame_system::Config for Runtime {
     type SystemWeightInfo = ();
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
     type SS58Prefix = SS58Prefix;
+    type OnSetCode = ();
 }
 
 parameter_types! {
@@ -524,21 +525,21 @@ macro_rules! construct_vln_runtime {
                     NodeBlock = opaque::Block,
                     UncheckedExtrinsic = UncheckedExtrinsic,
                 {
-                    System: frame_system::{Module, Call, Storage, Config, Event<T>},
-                    Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-                    RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-                    Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+                    System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+                    Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+                    RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+                    Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 
                     // vln dependencies
-                    Whitelist: pallet_membership::{Call, Storage, Module, Event<T>, Config<T>},
-                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
-                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
-                    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
-                    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
-                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
-                    Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
-                    Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
-                    Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
+                    Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
+                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
+                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
+                    Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
+                    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Pallet, Storage},
+                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Pallet, Storage},
+                    Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
+                    Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
+                    Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }
@@ -547,16 +548,16 @@ macro_rules! construct_vln_runtime {
 
 #[cfg(feature = "standalone")]
 construct_vln_runtime! {
-    Aura: pallet_aura::{Config<T>, Module},
-    Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
+    Aura: pallet_aura::{Config<T>, Pallet},
+    Grandpa: pallet_grandpa::{Call, Config, Event, Pallet, Storage},
 }
 
 #[cfg(not(feature = "standalone"))]
 construct_vln_runtime! {
-    ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
-    ParachainInfo: parachain_info::{Module, Storage, Config},
-    XcmHandler: cumulus_pallet_xcm_handler::{Module, Call, Event<T>, Origin},
-    XTokens: orml_xtokens::{Module, Storage, Call, Event<T>},
+    ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event},
+    ParachainInfo: parachain_info::{Pallet, Storage, Config},
+    XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
+    XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
 }
 
 /// The address format for describing accounts.
@@ -633,7 +634,7 @@ impl_runtime_apis! {
         }
 
         fn random_seed() -> <Block as BlockT>::Hash {
-            RandomnessCollectiveFlip::random_seed()
+            RandomnessCollectiveFlip::random_seed().0
         }
     }
 
@@ -670,9 +671,9 @@ impl_runtime_apis! {
             Aura::authorities()
         }
 
-        fn slot_duration() -> u64 {
-            Aura::slot_duration()
-        }
+        fn slot_duration() -> sp_consensus_aura::SlotDuration {
+			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+		}
     }
 
     #[cfg(feature = "standalone")]
