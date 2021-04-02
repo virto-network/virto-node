@@ -308,6 +308,23 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
     type WeightInfo = ();
 }
 
+parameter_type_with_key! {
+    pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
+        Zero::zero()
+    };
+}
+
+type ForeignTokensInstance = orml_tokens::Instance3;
+impl orml_tokens::Config<ForeignTokensInstance> for Runtime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = ForeignCurrencyId;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDepositsForeign;
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
+    type WeightInfo = ();
+}
+
 parameter_types! {
     pub const ProxyDepositBase: Balance = 1;
     pub const ProxyDepositFactor: Balance = 1;
@@ -342,7 +359,7 @@ impl vln_foreign_asset::Config for Runtime {
 type UsdvInstance = vln_backed_asset::Instance1;
 impl vln_backed_asset::Config<UsdvInstance> for Runtime {
     type Event = Event;
-    type Collateral = Tokens;
+    type Collateral = ForeignTokens;
     type BaseCurrency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
 }
 
@@ -421,23 +438,6 @@ pub use parachain_impl::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_impl {
     use super::*;
-
-    parameter_type_with_key! {
-        pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
-            Zero::zero()
-        };
-    }
-
-    type ForeignTokensInstance = orml_tokens::Instance3;
-    impl orml_tokens::Config<ForeignTokensInstance> for Runtime {
-        type Amount = Amount;
-        type Balance = Balance;
-        type CurrencyId = ForeignCurrencyId;
-        type Event = Event;
-        type ExistentialDeposits = ExistentialDepositsForeign;
-        type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
-        type WeightInfo = ();
-    }
 
     impl cumulus_pallet_parachain_system::Config for Runtime {
         type Event = Event;
@@ -566,6 +566,7 @@ macro_rules! construct_vln_runtime {
                     Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
+                    ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }
@@ -584,7 +585,6 @@ construct_vln_runtime! {
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
-    ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
 }
 
 /// The address format for describing accounts.
