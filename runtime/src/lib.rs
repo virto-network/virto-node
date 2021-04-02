@@ -22,7 +22,7 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
-use sp_std::prelude::*;
+use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -52,7 +52,7 @@ use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
     pub use frame_system::EnsureRoot;
-    pub use orml_xcm_support::XcmHandler as XcmHandlerT;
+    pub use orml_xcm_support::{NativePalletAssetOr, XcmHandler as XcmHandlerT};
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::{
         traits::{Convert, Identity},
@@ -422,6 +422,23 @@ pub use parachain_impl::*;
 mod parachain_impl {
     use super::*;
 
+    parameter_type_with_key! {
+        pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
+            Zero::zero()
+        };
+    }
+
+    type ForeignTokensInstance = orml_tokens::Instance3;
+    impl orml_tokens::Config<ForeignTokensInstance> for Runtime {
+        type Amount = Amount;
+        type Balance = Balance;
+        type CurrencyId = ForeignCurrencyId;
+        type Event = Event;
+        type ExistentialDeposits = ExistentialDepositsForeign;
+        type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
+        type WeightInfo = ();
+    }
+
     impl cumulus_pallet_parachain_system::Config for Runtime {
         type Event = Event;
         type OnValidationData = ();
@@ -466,6 +483,15 @@ mod parachain_impl {
         SignedAccountId32AsNative<RococoNetwork, Origin>,
     );
 
+    parameter_types! {
+        pub NativeOrmlTokens: BTreeSet<(Vec<u8>, MultiLocation)> = {
+            let mut t = BTreeSet::new();
+            // ausd from acala at parachainid - 666
+            t.insert(("AUSD".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
+            t
+        };
+    }
+
     pub struct XcmConfig;
     impl Config for XcmConfig {
         type Call = Call;
@@ -473,7 +499,7 @@ mod parachain_impl {
         // How to withdraw and deposit an asset.
         type AssetTransactor = LocalAssetTransactor;
         type OriginConverter = LocalOriginConverter;
-        type IsReserve = NativeAsset;
+        type IsReserve = NativePalletAssetOr<NativeOrmlTokens>;
         type IsTeleporter = ();
         type LocationInverter = LocationInverter<Ancestry>;
     }
@@ -558,6 +584,7 @@ construct_vln_runtime! {
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
+    ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
 }
 
 /// The address format for describing accounts.
@@ -672,8 +699,8 @@ impl_runtime_apis! {
         }
 
         fn slot_duration() -> sp_consensus_aura::SlotDuration {
-			sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
-		}
+            sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+        }
     }
 
     #[cfg(feature = "standalone")]
