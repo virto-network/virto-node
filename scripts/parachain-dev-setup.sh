@@ -10,7 +10,7 @@ function flagify() {
 }
 
 # start relaychains in seperate screens for debugging
-startrelaychain() {
+function startrelaychain() {
  screen_name="$1"
  auth="$2"
  port="$3"
@@ -18,24 +18,29 @@ startrelaychain() {
  rpcport="$5"
 
  screen -dmS "$screen_name" \
- ./polkadot/target/release/polkadot --chain "polkadot/rococo-local-cfde-real-overseer.json" \
+ ../polkadot/target/release/polkadot --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
  --tmp --rpc-external --ws-external --rpc-cors all --discover-local -lruntime=trace \
   --ws-port "$wsport" --port "$port" --rpc-port "$rpcport" \
   "$(flagify "$auth")"
 }
 
-startvlnparachain() {
+function startvlnparachain() {
  screen_name="$1"
  chain="$2"
  port="$3"
  wsport="$4"
  rpcport="$5"
 
+ # create outputs for chainid
+ ./target/debug/vln_parachain export-genesis-state --parachain-id "$chain" > genesis-state-"$chain"
+
+ ./target/debug/vln_parachain export-genesis-wasm > genesis-wasm-"$chain"
+
  screen -dmS "$screen_name" \
- ./vln-node/target/release/vln_parachain --collator --tmp \
+ ./target/debug/vln_parachain --collator --tmp \
  --parachain-id "$chain" -lruntime=trace \
  --port "$port" --ws-port "$wsport" -- --execution wasm \
- --chain "polkadot/rococo-local-cfde-real-overseer.json" \
+ --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
  --port "$rpcport"
 }
 
