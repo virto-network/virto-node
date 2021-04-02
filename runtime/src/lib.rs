@@ -32,7 +32,7 @@ mod proxy_type;
 use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
-use vln_primitives::{Asset, Collateral as CollateralType};
+use vln_primitives::{Asset, Collateral as CollateralType, ForeignCurrencyId};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
