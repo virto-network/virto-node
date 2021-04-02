@@ -27,5 +27,9 @@
   },
   "TimestampedValueOf" : "TimestampedValue",
   "OrderedSet": "Vec<AccountId>",
-  "Share" : "Permill"
+  "Share" : "Permill",
+  "XCurrencyId": {
+    "chain_id": "ChainId",
+    "currency_id": "Asset"
+  }
 }

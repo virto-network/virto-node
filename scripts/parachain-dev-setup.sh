@@ -39,6 +39,7 @@ function startvlnparachain() {
  screen -dmS "$screen_name" \
  ./target/debug/vln_parachain --collator --tmp \
  --parachain-id "$chain" -lruntime=trace \
+ --rpc-external --ws-external --rpc-cors all \
  --port "$port" --ws-port "$wsport" -- --execution wasm \
  --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
  --port "$rpcport"
@@ -51,3 +52,4 @@ startrelaychain relay3 charlie 30335 9946 9935
 
 # start parachain
 startvlnparachain vln 200 40335 9947 30336
+#startvlnparachain vln2 400 40336 9948 30337
