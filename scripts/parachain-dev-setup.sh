@@ -45,11 +45,29 @@ function startvlnparachain() {
  --port "$rpcport"
 }
 
+function startacalaparachain() {
+ # create outputs for chainid
+ ../Acala/target/release/acala export-genesis-state --parachain-id 666 > genesis-state-666
+
+ ../Acala/target/release/acala export-genesis-wasm > genesis-wasm-666
+
+ screen -dmS acala \
+ ./target/debug/vln_parachain --collator --tmp \
+ --parachain-id 666 -lruntime=trace \
+ --rpc-external --ws-external --rpc-cors all \
+ --port 40338 --ws-port 9950 -- --execution wasm \
+ --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
+ --port 30339
+}
+
 # Start relaychain
 startrelaychain relay1 alice 30333 9944 9933
 startrelaychain relay2 bob 30334 9945 9934
 startrelaychain relay3 charlie 30335 9946 9935
 
-# start parachain
+# start acala parachain
+startacalaparachain
+
+# start vln parachain
 startvlnparachain vln 200 40335 9947 30336
 #startvlnparachain vln2 400 40336 9948 30337
