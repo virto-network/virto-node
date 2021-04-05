@@ -31,5 +31,15 @@
   "XCurrencyId": {
     "chain_id": "ChainId",
     "currency_id": "Asset"
+  },
+  "ChainId": "NetworkId",
+  "ForeignCurrencyId": {
+    "_enum": [
+      "ACA",
+      "AUSD",
+      "DOT",
+      "LDOT",
+      "USDV"
+    ]
   }
 }
