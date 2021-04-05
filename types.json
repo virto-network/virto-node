@@ -17,28 +17,37 @@
       "Vez"
     ]
   },
-  "CurrencyId": "Asset",
+  "CurrencyId": "ForeignCurrencyId",
   "OracleKey": "Asset",
   "OracleValue": "FixedU128",
-  "CurrencyIdOf": "Asset",
+  "CurrencyIdOf": "ForeignCurrencyId",
   "TimestampedValue": {
     "value": "OracleValue",
     "timestamp": "Moment"
   },
-  "TimestampedValueOf" : "TimestampedValue",
+  "TimestampedValueOf": "TimestampedValue",
   "OrderedSet": "Vec<AccountId>",
-  "Share" : "Permill",
+  "Share": "Permill",
   "XCurrencyId": {
     "chain_id": "ChainId",
-    "currency_id": "Asset"
+    "currency_id": "Bytes"
   },
-  "ChainId": "NetworkId",
-  "ForeignCurrencyId": {
+  "ChainId": {
+    "_enum": {
+      "RelayChain": null,
+      "Parachain": "ParaId"
+    }
+  },
+  "ForeignCurrencyId" : {
+    "_enum": {
+      "Token": "TokenSymbol"
+    }
+  },
+  "TokenSymbol": {
     "_enum": [
       "ACA",
       "AUSD",
       "DOT",
-      "LDOT",
       "USDV"
     ]
   }

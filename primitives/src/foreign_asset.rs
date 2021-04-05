@@ -7,24 +7,50 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::RuntimeDebug;
 use sp_std::{convert::TryFrom, prelude::*, vec};
 
+/// Supported token symbols.
+#[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum TokenSymbol {
+    /// Acala native token.
+    ACA = 0,
+    /// Acala stable coin.
+    AUSD = 1,
+    /// Polkadot native token.
+    DOT = 2,
+    /// Valiu's USDV
+    USDV = 3
+}
+
+impl TryFrom<u8> for TokenSymbol {
+    type Error = ();
+
+    fn try_from(v: u8) -> Result<Self, Self::Error> {
+        match v {
+            0 => Ok(TokenSymbol::ACA),
+            1 => Ok(TokenSymbol::AUSD),
+            2 => Ok(TokenSymbol::DOT),
+            2 => Ok(TokenSymbol::USDV),
+            _ => Err(()),
+        }
+    }
+}
+
+/// Currency identifier.
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignCurrencyId {
-    ACA = 0,
-    AUSD,
-    DOT,
-    LDOT,
-    USDV,
+    /// Native token.
+    Token(TokenSymbol),
 }
 
 impl TryFrom<Vec<u8>> for ForeignCurrencyId {
     type Error = ();
     fn try_from(v: Vec<u8>) -> Result<ForeignCurrencyId, ()> {
         match v.as_slice() {
-            b"AUSD" => Ok(ForeignCurrencyId::AUSD),
-            b"DOT" => Ok(ForeignCurrencyId::DOT),
-            b"LDOT" => Ok(ForeignCurrencyId::LDOT),
-            b"USDV" => Ok(ForeignCurrencyId::USDV),
+            b"ACA" => Ok(ForeignCurrencyId::Token(TokenSymbol::ACA)),
+            b"AUSD" => Ok(ForeignCurrencyId::Token(TokenSymbol::AUSD)),
+            b"DOT" => Ok(ForeignCurrencyId::Token(TokenSymbol::DOT)),
+            b"USDV" => Ok(ForeignCurrencyId::Token(TokenSymbol::USDV)),
             _ => Err(()),
         }
     }
@@ -33,6 +59,6 @@ impl TryFrom<Vec<u8>> for ForeignCurrencyId {
 impl Default for ForeignCurrencyId {
     #[inline]
     fn default() -> Self {
-        Self::AUSD
+        Self::Token(TokenSymbol::USDV)
     }
 }

@@ -32,7 +32,7 @@ mod proxy_type;
 use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
-use vln_primitives::{Asset, Collateral as CollateralType, ForeignCurrencyId};
+use vln_primitives::{Asset, Collateral as CollateralType, ForeignCurrencyId, TokenSymbol};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -452,7 +452,7 @@ mod parachain_impl {
     }
 
     parameter_types! {
-        pub const GetNativeCurrencyId: ForeignCurrencyId = ForeignCurrencyId::USDV;
+        pub const GetNativeCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::USDV);
     }
 
     impl orml_currencies::Config for Runtime {
@@ -472,24 +472,6 @@ mod parachain_impl {
         type Event = Event;
     }
 
-    pub struct RelayToNative;
-    impl Convert<RelayChainBalance, Balance> for RelayToNative {
-        fn convert(val: u128) -> Balance {
-            // use same as relay for now
-            // TODO: decide conversion factor
-            val
-        }
-    }
-
-    pub struct NativeToRelay;
-    impl Convert<Balance, RelayChainBalance> for NativeToRelay {
-        fn convert(val: u128) -> Balance {
-            // use same as relay for now
-            // TODO: decide conversion factor
-            val
-        }
-    }
-
     impl parachain_info::Config for Runtime {}
 
     parameter_types! {
@@ -501,7 +483,7 @@ mod parachain_impl {
         pub Ancestry: MultiLocation = Junction::Parachain {
             id: ParachainInfo::parachain_id().into()
         }.into();
-        pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::DOT;
+        pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::DOT);
     }
 
     type LocationConverter = (
@@ -520,7 +502,7 @@ mod parachain_impl {
     type LocalAssetTransactor = MultiCurrencyAdapter<
         Currencies,
         UnknownTokens,
-        IsConcreteWithGeneralKey<ForeignCurrencyId, RelayToNative>,
+        IsConcreteWithGeneralKey<ForeignCurrencyId, Identity>,
         LocationConverter,
         AccountId,
         CurrencyIdConverter<ForeignCurrencyId, RelayChainCurrencyId>,
@@ -533,6 +515,7 @@ mod parachain_impl {
             // ausd from acala at parachainid - 666
             t.insert(("ACA".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
             t.insert(("AUSD".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
+            t
         };
     }
 
