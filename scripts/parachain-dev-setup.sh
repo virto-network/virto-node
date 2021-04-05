@@ -1,6 +1,6 @@
 #!/bin/bash
 # Spinup a local env with relaychains and parachains for testing.
-# This script expects compiled polkadot and vln binaries under /polkadot and /vln-node
+# This script expects compiled polkadot, acala and vln binaries under /polkadot, /Acala and /vln-node
 # directories. Run this script only after initial setup as per https://github.com/paritytech/cumulus/blob/master/README.md
 # Ref : https://wiki.acala.network/build/development-guide/composable-chains/open-hrmp-channel
 

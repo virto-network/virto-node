@@ -1,7 +1,8 @@
 #![allow(
     clippy::unused_unit,
     unused_qualifications,
-    missing_debug_implementations
+    missing_debug_implementations,
+    deprecated //line 116 : Modify later and remove
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;

@@ -1,7 +1,8 @@
 #![allow(
     clippy::large_enum_variant,
     clippy::from_over_into,
-    missing_debug_implementations
+    missing_debug_implementations,
+    deprecated //required to stay with specific commits
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -22,7 +23,6 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
-use sp_std::{collections::btree_set::BTreeSet, prelude::*};
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -32,7 +32,8 @@ mod proxy_type;
 use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
-use vln_primitives::{Asset, Collateral as CollateralType, ForeignCurrencyId, TokenSymbol};
+use sp_std::prelude::*;
+use vln_primitives::{Asset, Collateral as CollateralType};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -63,6 +64,8 @@ mod parachain_use {
         traits::{Convert, Identity},
         DispatchResult,
     };
+    pub use sp_std::collections::btree_set::BTreeSet;
+    pub use vln_primitives::{ForeignCurrencyId, TokenSymbol};
     pub use xcm::v0::{Junction, MultiLocation, NetworkId, Xcm};
     pub use xcm_builder::{
         AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
@@ -312,23 +315,6 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
     type WeightInfo = ();
 }
 
-parameter_type_with_key! {
-    pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
-        Zero::zero()
-    };
-}
-
-type ForeignTokensInstance = orml_tokens::Instance3;
-impl orml_tokens::Config<ForeignTokensInstance> for Runtime {
-    type Amount = Amount;
-    type Balance = Balance;
-    type CurrencyId = ForeignCurrencyId;
-    type Event = Event;
-    type ExistentialDeposits = ExistentialDepositsForeign;
-    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
-    type WeightInfo = ();
-}
-
 parameter_types! {
     pub const ProxyDepositBase: Balance = 1;
     pub const ProxyDepositFactor: Balance = 1;
@@ -363,7 +349,7 @@ impl vln_foreign_asset::Config for Runtime {
 type UsdvInstance = vln_backed_asset::Instance1;
 impl vln_backed_asset::Config<UsdvInstance> for Runtime {
     type Event = Event;
-    type Collateral = ForeignTokens;
+    type Collateral = Tokens;
     type BaseCurrency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
 }
 
@@ -442,6 +428,23 @@ pub use parachain_impl::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_impl {
     use super::*;
+
+    parameter_type_with_key! {
+        pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
+            Zero::zero()
+        };
+    }
+
+    type ForeignTokensInstance = orml_tokens::Instance3;
+    impl orml_tokens::Config<ForeignTokensInstance> for Runtime {
+        type Amount = Amount;
+        type Balance = Balance;
+        type CurrencyId = ForeignCurrencyId;
+        type Event = Event;
+        type ExistentialDeposits = ExistentialDepositsForeign;
+        type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
+        type WeightInfo = ();
+    }
 
     impl cumulus_pallet_parachain_system::Config for Runtime {
         type Event = Event;
@@ -593,7 +596,6 @@ macro_rules! construct_vln_runtime {
                     Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
-                    ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }
@@ -611,6 +613,7 @@ construct_vln_runtime! {
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
+    ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
     Currencies: orml_currencies::{Pallet, Call, Event<T>},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},

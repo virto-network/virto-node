@@ -1,11 +1,12 @@
 // Represents assets from other parachains that are supported in vln parachain
 // Ref : https://github.com/laminar-protocol/laminar-chain/blob/a07ea4aa75bce5d30a24ce2e7a506dda5e22013f/primitives/src/lib.rs#L101
 // Ref : https://github.com/open-web3-stack/open-runtime-module-library/wiki/xtokens
-use parity_scale_codec::{Decode, Encode, Error, Input};
+#![allow(clippy::upper_case_acronyms, clippy::unnecessary_cast)]
+use parity_scale_codec::{Decode, Encode};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::RuntimeDebug;
-use sp_std::{convert::TryFrom, prelude::*, vec};
+use sp_std::{convert::TryFrom, prelude::*};
 
 /// Supported token symbols.
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
@@ -18,7 +19,7 @@ pub enum TokenSymbol {
     /// Polkadot native token.
     DOT = 2,
     /// Valiu's USDV
-    USDV = 3
+    USDV = 3,
 }
 
 impl TryFrom<u8> for TokenSymbol {
@@ -29,7 +30,7 @@ impl TryFrom<u8> for TokenSymbol {
             0 => Ok(TokenSymbol::ACA),
             1 => Ok(TokenSymbol::AUSD),
             2 => Ok(TokenSymbol::DOT),
-            2 => Ok(TokenSymbol::USDV),
+            3 => Ok(TokenSymbol::USDV),
             _ => Err(()),
         }
     }
