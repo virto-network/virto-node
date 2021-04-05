@@ -59,8 +59,10 @@ orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-librar
 orml-oracle = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, version = "0.4.1-dev" }
+orml-xtokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-xcm-support = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-currencies = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-unknown-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 
 # Local dependencies
 vln-primitives = { default-features = false, path = '../primitives' }
@@ -120,6 +122,8 @@ std = [
     'vln-transfers/std',
 	'pallet-membership/std',
 	'orml-xtokens/std',
-	'orml-xcm-support/std'
+	'orml-xcm-support/std',
+	'orml-currencies/std',
+	'orml-unknown-tokens/std'
 ]
 standalone = []

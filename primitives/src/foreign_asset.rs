@@ -10,18 +10,21 @@ use sp_std::{convert::TryFrom, prelude::*, vec};
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ForeignCurrencyId {
-    LAMI = 0,
+    ACA = 0,
     AUSD,
     DOT,
+    LDOT,
+    USDV,
 }
 
 impl TryFrom<Vec<u8>> for ForeignCurrencyId {
     type Error = ();
     fn try_from(v: Vec<u8>) -> Result<ForeignCurrencyId, ()> {
         match v.as_slice() {
-            b"LAMI" => Ok(ForeignCurrencyId::LAMI),
             b"AUSD" => Ok(ForeignCurrencyId::AUSD),
             b"DOT" => Ok(ForeignCurrencyId::DOT),
+            b"LDOT" => Ok(ForeignCurrencyId::LDOT),
+            b"USDV" => Ok(ForeignCurrencyId::USDV),
             _ => Err(()),
         }
     }

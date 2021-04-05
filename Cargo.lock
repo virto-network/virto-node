@@ -3035,9 +3035,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-proc-macros"
-version = "0.2.0-alpha.3"
+version = "0.2.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6bb4afbda476e2ee11cc6245055c498c116fc8002d2d60fe8338b6ee15d84c3a"
+checksum = "8e392bedb66803ec695b045edb7d9d1c213edcbeeffa77ddc7b42a80a68d01ed"
 dependencies = [
  "Inflector",
  "proc-macro2 1.0.26",
@@ -3740,9 +3740,9 @@ dependencies = [
 
 [[package]]
 name = "lock_api"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd96ffd135b2fd7b973ac026d28085defbe8983df057ced3eb4f2130b0831312"
+checksum = "5a3c91c24eae6777794bb1997ad98bbb87daf92890acab859f7eaa4320333176"
 dependencies = [
  "scopeguard 1.1.0",
 ]
@@ -4137,6 +4137,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa9b4819da1bc61c0ea48b63b7bc8604064dd43013e7cc325df098d49cd7c18a"
+dependencies = [
+ "bitflags",
+ "cc",
+ "cfg-if 1.0.0",
+ "libc",
+]
+
+[[package]]
 name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4280,6 +4292,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-currencies"
+version = "0.4.1-dev"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "funty",
+ "orml-traits",
+ "orml-utilities",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+]
+
+[[package]]
 name = "orml-oracle"
 version = "0.4.1-dev"
 source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
@@ -4287,8 +4316,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "funty",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
- "orml-utilities 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits",
+ "orml-utilities",
  "parity-scale-codec",
  "serde",
  "sp-application-crypto",
@@ -4305,26 +4334,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "funty",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
- "sp-runtime",
- "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#db10cfda77388524b6b30faa7300b165c740e6d4"
-dependencies = [
- "frame-support",
- "funty",
- "impl-trait-for-tuples 0.2.1",
- "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
- "parity-scale-codec",
- "serde",
- "sp-io",
  "sp-runtime",
  "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
 ]
@@ -4338,7 +4350,7 @@ dependencies = [
  "funty",
  "impl-trait-for-tuples 0.1.3",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-utilities",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -4347,17 +4359,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-utilities"
+name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#db10cfda77388524b6b30faa7300b165c740e6d4"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "frame-support",
- "funty",
+ "frame-system",
+ "orml-xcm-support",
  "parity-scale-codec",
  "serde",
- "sp-io",
- "sp-runtime",
  "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "xcm",
 ]
 
 [[package]]
@@ -4377,10 +4389,10 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#db10cfda77388524b6b30faa7300b165c740e6d4"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "frame-support",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
@@ -4391,7 +4403,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#db10cfda77388524b6b30faa7300b165c740e6d4"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#44aea194950c9b26fe0710f99ec853a9e6cb2310"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -5177,7 +5189,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d7744ac029df22dca6284efe4e898991d28e3085c706c972bcd7da4a27a15eb"
 dependencies = [
  "instant",
- "lock_api 0.4.2",
+ "lock_api 0.4.3",
  "parking_lot_core 0.8.3",
 ]
 
@@ -6941,8 +6953,8 @@ checksum = "2a34bde3561f980a51c70495164200569a11662644fe5af017f0b5d7015688cc"
 dependencies = [
  "cfg-if 0.1.10",
  "libc",
- "nix",
- "rand 0.6.5",
+ "nix 0.20.0",
+ "rand 0.8.3",
  "winapi 0.3.9",
 ]
 
@@ -8615,9 +8627,9 @@ checksum = "b854a362375dfe8ab12ea8a98228040d37293c988f85fbac9fa0f83336387966"
 dependencies = [
  "cfg-if 0.1.10",
  "libc",
- "nix",
+ "nix 0.20.0",
  "quick-error 2.0.0",
- "rand 0.6.5",
+ "rand 0.8.3",
  "winapi 0.3.9",
 ]
 
@@ -10377,7 +10389,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.6.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
@@ -10565,7 +10577,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -10580,7 +10592,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits",
  "pallet-membership",
  "parity-scale-codec",
  "serde",
@@ -10656,7 +10668,7 @@ dependencies = [
  "hex-literal 0.2.1",
  "jsonrpc-core",
  "log",
- "nix",
+ "nix 0.17.0",
  "pallet-sudo",
  "parity-scale-codec",
  "parking_lot 0.9.0",
@@ -10730,9 +10742,11 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal 0.3.1",
+ "orml-currencies",
  "orml-oracle",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits",
+ "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
  "pallet-aura",
@@ -10776,7 +10790,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-core",

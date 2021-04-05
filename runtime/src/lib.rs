@@ -51,8 +51,13 @@ mod standalone_use {
 use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
+    pub use cumulus_primitives_core::relay_chain::Balance as RelayChainBalance;
     pub use frame_system::EnsureRoot;
-    pub use orml_xcm_support::{NativePalletAssetOr, XcmHandler as XcmHandlerT};
+    pub use orml_currencies::BasicCurrencyAdapter;
+    pub use orml_xcm_support::{
+        CurrencyIdConverter, IsConcreteWithGeneralKey, MultiCurrencyAdapter, NativePalletAssetOr,
+        XcmHandler as XcmHandlerT,
+    };
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::{
         traits::{Convert, Identity},
@@ -442,45 +447,85 @@ mod parachain_impl {
         type Event = Event;
         type OnValidationData = ();
         type SelfParaId = parachain_info::Module<Runtime>;
-        type DownwardMessageHandlers = ();
-        type HrmpMessageHandlers = ();
+        type DownwardMessageHandlers = XcmHandler;
+        type HrmpMessageHandlers = XcmHandler;
+    }
+
+    parameter_types! {
+        pub const GetNativeCurrencyId: ForeignCurrencyId = ForeignCurrencyId::USDV;
+    }
+
+    impl orml_currencies::Config for Runtime {
+        type Event = Event;
+        type MultiCurrency = ForeignTokens;
+        type NativeCurrency = BasicCurrencyAdapter<
+            Runtime,
+            CurrencyAdapter<Runtime, orml_tokens::Instance3, GetNativeCurrencyId>,
+            Amount,
+            BlockNumber,
+        >;
+        type GetNativeCurrencyId = GetNativeCurrencyId;
+        type WeightInfo = ();
+    }
+
+    impl orml_unknown_tokens::Config for Runtime {
+        type Event = Event;
+    }
+
+    pub struct RelayToNative;
+    impl Convert<RelayChainBalance, Balance> for RelayToNative {
+        fn convert(val: u128) -> Balance {
+            // use same as relay for now
+            // TODO: decide conversion factor
+            val
+        }
+    }
+
+    pub struct NativeToRelay;
+    impl Convert<Balance, RelayChainBalance> for NativeToRelay {
+        fn convert(val: u128) -> Balance {
+            // use same as relay for now
+            // TODO: decide conversion factor
+            val
+        }
     }
 
     impl parachain_info::Config for Runtime {}
 
     parameter_types! {
         pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
-        pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
+        pub VlnNetwork: NetworkId = NetworkId::Named("valiu".into());
+        pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
         pub const GetUsdvId: Asset = Asset::Usdv;
         pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();
         pub Ancestry: MultiLocation = Junction::Parachain {
             id: ParachainInfo::parachain_id().into()
         }.into();
+        pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::DOT;
     }
 
     type LocationConverter = (
         ParentIsDefault<AccountId>,
         SiblingParachainConvertsVia<Sibling, AccountId>,
-        AccountId32Aliases<RococoNetwork, AccountId>,
+        AccountId32Aliases<VlnNetwork, AccountId>,
     );
-
-    type LocalAssetTransactor = xcm_builder::CurrencyAdapter<
-        // Use this currency:
-        orml_tokens::CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>,
-        // Use this currency when it is a fungible asset matching the given location or name:
-        IsConcrete<RococoLocation>,
-        // Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
-        LocationConverter,
-        // Our chain's account ID type (we can't get away without mentioning it explicitly):
-        AccountId,
-    >;
 
     type LocalOriginConverter = (
         SovereignSignedViaLocation<LocationConverter, Origin>,
         RelayChainAsNative<RelayChainOrigin, Origin>,
         SiblingParachainAsNative<cumulus_pallet_xcm_handler::Origin, Origin>,
-        SignedAccountId32AsNative<RococoNetwork, Origin>,
+        SignedAccountId32AsNative<VlnNetwork, Origin>,
     );
+
+    type LocalAssetTransactor = MultiCurrencyAdapter<
+        Currencies,
+        UnknownTokens,
+        IsConcreteWithGeneralKey<ForeignCurrencyId, RelayToNative>,
+        LocationConverter,
+        AccountId,
+        CurrencyIdConverter<ForeignCurrencyId, RelayChainCurrencyId>,
+        ForeignCurrencyId,
+    >;
 
     parameter_types! {
         pub NativeOrmlTokens: BTreeSet<(Vec<u8>, MultiLocation)> = {
@@ -583,7 +628,9 @@ construct_vln_runtime! {
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
+    Currencies: orml_currencies::{Pallet, Call, Event<T>},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
+    UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
 }
 
 /// The address format for describing accounts.
