@@ -531,8 +531,8 @@ mod parachain_impl {
         pub NativeOrmlTokens: BTreeSet<(Vec<u8>, MultiLocation)> = {
             let mut t = BTreeSet::new();
             // ausd from acala at parachainid - 666
+            t.insert(("ACA".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
             t.insert(("AUSD".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
-            t
         };
     }
 

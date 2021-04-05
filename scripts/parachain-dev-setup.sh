@@ -33,12 +33,12 @@ function startvlnparachain() {
  rpcport="$5"
 
  # create outputs for chainid
- ./target/debug/vln_parachain export-genesis-state --parachain-id "$chain" > genesis-state-"$chain"
+ ./target/release/vln_parachain export-genesis-state --parachain-id "$chain" > genesis-state-"$chain"
 
- ./target/debug/vln_parachain export-genesis-wasm > genesis-wasm-"$chain"
+ ./target/release/vln_parachain export-genesis-wasm > genesis-wasm-"$chain"
 
  screen -dmS "$screen_name" \
- ./target/debug/vln_parachain --collator --tmp \
+ ./target/release/vln_parachain --collator --tmp \
  --parachain-id "$chain" -lruntime=trace \
  --rpc-external --ws-external --rpc-cors all \
  --port "$port" --ws-port "$wsport" -- --execution wasm \
@@ -53,7 +53,7 @@ function startacalaparachain() {
  ../Acala/target/release/acala export-genesis-wasm --chain dev > genesis-wasm-666
 
  screen -dmS acala \
- ../target/release/acala --chain dev --collator --tmp \
+ ../Acala/target/release/acala --chain dev --collator --tmp \
  --parachain-id 666 -lruntime=trace \
  --rpc-external --ws-external --rpc-cors all \
  --port 40338 --ws-port 9979 -- --execution wasm \
