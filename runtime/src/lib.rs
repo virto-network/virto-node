@@ -1,8 +1,7 @@
 #![allow(
     clippy::large_enum_variant,
     clippy::from_over_into,
-    missing_debug_implementations,
-    deprecated //required to stay with specific commits
+    missing_debug_implementations
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -262,6 +261,10 @@ impl frame_system::Config for Runtime {
     type SystemWeightInfo = ();
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
     type SS58Prefix = SS58Prefix;
+    #[cfg(feature = "standalone")]
+    type OnSetCode = ();
+    #[cfg(not(feature = "standalone"))]
+    type OnSetCode = ParachainSystem;
 }
 
 parameter_types! {
@@ -451,7 +454,7 @@ mod parachain_impl {
         type OnValidationData = ();
         type SelfParaId = parachain_info::Module<Runtime>;
         type DownwardMessageHandlers = XcmHandler;
-        type HrmpMessageHandlers = XcmHandler;
+        type XcmpMessageHandlers = XcmHandler;
     }
 
     parameter_types! {
@@ -538,7 +541,7 @@ mod parachain_impl {
         type Event = Event;
         type XcmExecutor = XcmExecutor<XcmConfig>;
         type UpwardMessageSender = ParachainSystem;
-        type HrmpMessageSender = ParachainSystem;
+        type XcmpMessageSender = ParachainSystem;
         type SendXcmOrigin = EnsureRoot<AccountId>;
         type AccountIdConverter = LocationConverter;
     }
@@ -648,7 +651,7 @@ pub type Executive = frame_executive::Executive<
     Block,
     frame_system::ChainContext<Runtime>,
     Runtime,
-    AllModules,
+    AllPallets,
 >;
 
 impl_runtime_apis! {
