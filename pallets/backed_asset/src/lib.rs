@@ -113,7 +113,7 @@ pub mod pallet {
                     if c == collateral {
                         price += amount;
                     };
-                    *share = Some(Share::from_rational_approximation(price, new_balance));
+                    *share = Some(Share::from_rational(price, new_balance));
                     Ok(())
                 })?;
             }

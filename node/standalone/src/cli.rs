@@ -1,3 +1,4 @@
+#![allow(clippy::all, unused_qualifications)]
 use sc_cli::RunCmd;
 use structopt::StructOpt;
 

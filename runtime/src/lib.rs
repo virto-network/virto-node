@@ -22,7 +22,6 @@ use sp_runtime::{
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
-use sp_std::prelude::*;
 
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -32,6 +31,7 @@ mod proxy_type;
 use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
+use sp_std::prelude::*;
 use vln_primitives::{Asset, Collateral as CollateralType};
 
 #[cfg(feature = "standalone")]
@@ -47,6 +47,35 @@ mod standalone_use {
 }
 
 // XCM imports
+#[cfg(not(feature = "standalone"))]
+use parachain_use::*;
+#[cfg(not(feature = "standalone"))]
+mod parachain_use {
+    pub use cumulus_primitives_core::relay_chain::Balance as RelayChainBalance;
+    pub use frame_system::EnsureRoot;
+    pub use orml_xcm_support::{
+        CurrencyIdConverter, IsConcreteWithGeneralKey, MultiCurrencyAdapter, NativePalletAssetOr,
+        XcmHandler as XcmHandlerT,
+    };
+    pub use polkadot_parachain::primitives::Sibling;
+    pub use sp_runtime::{
+        traits::{Convert, Identity},
+        DispatchResult,
+    };
+    pub use sp_std::collections::btree_set::BTreeSet;
+    pub use vln_primitives::{ForeignCurrencyId, TokenSymbol};
+    pub use xcm::v0::{Junction, MultiLocation, NetworkId, Xcm};
+    pub use xcm_builder::{
+        AccountId32Aliases, LocationInverter, ParentIsDefault, RelayChainAsNative,
+        SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+        SovereignSignedViaLocation,
+    };
+    pub use xcm_executor::{
+        traits::{IsConcrete, NativeAsset},
+        Config, XcmExecutor,
+    };
+}
+
 use frame_system::limits::{BlockLength, BlockWeights};
 
 // A few exports that help ease life for downstream crates.
@@ -231,6 +260,10 @@ impl frame_system::Config for Runtime {
     type SystemWeightInfo = ();
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
     type SS58Prefix = SS58Prefix;
+    #[cfg(feature = "standalone")]
+    type OnSetCode = ();
+    #[cfg(not(feature = "standalone"))]
+    type OnSetCode = ParachainSystem;
 }
 
 parameter_types! {
@@ -398,15 +431,130 @@ pub use parachain_impl::*;
 mod parachain_impl {
     use super::*;
 
+    parameter_type_with_key! {
+        pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
+            Zero::zero()
+        };
+    }
+
+    type NetworkAssetsInstance = orml_tokens::Instance3;
+    impl orml_tokens::Config<NetworkAssetsInstance> for Runtime {
+        type Amount = Amount;
+        type Balance = Balance;
+        type CurrencyId = ForeignCurrencyId;
+        type Event = Event;
+        type ExistentialDeposits = ExistentialDepositsForeign;
+        type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
+        type WeightInfo = ();
+    }
+
     impl cumulus_pallet_parachain_system::Config for Runtime {
         type Event = Event;
         type OnValidationData = ();
         type SelfParaId = parachain_info::Module<Runtime>;
-        type DownwardMessageHandlers = ();
-        type HrmpMessageHandlers = ();
+        type DownwardMessageHandlers = XcmHandler;
+        type XcmpMessageHandlers = XcmHandler;
+    }
+
+    impl orml_unknown_tokens::Config for Runtime {
+        type Event = Event;
     }
 
     impl parachain_info::Config for Runtime {}
+
+    parameter_types! {
+        pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+        pub VlnNetwork: NetworkId = NetworkId::Named("vln".into());
+        pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
+        pub const GetUsdvId: Asset = Asset::Usdv;
+        pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();
+        pub Ancestry: MultiLocation = Junction::Parachain {
+            id: ParachainInfo::parachain_id().into()
+        }.into();
+        pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::DOT);
+    }
+
+    type LocationConverter = (
+        ParentIsDefault<AccountId>,
+        SiblingParachainConvertsVia<Sibling, AccountId>,
+        AccountId32Aliases<VlnNetwork, AccountId>,
+    );
+
+    type LocalOriginConverter = (
+        SovereignSignedViaLocation<LocationConverter, Origin>,
+        RelayChainAsNative<RelayChainOrigin, Origin>,
+        SiblingParachainAsNative<cumulus_pallet_xcm_handler::Origin, Origin>,
+        SignedAccountId32AsNative<VlnNetwork, Origin>,
+    );
+
+    type LocalAssetTransactor = MultiCurrencyAdapter<
+        NetworkAssets,
+        UnknownTokens,
+        IsConcreteWithGeneralKey<ForeignCurrencyId, Identity>,
+        LocationConverter,
+        AccountId,
+        CurrencyIdConverter<ForeignCurrencyId, RelayChainCurrencyId>,
+        ForeignCurrencyId,
+    >;
+
+    parameter_types! {
+        pub NativeOrmlTokens: BTreeSet<(Vec<u8>, MultiLocation)> = {
+            let mut t = BTreeSet::new();
+            // ausd from acala at parachainid - 666
+            t.insert(("ACA".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
+            t.insert(("AUSD".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
+            t
+        };
+    }
+
+    pub struct XcmConfig;
+    impl Config for XcmConfig {
+        type Call = Call;
+        type XcmSender = XcmHandler;
+        // How to withdraw and deposit an asset.
+        type AssetTransactor = LocalAssetTransactor;
+        type OriginConverter = LocalOriginConverter;
+        type IsReserve = NativePalletAssetOr<NativeOrmlTokens>;
+        type IsTeleporter = ();
+        type LocationInverter = LocationInverter<Ancestry>;
+    }
+
+    impl cumulus_pallet_xcm_handler::Config for Runtime {
+        type Event = Event;
+        type XcmExecutor = XcmExecutor<XcmConfig>;
+        type UpwardMessageSender = ParachainSystem;
+        type XcmpMessageSender = ParachainSystem;
+        type SendXcmOrigin = EnsureRoot<AccountId>;
+        type AccountIdConverter = LocationConverter;
+    }
+
+    parameter_types! {
+        pub const GetRelayChainId: NetworkId = NetworkId::Polkadot;
+    }
+
+    pub struct AccountId32Convert;
+    impl Convert<AccountId, [u8; 32]> for AccountId32Convert {
+        fn convert(account_id: AccountId) -> [u8; 32] {
+            account_id.into()
+        }
+    }
+
+    pub struct HandleXcm;
+    impl XcmHandlerT<AccountId> for HandleXcm {
+        fn execute_xcm(origin: AccountId, xcm: Xcm) -> DispatchResult {
+            XcmHandler::execute_xcm(origin, xcm)
+        }
+    }
+
+    impl orml_xtokens::Config for Runtime {
+        type Event = Event;
+        type Balance = Balance;
+        type ToRelayChainBalance = Identity;
+        type AccountId32Convert = AccountId32Convert;
+        type RelayChainNetworkId = GetRelayChainId;
+        type ParaId = ParachainInfo;
+        type XcmHandler = HandleXcm;
+    }
 }
 
 macro_rules! construct_vln_runtime {
@@ -418,21 +566,21 @@ macro_rules! construct_vln_runtime {
                     NodeBlock = opaque::Block,
                     UncheckedExtrinsic = UncheckedExtrinsic,
                 {
-                    System: frame_system::{Module, Call, Storage, Config, Event<T>},
-                    Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-                    RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-                    Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
+                    System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+                    Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+                    RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+                    Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 
                     // vln dependencies
-                    Whitelist: pallet_membership::{Call, Storage, Module, Event<T>, Config<T>},
-                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Module, Storage},
-                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Module, Storage},
-                    Proxy: pallet_proxy::{Call, Event<T>, Module, Storage},
-                    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Module, Storage},
-                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Module, Storage},
-                    Swaps: vln_human_swap::{Call, Event<T>, Module, Storage},
-                    Transfers: vln_transfers::{Call, Event<T>, Module, Storage},
-                    Oracle: orml_oracle::{Call, Event<T>, Module, Storage},
+                    Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
+                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
+                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
+                    Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
+                    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Pallet, Storage},
+                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Pallet, Storage},
+                    Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
+                    Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
+                    Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }
@@ -441,14 +589,18 @@ macro_rules! construct_vln_runtime {
 
 #[cfg(feature = "standalone")]
 construct_vln_runtime! {
-    Aura: pallet_aura::{Config<T>, Module},
-    Grandpa: pallet_grandpa::{Call, Config, Event, Module, Storage},
+    Aura: pallet_aura::{Config<T>, Pallet},
+    Grandpa: pallet_grandpa::{Call, Config, Event, Pallet, Storage},
 }
 
 #[cfg(not(feature = "standalone"))]
 construct_vln_runtime! {
-    ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
-    ParachainInfo: parachain_info::{Module, Storage, Config},
+    ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event},
+    ParachainInfo: parachain_info::{Pallet, Storage, Config},
+    XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
+    NetworkAssets: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
+    XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
+    UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
 }
 
 /// The address format for describing accounts.
@@ -480,7 +632,7 @@ pub type Executive = frame_executive::Executive<
     Block,
     frame_system::ChainContext<Runtime>,
     Runtime,
-    AllModules,
+    AllPallets,
 >;
 
 impl_runtime_apis! {
@@ -525,7 +677,7 @@ impl_runtime_apis! {
         }
 
         fn random_seed() -> <Block as BlockT>::Hash {
-            RandomnessCollectiveFlip::random_seed()
+            RandomnessCollectiveFlip::random_seed().0
         }
     }
 
@@ -562,8 +714,8 @@ impl_runtime_apis! {
             Aura::authorities()
         }
 
-        fn slot_duration() -> u64 {
-            Aura::slot_duration()
+        fn slot_duration() -> sp_consensus_aura::SlotDuration {
+            sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
         }
     }
 

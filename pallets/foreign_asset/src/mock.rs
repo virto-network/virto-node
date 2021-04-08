@@ -19,10 +19,10 @@ frame_support::construct_runtime!(
         NodeBlock = Block,
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
-        System: frame_system::{Module, Call, Config, Storage, Event<T>},
-        Assets: foreign_asset::{Module, Call, Storage, Event<T>},
-        Tokens: orml_tokens::{Module, Event<T>},
-        Whitelist: pallet_membership::{Call, Storage, Module, Event<T>, Config<T>},
+        System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+        Assets: foreign_asset::{Pallet, Call, Storage, Event<T>},
+        Tokens: orml_tokens::{Pallet, Event<T>},
+        Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
     }
 );
 
@@ -54,6 +54,7 @@ impl system::Config for Test {
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
     type SS58Prefix = SS58Prefix;
+    type OnSetCode = ();
 }
 
 parameter_type_with_key! {

@@ -46,7 +46,7 @@ where
 pub fn development_config(id: ParaId) -> ChainSpec {
     ChainSpec::from_genesis(
         // Name
-        "Development",
+        "VLN Development",
         // ID
         "dev",
         ChainType::Local,
@@ -65,7 +65,7 @@ pub fn development_config(id: ParaId) -> ChainSpec {
 pub fn local_testnet_config(id: ParaId) -> ChainSpec {
     ChainSpec::from_genesis(
         // Name
-        "Local Testnet",
+        "VLN Local Testnet",
         // ID
         "local_testnet",
         ChainType::Local,
@@ -97,6 +97,9 @@ fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfi
             endowed_accounts: vec![],
         },
         orml_tokens_Instance2: vln_runtime::CollateralConfig {
+            endowed_accounts: vec![],
+        },
+        orml_tokens_Instance3: vln_runtime::NetworkAssetsConfig {
             endowed_accounts: vec![],
         },
         pallet_membership: vln_runtime::WhitelistConfig {
