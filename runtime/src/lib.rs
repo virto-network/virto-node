@@ -464,7 +464,7 @@ mod parachain_impl {
 
     parameter_types! {
         pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
-        pub VlnNetwork: NetworkId = NetworkId::Named("valiu".into());
+        pub VlnNetwork: NetworkId = NetworkId::Named("vln".into());
         pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
         pub const GetUsdvId: Asset = Asset::Usdv;
         pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();

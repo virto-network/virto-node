@@ -29,5 +29,5 @@ cargo build --release --features real-overseer
 
 Run VLN parachain:
 ```
-./target/release/vln_parachain -d local-test --collator --alice --ws-port 9945 --parachain-id 200 -- --chain ../polkadot/rococo_local.json
+./target/release/vln_parachain -d local-test --collator --alice --ws-port 9945 --parachain-id 200 -- --chain rococo-local
 ```
