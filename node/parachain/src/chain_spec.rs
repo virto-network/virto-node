@@ -1,11 +1,11 @@
 use cumulus_primitives_core::ParaId;
+use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{AccountId, Signature};
-use hex_literal::hex;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
@@ -70,7 +70,12 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         // ID
         "testnet",
         ChainType::Live,
-        move || testnet_genesis(hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into(), id),
+        move || {
+            testnet_genesis(
+                hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into(),
+                id,
+            )
+        },
         vec![],
         None,
         None,
