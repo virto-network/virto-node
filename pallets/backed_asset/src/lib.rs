@@ -1,8 +1,7 @@
 #![allow(
     clippy::unused_unit,
     unused_qualifications,
-    missing_debug_implementations,
-    deprecated //line 116 : Modify later and remove
+    missing_debug_implementations
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
@@ -114,7 +113,7 @@ pub mod pallet {
                     if c == collateral {
                         price += amount;
                     };
-                    *share = Some(Share::from_rational_approximation(price, new_balance));
+                    *share = Some(Share::from_rational(price, new_balance));
                     Ok(())
                 })?;
             }
