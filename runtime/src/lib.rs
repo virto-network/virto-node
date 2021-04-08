@@ -53,7 +53,6 @@ use parachain_use::*;
 mod parachain_use {
     pub use cumulus_primitives_core::relay_chain::Balance as RelayChainBalance;
     pub use frame_system::EnsureRoot;
-    pub use orml_currencies::BasicCurrencyAdapter;
     pub use orml_xcm_support::{
         CurrencyIdConverter, IsConcreteWithGeneralKey, MultiCurrencyAdapter, NativePalletAssetOr,
         XcmHandler as XcmHandlerT,
@@ -67,7 +66,7 @@ mod parachain_use {
     pub use vln_primitives::{ForeignCurrencyId, TokenSymbol};
     pub use xcm::v0::{Junction, MultiLocation, NetworkId, Xcm};
     pub use xcm_builder::{
-        AccountId32Aliases, CurrencyAdapter, LocationInverter, ParentIsDefault, RelayChainAsNative,
+        AccountId32Aliases, LocationInverter, ParentIsDefault, RelayChainAsNative,
         SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
         SovereignSignedViaLocation,
     };
@@ -457,23 +456,6 @@ mod parachain_impl {
         type XcmpMessageHandlers = XcmHandler;
     }
 
-    parameter_types! {
-        pub const GetNativeCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::USDV);
-    }
-
-    impl orml_currencies::Config for Runtime {
-        type Event = Event;
-        type MultiCurrency = ForeignTokens;
-        type NativeCurrency = BasicCurrencyAdapter<
-            Runtime,
-            CurrencyAdapter<Runtime, orml_tokens::Instance3, GetNativeCurrencyId>,
-            Amount,
-            BlockNumber,
-        >;
-        type GetNativeCurrencyId = GetNativeCurrencyId;
-        type WeightInfo = ();
-    }
-
     impl orml_unknown_tokens::Config for Runtime {
         type Event = Event;
     }
@@ -506,7 +488,7 @@ mod parachain_impl {
     );
 
     type LocalAssetTransactor = MultiCurrencyAdapter<
-        Currencies,
+        ForeignTokens,
         UnknownTokens,
         IsConcreteWithGeneralKey<ForeignCurrencyId, Identity>,
         LocationConverter,
@@ -617,7 +599,6 @@ construct_vln_runtime! {
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
     ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
-    Currencies: orml_currencies::{Pallet, Call, Event<T>},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
 }

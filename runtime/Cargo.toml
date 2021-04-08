@@ -61,7 +61,6 @@ pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "roco
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 orml-xtokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 orml-xcm-support = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
-orml-currencies = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 orml-unknown-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 
 # Local dependencies
@@ -123,7 +122,6 @@ std = [
 	'pallet-membership/std',
 	'orml-xtokens/std',
 	'orml-xcm-support/std',
-	'orml-currencies/std',
 	'orml-unknown-tokens/std'
 ]
 standalone = []
