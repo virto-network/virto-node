@@ -5,7 +5,7 @@ Description=Valibre blockchain node
 Type=simple
 Restart=always
 Environment="RUST_LOG=warn"
-ExecStart=/valiu/vln_node \
+ExecStart=/valiu/vln_parachain \
 	--base-path /valiu/data/db \
 	--chain CHAIN_NAME \
 	--name vln-NODE_NAME \

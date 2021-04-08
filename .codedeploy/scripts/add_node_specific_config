@@ -23,10 +23,10 @@ FLAGS=
 
 case "$NAME" in
 	vln)
-		FLAGS="--ws-port 80 --rpc-port 8080 --rpc-external --ws-external --rpc-cors all --node-key $VLN1_KEY"
+		FLAGS="--collator --ws-port 80 --rpc-port 8080 --rpc-external --ws-external --rpc-cors all -- --execution wasm --chain rococo --port 30336"
 		NAME="node"
 		;;
-	*) FLAGS="--validator $(bootnodes vln)";;
+	*) FLAGS="";;
 esac
 
 sed -i "s~CHAIN_NAME~$CHAIN_NAME~" /usr/lib/systemd/system/app.service
