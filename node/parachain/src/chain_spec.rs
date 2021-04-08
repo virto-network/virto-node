@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{AccountId, Signature};
+use hex_literal::hex;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
@@ -46,7 +47,7 @@ where
 pub fn development_config(id: ParaId) -> ChainSpec {
     ChainSpec::from_genesis(
         // Name
-        "VLN Development",
+        "VLN PC Dev",
         // ID
         "dev",
         ChainType::Local,
@@ -56,26 +57,26 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         None,
         None,
         Extensions {
-            relay_chain: "rococo-dev".into(),
+            relay_chain: "rococo-local".into(),
             para_id: id.into(),
         },
     )
 }
 
-pub fn local_testnet_config(id: ParaId) -> ChainSpec {
+pub fn testnet_config(id: ParaId) -> ChainSpec {
     ChainSpec::from_genesis(
         // Name
-        "VLN Local Testnet",
+        "VLN PC",
         // ID
-        "local_testnet",
-        ChainType::Local,
-        move || testnet_genesis(get_account_id_from_seed::<sr25519::Public>("Alice"), id),
+        "testnet",
+        ChainType::Live,
+        move || testnet_genesis(hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into(), id),
         vec![],
         None,
         None,
         None,
         Extensions {
-            relay_chain: "rococo-local".into(),
+            relay_chain: "rococo".into(),
             para_id: id.into(),
         },
     )
