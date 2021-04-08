@@ -437,8 +437,8 @@ mod parachain_impl {
         };
     }
 
-    type ForeignTokensInstance = orml_tokens::Instance3;
-    impl orml_tokens::Config<ForeignTokensInstance> for Runtime {
+    type NetworkAssetsInstance = orml_tokens::Instance3;
+    impl orml_tokens::Config<NetworkAssetsInstance> for Runtime {
         type Amount = Amount;
         type Balance = Balance;
         type CurrencyId = ForeignCurrencyId;
@@ -488,7 +488,7 @@ mod parachain_impl {
     );
 
     type LocalAssetTransactor = MultiCurrencyAdapter<
-        ForeignTokens,
+        NetworkAssets,
         UnknownTokens,
         IsConcreteWithGeneralKey<ForeignCurrencyId, Identity>,
         LocationConverter,
@@ -598,7 +598,7 @@ construct_vln_runtime! {
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
-    ForeignTokens: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
+    NetworkAssets: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
 }

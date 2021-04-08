@@ -99,7 +99,7 @@ fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfi
         orml_tokens_Instance2: vln_runtime::CollateralConfig {
             endowed_accounts: vec![],
         },
-        orml_tokens_Instance3: vln_runtime::ForeignTokensConfig {
+        orml_tokens_Instance3: vln_runtime::NetworkAssetsConfig {
             endowed_accounts: vec![],
         },
         pallet_membership: vln_runtime::WhitelistConfig {
