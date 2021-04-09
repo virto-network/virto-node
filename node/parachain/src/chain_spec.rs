@@ -82,7 +82,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         None,
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: 35_u32,
+            para_id: 3586_u32,
         },
     )
 }
