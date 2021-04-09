@@ -35,8 +35,8 @@ jobs:
           args: --release -p vln-parachain
       - name: Build parachain artifacts
         run: |
-          chmod +x ./scripts/gen-parachain-artifacts.sh
-          ./scripts/gen-parachain-artifacts.sh
+          ./target/release/vln_parachain export-genesis-state --chain testnet > genesis-state
+          ./target/release/vln_parachain export-genesis-wasm --chain testnet > genesis-wasm
       - name: Package files
         uses: actions/upload-artifact@v2
         with:
@@ -57,7 +57,7 @@ jobs:
         with:
           name: build
       - name: Create app.zip
-        run: zip -rj app target/release/vln_parachain genesis-state genesis-wasm .codedeploy/*
+        run: zip -rj app target/release/vln_parachain .codedeploy/*
       - name: S3 Upload
         uses: hannut91/aws-cli@1.18.65
         with:
