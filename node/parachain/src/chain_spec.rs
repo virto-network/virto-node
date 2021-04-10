@@ -17,6 +17,8 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
         .public()
 }
 
+const TESTNET_ROOT_KEY: &str = "b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b";
+
 /// The extensions for the [`ChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
 #[serde(deny_unknown_fields)]
@@ -70,12 +72,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         // ID
         "testnet",
         ChainType::Live,
-        move || {
-            testnet_genesis(
-                hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into(),
-                id,
-            )
-        },
+        move || testnet_genesis(hex![TESTNET_ROOT_KEY].into(), id),
         vec![],
         None,
         None,
