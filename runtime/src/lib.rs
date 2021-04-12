@@ -142,7 +142,10 @@ impl_opaque_keys! {
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
+    #[cfg(feature = "standalone")]
     spec_name: create_runtime_str!("VLN"),
+    #[cfg(not(feature = "standalone"))]
+    spec_name: create_runtime_str!("VLN-PC"),
     impl_name: create_runtime_str!("vln-runtime"),
     authoring_version: 1,
     spec_version: 100, // >100 recommended for compatiblity https://github.com/polkadot-js/api/blob/master/CHANGELOG.md

@@ -1,6 +1,6 @@
 #!/bin/bash
 SERVICE_FILE=/usr/lib/systemd/system/app.service
-BIN=/valiu/vln_node
+BIN=/valiu/vln_parachain
 
 [ ! -f $SERVICE_FILE ] || mv $SERVICE_FILE /tmp/$(basename $SERVICE_FILE).old
 [ ! -f $BIN ] || mv $BIN /tmp/$(basename $BIN).old
