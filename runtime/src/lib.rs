@@ -51,11 +51,11 @@ mod standalone_use {
 use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
-    pub use cumulus_primitives_core::relay_chain::Balance as RelayChainBalance;
+    pub use codec::{Decode, Encode};
+    pub use cumulus_primitives_core::ParaId;
     pub use frame_system::EnsureRoot;
     pub use orml_xcm_support::{
-        CurrencyIdConverter, IsConcreteWithGeneralKey, MultiCurrencyAdapter, NativePalletAssetOr,
-        XcmHandler as XcmHandlerT,
+        IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
     };
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::{
@@ -64,7 +64,12 @@ mod parachain_use {
     };
     pub use sp_std::collections::btree_set::BTreeSet;
     pub use vln_primitives::{ForeignCurrencyId, TokenSymbol};
-    pub use xcm::v0::{Junction, MultiLocation, NetworkId, Xcm};
+    pub use xcm::v0::{
+        Junction::{GeneralKey, Parachain, Parent},
+        MultiAsset,
+        MultiLocation::{self, X1, X2, X3},
+        NetworkId, Xcm,
+    };
     pub use xcm_builder::{
         AccountId32Aliases, LocationInverter, ParentIsDefault, RelayChainAsNative,
         SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
@@ -81,7 +86,7 @@ use frame_system::limits::{BlockLength, BlockWeights};
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness},
+    traits::{Get, KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchClass, IdentityFee, Weight,
@@ -263,7 +268,7 @@ impl frame_system::Config for Runtime {
     #[cfg(feature = "standalone")]
     type OnSetCode = ();
     #[cfg(not(feature = "standalone"))]
-    type OnSetCode = ParachainSystem;
+    type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
 parameter_types! {
@@ -463,12 +468,12 @@ mod parachain_impl {
     impl parachain_info::Config for Runtime {}
 
     parameter_types! {
-        pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+        pub const RococoLocation: MultiLocation = MultiLocation::X1(Parent);
         pub VlnNetwork: NetworkId = NetworkId::Named("vln".into());
         pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
         pub const GetUsdvId: Asset = Asset::Usdv;
         pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();
-        pub Ancestry: MultiLocation = Junction::Parachain {
+        pub Ancestry: MultiLocation = Parachain {
             id: ParachainInfo::parachain_id().into()
         }.into();
         pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::DOT);
@@ -490,31 +495,20 @@ mod parachain_impl {
     type LocalAssetTransactor = MultiCurrencyAdapter<
         NetworkAssets,
         UnknownTokens,
-        IsConcreteWithGeneralKey<ForeignCurrencyId, Identity>,
-        LocationConverter,
+        IsNativeConcrete<ForeignCurrencyId, CurrencyIdConvert>,
         AccountId,
-        CurrencyIdConverter<ForeignCurrencyId, RelayChainCurrencyId>,
+        LocationConverter,
         ForeignCurrencyId,
+        CurrencyIdConvert,
     >;
-
-    parameter_types! {
-        pub NativeOrmlTokens: BTreeSet<(Vec<u8>, MultiLocation)> = {
-            let mut t = BTreeSet::new();
-            // ausd from acala at parachainid - 666
-            t.insert(("ACA".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
-            t.insert(("AUSD".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
-            t
-        };
-    }
 
     pub struct XcmConfig;
     impl Config for XcmConfig {
         type Call = Call;
         type XcmSender = XcmHandler;
-        // How to withdraw and deposit an asset.
         type AssetTransactor = LocalAssetTransactor;
         type OriginConverter = LocalOriginConverter;
-        type IsReserve = NativePalletAssetOr<NativeOrmlTokens>;
+        type IsReserve = MultiNativeAsset;
         type IsTeleporter = ();
         type LocationInverter = LocationInverter<Ancestry>;
     }
@@ -546,13 +540,75 @@ mod parachain_impl {
         }
     }
 
+    fn native_currency_location(id: ForeignCurrencyId) -> MultiLocation {
+        X3(
+            Parent,
+            Parachain {
+                id: ParachainInfo::get().into(),
+            },
+            GeneralKey(id.encode()),
+        )
+    }
+
+    pub struct CurrencyIdConvert;
+    impl Convert<ForeignCurrencyId, Option<MultiLocation>> for CurrencyIdConvert {
+        fn convert(id: ForeignCurrencyId) -> Option<MultiLocation> {
+            use ForeignCurrencyId::Token;
+            use TokenSymbol::*;
+            match id {
+                Token(DOT) => Some(X1(Parent)),
+                Token(ACA) | Token(AUSD) => Some(native_currency_location(id)),
+                _ => None,
+            }
+        }
+    }
+
+    impl Convert<MultiLocation, Option<ForeignCurrencyId>> for CurrencyIdConvert {
+        fn convert(location: MultiLocation) -> Option<ForeignCurrencyId> {
+            use ForeignCurrencyId::Token;
+            use TokenSymbol::*;
+            match location {
+                X1(Parent) => Some(Token(DOT)),
+                X3(Parent, Parachain { id }, GeneralKey(key))
+                    if ParaId::from(id) == ParachainInfo::get() =>
+                {
+                    // decode the general key
+                    if let Ok(currency_id) = ForeignCurrencyId::decode(&mut &key[..]) {
+                        // check if `currency_id` is cross-chain asset
+                        match currency_id {
+                            Token(ACA) | Token(AUSD) => Some(currency_id),
+                            _ => None,
+                        }
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            }
+        }
+    }
+
+    impl Convert<MultiAsset, Option<ForeignCurrencyId>> for CurrencyIdConvert {
+        fn convert(asset: MultiAsset) -> Option<ForeignCurrencyId> {
+            if let MultiAsset::ConcreteFungible { id, amount: _ } = asset {
+                Self::convert(id)
+            } else {
+                None
+            }
+        }
+    }
+
+    parameter_types! {
+        pub SelfLocation: MultiLocation = MultiLocation::X2(Parent, Parachain { id: ParachainInfo::get().into() });
+    }
+
     impl orml_xtokens::Config for Runtime {
         type Event = Event;
         type Balance = Balance;
-        type ToRelayChainBalance = Identity;
+        type CurrencyId = ForeignCurrencyId;
         type AccountId32Convert = AccountId32Convert;
-        type RelayChainNetworkId = GetRelayChainId;
-        type ParaId = ParachainInfo;
+        type CurrencyIdConvert = CurrencyIdConvert;
+        type SelfLocation = SelfLocation;
         type XcmHandler = HandleXcm;
     }
 }
