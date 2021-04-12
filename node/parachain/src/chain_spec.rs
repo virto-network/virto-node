@@ -1,4 +1,5 @@
 use cumulus_primitives_core::ParaId;
+use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -46,7 +47,7 @@ where
 pub fn development_config(id: ParaId) -> ChainSpec {
     ChainSpec::from_genesis(
         // Name
-        "VLN Development",
+        "VLN PC Dev",
         // ID
         "dev",
         ChainType::Local,
@@ -56,27 +57,29 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         None,
         None,
         Extensions {
-            relay_chain: "rococo-dev".into(),
+            relay_chain: "rococo-local".into(),
             para_id: id.into(),
         },
     )
 }
 
-pub fn local_testnet_config(id: ParaId) -> ChainSpec {
+pub fn testnet_config(id: ParaId) -> ChainSpec {
+    let testnet_root_key: AccountId =
+        hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into();
     ChainSpec::from_genesis(
         // Name
-        "VLN Local Testnet",
+        "VLN PC",
         // ID
-        "local_testnet",
-        ChainType::Local,
-        move || testnet_genesis(get_account_id_from_seed::<sr25519::Public>("Alice"), id),
+        "testnet",
+        ChainType::Live,
+        move || testnet_genesis(testnet_root_key.clone(), id),
         vec![],
         None,
         None,
         None,
         Extensions {
-            relay_chain: "rococo-local".into(),
-            para_id: id.into(),
+            relay_chain: "rococo".into(),
+            para_id: 3586_u32,
         },
     )
 }
