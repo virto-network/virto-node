@@ -23,7 +23,7 @@ FLAGS=
 
 case "$NAME" in
 	vln)
-		FLAGS="--ws-port 80 --rpc-port 8080 --rpc-external --ws-external --rpc-cors all"
+		FLAGS="--ws-port 80 --rpc-port 8080 --rpc-external --ws-external --rpc-cors all --node-key $VLN1_KEY"
 		NAME="node"
 		;;
 	*) FLAGS="--collator -- --execution wasm --chain rococo $(bootnodes vln)";;
