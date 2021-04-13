@@ -56,15 +56,15 @@ impl From<Fiat> for Asset {
 enum_with_aux_fns! {
     /// Asset used to back other assets
     pub enum Collateral {
-        Usdc = "USDC",
+        USDC = "USDC",
     }
 }
 
 enum_with_aux_fns! {
     /// A currency issued by a goverment
     pub enum Fiat {
-        Cop = "COP",
-        Vez = "VEZ",
+        COP = "COP",
+        VEZ = "VEZ",
     }
 }
 
