@@ -468,7 +468,7 @@ mod parachain_impl {
     impl parachain_info::Config for Runtime {}
 
     parameter_types! {
-        pub const RococoLocation: MultiLocation = MultiLocation::X1(Parent);
+        pub const RococoLocation: MultiLocation = X1(Parent);
         pub VlnNetwork: NetworkId = NetworkId::Named("vln".into());
         pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
         pub const GetUsdvId: Asset = Asset::Usdv;
@@ -599,7 +599,7 @@ mod parachain_impl {
     }
 
     parameter_types! {
-        pub SelfLocation: MultiLocation = MultiLocation::X2(Parent, Parachain { id: ParachainInfo::get().into() });
+        pub SelfLocation: MultiLocation = X2(Parent, Parachain { id: ParachainInfo::get().into() });
     }
 
     impl orml_xtokens::Config for Runtime {
