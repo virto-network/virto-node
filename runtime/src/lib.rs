@@ -46,16 +46,18 @@ mod standalone_use {
     pub use sp_runtime::traits::NumberFor;
 }
 
+#[cfg(not(feature = "standalone"))]
+mod currency_id_convert;
+
 // XCM imports
 #[cfg(not(feature = "standalone"))]
 use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
-    pub use cumulus_primitives_core::relay_chain::Balance as RelayChainBalance;
+    pub use crate::currency_id_convert::CurrencyIdConvert;
     pub use frame_system::EnsureRoot;
     pub use orml_xcm_support::{
-        CurrencyIdConverter, IsConcreteWithGeneralKey, MultiCurrencyAdapter, NativePalletAssetOr,
-        XcmHandler as XcmHandlerT,
+        IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
     };
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::{
@@ -64,7 +66,11 @@ mod parachain_use {
     };
     pub use sp_std::collections::btree_set::BTreeSet;
     pub use vln_primitives::{ForeignCurrencyId, TokenSymbol};
-    pub use xcm::v0::{Junction, MultiLocation, NetworkId, Xcm};
+    pub use xcm::v0::{
+        Junction::{Parachain, Parent},
+        MultiLocation::{self, X1, X2},
+        NetworkId, Xcm,
+    };
     pub use xcm_builder::{
         AccountId32Aliases, LocationInverter, ParentIsDefault, RelayChainAsNative,
         SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
@@ -81,7 +87,7 @@ use frame_system::limits::{BlockLength, BlockWeights};
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
     construct_runtime, parameter_types,
-    traits::{KeyOwnerProofSystem, Randomness},
+    traits::{Get, KeyOwnerProofSystem, Randomness},
     weights::{
         constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
         DispatchClass, IdentityFee, Weight,
@@ -266,7 +272,7 @@ impl frame_system::Config for Runtime {
     #[cfg(feature = "standalone")]
     type OnSetCode = ();
     #[cfg(not(feature = "standalone"))]
-    type OnSetCode = ParachainSystem;
+    type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
 parameter_types! {
@@ -466,12 +472,12 @@ mod parachain_impl {
     impl parachain_info::Config for Runtime {}
 
     parameter_types! {
-        pub const RococoLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
+        pub const RococoLocation: MultiLocation = X1(Parent);
         pub VlnNetwork: NetworkId = NetworkId::Named("vln".into());
         pub const PolkadotNetwork: NetworkId = NetworkId::Polkadot;
         pub const GetUsdvId: Asset = Asset::Usdv;
         pub RelayChainOrigin: Origin = cumulus_pallet_xcm_handler::Origin::Relay.into();
-        pub Ancestry: MultiLocation = Junction::Parachain {
+        pub Ancestry: MultiLocation = Parachain {
             id: ParachainInfo::parachain_id().into()
         }.into();
         pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::DOT);
@@ -493,31 +499,20 @@ mod parachain_impl {
     type LocalAssetTransactor = MultiCurrencyAdapter<
         NetworkAssets,
         UnknownTokens,
-        IsConcreteWithGeneralKey<ForeignCurrencyId, Identity>,
-        LocationConverter,
+        IsNativeConcrete<ForeignCurrencyId, CurrencyIdConvert>,
         AccountId,
-        CurrencyIdConverter<ForeignCurrencyId, RelayChainCurrencyId>,
+        LocationConverter,
         ForeignCurrencyId,
+        CurrencyIdConvert,
     >;
-
-    parameter_types! {
-        pub NativeOrmlTokens: BTreeSet<(Vec<u8>, MultiLocation)> = {
-            let mut t = BTreeSet::new();
-            // ausd from acala at parachainid - 666
-            t.insert(("ACA".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
-            t.insert(("AUSD".into(), (Junction::Parent, Junction::Parachain { id: 666 }).into()));
-            t
-        };
-    }
 
     pub struct XcmConfig;
     impl Config for XcmConfig {
         type Call = Call;
         type XcmSender = XcmHandler;
-        // How to withdraw and deposit an asset.
         type AssetTransactor = LocalAssetTransactor;
         type OriginConverter = LocalOriginConverter;
-        type IsReserve = NativePalletAssetOr<NativeOrmlTokens>;
+        type IsReserve = MultiNativeAsset;
         type IsTeleporter = ();
         type LocationInverter = LocationInverter<Ancestry>;
     }
@@ -549,13 +544,17 @@ mod parachain_impl {
         }
     }
 
+    parameter_types! {
+        pub SelfLocation: MultiLocation = X2(Parent, Parachain { id: ParachainInfo::get().into() });
+    }
+
     impl orml_xtokens::Config for Runtime {
         type Event = Event;
         type Balance = Balance;
-        type ToRelayChainBalance = Identity;
+        type CurrencyId = ForeignCurrencyId;
         type AccountId32Convert = AccountId32Convert;
-        type RelayChainNetworkId = GetRelayChainId;
-        type ParaId = ParachainInfo;
+        type CurrencyIdConvert = CurrencyIdConvert;
+        type SelfLocation = SelfLocation;
         type XcmHandler = HandleXcm;
     }
 }
