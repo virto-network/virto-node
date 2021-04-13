@@ -18,7 +18,7 @@ macro_rules! enum_with_aux_fns {
     ) => {
         $(#[$meta])*
         #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-        #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, codec::Decode, codec::Encode)]
+        #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode)]
         $v enum $name {
           $($variant,)*
         }

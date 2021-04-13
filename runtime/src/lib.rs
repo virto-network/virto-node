@@ -65,7 +65,7 @@ mod parachain_use {
         DispatchResult,
     };
     pub use sp_std::collections::btree_set::BTreeSet;
-    pub use vln_primitives::{ForeignCurrencyId, TokenSymbol};
+    pub use vln_primitives::NetworkAsset;
     pub use xcm::v0::{
         Junction::{Parachain, Parent},
         MultiLocation::{self, X1, X2},
@@ -441,7 +441,7 @@ mod parachain_impl {
     use super::*;
 
     parameter_type_with_key! {
-        pub ExistentialDepositsForeign: |currency_id: ForeignCurrencyId| -> Balance {
+        pub ExistentialDepositsForeign: |currency_id: NetworkAsset| -> Balance {
             Zero::zero()
         };
     }
@@ -450,7 +450,7 @@ mod parachain_impl {
     impl orml_tokens::Config<NetworkAssetsInstance> for Runtime {
         type Amount = Amount;
         type Balance = Balance;
-        type CurrencyId = ForeignCurrencyId;
+        type CurrencyId = NetworkAsset;
         type Event = Event;
         type ExistentialDeposits = ExistentialDepositsForeign;
         type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
@@ -480,7 +480,7 @@ mod parachain_impl {
         pub Ancestry: MultiLocation = Parachain {
             id: ParachainInfo::parachain_id().into()
         }.into();
-        pub const RelayChainCurrencyId: ForeignCurrencyId = ForeignCurrencyId::Token(TokenSymbol::DOT);
+        pub const RelayChainCurrencyId: NetworkAsset = NetworkAsset::DOT;
     }
 
     type LocationConverter = (
@@ -499,10 +499,10 @@ mod parachain_impl {
     type LocalAssetTransactor = MultiCurrencyAdapter<
         NetworkAssets,
         UnknownTokens,
-        IsNativeConcrete<ForeignCurrencyId, CurrencyIdConvert>,
+        IsNativeConcrete<NetworkAsset, CurrencyIdConvert>,
         AccountId,
         LocationConverter,
-        ForeignCurrencyId,
+        NetworkAsset,
         CurrencyIdConvert,
     >;
 
@@ -551,7 +551,7 @@ mod parachain_impl {
     impl orml_xtokens::Config for Runtime {
         type Event = Event;
         type Balance = Balance;
-        type CurrencyId = ForeignCurrencyId;
+        type CurrencyId = NetworkAsset;
         type AccountId32Convert = AccountId32Convert;
         type CurrencyIdConvert = CurrencyIdConvert;
         type SelfLocation = SelfLocation;

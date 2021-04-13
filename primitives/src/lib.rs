@@ -7,9 +7,7 @@
 #[macro_use]
 mod macros;
 mod asset;
-mod foreign_asset;
 
 pub use asset::*;
-pub use foreign_asset::*;
 
 pub type Share = sp_arithmetic::Permill;

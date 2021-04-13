@@ -1,12 +1,14 @@
+#![allow(clippy::upper_case_acronyms, clippy::unnecessary_cast)]
 use core::fmt;
-use parity_scale_codec as codec;
-
+use parity_scale_codec::{Decode, Encode};
+use sp_std::{convert::TryFrom, prelude::*};
 /// A resource or valuable thing.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, codec::Decode, codec::Encode)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode)]
 pub enum Asset {
     Collateral(Collateral),
     Fiat(Fiat),
+    Network(NetworkAsset),
     Usdv,
 }
 
@@ -17,6 +19,7 @@ impl Asset {
         match *self {
             Self::Collateral(c) => c.as_str(),
             Self::Fiat(f) => f.as_str(),
+            Self::Network(n) => n.as_str(),
             Self::Usdv => "USDv",
         }
     }
@@ -53,14 +56,34 @@ impl From<Fiat> for Asset {
 enum_with_aux_fns! {
     /// Asset used to back other assets
     pub enum Collateral {
-        Usdc = "USDC",
+        USDC = "USDC",
     }
 }
 
 enum_with_aux_fns! {
     /// A currency issued by a goverment
     pub enum Fiat {
-        Cop = "COP",
-        Vez = "VEZ",
+        COP = "COP",
+        VEZ = "VEZ",
+    }
+}
+
+enum_with_aux_fns! {
+    pub enum NetworkAsset {
+        ACA = "ACA",
+        AUSD = "AUSD",
+        DOT = "DOT",
+    }
+}
+
+impl TryFrom<Vec<u8>> for Asset {
+    type Error = ();
+    fn try_from(v: Vec<u8>) -> Result<Asset, ()> {
+        match v.as_slice() {
+            b"ACA" => Ok(Asset::Network(NetworkAsset::ACA)),
+            b"AUSD" => Ok(Asset::Network(NetworkAsset::AUSD)),
+            b"DOT" => Ok(Asset::Network(NetworkAsset::DOT)),
+            _ => Err(()),
+        }
     }
 }
