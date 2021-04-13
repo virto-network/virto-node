@@ -1,3 +1,6 @@
 .static/
 target/
 .DS_Store
+genesis-state
+.gitignore
+genesis-wasm
