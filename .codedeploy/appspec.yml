@@ -3,7 +3,7 @@ os: linux
 files:
         - source: app.service
           destination: /usr/lib/systemd/system/
-        - source: vln_node
+        - source: vln_parachain
           destination: /valiu/
 
 hooks:
