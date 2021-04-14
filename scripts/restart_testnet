@@ -30,17 +30,17 @@ clean_validator_remotely() {
 
 	ssh -tt $HOST CHAIN=$CHAIN AURA=$aura_key GRAN=$gran_key 'bash -s --' <<-'ENDSSH'
 	sudo systemctl stop app
-	sudo /valiu/vln_node purge-chain -y --base-path /valiu/data/db --chain $CHAIN
-	insert_key() { curl localhost:8080 -H 'Content-Type: application/json' -d "$1" ; }
+	sudo /valiu/vln_parachain purge-chain -y --base-path /valiu/data/db --chain $CHAIN
+	#insert_key() { curl localhost:8080 -H 'Content-Type: application/json' -d "$1" ; }
 
-	sudo /valiu/vln_node --base-path /valiu/data/db --chain $CHAIN \
+	sudo /valiu/vln_parachain --base-path /valiu/data/db --chain $CHAIN \
 		--validator --rpc-port 8080 --rpc-methods Unsafe --no-prometheus &
 	sleep 3
 
-	insert_key $AURA
-	insert_key $GRAN
+	#insert_key $AURA
+	#insert_key $GRAN
 
-	sudo killall vln_node
+	sudo killall vln_parachain
 	exit
 ENDSSH
 }
@@ -49,7 +49,7 @@ read -a full_node <<< $(aws_ec2_node_ip valiu_vln)
 echo "Cleaning full-node ${full_node[0]}(${full_node[1]})"
 ssh -tt ${full_node[1]} CHAIN=$CHAIN 'bash -s --' <<'ENDSSH'
 sudo systemctl stop app
-sudo /valiu/vln_node purge-chain -y --base-path /valiu/data/db --chain $CHAIN || true
+sudo /valiu/vln_parachain purge-chain -y --base-path /valiu/data/db --chain $CHAIN || true
 exit
 ENDSSH
 
