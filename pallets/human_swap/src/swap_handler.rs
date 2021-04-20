@@ -19,4 +19,20 @@ pub trait SwapHandler {
 // We can make SwapHandler generic and put valiu business logic here
 pub struct ValiuSwapHandler;
 impl SwapHandler for ValiuSwapHandler {
+
+    fn create_cash_in(who: Origin, human: RateProvider, amount: Balance, from_currency: Currency, to_currency: Currency) -> Result {
+    }
+
+    fn create_cash_out(who: Origin, human: RateProvider, amount: Balance, from_currency: Currency, to_currency: Currency) -> Result {
+        // Caller can reserve amount of from_currency, the human can claim the locked amount on calling complete_cash_out?
+    }
+
+    fn complete_cash_in(who: Origin, amount: Balance, currency: Currency, dest: Destination) -> Result {
+        // this should just transfer the amount from human to caller
+    }
+
+    fn complete_cash_out(who: Origin, proof: FileHash) -> Result {
+        // on calling with proof of offchain transfer - the amount reserved by the caller can be unlocked
+        // but without verification of proof this is free money $$ - maybe require approval from creator?
+    }
 }
