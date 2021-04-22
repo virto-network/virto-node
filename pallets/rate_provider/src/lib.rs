@@ -24,7 +24,6 @@ pub mod pallet {
         dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
     };
     use frame_system::pallet_prelude::*;
-    use sp_runtime::FixedU128;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -35,6 +34,8 @@ pub mod pallet {
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
         /// anyone should be able to publish rates
         type Whitelist: Contains<Self::AccountId>;
+        /// The rates value type
+        type RatesValue: Parameter + Member + Ord;
     }
 
     #[pallet::pallet]
@@ -44,14 +45,15 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn rates)]
     // Rates provided by an LP, the actual rate is not stored here
-    // this only represents the 
+    // this only represents the basis points above/below the rates supplied by oracle
+    // module
     pub(super) type RateStore<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
         Rates<T::CurrencyId>,
         Twox64Concat,
         T::AccountId,
-        FixedU128,
+        T::RatesValue,
         OptionQuery,
     >;
 
@@ -83,7 +85,7 @@ pub mod pallet {
             from: T::CurrencyId,
             to: T::CurrencyId,
             method: PaymentMethod,
-            rate: FixedU128,
+            rate: T::RatesValue,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
@@ -110,13 +112,15 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> RateProvider<T::CurrencyId, PaymentMethod, T::AccountId, FixedU128> for Pallet<T> {
+    impl<T: Config> RateProvider<T::CurrencyId, PaymentMethod, T::AccountId, T::RatesValue>
+        for Pallet<T>
+    {
         fn get_rates(
             from: T::CurrencyId,
             to: T::CurrencyId,
             method: PaymentMethod,
             who: T::AccountId,
-        ) -> Option<FixedU128> {
+        ) -> Option<T::RatesValue> {
             RateStore::<T>::get(Rates { from, to, method }, who)
         }
     }

@@ -11079,7 +11079,6 @@ dependencies = [
 name = "vln-primitives"
 version = "0.1.0"
 dependencies = [
- "frame-support",
  "parity-scale-codec",
  "serde",
  "sp-arithmetic 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
