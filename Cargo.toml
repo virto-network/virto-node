@@ -9,6 +9,7 @@ members = [
     'pallets/foreign_asset',
     'pallets/human_swap',
     'pallets/transfers',
+    'pallets/rate_provider',
     'primitives',
     'runtime'
 ]
