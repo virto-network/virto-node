@@ -1,3 +1,8 @@
+#![allow(
+    clippy::unused_unit,
+    unused_qualifications,
+    missing_debug_implementations
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
 pub use pallet::*;
@@ -11,19 +16,26 @@ mod tests;
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Rates<CurrencyId> {
+pub struct Rates<CurrencyId, BaseCurrencyId> {
     pub from: CurrencyId,
-    pub to: CurrencyId,
+    pub to: BaseCurrencyId,
     pub method: PaymentMethod,
+}
+
+pub mod primitives {
+    // NOTE We should be able to make our module generic over any kind of `PerThing`
+    pub type LpRatePremium = sp_runtime::Percent;
 }
 
 #[frame_support::pallet]
 pub mod pallet {
-    use crate::{PaymentMethod, RateProvider, Rates};
+    use crate::{primitives::LpRatePremium, PaymentMethod, RateProvider, Rates};
     use frame_support::{
         dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
     };
     use frame_system::pallet_prelude::*;
+    use orml_traits::DataProvider;
+    use sp_runtime::traits::AtLeast32BitUnsigned;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -31,11 +43,15 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Type of assets that the LP can set rates for
         type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
+        /// Type of the base currency
+        type BaseCurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
+        /// type of Oracle Provider
+        type OracleProvider: DataProvider<Self::CurrencyId, Self::OracleValue>;
+        /// type of Oracle Value
+        type OracleValue: Parameter + Member + Ord + AtLeast32BitUnsigned;
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
         /// anyone should be able to publish rates
         type Whitelist: Contains<Self::AccountId>;
-        /// The rates value type
-        type RatesValue: Parameter + Member + Ord;
     }
 
     #[pallet::pallet]
@@ -50,21 +66,25 @@ pub mod pallet {
     pub(super) type RateStore<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
-        Rates<T::CurrencyId>,
+        Rates<T::CurrencyId, T::BaseCurrencyId>,
         Twox64Concat,
         T::AccountId,
-        T::RatesValue,
+        LpRatePremium,
         OptionQuery,
     >;
 
     #[pallet::event]
-    #[pallet::metadata(T::AccountId = "AccountId", T::CurrencyId = "CurrencyId")]
+    #[pallet::metadata(
+        T::AccountId = "AccountId",
+        T::CurrencyId = "CurrencyId",
+        T::BaseCurrencyId = "BaseCurrencyId"
+    )]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Rate has been updated
-        RatesUpdated(T::AccountId, T::CurrencyId, T::CurrencyId),
+        RatesUpdated(T::AccountId, T::CurrencyId, T::BaseCurrencyId),
         /// Rates have been removed by LP
-        RatesRemoved(T::AccountId, T::CurrencyId, T::CurrencyId),
+        RatesRemoved(T::AccountId, T::CurrencyId, T::BaseCurrencyId),
     }
 
     #[pallet::error]
@@ -83,9 +103,9 @@ pub mod pallet {
         pub fn update_price(
             origin: OriginFor<T>,
             from: T::CurrencyId,
-            to: T::CurrencyId,
+            to: T::BaseCurrencyId,
             method: PaymentMethod,
-            rate: T::RatesValue,
+            rate: LpRatePremium,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
@@ -97,12 +117,12 @@ pub mod pallet {
         }
 
         /// Remove any exising price stored by LP
-        /// Can be called when LPs want to optout from serving a pair
+        /// Can be called when LPs want to opt-out from serving a pair
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn remove_price(
             origin: OriginFor<T>,
             from: T::CurrencyId,
-            to: T::CurrencyId,
+            to: T::BaseCurrencyId,
             method: PaymentMethod,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
@@ -112,16 +132,20 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> RateProvider<T::CurrencyId, PaymentMethod, T::AccountId, T::RatesValue>
+    impl<T: Config>
+        RateProvider<T::CurrencyId, T::BaseCurrencyId, PaymentMethod, T::AccountId, T::OracleValue>
         for Pallet<T>
     {
         fn get_rates(
             from: T::CurrencyId,
-            to: T::CurrencyId,
+            to: T::BaseCurrencyId,
             method: PaymentMethod,
             who: T::AccountId,
-        ) -> Option<T::RatesValue> {
-            RateStore::<T>::get(Rates { from, to, method }, who)
+        ) -> Option<T::OracleValue> {
+            let lp_premium = RateStore::<T>::get(Rates { from, to, method }, who)?;
+            // asssuming that to(base-currency) is USD or any value thats common everywhere
+            let oracle_rate = T::OracleProvider::get(&from)?;
+            Some(lp_premium.mul_floor(oracle_rate.clone()) + oracle_rate)
         }
     }
 }

@@ -1,6 +1,7 @@
 use crate as rate_provider;
 use frame_support::{parameter_types, traits::Contains};
 use frame_system as system;
+use orml_traits::DataProvider;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -67,11 +68,23 @@ impl Contains<AccountId> for MockMembership {
     }
 }
 
+pub struct MockOracle;
+impl DataProvider<u32, u32> for MockOracle {
+    fn get(key: &u32) -> Option<u32> {
+        match key {
+            1 => Some(100),
+            _ => None,
+        }
+    }
+}
+
 impl rate_provider::Config for Test {
     type Event = Event;
     type CurrencyId = u32;
+    type BaseCurrencyId = u32;
     type Whitelist = MockMembership;
-    type RatesValue = u32;
+    type OracleProvider = MockOracle;
+    type OracleValue = u32;
 }
 
 // Build genesis storage according to the mock runtime.

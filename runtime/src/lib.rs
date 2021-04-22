@@ -401,6 +401,15 @@ impl pallet_membership::Config for Runtime {
     type MembershipChanged = ();
 }
 
+impl vln_rates_provider::Config for Runtime {
+    type Event = Event;
+    type CurrencyId = Asset;
+    type BaseCurrencyId = Asset;
+    type Whitelist = Whitelist;
+    type OracleProvider = Oracle;
+    type OracleValue = FixedU128;
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -583,6 +592,7 @@ macro_rules! construct_vln_runtime {
                     Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
+                    RatesProvider: vln_rates_provider::{Call, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }

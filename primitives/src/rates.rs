@@ -10,6 +10,6 @@ pub enum PaymentMethod {
 }
 
 // A trait for querying rates supplied by an LP
-pub trait RateProvider<T, M, Z, U> {
-    fn get_rates(from: T, to: T, method: M, who: Z) -> Option<U>;
+pub trait RateProvider<T, X, M, Z, U> {
+    fn get_rates(from: T, to: X, method: M, who: Z) -> Option<U>;
 }

@@ -20,6 +20,11 @@ Assume that COP-USDv price is 100, but a certain LP can process the payments at 
 `update_price(origin, from_currency, to_currency, payment_method, rate)` - Create/update the rate that LP will accept
 `remove_price(origin, from_currency, to_currency, payment_method)` - Delist a pair/payment method for the LP
 
+## Implementations
+
+The RatesProvider module provides implementations for the following traits.
+- [`RateProvider`](../../primitives/src/rates.rs)
+
 ## GenesisConfig
 
 The rates_provider pallet does not depend on the `GenesisConfig`
