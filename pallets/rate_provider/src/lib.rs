@@ -35,7 +35,6 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::DataProvider;
-    use sp_runtime::traits::AtLeast32BitUnsigned;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -48,7 +47,7 @@ pub mod pallet {
         /// type of Oracle Provider
         type OracleProvider: DataProvider<Self::CurrencyId, Self::OracleValue>;
         /// type of Oracle Value
-        type OracleValue: Parameter + Member + Ord + AtLeast32BitUnsigned;
+        type OracleValue: Parameter + Member + Ord;
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
         /// anyone should be able to publish rates
         type Whitelist: Contains<Self::AccountId>;
@@ -133,19 +132,25 @@ pub mod pallet {
     }
 
     impl<T: Config>
-        RateProvider<T::CurrencyId, T::BaseCurrencyId, PaymentMethod, T::AccountId, T::OracleValue>
-        for Pallet<T>
+        RateProvider<
+            T::CurrencyId,
+            T::BaseCurrencyId,
+            PaymentMethod,
+            T::AccountId,
+            T::OracleValue,
+            LpRatePremium,
+        > for Pallet<T>
     {
         fn get_rates(
             from: T::CurrencyId,
             to: T::BaseCurrencyId,
             method: PaymentMethod,
             who: T::AccountId,
-        ) -> Option<T::OracleValue> {
+        ) -> Option<(T::OracleValue, LpRatePremium)> {
             let lp_premium = RateStore::<T>::get(Rates { from, to, method }, who)?;
             // asssuming that to(base-currency) is USD or any value thats common everywhere
             let oracle_rate = T::OracleProvider::get(&from)?;
-            Some(lp_premium.mul_floor(oracle_rate.clone()) + oracle_rate)
+            Some((oracle_rate, lp_premium))
         }
     }
 }

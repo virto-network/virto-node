@@ -30,7 +30,10 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Percent::from_percent(1)
         ),);
-        assert_eq!(Rates::get_rates(1, 2, PaymentMethod::BankX, 10), Some(101));
+        assert_eq!(
+            Rates::get_rates(1, 2, PaymentMethod::BankX, 10),
+            Some((100, Percent::from_percent(1)))
+        );
 
         assert_ok!(Rates::update_price(
             Origin::signed(10),
@@ -39,7 +42,10 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Percent::from_percent(4)
         ),);
-        assert_eq!(Rates::get_rates(1, 2, PaymentMethod::BankX, 10), Some(104));
+        assert_eq!(
+            Rates::get_rates(1, 2, PaymentMethod::BankX, 10),
+            Some((100, Percent::from_percent(4)))
+        );
     });
 }
 
@@ -53,7 +59,10 @@ fn test_remove_rates_work() {
             PaymentMethod::BankX,
             Percent::from_parts(1)
         ),);
-        assert_eq!(Rates::get_rates(1, 2, PaymentMethod::BankX, 10), Some(101));
+        assert_eq!(
+            Rates::get_rates(1, 2, PaymentMethod::BankX, 10),
+            Some((100, Percent::from_percent(1)))
+        );
         assert_ok!(Rates::remove_price(
             Origin::signed(10),
             1,
