@@ -1,5 +1,5 @@
 use parity_scale_codec::{Decode, Encode};
-use sp_runtime::{traits::Saturating, FixedU128, Percent};
+use sp_runtime::{traits::Saturating, FixedU128, Permill};
 
 // The payment method that is taken for a cashin or cashout
 // TODO: Replace with actual provider names
@@ -22,8 +22,8 @@ pub trait RatePremiumCalc<R, P> {
 
 #[derive(Debug)]
 pub struct DefaultRatePremiumCalc;
-impl RatePremiumCalc<FixedU128, Percent> for DefaultRatePremiumCalc {
-    fn combine_rates(rate: FixedU128, premium: Percent) -> FixedU128 {
+impl RatePremiumCalc<FixedU128, Permill> for DefaultRatePremiumCalc {
+    fn combine_rates(rate: FixedU128, premium: Permill) -> FixedU128 {
         rate.saturating_mul(FixedU128::from(premium))
             .saturating_add(rate)
     }

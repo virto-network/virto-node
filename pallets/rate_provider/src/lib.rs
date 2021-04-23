@@ -24,7 +24,7 @@ pub struct Rates<CurrencyId, BaseCurrencyId> {
 
 pub mod primitives {
     // NOTE We should be able to make our module generic over any kind of `PerThing`
-    pub type LpRatePremium = sp_runtime::Percent;
+    pub type LpRatePremium = sp_runtime::Permill;
 }
 
 #[frame_support::pallet]
