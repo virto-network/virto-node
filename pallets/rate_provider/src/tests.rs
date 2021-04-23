@@ -1,7 +1,7 @@
 use crate::mock::*;
 use frame_support::{assert_noop, assert_ok};
-use sp_runtime::Percent;
-use vln_primitives::{PaymentMethod, RateProvider};
+use sp_runtime::{FixedU128, Percent};
+use vln_primitives::{DefaultRatePremiumCalc, PaymentMethod, RatePremiumCalc, RateProvider};
 
 #[test]
 fn test_non_whitelisted_call_must_fail() {
@@ -30,9 +30,10 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Percent::from_percent(1)
         ),);
+        let (rate, premium) = Rates::get_rates(1, 2, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            Rates::get_rates(1, 2, PaymentMethod::BankX, 10),
-            Some((100, Percent::from_percent(1)))
+            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            FixedU128::from(101)
         );
 
         assert_ok!(Rates::update_price(
@@ -40,11 +41,12 @@ fn test_add_rates_work() {
             1,
             2,
             PaymentMethod::BankX,
-            Percent::from_percent(4)
+            Percent::from_percent(45)
         ),);
+        let (rate, premium) = Rates::get_rates(1, 2, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            Rates::get_rates(1, 2, PaymentMethod::BankX, 10),
-            Some((100, Percent::from_percent(4)))
+            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            FixedU128::from(145)
         );
     });
 }
@@ -61,7 +63,7 @@ fn test_remove_rates_work() {
         ),);
         assert_eq!(
             Rates::get_rates(1, 2, PaymentMethod::BankX, 10),
-            Some((100, Percent::from_percent(1)))
+            Some((FixedU128::from(100), Percent::from_percent(1)))
         );
         assert_ok!(Rates::remove_price(
             Origin::signed(10),

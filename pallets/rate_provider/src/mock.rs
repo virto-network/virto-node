@@ -6,6 +6,7 @@ use sp_core::H256;
 use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
+    FixedU128,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -68,11 +69,12 @@ impl Contains<AccountId> for MockMembership {
     }
 }
 
+pub type OracleValue = FixedU128;
 pub struct MockOracle;
-impl DataProvider<u32, u32> for MockOracle {
-    fn get(key: &u32) -> Option<u32> {
+impl DataProvider<u32, OracleValue> for MockOracle {
+    fn get(key: &u32) -> Option<OracleValue> {
         match key {
-            1 => Some(100),
+            1 => Some(FixedU128::from(100)),
             _ => None,
         }
     }
@@ -84,7 +86,7 @@ impl rate_provider::Config for Test {
     type BaseCurrencyId = u32;
     type Whitelist = MockMembership;
     type OracleProvider = MockOracle;
-    type OracleValue = u32;
+    type OracleValue = OracleValue;
 }
 
 // Build genesis storage according to the mock runtime.
