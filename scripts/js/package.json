@@ -1,0 +1,20 @@
+{
+  "name": "vln-test-scripts",
+  "version": "1.0.0",
+  "description": "Scripts to help with xcm testing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@acala-network/api": "^0.7.3",
+    "@acala-network/types": "^0.7.3",
+    "@polkadot/api": "^4.6.2",
+    "@polkadot/util-crypto": "^6.2.1",
+    "bn.js": "^5.2.0",
+    "dotenv": "^8.2.0",
+    "shelljs": "^0.8.4"
+  }
+}

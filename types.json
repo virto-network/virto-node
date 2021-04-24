@@ -21,6 +21,8 @@
   "OracleKey": "Asset",
   "OracleValue": "FixedU128",
   "CurrencyIdOf": "ForeignCurrencyId",
+  "Amount": "i64",
+  "AmountOf": "Amount",
   "TimestampedValue": {
     "value": "OracleValue",
     "timestamp": "Moment"

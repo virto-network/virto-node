@@ -19,7 +19,7 @@ function startrelaychain() {
  rpcport="$5"
 
  screen -dmS "$screen_name" \
- ../polkadot/target/release/polkadot --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
+ ../polkadot/target/release/polkadot --chain "../polkadot/rococo-local-cfde.json" \
  --tmp --rpc-external --ws-external --rpc-cors all --discover-local -lruntime=trace \
   --ws-port "$wsport" --port "$port" --rpc-port "$rpcport" \
   "$(flagify "$auth")"
@@ -42,22 +42,22 @@ function startvlnparachain() {
  --parachain-id "$chain" -lruntime=trace \
  --rpc-external --ws-external --rpc-cors all \
  --port "$port" --ws-port "$wsport" -- --execution wasm \
- --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
+ --chain "../polkadot/rococo-local-cfde.json" \
  --port "$rpcport"
 }
 
 function startacalaparachain() {
  # create outputs for chainid
- ../Acala/target/release/acala export-genesis-state --chain dev --parachain-id 666 > genesis-state-666
+ ../Acala/target/release/acala export-genesis-state --chain dev --parachain-id 1000 > genesis-state-1000
 
- ../Acala/target/release/acala export-genesis-wasm --chain dev > genesis-wasm-666
+ ../Acala/target/release/acala export-genesis-wasm --chain dev > genesis-wasm-1000
 
  screen -dmS acala \
  ../Acala/target/release/acala --chain dev --collator --tmp \
- --parachain-id 666 -lruntime=trace \
+ --parachain-id 1000 -lruntime=trace \
  --rpc-external --ws-external --rpc-cors all \
  --port 40338 --ws-port 9979 -- --execution wasm \
- --chain "../polkadot/rococo-local-cfde-real-overseer.json" \
+ --chain "../polkadot/rococo-local-cfde.json" \
  --port 30339
 }
 
@@ -70,5 +70,5 @@ startrelaychain relay3 charlie 30335 9946 9935
 #startacalaparachain
 
 # start vln parachain
-startvlnparachain vln 200 40335 9947 30336
+startvlnparachain vln 3586 40335 9947 30336
 #startvlnparachain vln2 400 40336 9948 30337

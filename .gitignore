@@ -3,3 +3,5 @@ target/
 .DS_Store
 genesis-state
 genesis-wasm
+node_modules/
+scripts/js/.env
