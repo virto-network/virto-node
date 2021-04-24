@@ -4,9 +4,7 @@
     missing_debug_implementations
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
-use codec::{Decode, Encode};
 pub use pallet::*;
-pub use vln_primitives::{PaymentMethod, RateProvider};
 
 #[cfg(test)]
 mod mock;
@@ -14,27 +12,14 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Rates<Asset, BaseAsset> {
-    pub from: Asset,
-    pub to: BaseAsset,
-    pub medium: PaymentMethod,
-}
-
-pub mod primitives {
-    // NOTE We should be able to make our module generic over any kind of `PerThing`
-    pub type LpRatePremium = sp_runtime::Permill;
-}
-
 #[frame_support::pallet]
 pub mod pallet {
-    use crate::{primitives::LpRatePremium, PaymentMethod, RateProvider, Rates};
     use frame_support::{
         dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::DataProvider;
+    use vln_primitives::{AssetPair, PaymentMethod, RatePremiumType, RateProvider, Rates};
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -68,7 +53,7 @@ pub mod pallet {
         Rates<T::Asset, T::BaseAsset>,
         Twox64Concat,
         T::AccountId,
-        LpRatePremium,
+        RatePremiumType,
         OptionQuery,
     >;
 
@@ -101,17 +86,24 @@ pub mod pallet {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn update_price(
             origin: OriginFor<T>,
-            from: T::Asset,
-            to: T::BaseAsset,
+            base: T::Asset,
+            quote: T::BaseAsset,
             medium: PaymentMethod,
-            rate: LpRatePremium,
+            rate: RatePremiumType,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotPermitted);
             // Update storage.
-            RateStore::<T>::insert(Rates { from, to, medium }, &who, rate);
-            Self::deposit_event(Event::RatesUpdated(who, from, to));
+            RateStore::<T>::insert(
+                Rates {
+                    pair: AssetPair { base, quote },
+                    medium,
+                },
+                &who,
+                rate,
+            );
+            Self::deposit_event(Event::RatesUpdated(who, base, quote));
             Ok(().into())
         }
 
@@ -120,36 +112,47 @@ pub mod pallet {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn remove_price(
             origin: OriginFor<T>,
-            from: T::Asset,
-            to: T::BaseAsset,
+            base: T::Asset,
+            quote: T::BaseAsset,
             medium: PaymentMethod,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            RateStore::<T>::remove(Rates { from, to, medium }, &who);
-            Self::deposit_event(Event::RatesRemoved(who, from, to));
+            RateStore::<T>::remove(
+                Rates {
+                    pair: AssetPair { base, quote },
+                    medium,
+                },
+                &who,
+            );
+            Self::deposit_event(Event::RatesRemoved(who, base, quote));
             Ok(().into())
         }
     }
 
     impl<T: Config>
         RateProvider<
-            T::Asset,
-            T::BaseAsset,
+            AssetPair<T::Asset, T::BaseAsset>,
             PaymentMethod,
             T::AccountId,
             T::OracleValue,
-            LpRatePremium,
+            RatePremiumType,
         > for Pallet<T>
     {
         fn get_rates(
-            from: T::Asset,
-            to: T::BaseAsset,
+            pair: AssetPair<T::Asset, T::BaseAsset>,
             medium: PaymentMethod,
             who: T::AccountId,
-        ) -> Option<(T::OracleValue, LpRatePremium)> {
-            let lp_premium = RateStore::<T>::get(Rates { from, to, medium }, who)?;
-            // asssuming that to(base-currency) is USD or any value thats common everywhere
-            let oracle_rate = T::PriceFeed::get(&from)?;
+        ) -> Option<(T::OracleValue, RatePremiumType)> {
+            let lp_premium = RateStore::<T>::get(
+                Rates {
+                    pair: pair.clone(),
+                    medium,
+                },
+                &who,
+            )?;
+            // asssuming that quote (base-currency) is USD or any value thats common between the price-feed
+            // and the provider
+            let oracle_rate = T::PriceFeed::get(&pair.base)?;
             Some((oracle_rate, lp_premium))
         }
     }
