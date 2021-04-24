@@ -32,7 +32,7 @@ use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, Collateral as CollateralType};
+use vln_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -408,6 +408,7 @@ impl vln_rate_provider::Config for Runtime {
     type Whitelist = Whitelist;
     type PriceFeed = Oracle;
     type OracleValue = FixedU128;
+    type RateCombinator = DefaultRateCombinator;
 }
 
 #[cfg(feature = "standalone")]

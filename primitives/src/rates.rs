@@ -2,20 +2,27 @@ use parity_scale_codec::{Decode, Encode};
 use sp_runtime::{traits::Saturating, FixedU128, Permill};
 
 // type to represent the premium charged by provider
-pub type RatePremiumType = sp_runtime::Permill;
+pub type RatePremiumType = Permill;
+
+#[allow(unused_qualifications)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct RateDetail<T> {
+    pub rate: T,
+}
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Rates<Base, Quote> {
-    pub pair: AssetPair<Base, Quote>,
+pub struct Rates<B, Q> {
+    pub pair: AssetPair<B, Q>,
     pub medium: PaymentMethod,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AssetPair<Base, Quote> {
-    pub base: Base,
-    pub quote: Quote,
+pub struct AssetPair<B, Q> {
+    pub base: B,
+    pub quote: Q,
 }
 
 // The payment method that is taken for a cashin or cashout
