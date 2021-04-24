@@ -16,7 +16,7 @@ const NETWORK_PROVIDER = {
 const CUSTOM_TYPES = {
   relay: null,
   localvln: vln_types,
-  livevln: vln_types
+  livevln: vln_types,
 };
 
 function buildConnection(network) {
@@ -32,5 +32,5 @@ function buildConnection(network) {
 
 module.exports = {
   buildConnection,
-  NETWORK_PROVIDER
+  NETWORK_PROVIDER,
 };

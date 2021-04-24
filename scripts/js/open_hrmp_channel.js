@@ -24,8 +24,11 @@ async function openHrmpChanneltoVln(chain_id, relay = "localrelay", parachain = 
     })
   );
 
-  // send sudo call to init request
-  await sendSudoCall(api, proposal, adminPair);
+  return new Promise(async (resolve) => {
+    // send sudo call to init request
+    await sendSudoCall(api, proposal, adminPair);
+    resolve();
+  });
 }
 
 async function genHrmpOpenInit(chain_id, relay = "localrelay") {
@@ -65,8 +68,11 @@ async function acceptHrmpRequestfromAcala(chain_id, relay = "localrelay", parach
     })
   );
 
-  // send sudo call to init request
-  await sendSudoCall(api, proposal, adminPair);
+  return new Promise(async (resolve) => {
+    // send sudo call to init request
+    await sendSudoCall(api, proposal, adminPair);
+    resolve();
+  });
 }
 
 function sendSudoCall(api, proposal, adminPair) {
@@ -85,5 +91,5 @@ function sendSudoCall(api, proposal, adminPair) {
 module.exports = {
   openHrmpChanneltoVln,
   acceptHrmpRequestfromAcala,
-  sendSudoCall
+  sendSudoCall,
 };
