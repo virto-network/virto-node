@@ -1,10 +1,10 @@
+#![allow(unused_qualifications)]
 use parity_scale_codec::{Decode, Encode};
 use sp_runtime::{traits::Saturating, FixedU128, Permill};
 
 // type to represent the premium charged by provider
 pub type RatePremiumType = Permill;
 
-#[allow(unused_qualifications)]
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RateDetail<T> {
@@ -35,7 +35,10 @@ pub enum PaymentMethod {
 }
 
 // A trait for querying rates supplied by an LP
-pub trait RateProvider<X, M, Z, R> {
+pub trait RateProvider<X, M, Z, R, T> {
+    // fetch all avaiable rates for a given pair/medium
+    fn get_pair_rates(pair: X, medium: M) -> T;
+    // fetch rate for a given combo of pair/medium/provider
     fn get_rates(pair: X, medium: M, who: Z) -> Option<R>;
 }
 

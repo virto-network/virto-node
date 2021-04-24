@@ -60,7 +60,7 @@ pub struct MockMembership;
 impl Contains<AccountId> for MockMembership {
     fn contains(t: &AccountId) -> bool {
         match t {
-            10 => true,
+            10 | 11 => true,
             _ => false,
         }
     }

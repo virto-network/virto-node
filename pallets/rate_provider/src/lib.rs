@@ -19,6 +19,7 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::DataProvider;
+    use sp_std::collections::btree_map::BTreeMap;
     use vln_primitives::{
         AssetPair, PaymentMethod, RateCombinator, RateDetail, RatePremiumType, RateProvider, Rates,
     };
@@ -52,14 +53,12 @@ pub mod pallet {
     // Rates published by providers, the actual rate is not stored here
     // this only represents the basis points above/below the rates supplied by oracle
     // module
-    pub(super) type RateStore<T: Config> = StorageDoubleMap<
+    pub(super) type RateStore<T: Config> = StorageMap<
         _,
         Blake2_128Concat,
         Rates<T::Asset, T::BaseAsset>,
-        Twox64Concat,
-        T::AccountId,
-        RateDetail<RatePremiumType>,
-        OptionQuery,
+        BTreeMap<T::AccountId, RateDetail<RatePremiumType>>,
+        ValueQuery,
     >;
 
     #[pallet::event]
@@ -100,14 +99,16 @@ pub mod pallet {
             // restrict calls to whitelisted LPs only
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotPermitted);
             // Update storage.
-            RateStore::<T>::insert(
+            RateStore::<T>::try_mutate(
                 Rates {
                     pair: AssetPair { base, quote },
                     medium,
                 },
-                &who,
-                RateDetail { rate },
-            );
+                |providers| -> DispatchResult {
+                    providers.insert(who.clone(), RateDetail { rate });
+                    Ok(())
+                },
+            )?;
             Self::deposit_event(Event::RatesUpdated(who, base, quote));
             Ok(().into())
         }
@@ -122,38 +123,51 @@ pub mod pallet {
             medium: PaymentMethod,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            RateStore::<T>::remove(
+            RateStore::<T>::try_mutate(
                 Rates {
                     pair: AssetPair { base, quote },
                     medium,
                 },
-                &who,
-            );
+                |providers| -> DispatchResult {
+                    providers.remove(&who);
+                    Ok(())
+                },
+            )?;
             Self::deposit_event(Event::RatesRemoved(who, base, quote));
             Ok(().into())
         }
     }
 
     impl<T: Config>
-        RateProvider<AssetPair<T::Asset, T::BaseAsset>, PaymentMethod, T::AccountId, T::OracleValue>
-        for Pallet<T>
+        RateProvider<
+            AssetPair<T::Asset, T::BaseAsset>,
+            PaymentMethod,
+            T::AccountId,
+            T::OracleValue,
+            BTreeMap<T::AccountId, RateDetail<RatePremiumType>>,
+        > for Pallet<T>
     {
         fn get_rates(
             pair: AssetPair<T::Asset, T::BaseAsset>,
             medium: PaymentMethod,
             who: T::AccountId,
         ) -> Option<T::OracleValue> {
-            let premium = RateStore::<T>::get(
-                Rates {
-                    pair: pair.clone(),
-                    medium,
-                },
-                &who,
-            )?;
+            let premium_map = RateStore::<T>::get(Rates {
+                pair: pair.clone(),
+                medium,
+            });
+            let premium = premium_map.get(&who)?;
             // asssuming that quote (base-currency) is USD or any value thats common between the price-feed
             // and the provider
             let oracle_rate = T::PriceFeed::get(&pair.base)?;
             Some(T::RateCombinator::combine_rates(oracle_rate, premium.rate))
+        }
+
+        fn get_pair_rates(
+            pair: AssetPair<T::Asset, T::BaseAsset>,
+            medium: PaymentMethod,
+        ) -> BTreeMap<T::AccountId, RateDetail<RatePremiumType>> {
+            RateStore::<T>::get(Rates { pair, medium })
         }
     }
 }

@@ -123,6 +123,7 @@ std = [
 	'pallet-membership/std',
 	'orml-xtokens/std',
 	'orml-xcm-support/std',
-	'orml-unknown-tokens/std'
+	'orml-unknown-tokens/std',
+	'vln-rate-provider/std'
 ]
 standalone = []
