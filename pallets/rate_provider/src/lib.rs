@@ -19,7 +19,7 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::DataProvider;
-    use vln_primitives::{AssetPair, PaymentMethod, RatePremiumType, RateProvider, Rates};
+    use vln_primitives::{AssetPair, PaymentMethod, RatePremiumType, RateProvider, Rates, RateCombinator};
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -36,6 +36,9 @@ pub mod pallet {
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
         /// anyone should be able to publish rates
         type Whitelist: Contains<Self::AccountId>;
+        /// Implementation of RatePremiumCalc that handles combining premium to
+        /// rate
+        type RateCombinator: RateCombinator<Self::OracleValue, RatePremiumType>;
     }
 
     #[pallet::pallet]
@@ -134,16 +137,15 @@ pub mod pallet {
             AssetPair<T::Asset, T::BaseAsset>,
             PaymentMethod,
             T::AccountId,
-            T::OracleValue,
-            RatePremiumType,
+            T::OracleValue
         > for Pallet<T>
     {
         fn get_rates(
             pair: AssetPair<T::Asset, T::BaseAsset>,
             medium: PaymentMethod,
             who: T::AccountId,
-        ) -> Option<(T::OracleValue, RatePremiumType)> {
-            let lp_premium = RateStore::<T>::get(
+        ) -> Option<T::OracleValue> {
+            let premium = RateStore::<T>::get(
                 Rates {
                     pair: pair.clone(),
                     medium,
@@ -153,7 +155,7 @@ pub mod pallet {
             // asssuming that quote (base-currency) is USD or any value thats common between the price-feed
             // and the provider
             let oracle_rate = T::PriceFeed::get(&pair.base)?;
-            Some((oracle_rate, lp_premium))
+            Some(T::RateCombinator::combine_rates(oracle_rate, premium))
         }
     }
 }

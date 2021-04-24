@@ -8,6 +8,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     FixedU128,
 };
+use vln_primitives::DefaultRateCombinator;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -87,6 +88,7 @@ impl rate_provider::Config for Test {
     type Whitelist = MockMembership;
     type PriceFeed = MockOracle;
     type OracleValue = OracleValue;
+    type RateCombinator = DefaultRateCombinator;
 }
 
 // Build genesis storage according to the mock runtime.

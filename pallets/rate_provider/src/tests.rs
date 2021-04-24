@@ -1,7 +1,7 @@
 use crate::mock::*;
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::{FixedU128, Permill};
-use vln_primitives::{DefaultRatePremiumCalc, PaymentMethod, RatePremiumCalc, RateProvider, AssetPair};
+use vln_primitives::{PaymentMethod, RateProvider, AssetPair};
 
 #[test]
 fn test_non_whitelisted_call_must_fail() {
@@ -30,9 +30,9 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Permill::from_percent(1)
         ),);
-        let (rate, premium) = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
+        let rate = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            rate,
             FixedU128::from(101)
         );
 
@@ -43,9 +43,9 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Permill::from_percent(45)
         ),);
-        let (rate, premium) = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
+        let rate = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            rate,
             FixedU128::from(145)
         );
 
@@ -56,9 +56,9 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Permill::from_float(0.0496)
         ),);
-        let (rate, premium) = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
+        let rate = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            rate,
             FixedU128::from_float(104.96)
         );
 
@@ -69,9 +69,9 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Permill::from_float(0.999)
         ),);
-        let (rate, premium) = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
+        let rate = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            rate,
             FixedU128::from_float(199.9)
         );
 
@@ -82,9 +82,9 @@ fn test_add_rates_work() {
             PaymentMethod::BankX,
             Permill::from_float(0.0)
         ),);
-        let (rate, premium) = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
+        let rate = Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10).unwrap();
         assert_eq!(
-            DefaultRatePremiumCalc::combine_rates(rate, premium),
+            rate,
             FixedU128::from(100)
         );
     });
@@ -102,7 +102,7 @@ fn test_remove_rates_work() {
         ),);
         assert_eq!(
             Rates::get_rates(AssetPair { base : 1, quote : 2 }, PaymentMethod::BankX, 10),
-            Some((FixedU128::from(100), Permill::from_percent(1)))
+            Some(FixedU128::from(101))
         );
         assert_ok!(Rates::remove_price(
             Origin::signed(10),

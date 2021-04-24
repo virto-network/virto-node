@@ -28,18 +28,18 @@ pub enum PaymentMethod {
 }
 
 // A trait for querying rates supplied by an LP
-pub trait RateProvider<X, M, Z, R, P> {
-    fn get_rates(pair: X, medium: M, who: Z) -> Option<(R, P)>;
+pub trait RateProvider<X, M, Z, R> {
+    fn get_rates(pair: X, medium: M, who: Z) -> Option<R>;
 }
 
 // A trait for adding the premium and rate to get final price
-pub trait RatePremiumCalc<R, P> {
+pub trait RateCombinator<R, P> {
     fn combine_rates(rate: R, premium: P) -> R;
 }
 
 #[derive(Debug)]
-pub struct DefaultRatePremiumCalc;
-impl RatePremiumCalc<FixedU128, Permill> for DefaultRatePremiumCalc {
+pub struct DefaultRateCombinator;
+impl RateCombinator<FixedU128, Permill> for DefaultRateCombinator {
     fn combine_rates(rate: FixedU128, premium: Permill) -> FixedU128 {
         rate.saturating_mul(FixedU128::from(premium))
             .saturating_add(rate)
