@@ -1,7 +1,7 @@
 [package]
-authors = ["Daniel Olano <daniel@olanod.com>"]
+authors = ["Stanly Johnson <stanlyjohnson@outlook.com>"]
 edition = '2018'
-name = "vln-rates-provider"
+name = "vln-rate-provider"
 version = "0.1.0"
 license = "Unlicense"
 homepage = "https://github.com/valibre-org/vln-node/"

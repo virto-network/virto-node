@@ -11087,7 +11087,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vln-rates-provider"
+name = "vln-rate-provider"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -11149,7 +11149,7 @@ dependencies = [
  "vln-foreign-asset",
  "vln-human-swap",
  "vln-primitives",
- "vln-rates-provider",
+ "vln-rate-provider",
  "vln-transfers",
  "xcm",
  "xcm-builder",

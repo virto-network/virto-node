@@ -16,10 +16,10 @@ mod tests;
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Rates<CurrencyId, BaseCurrencyId> {
-    pub from: CurrencyId,
-    pub to: BaseCurrencyId,
-    pub method: PaymentMethod,
+pub struct Rates<Asset, BaseAsset> {
+    pub from: Asset,
+    pub to: BaseAsset,
+    pub medium: PaymentMethod,
 }
 
 pub mod primitives {
@@ -41,11 +41,11 @@ pub mod pallet {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Type of assets that the LP can set rates for
-        type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
+        type Asset: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
         /// Type of the base currency
-        type BaseCurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
+        type BaseAsset: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
         /// type of Oracle Provider
-        type OracleProvider: DataProvider<Self::CurrencyId, Self::OracleValue>;
+        type PriceFeed: DataProvider<Self::Asset, Self::OracleValue>;
         /// type of Oracle Value
         type OracleValue: Parameter + Member + Ord;
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
@@ -59,13 +59,13 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn rates)]
-    // Rates provided by an LP, the actual rate is not stored here
+    // Rates published by providers, the actual rate is not stored here
     // this only represents the basis points above/below the rates supplied by oracle
     // module
     pub(super) type RateStore<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
-        Rates<T::CurrencyId, T::BaseCurrencyId>,
+        Rates<T::Asset, T::BaseAsset>,
         Twox64Concat,
         T::AccountId,
         LpRatePremium,
@@ -75,15 +75,15 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::metadata(
         T::AccountId = "AccountId",
-        T::CurrencyId = "CurrencyId",
-        T::BaseCurrencyId = "BaseCurrencyId"
+        T::Asset = "Asset",
+        T::BaseAsset = "BaseAsset"
     )]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Rate has been updated
-        RatesUpdated(T::AccountId, T::CurrencyId, T::BaseCurrencyId),
+        RatesUpdated(T::AccountId, T::Asset, T::BaseAsset),
         /// Rates have been removed by LP
-        RatesRemoved(T::AccountId, T::CurrencyId, T::BaseCurrencyId),
+        RatesRemoved(T::AccountId, T::Asset, T::BaseAsset),
     }
 
     #[pallet::error]
@@ -101,16 +101,16 @@ pub mod pallet {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn update_price(
             origin: OriginFor<T>,
-            from: T::CurrencyId,
-            to: T::BaseCurrencyId,
-            method: PaymentMethod,
+            from: T::Asset,
+            to: T::BaseAsset,
+            medium: PaymentMethod,
             rate: LpRatePremium,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotPermitted);
             // Update storage.
-            RateStore::<T>::insert(Rates { from, to, method }, &who, rate);
+            RateStore::<T>::insert(Rates { from, to, medium }, &who, rate);
             Self::deposit_event(Event::RatesUpdated(who, from, to));
             Ok(().into())
         }
@@ -120,12 +120,12 @@ pub mod pallet {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn remove_price(
             origin: OriginFor<T>,
-            from: T::CurrencyId,
-            to: T::BaseCurrencyId,
-            method: PaymentMethod,
+            from: T::Asset,
+            to: T::BaseAsset,
+            medium: PaymentMethod,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            RateStore::<T>::remove(Rates { from, to, method }, &who);
+            RateStore::<T>::remove(Rates { from, to, medium }, &who);
             Self::deposit_event(Event::RatesRemoved(who, from, to));
             Ok(().into())
         }
@@ -133,8 +133,8 @@ pub mod pallet {
 
     impl<T: Config>
         RateProvider<
-            T::CurrencyId,
-            T::BaseCurrencyId,
+            T::Asset,
+            T::BaseAsset,
             PaymentMethod,
             T::AccountId,
             T::OracleValue,
@@ -142,14 +142,14 @@ pub mod pallet {
         > for Pallet<T>
     {
         fn get_rates(
-            from: T::CurrencyId,
-            to: T::BaseCurrencyId,
-            method: PaymentMethod,
+            from: T::Asset,
+            to: T::BaseAsset,
+            medium: PaymentMethod,
             who: T::AccountId,
         ) -> Option<(T::OracleValue, LpRatePremium)> {
-            let lp_premium = RateStore::<T>::get(Rates { from, to, method }, who)?;
+            let lp_premium = RateStore::<T>::get(Rates { from, to, medium }, who)?;
             // asssuming that to(base-currency) is USD or any value thats common everywhere
-            let oracle_rate = T::OracleProvider::get(&from)?;
+            let oracle_rate = T::PriceFeed::get(&from)?;
             Some((oracle_rate, lp_premium))
         }
     }

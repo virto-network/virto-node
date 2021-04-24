@@ -82,10 +82,10 @@ impl DataProvider<u32, OracleValue> for MockOracle {
 
 impl rate_provider::Config for Test {
     type Event = Event;
-    type CurrencyId = u32;
-    type BaseCurrencyId = u32;
+    type Asset = u32;
+    type BaseAsset = u32;
     type Whitelist = MockMembership;
-    type OracleProvider = MockOracle;
+    type PriceFeed = MockOracle;
     type OracleValue = OracleValue;
 }
 
