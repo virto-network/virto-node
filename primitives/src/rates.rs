@@ -1,6 +1,6 @@
 #![allow(unused_qualifications)]
 use parity_scale_codec::{Decode, Encode};
-use sp_runtime::{traits::Saturating, FixedU128, Permill};
+use sp_runtime::{traits::Saturating, FixedPointNumber, FixedU128, Permill};
 
 // type to represent the premium charged by provider
 pub type RatePremiumType = Permill;
@@ -9,13 +9,6 @@ pub type RatePremiumType = Permill;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RateDetail<T> {
     pub rate: T,
-}
-
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Rates<B, Q> {
-    pub pair: AssetPair<B, Q>,
-    pub medium: PaymentMethod,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
@@ -35,11 +28,10 @@ pub enum PaymentMethod {
 }
 
 // A trait for querying rates supplied by an LP
-pub trait RateProvider<X, M, Z, R, T> {
-    // fetch all avaiable rates for a given pair/medium
-    fn get_pair_rates(pair: X, medium: M) -> T;
+pub trait RateProvider<P, M, W> {
+    type Rate: FixedPointNumber;
     // fetch rate for a given combo of pair/medium/provider
-    fn get_rates(pair: X, medium: M, who: Z) -> Option<R>;
+    fn get_rates(pair: P, medium: M, who: W) -> Option<Self::Rate>;
 }
 
 // A trait for adding the premium and rate to get final price

@@ -19,9 +19,10 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::DataProvider;
+    use sp_runtime::FixedPointNumber;
     use sp_std::collections::btree_map::BTreeMap;
     use vln_primitives::{
-        AssetPair, PaymentMethod, RateCombinator, RateDetail, RatePremiumType, RateProvider, Rates,
+        AssetPair, PaymentMethod, RateCombinator, RateDetail, RatePremiumType, RateProvider,
     };
 
     #[pallet::config]
@@ -35,7 +36,7 @@ pub mod pallet {
         /// type of Oracle Provider
         type PriceFeed: DataProvider<Self::Asset, Self::OracleValue>;
         /// type of Oracle Value
-        type OracleValue: Parameter + Member + Ord;
+        type OracleValue: Parameter + Member + Ord + FixedPointNumber;
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
         /// anyone should be able to publish rates
         type Whitelist: Contains<Self::AccountId>;
@@ -53,10 +54,12 @@ pub mod pallet {
     // Rates published by providers, the actual rate is not stored here
     // this only represents the basis points above/below the rates supplied by oracle
     // module
-    pub(super) type RateStore<T: Config> = StorageMap<
+    pub(super) type Rates<T: Config> = StorageDoubleMap<
         _,
-        Blake2_128Concat,
-        Rates<T::Asset, T::BaseAsset>,
+        Twox64Concat,
+        AssetPair<T::Asset, T::BaseAsset>,
+        Twox64Concat,
+        PaymentMethod,
         BTreeMap<T::AccountId, RateDetail<RatePremiumType>>,
         ValueQuery,
     >;
@@ -99,11 +102,9 @@ pub mod pallet {
             // restrict calls to whitelisted LPs only
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotPermitted);
             // Update storage.
-            RateStore::<T>::try_mutate(
-                Rates {
-                    pair: AssetPair { base, quote },
-                    medium,
-                },
+            Rates::<T>::try_mutate(
+                AssetPair { base, quote },
+                medium,
                 |providers| -> DispatchResult {
                     providers.insert(who.clone(), RateDetail { rate });
                     Ok(())
@@ -123,11 +124,9 @@ pub mod pallet {
             medium: PaymentMethod,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            RateStore::<T>::try_mutate(
-                Rates {
-                    pair: AssetPair { base, quote },
-                    medium,
-                },
+            Rates::<T>::try_mutate(
+                AssetPair { base, quote },
+                medium,
                 |providers| -> DispatchResult {
                     providers.remove(&who);
                     Ok(())
@@ -138,36 +137,22 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config>
-        RateProvider<
-            AssetPair<T::Asset, T::BaseAsset>,
-            PaymentMethod,
-            T::AccountId,
-            T::OracleValue,
-            BTreeMap<T::AccountId, RateDetail<RatePremiumType>>,
-        > for Pallet<T>
+    impl<T: Config> RateProvider<AssetPair<T::Asset, T::BaseAsset>, PaymentMethod, T::AccountId>
+        for Pallet<T>
     {
+        type Rate = T::OracleValue;
+
         fn get_rates(
             pair: AssetPair<T::Asset, T::BaseAsset>,
             medium: PaymentMethod,
             who: T::AccountId,
         ) -> Option<T::OracleValue> {
-            let premium_map = RateStore::<T>::get(Rates {
-                pair: pair.clone(),
-                medium,
-            });
+            let premium_map = Rates::<T>::get(pair.clone(), medium);
             let premium = premium_map.get(&who)?;
             // asssuming that quote (base-currency) is USD or any value thats common between the price-feed
             // and the provider
             let oracle_rate = T::PriceFeed::get(&pair.base)?;
             Some(T::RateCombinator::combine_rates(oracle_rate, premium.rate))
-        }
-
-        fn get_pair_rates(
-            pair: AssetPair<T::Asset, T::BaseAsset>,
-            medium: PaymentMethod,
-        ) -> BTreeMap<T::AccountId, RateDetail<RatePremiumType>> {
-            RateStore::<T>::get(Rates { pair, medium })
         }
     }
 }

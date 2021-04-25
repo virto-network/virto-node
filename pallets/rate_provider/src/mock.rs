@@ -13,6 +13,8 @@ use vln_primitives::DefaultRateCombinator;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u8;
+pub const PROVIDER_ONE: AccountId = 10;
+pub const PROVIDER_TWO: AccountId = 11;
 
 frame_support::construct_runtime!(
     pub enum Test where
@@ -21,7 +23,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-        Rates: rate_provider::{Pallet, Call, Storage, Event<T>},
+        RatePallet: rate_provider::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -60,7 +62,7 @@ pub struct MockMembership;
 impl Contains<AccountId> for MockMembership {
     fn contains(t: &AccountId) -> bool {
         match t {
-            10 | 11 => true,
+            &PROVIDER_ONE | &PROVIDER_TWO => true,
             _ => false,
         }
     }
