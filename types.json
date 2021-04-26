@@ -3,6 +3,7 @@
     "_enum": {
       "Collateral": "Collateral",
       "Fiat": "Fiat",
+      "Network" : "NetworkAsset",
       "Usdv": null
     }
   },
@@ -17,10 +18,12 @@
       "Vez"
     ]
   },
-  "CurrencyId": "ForeignCurrencyId",
+  "CurrencyId": "NetworkAsset",
   "OracleKey": "Asset",
   "OracleValue": "FixedU128",
-  "CurrencyIdOf": "ForeignCurrencyId",
+  "CurrencyIdOf": "NetworkAsset",
+  "Amount": "i64",
+  "AmountOf": "Amount",
   "TimestampedValue": {
     "value": "OracleValue",
     "timestamp": "Moment"
@@ -38,17 +41,22 @@
       "Parachain": "ParaId"
     }
   },
-  "ForeignCurrencyId" : {
-    "_enum": {
-      "Token": "TokenSymbol"
-    }
-  },
-  "TokenSymbol": {
+  "NetworkAsset": {
     "_enum": [
       "ACA",
       "AUSD",
-      "DOT",
-      "USDV"
+      "DOT"
+    ]
+  },
+  "BaseAsset" : "Asset",
+  "AssetPair": {
+    "base": "BaseAsset",
+    "quote": "CurrencyId"
+  },
+  "PaymentMethod" : {
+    "_enum": [
+      "BankX",
+      "BankY"
     ]
   }
 }

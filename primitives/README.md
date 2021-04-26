@@ -10,6 +10,7 @@ An asset is meant to represent the synthetic version of any fiat/crypto currency
 pub enum Asset {
     Collateral(Collateral),
     Fiat(Fiat),
+    Network(NetworkAsset),
     Usdv,
 }
 ```
@@ -32,6 +33,18 @@ Fiat lists all the fiat currencies that can be deposited to create assets onchai
 pub enum Fiat {
         Cop = "COP",
         Vez = "VEZ",
+    }
+```
+
+#### Network
+
+Network lists all the currencies that we currently support for xcm transfer from other parachains and relay chain.
+
+```rust
+pub enum NetworkAsset {
+        ACA = "ACA",
+        AUSD = "AUSD",
+        DOT = "DOT",
     }
 ```
 
