@@ -36,7 +36,7 @@ pub mod pallet {
         /// type of Oracle Provider
         type PriceFeed: DataProvider<Self::Asset, Self::OracleValue>;
         /// type of Oracle Value
-        type OracleValue: Parameter + Member + Ord + FixedPointNumber;
+        type OracleValue: Parameter + Member + FixedPointNumber;
         /// Whitelist of LPs allowed to participate, this will eventually be removed and
         /// anyone should be able to publish rates
         type Whitelist: Contains<Self::AccountId>;
