@@ -69,6 +69,7 @@ vln-foreign-asset = { default-features = false, path = '../pallets/foreign_asset
 vln-backed-asset = { default-features = false, path = '../pallets/backed_asset' }
 vln-human-swap = { default-features = false, path = '../pallets/human_swap' }
 vln-transfers = { default-features = false, path = '../pallets/transfers' }
+vln-rate-provider = { default-features = false, path = '../pallets/rate_provider' }
 
 [features]
 default = ['std']
@@ -122,6 +123,7 @@ std = [
 	'pallet-membership/std',
 	'orml-xtokens/std',
 	'orml-xcm-support/std',
-	'orml-unknown-tokens/std'
+	'orml-unknown-tokens/std',
+	'vln-rate-provider/std'
 ]
 standalone = []

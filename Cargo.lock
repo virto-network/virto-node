@@ -11087,6 +11087,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "vln-rate-provider"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "vln-primitives",
+]
+
+[[package]]
 name = "vln-runtime"
 version = "2.0.0"
 dependencies = [
@@ -11134,6 +11150,7 @@ dependencies = [
  "vln-foreign-asset",
  "vln-human-swap",
  "vln-primitives",
+ "vln-rate-provider",
  "vln-transfers",
  "xcm",
  "xcm-builder",

@@ -32,7 +32,7 @@ use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, Collateral as CollateralType};
+use vln_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -401,6 +401,16 @@ impl pallet_membership::Config for Runtime {
     type MembershipChanged = ();
 }
 
+impl vln_rate_provider::Config for Runtime {
+    type Event = Event;
+    type Asset = Asset;
+    type BaseAsset = Asset;
+    type Whitelist = Whitelist;
+    type PriceFeed = Oracle;
+    type OracleValue = FixedU128;
+    type RateCombinator = DefaultRateCombinator;
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -583,6 +593,7 @@ macro_rules! construct_vln_runtime {
                     Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
+                    RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }

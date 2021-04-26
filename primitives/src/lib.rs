@@ -7,7 +7,9 @@
 #[macro_use]
 mod macros;
 mod asset;
+mod rates;
 
 pub use asset::*;
+pub use rates::*;
 
 pub type Share = sp_arithmetic::Permill;
