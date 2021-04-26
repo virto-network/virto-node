@@ -1,10 +1,11 @@
 #![allow(clippy::upper_case_acronyms, clippy::unnecessary_cast)]
 use core::fmt;
 use parity_scale_codec::{Decode, Encode};
+use scale_info::TypeInfo;
 use sp_std::{convert::TryFrom, prelude::*};
 /// A resource or valuable thing.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub enum Asset {
     Collateral(Collateral),
     Fiat(Fiat),

@@ -8661,6 +8661,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "scale-info"
+version = "0.6.0"
+source = "git+https://github.com/paritytech/scale-info#3b542f4ddd384d91eede8a5d49a7f4828a77f30e"
+dependencies = [
+ "cfg-if 1.0.0",
+ "derive_more 0.99.13",
+ "parity-scale-codec",
+ "scale-info-derive",
+ "serde",
+]
+
+[[package]]
+name = "scale-info-derive"
+version = "0.4.0"
+source = "git+https://github.com/paritytech/scale-info#3b542f4ddd384d91eede8a5d49a7f4828a77f30e"
+dependencies = [
+ "proc-macro-crate 1.0.0",
+ "proc-macro2 1.0.26",
+ "quote 1.0.9",
+ "syn 1.0.69",
+]
+
+[[package]]
 name = "schannel"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10747,7 +10770,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.6.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
@@ -11080,6 +11103,7 @@ name = "vln-primitives"
 version = "0.1.0"
 dependencies = [
  "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-arithmetic 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime",

@@ -1,17 +1,18 @@
 #![allow(unused_qualifications)]
 use parity_scale_codec::{Decode, Encode};
+use scale_info::TypeInfo;
 use sp_runtime::{traits::Saturating, FixedPointNumber, FixedU128, Permill};
 
 // type to represent the premium charged by provider
 pub type RatePremiumType = Permill;
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RateDetail<T> {
     pub rate: T,
 }
 
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssetPair<B, Q> {
     pub base: B,
@@ -20,7 +21,7 @@ pub struct AssetPair<B, Q> {
 
 // The payment method that is taken for a cashin or cashout
 // TODO: Replace with actual provider names
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PaymentMethod {
     BankX,
