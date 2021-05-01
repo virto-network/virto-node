@@ -44,7 +44,7 @@ pub enum SwapIn {
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SwapOut {
-    Created(Cid),
+    Created,
     Accepted,
     Rejected(Reason),
     Confirmed(Proof),

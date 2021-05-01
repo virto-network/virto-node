@@ -10988,6 +10988,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "orml-tokens",
  "orml-traits",
  "parity-scale-codec",
  "serde",
@@ -10995,6 +10996,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "vln-primitives",
+ "vln-rate-provider",
 ]
 
 [[package]]

@@ -14,7 +14,9 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains};
+    use frame_support::{
+        dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
+    };
     use frame_system::pallet_prelude::*;
     use orml_traits::{LockIdentifier, MultiCurrency, MultiLockableCurrency};
     use sp_runtime::{FixedPointNumber, FixedU128};
@@ -86,6 +88,7 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
+    // TODO : replace with dynamic lock key for each swap
     const SWAP_LOCK_ID: LockIdentifier = *b"swaplock";
 
     #[pallet::call]
@@ -113,7 +116,7 @@ pub mod pallet {
                     kind: SwapKind::In(SwapIn::Created),
                     price: PairPrice {
                         pair,
-                        price: FixedU128::zero(),
+                        price: FixedU128::zero(), // TODO: insert actual price
                     },
                     amount,
                 },
@@ -154,7 +157,7 @@ pub mod pallet {
                             Error::<T>::ActionNotPermitted
                         );
                         // lock the amount to cash_in, to be released on confirmation
-                        T::Asset::set_lock(SWAP_LOCK_ID, swap.price.pair.quote, &who, swap.amount)?;
+                        T::Asset::set_lock(SWAP_LOCK_ID, swap.price.pair.quote, &who, swap.amount)?; // TODO: multiply with price
                         swap.kind = SwapKind::In(state.clone());
                         Ok(())
                     }
@@ -218,7 +221,102 @@ pub mod pallet {
             Self::deposit_event(Event::SwapUpdated(who, SwapKind::In(SwapIn::Completed)));
             Ok(().into())
         }
+
+        /// Allow any user to open a swap-out request
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn create_swap_out(
+            origin: OriginFor<T>,
+            base: CurrencyIdOf<T>,
+            quote: CurrencyIdOf<T>,
+            method: PaymentMethod,
+            amount: BalanceOf<T>,
+            human: T::AccountId,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            let swap_nonce = SwapIndex::<T>::get(who.clone()) + 1;
+            let pair = AssetPair { base, quote };
+            let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
+                .ok_or_else(|| Error::<T>::InvalidProvider)?;
+            // lock the user balance to swap out
+            T::Asset::set_lock(SWAP_LOCK_ID, quote, &who, amount)?; // TODO: mul with actual price
+            Swaps::<T>::insert(
+                who.clone(),
+                swap_nonce,
+                Swap {
+                    human,
+                    kind: SwapKind::Out(SwapOut::Created),
+                    price: PairPrice {
+                        pair,
+                        price: FixedU128::zero(), // TODO: insert actual price
+                    },
+                    amount,
+                },
+            );
+            SwapIndex::<T>::insert(who.clone(), swap_nonce);
+            Self::deposit_event(Event::SwapCreated(who, SwapKind::Out(SwapOut::Created)));
+            Ok(().into())
+        }
+
+        /// this extrinsic allows the provider to accept/confirm swap requests
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn provider_process_swap_out(
+            origin: OriginFor<T>,
+            owner: T::AccountId,
+            swap_id: u32,
+            state: SwapOut,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            Swaps::<T>::try_mutate(owner, swap_id, |maybe_swap| -> DispatchResult {
+                let mut swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
+                // ensure the caller is the assigned provider
+                ensure!(swap.human == who, Error::<T>::ActionNotPermitted);
+                // only allow provider to reject/confirm
+                match state {
+                    SwapOut::Rejected(_) => {
+                        // ensure the swap is in created state
+                        ensure!(
+                            swap.kind == SwapKind::Out(SwapOut::Created),
+                            Error::<T>::ActionNotPermitted
+                        );
+                        swap.kind = SwapKind::Out(state.clone());
+                        Ok(())
+                    }
+                    SwapOut::Confirmed(_) => {
+                        // ensure the swap is in created state
+                        ensure!(
+                            swap.kind == SwapKind::Out(SwapOut::Created),
+                            Error::<T>::ActionNotPermitted
+                        );
+                        swap.kind = SwapKind::Out(state.clone());
+                        Ok(())
+                    }
+                    _ => Err(Error::<T>::ActionNotPermitted.into()),
+                }
+            })?;
+            Self::deposit_event(Event::SwapUpdated(who, SwapKind::Out(state)));
+            Ok(().into())
+        }
+
+        /// this extrinsic allows the user to complete swapout requests and release
+        /// the amount to provider wallet
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn complete_swap_out(origin: OriginFor<T>, swap_id: u32) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            Swaps::<T>::try_mutate(who.clone(), swap_id, |maybe_swap| -> DispatchResult {
+                let mut swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
+                // ensure the swap has been confirmed by the provider
+                match swap.kind {
+                    SwapKind::Out(SwapOut::Confirmed(_)) => {
+                        T::Asset::remove_lock(SWAP_LOCK_ID, swap.price.pair.quote, &who)?;
+                        T::Asset::transfer(swap.price.pair.quote, &who, &swap.human, swap.amount)?;
+                        swap.kind = SwapKind::Out(SwapOut::Completed);
+                        Ok(())
+                    }
+                    _ => Err(Error::<T>::ActionNotPermitted.into()),
+                }
+            })?;
+            Self::deposit_event(Event::SwapUpdated(who, SwapKind::Out(SwapOut::Completed)));
+            Ok(().into())
+        }
     }
-
-
 }

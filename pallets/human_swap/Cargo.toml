@@ -24,6 +24,8 @@ vln-primitives = { version = "0.1.0", path = "../../primitives" }
 serde = { version = "1.0.101" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
+orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+vln-rate-provider = { version = "0.1.0", path = "../rate_provider" }
 
 [features]
 default = ['std']
@@ -34,4 +36,5 @@ std = [
 	'vln-primitives/std',
 	'orml-traits/std',
 	'sp-runtime/std',
+	'orml-tokens/std',
 ]
