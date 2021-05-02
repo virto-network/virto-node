@@ -6,10 +6,10 @@ Please note that we have two different runtimes
 * `vln-node` - The standalone "validator" node runtime
 * `vln-parachain` - The parachain-compliant "collator" node runtime which runs on Rococo
 
-For development, we recommend to run the `vln-node`.
+To build the `vln-parachain`.
 
 ```bash
-cargo build --release -p vln-parachain
+make build-release
 ```
 
 ### Run
@@ -19,15 +19,13 @@ cargo build --release -p vln-parachain
 Clone Polkadot (rococo-v1 branch):
 ```
 cd polkadot/
-cargo build --release --features real-overseer
-
-./target/release/polkadot build-spec --chain rococo-local --raw --disable-default-bootnode > rococo_local.json
-
-./target/release/polkadot --chain ./rococo_local.json -d cumulus_relay1 --validator --bob --port 50555
-./target/release/polkadot --chain ./rococo_local.json -d cumulus_relay0 --validator --alice --port 50556
+cargo build --release
 ```
 
-Run VLN parachain:
+Run VLN parachain with rococo collators:
 ```
-./target/release/vln_parachain -d local-test --collator --alice --ws-port 9945 --parachain-id 200 -- --chain rococo-local
+make run-parachain-env
 ```
+
+To test xcm asset transfer clone and run [vln-toolbox](https://github.com/valibre-org/vln-toolbox)
+

@@ -34,16 +34,13 @@ For development, we recommend to run the `vln-node`.
 
 ```bash
 # build in debug mode
-cargo build -p $RUNTIME
-
-# build in release mode 
-cargo build --release -p $RUNTIME
+make build-dev
 
 # build the standalone vln node
-cargo build --release -p vln-node
+make build-release-node
 
 # build the vln-parachain collator node 
-cargo build --release -p vln-parachain
+make build-release
 ```
 
 
