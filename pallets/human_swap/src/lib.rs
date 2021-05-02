@@ -20,6 +20,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
     use sp_runtime::{FixedPointNumber, FixedU128};
+    use sp_std::vec::Vec;
     use vln_primitives::*;
 
     type BalanceOf<T> =
@@ -104,7 +105,7 @@ pub mod pallet {
             let swap_nonce = SwapIndex::<T>::get(who.clone()) + 1;
             let pair = AssetPair { base, quote };
             let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
-                .ok_or_else(|| Error::<T>::InvalidProvider)?;
+                .ok_or(Error::<T>::InvalidProvider)?;
             Swaps::<T>::insert(
                 who.clone(),
                 swap_nonce,
@@ -239,7 +240,7 @@ pub mod pallet {
             let swap_nonce = SwapIndex::<T>::get(who.clone()) + 1;
             let pair = AssetPair { base, quote };
             let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
-                .ok_or_else(|| Error::<T>::InvalidProvider)?;
+                .ok_or(Error::<T>::InvalidProvider)?;
             // reserve the user balance to swap out
             T::Asset::reserve(quote, &who, amount)?; // TODO: mul with actual price
             Swaps::<T>::insert(

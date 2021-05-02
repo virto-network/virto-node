@@ -7,7 +7,7 @@ use sp_std::prelude::*;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PairPrice<P, R> {
     pub pair: P,
-    pub price: R
+    pub price: R,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
@@ -18,7 +18,7 @@ pub struct Swap<H, P, B> {
     pub price: P,
     pub amount: B,
 }
-  
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SwapKind {

@@ -366,6 +366,9 @@ impl vln_backed_asset::Config<UsdvInstance> for Runtime {
 
 impl vln_human_swap::Config for Runtime {
     type Event = Event;
+    type Asset = Tokens;
+    type RateProvider = RatesProvider;
+    type Whitelist = Whitelist;
 }
 
 impl vln_transfers::Config for Runtime {
