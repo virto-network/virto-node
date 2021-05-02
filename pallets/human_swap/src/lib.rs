@@ -133,7 +133,7 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             Swaps::<T>::try_mutate(owner, swap_id, |maybe_swap| -> DispatchResult {
-                let mut swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
+                let swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
                 // ensure the caller is the assigned provider
                 ensure!(swap.human == who, Error::<T>::ActionNotPermitted);
                 // only allow provider to accept/reject/complete
@@ -144,8 +144,10 @@ pub mod pallet {
                             swap.kind == SwapKind::In(SwapIn::Created),
                             Error::<T>::ActionNotPermitted
                         );
-                        swap.kind = SwapKind::In(state.clone());
-                        Ok(())
+                        *maybe_swap = Some(Swap {
+                            kind: SwapKind::In(state.clone()),
+                            ..swap
+                        });
                     }
                     SwapIn::Accepted(_) => {
                         // ensure the swap is in created state
@@ -153,13 +155,16 @@ pub mod pallet {
                             swap.kind == SwapKind::In(SwapIn::Created),
                             Error::<T>::ActionNotPermitted
                         );
-                        // lock the amount to cash_in, to be released on confirmation
+                        // reserve the amount to cash_in, to be released on confirmation
                         T::Asset::reserve(swap.price.pair.quote, &who, swap.amount)?; // TODO: multiply with price
-                        swap.kind = SwapKind::In(state.clone());
-                        Ok(())
+                        *maybe_swap = Some(Swap {
+                            kind: SwapKind::In(state.clone()),
+                            ..swap
+                        });
                     }
-                    _ => Err(Error::<T>::ActionNotPermitted.into()),
-                }
+                    _ => *maybe_swap = Some(swap),
+                };
+                Ok(())
             })?;
             Self::deposit_event(Event::SwapUpdated(who, SwapKind::In(state)));
             Ok(().into())
@@ -174,15 +179,18 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             Swaps::<T>::try_mutate(who.clone(), swap_id, |maybe_swap| -> DispatchResult {
-                let mut swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
+                let swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
                 // ensure the swap has been accepted by the provider
                 match swap.kind {
                     SwapKind::In(SwapIn::Accepted(_)) => {
-                        swap.kind = SwapKind::In(SwapIn::Confirmed(proof.clone()));
-                        Ok(())
+                        *maybe_swap = Some(Swap {
+                            kind: SwapKind::In(SwapIn::Confirmed(proof.clone())),
+                            ..swap
+                        });
                     }
-                    _ => Err(Error::<T>::ActionNotPermitted.into()),
-                }
+                    _ => *maybe_swap = Some(swap),
+                };
+                Ok(())
             })?;
             Self::deposit_event(Event::SwapUpdated(
                 who,
@@ -201,7 +209,7 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             Swaps::<T>::try_mutate(owner.clone(), swap_id, |maybe_swap| -> DispatchResult {
-                let mut swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
+                let swap = maybe_swap.take().ok_or(Error::<T>::InvalidSwap)?;
                 // ensure the caller is the assigned provider
                 ensure!(swap.human == who, Error::<T>::ActionNotPermitted);
                 // ensure the swap has been confirmed by the owner
@@ -209,11 +217,14 @@ pub mod pallet {
                     SwapKind::In(SwapIn::Confirmed(_)) => {
                         T::Asset::unreserve(swap.price.pair.quote, &who, swap.amount);
                         T::Asset::transfer(swap.price.pair.quote, &who, &owner, swap.amount)?;
-                        swap.kind = SwapKind::In(SwapIn::Completed);
-                        Ok(())
+                        *maybe_swap = Some(Swap {
+                            kind: SwapKind::In(SwapIn::Completed),
+                            ..swap
+                        });
                     }
-                    _ => Err(Error::<T>::ActionNotPermitted.into()),
-                }
+                    _ => *maybe_swap = Some(swap),
+                };
+                Ok(())
             })?;
             Self::deposit_event(Event::SwapUpdated(who, SwapKind::In(SwapIn::Completed)));
             Ok(().into())
@@ -234,7 +245,7 @@ pub mod pallet {
             let pair = AssetPair { base, quote };
             let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
                 .ok_or_else(|| Error::<T>::InvalidProvider)?;
-            // lock the user balance to swap out
+            // reserve the user balance to swap out
             T::Asset::reserve(quote, &who, amount)?; // TODO: mul with actual price
             Swaps::<T>::insert(
                 who.clone(),

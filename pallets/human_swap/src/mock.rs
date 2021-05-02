@@ -128,7 +128,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .unwrap();
 
     orml_tokens::GenesisConfig::<Test> {
-        endowed_accounts: vec![(1, 2, 100)],
+        endowed_accounts: vec![(1, 2, 100), (PROVIDER_ONE, 2, 100)],
     }
     .assimilate_storage(&mut t)
     .unwrap();
