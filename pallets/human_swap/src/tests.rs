@@ -76,7 +76,6 @@ fn it_works_for_swap_out_create() {
         );
 
         assert_eq!(Tokens::total_balance(2, &1), 100);
-        //assert_eq!(Tokens::locks(2, &1).len(), 1);
-        assert_eq!(Tokens::locks(1, &1).len(), 0);
+        assert_eq!(Tokens::free_balance(2, &1), 90);
     });
 }

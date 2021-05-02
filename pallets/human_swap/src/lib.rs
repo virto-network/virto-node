@@ -18,7 +18,7 @@ pub mod pallet {
         dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
     };
     use frame_system::pallet_prelude::*;
-    use orml_traits::{LockIdentifier, MultiCurrency, MultiLockableCurrency};
+    use orml_traits::{MultiCurrency, MultiReservableCurrency};
     use sp_runtime::{FixedPointNumber, FixedU128};
     use vln_primitives::*;
 
@@ -32,7 +32,7 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// Type of assets that can be swapped
-        type Asset: MultiLockableCurrency<Self::AccountId>;
+        type Asset: MultiReservableCurrency<Self::AccountId>;
         /// Rate provider trait
         type RateProvider: RateProvider<
             AssetPair<CurrencyIdOf<Self>, CurrencyIdOf<Self>>,
@@ -87,9 +87,6 @@ pub mod pallet {
 
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
-
-    // TODO : replace with dynamic lock key for each swap
-    const SWAP_LOCK_ID: LockIdentifier = *b"swaplock";
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
@@ -157,7 +154,7 @@ pub mod pallet {
                             Error::<T>::ActionNotPermitted
                         );
                         // lock the amount to cash_in, to be released on confirmation
-                        T::Asset::set_lock(SWAP_LOCK_ID, swap.price.pair.quote, &who, swap.amount)?; // TODO: multiply with price
+                        T::Asset::reserve(swap.price.pair.quote, &who, swap.amount)?; // TODO: multiply with price
                         swap.kind = SwapKind::In(state.clone());
                         Ok(())
                     }
@@ -210,7 +207,7 @@ pub mod pallet {
                 // ensure the swap has been confirmed by the owner
                 match swap.kind {
                     SwapKind::In(SwapIn::Confirmed(_)) => {
-                        T::Asset::remove_lock(SWAP_LOCK_ID, swap.price.pair.quote, &who)?;
+                        T::Asset::unreserve(swap.price.pair.quote, &who, swap.amount);
                         T::Asset::transfer(swap.price.pair.quote, &who, &owner, swap.amount)?;
                         swap.kind = SwapKind::In(SwapIn::Completed);
                         Ok(())
@@ -238,7 +235,7 @@ pub mod pallet {
             let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
                 .ok_or_else(|| Error::<T>::InvalidProvider)?;
             // lock the user balance to swap out
-            T::Asset::set_lock(SWAP_LOCK_ID, quote, &who, amount)?; // TODO: mul with actual price
+            T::Asset::reserve(quote, &who, amount)?; // TODO: mul with actual price
             Swaps::<T>::insert(
                 who.clone(),
                 swap_nonce,
@@ -307,7 +304,7 @@ pub mod pallet {
                 // ensure the swap has been confirmed by the provider
                 match swap.kind {
                     SwapKind::Out(SwapOut::Confirmed(_)) => {
-                        T::Asset::remove_lock(SWAP_LOCK_ID, swap.price.pair.quote, &who)?;
+                        T::Asset::unreserve(swap.price.pair.quote, &who, swap.amount);
                         T::Asset::transfer(swap.price.pair.quote, &who, &swap.human, swap.amount)?;
                         swap.kind = SwapKind::Out(SwapOut::Completed);
                         Ok(())
