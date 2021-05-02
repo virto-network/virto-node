@@ -1,6 +1,6 @@
 use crate::mock::*;
 use crate::Swaps;
-use frame_support::{assert_noop, assert_ok};
+use frame_support::assert_ok;
 use orml_traits::MultiCurrency;
 use sp_runtime::{FixedPointNumber, FixedU128, Permill};
 use vln_primitives::*;
@@ -120,40 +120,94 @@ fn test_swap_in_lifecycle() {
 }
 
 #[test]
-fn it_works_for_swap_out_create() {
+fn test_swap_out_lifecycle() {
     new_test_ext().execute_with(|| {
+        let base = 1;
+        let quote = 2;
+        let amount = 10;
+        let swap_owner = 1;
+        let expected_swap_id = 1;
+
         // update provider price
         assert_ok!(RatePallet::update_price(
             Origin::signed(PROVIDER_ONE),
-            1,
-            2,
+            base,
+            quote,
             PaymentMethod::BankX,
             Permill::from_percent(1)
         ),);
 
+        //----------------create swap out-----------------
         assert_ok!(HumanSwap::create_swap_out(
-            Origin::signed(1),
-            1,
-            2,
+            Origin::signed(swap_owner),
+            base,
+            quote,
             PaymentMethod::BankX,
-            10,
+            amount,
             PROVIDER_ONE
         ),);
 
         assert_eq!(
-            Swaps::<Test>::get(1, 1),
+            Swaps::<Test>::get(swap_owner, expected_swap_id),
             Some(Swap {
                 human: PROVIDER_ONE,
                 kind: SwapKind::Out(SwapOut::Created),
                 price: PairPrice {
-                    pair: AssetPair { base: 1, quote: 2 },
+                    pair: AssetPair { base, quote },
                     price: FixedU128::zero(),
                 },
-                amount: 10,
+                amount,
             })
         );
+        // ensure swap owner balances are reserved
+        assert_eq!(Tokens::total_balance(2, &swap_owner), 100);
+        assert_eq!(Tokens::free_balance(2, &swap_owner), 90);
 
-        assert_eq!(Tokens::total_balance(2, &1), 100);
-        assert_eq!(Tokens::free_balance(2, &1), 90);
+        //----------------provider confirms swapout-----------------
+        assert_ok!(HumanSwap::provider_process_swap_out(
+            Origin::signed(PROVIDER_ONE),
+            swap_owner,
+            expected_swap_id,
+            SwapOut::Confirmed(vec![])
+        ),);
+
+        assert_eq!(
+            Swaps::<Test>::get(swap_owner, expected_swap_id),
+            Some(Swap {
+                human: PROVIDER_ONE,
+                kind: SwapKind::Out(SwapOut::Confirmed(vec![])),
+                price: PairPrice {
+                    pair: AssetPair { base, quote },
+                    price: FixedU128::zero(),
+                },
+                amount,
+            })
+        );
+        // ensure swap owner balances are reserved
+        assert_eq!(Tokens::total_balance(2, &swap_owner), 100);
+        assert_eq!(Tokens::free_balance(2, &swap_owner), 90);
+
+        //----------------user completes swapout-----------------
+        assert_ok!(HumanSwap::complete_swap_out(
+            Origin::signed(swap_owner),
+            expected_swap_id,
+        ),);
+
+        assert_eq!(
+            Swaps::<Test>::get(swap_owner, expected_swap_id),
+            Some(Swap {
+                human: PROVIDER_ONE,
+                kind: SwapKind::Out(SwapOut::Completed),
+                price: PairPrice {
+                    pair: AssetPair { base, quote },
+                    price: FixedU128::zero(),
+                },
+                amount,
+            })
+        );
+        // ensure swap owner balances are reserved
+        assert_eq!(Tokens::total_balance(2, &swap_owner), 90);
+        assert_eq!(Tokens::free_balance(2, &swap_owner), 90);
+        assert_eq!(Tokens::free_balance(2, &PROVIDER_ONE), 110);
     });
 }
