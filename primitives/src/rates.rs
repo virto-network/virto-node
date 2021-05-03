@@ -1,4 +1,5 @@
 #![allow(unused_qualifications)]
+use frame_support::Parameter;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Saturating, FixedPointNumber, FixedU128, Permill};
@@ -30,7 +31,7 @@ pub enum PaymentMethod {
 
 // A trait for querying rates supplied by an LP
 pub trait RateProvider<P, M, W> {
-    type Rate: FixedPointNumber;
+    type Rate: FixedPointNumber + Parameter;
     // fetch rate for a given combo of pair/medium/provider
     fn get_rates(pair: P, medium: M, who: W) -> Option<Self::Rate>;
 }

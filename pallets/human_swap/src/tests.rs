@@ -2,7 +2,7 @@ use crate::mock::*;
 use crate::Swaps;
 use frame_support::assert_ok;
 use orml_traits::MultiCurrency;
-use sp_runtime::{FixedPointNumber, FixedU128, Permill};
+use sp_runtime::{FixedU128, Permill};
 use vln_primitives::*;
 
 #[test]
@@ -40,7 +40,7 @@ fn test_swap_in_lifecycle() {
                 kind: SwapKind::In(SwapIn::Created),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })
@@ -61,7 +61,7 @@ fn test_swap_in_lifecycle() {
                 kind: SwapKind::In(SwapIn::Accepted(vec![])),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })
@@ -84,7 +84,7 @@ fn test_swap_in_lifecycle() {
                 kind: SwapKind::In(SwapIn::Confirmed(vec![])),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })
@@ -107,7 +107,7 @@ fn test_swap_in_lifecycle() {
                 kind: SwapKind::In(SwapIn::Completed),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })
@@ -154,7 +154,7 @@ fn test_swap_out_lifecycle() {
                 kind: SwapKind::Out(SwapOut::Created),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })
@@ -178,7 +178,7 @@ fn test_swap_out_lifecycle() {
                 kind: SwapKind::Out(SwapOut::Confirmed(vec![])),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })
@@ -200,7 +200,7 @@ fn test_swap_out_lifecycle() {
                 kind: SwapKind::Out(SwapOut::Completed),
                 price: PairPrice {
                     pair: AssetPair { base, quote },
-                    price: FixedU128::zero(),
+                    price: FixedU128::from(101),
                 },
                 amount,
             })

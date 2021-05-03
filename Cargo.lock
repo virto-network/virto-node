@@ -11107,6 +11107,7 @@ dependencies = [
 name = "vln-primitives"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde",

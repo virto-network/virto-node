@@ -19,7 +19,6 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
-    use sp_runtime::{FixedPointNumber, FixedU128};
     use sp_std::vec::Vec;
     use vln_primitives::*;
 
@@ -27,7 +26,12 @@ pub mod pallet {
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
     type CurrencyIdOf<T> =
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
-    type RateOf<T> = PairPrice<AssetPair<CurrencyIdOf<T>, CurrencyIdOf<T>>, FixedU128>;
+    type Price<T> = <<T as Config>::RateProvider as RateProvider<
+        AssetPair<CurrencyIdOf<T>, CurrencyIdOf<T>>,
+        PaymentMethod,
+        <T as frame_system::Config>::AccountId,
+    >>::Rate;
+    type RateOf<T> = PairPrice<AssetPair<CurrencyIdOf<T>, CurrencyIdOf<T>>, Price<T>>;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
@@ -104,7 +108,7 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             let swap_nonce = SwapIndex::<T>::get(who.clone()) + 1;
             let pair = AssetPair { base, quote };
-            let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
+            let price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
                 .ok_or(Error::<T>::InvalidProvider)?;
             Swaps::<T>::insert(
                 who.clone(),
@@ -112,10 +116,7 @@ pub mod pallet {
                 Swap {
                     human,
                     kind: SwapKind::In(SwapIn::Created),
-                    price: PairPrice {
-                        pair,
-                        price: FixedU128::zero(), // TODO: insert actual price
-                    },
+                    price: PairPrice { pair, price },
                     amount,
                 },
             );
@@ -239,7 +240,7 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             let swap_nonce = SwapIndex::<T>::get(who.clone()) + 1;
             let pair = AssetPair { base, quote };
-            let _price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
+            let price = T::RateProvider::get_rates(pair.clone(), method, human.clone())
                 .ok_or(Error::<T>::InvalidProvider)?;
             // reserve the user balance to swap out
             T::Asset::reserve(quote, &who, amount)?; // TODO: mul with actual price
@@ -249,10 +250,7 @@ pub mod pallet {
                 Swap {
                     human,
                     kind: SwapKind::Out(SwapOut::Created),
-                    price: PairPrice {
-                        pair,
-                        price: FixedU128::zero(), // TODO: insert actual price
-                    },
+                    price: PairPrice { pair, price },
                     amount,
                 },
             );
