@@ -3,7 +3,7 @@
     "_enum": {
       "Collateral": "Collateral",
       "Fiat": "Fiat",
-      "Network" : "NetworkAsset",
+      "Network": "NetworkAsset",
       "Usdv": null
     }
   },
@@ -48,15 +48,55 @@
       "DOT"
     ]
   },
-  "BaseAsset" : "Asset",
+  "BaseAsset": "CurrencyId",
   "AssetPair": {
     "base": "BaseAsset",
     "quote": "CurrencyId"
   },
-  "PaymentMethod" : {
+  "PaymentMethod": {
     "_enum": [
       "BankX",
       "BankY"
     ]
+  },
+  "RatePremiumType": "FixedU128",
+  "SwapKind": {
+    "_enum": {
+      "In": "SwapIn",
+      "Out": "SwapOut"
+    }
+  },
+  "SwapIn": {
+    "_enum": {
+      "Created": null,
+      "Accepted": "Vec<u8>",
+      "Rejected": "Vec<u8>",
+      "Confirmed": "Vec<u8>",
+      "Expired": null,
+      "Completed": null
+    }
+  },
+  "SwapOut": {
+    "_enum": {
+      "Created": null,
+      "Accepted": null,
+      "Rejected": "Vec<u8>",
+      "Confirmed": "Vec<u8>",
+      "Expired": null,
+      "Completed": null
+    }
+  },
+  "PairPrice": {
+    "pair": "AssetPair",
+    "price": "FixedU128"
+  },
+  "Swap": {
+    "human": "AccountId",
+    "kind": "SwapKind",
+    "price": "PairPrice",
+    "amount": "FixedU128"
+  },
+  "RateDetail": {
+    "rate": "FixedU128"
   }
 }
