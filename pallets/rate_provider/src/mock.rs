@@ -66,10 +66,6 @@ impl Contains<AccountId> for MockMembership {
             _ => false,
         }
     }
-
-    fn sorted_members() -> Vec<AccountId> {
-        vec![]
-    }
 }
 
 pub type OracleValue = FixedU128;
