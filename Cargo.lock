@@ -10940,7 +10940,6 @@ dependencies = [
  "frame-system",
  "orml-tokens",
  "orml-traits",
- "pallet-membership",
  "parity-scale-codec",
  "serde",
  "sp-core",
