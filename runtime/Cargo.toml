@@ -50,8 +50,11 @@ parachain-info = {git = "https://github.com/paritytech/cumulus", default-feature
 xcm = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
 xcm-builder = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
 xcm-executor = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
-cumulus-pallet-xcm-handler = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
 polkadot-parachain = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
+cumulus-primitives-utility = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
+cumulus-pallet-xcm = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
+cumulus-pallet-xcmp-queue = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
+pallet-xcm = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1"}
 
 # Vln dependencies
 orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
@@ -59,9 +62,9 @@ orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-librar
 orml-oracle = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
-orml-xtokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
-orml-xcm-support = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
-orml-unknown-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+# orml-xtokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+# orml-xcm-support = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+# orml-unknown-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 
 # Local dependencies
 vln-primitives = { default-features = false, path = '../primitives' }
@@ -111,7 +114,7 @@ std = [
 	"xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
-	"cumulus-pallet-xcm-handler/std",
+	# "cumulus-pallet-xcm-handler/std",
 	'orml-tokens/std',
     'orml-oracle/std',
 	'pallet-proxy/std',
@@ -121,9 +124,11 @@ std = [
     'vln-human-swap/std',
     'vln-transfers/std',
 	'pallet-membership/std',
-	'orml-xtokens/std',
-	'orml-xcm-support/std',
-	'orml-unknown-tokens/std',
-	'vln-rate-provider/std'
+	# 'orml-xtokens/std',
+	# 'orml-xcm-support/std',
+	# 'orml-unknown-tokens/std',
+	'vln-rate-provider/std',
+	"cumulus-pallet-xcmp-queue/std",
+	"cumulus-pallet-xcm/std",
 ]
 standalone = []
