@@ -8,8 +8,10 @@
 mod macros;
 mod asset;
 mod rates;
+mod escrow;
 
 pub use asset::*;
 pub use rates::*;
+pub use escrow::*;
 
 pub type Share = sp_arithmetic::Permill;
