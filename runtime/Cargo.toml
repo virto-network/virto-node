@@ -73,6 +73,7 @@ vln-backed-asset = { default-features = false, path = '../pallets/backed_asset' 
 vln-human-swap = { default-features = false, path = '../pallets/human_swap' }
 vln-transfers = { default-features = false, path = '../pallets/transfers' }
 vln-rate-provider = { default-features = false, path = '../pallets/rate_provider' }
+vln-escrow = { default-features = false, path = '../pallets/escrow' }
 
 [features]
 default = ['std']
@@ -130,5 +131,6 @@ std = [
 	'vln-rate-provider/std',
 	"cumulus-pallet-xcmp-queue/std",
 	"cumulus-pallet-xcm/std",
+	'vln-escrow/std',
 ]
 standalone = []

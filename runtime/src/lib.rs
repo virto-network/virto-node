@@ -416,6 +416,11 @@ impl vln_rate_provider::Config for Runtime {
     type RateCombinator = DefaultRateCombinator;
 }
 
+impl vln_escrow::Config for Runtime {
+    type Event = Event;
+    type Asset = Tokens;
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -640,6 +645,7 @@ macro_rules! construct_vln_runtime {
                     Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
+                    Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }

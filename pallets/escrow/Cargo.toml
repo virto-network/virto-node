@@ -19,6 +19,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "roco
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false }
 orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 vln-primitives = { version = "0.1.0", path = "../../primitives" }
 
 [dev-dependencies]
@@ -34,5 +35,6 @@ std = [
 	'frame-system/std',
 	'sp-runtime/std',
 	'orml-traits/std',
-	'sp-std/std'
+	'sp-std/std',
+	'orml-tokens/std'
 ]

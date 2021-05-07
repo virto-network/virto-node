@@ -10938,6 +10938,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "orml-tokens",
  "orml-traits",
  "parity-scale-codec",
  "serde",
@@ -11152,6 +11153,7 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder 4.0.0",
  "vln-backed-asset",
+ "vln-escrow",
  "vln-foreign-asset",
  "vln-human-swap",
  "vln-primitives",

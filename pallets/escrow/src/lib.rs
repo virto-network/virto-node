@@ -6,20 +6,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
-    use sp_runtime::traits::Zero;
-    use sp_runtime::FixedPointNumber;
-    use vln_primitives::{EscrowDetail, EscrowId, EscrowState};
+    use vln_primitives::{EscrowDetail, EscrowHandler, EscrowId, EscrowState};
 
     type BalanceOf<T> =
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -72,6 +70,8 @@ pub mod pallet {
     pub enum Error<T> {
         /// The selected escrow does not exist
         InvalidEscrow,
+        /// The selected escrow cannot be released
+        EscrowAlreadyReleased,
     }
 
     #[pallet::hooks]
@@ -90,23 +90,13 @@ pub mod pallet {
             amount: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            // try to reserve the amount in the user balance
-            T::Asset::reserve(asset, &who, amount)?;
-            let escrow_index = EscrowIndex::<T>::get(who.clone()) + 1;
-            // add the escrow detail to storage
-            Escrow::<T>::insert(who.clone(), escrow_index.clone(), EscrowDetail {
-                recipent,
-                asset,
-                amount,
-                state : EscrowState::Created
-            });
-            // update the escrow index
-            EscrowIndex::<T>::insert(who.clone(), escrow_index);
-            Self::deposit_event(Event::EscrowCreated(who, asset, amount));
+            <Self as EscrowHandler<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>>::create_escrow(
+                who, recipent, asset, amount,
+            )?;
             Ok(().into())
         }
 
-        /// Release any created escrow, this will transfer the reserved amount from the 
+        /// Release any created escrow, this will transfer the reserved amount from the
         /// creator of the escrow to the assigned recipent
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn release_escrow(
@@ -114,21 +104,68 @@ pub mod pallet {
             escrow_id: EscrowId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            <Self as EscrowHandler<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>>::release_escrow(
+                who, escrow_id,
+            )?;
+            Ok(().into())
+        }
+    }
+
+    impl<T: Config> EscrowHandler<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>> for Pallet<T> {
+        fn create_escrow(
+            from: T::AccountId,
+            recipent: T::AccountId,
+            asset: CurrencyIdOf<T>,
+            amount: BalanceOf<T>,
+        ) -> Result<EscrowId, DispatchError> {
+            // try to reserve the amount in the user balance
+            T::Asset::reserve(asset, &from, amount)?;
+            let escrow_index = EscrowIndex::<T>::get(from.clone()) + 1;
             // add the escrow detail to storage
-            Escrow::<T>::try_mutate(who.clone(), escrow_id.clone(), |maybe_escrow| -> DispatchResult {
+            Escrow::<T>::insert(
+                from.clone(),
+                escrow_index,
+                EscrowDetail {
+                    recipent,
+                    asset,
+                    amount,
+                    state: EscrowState::Created,
+                },
+            );
+            // update the escrow index
+            EscrowIndex::<T>::insert(from.clone(), escrow_index);
+            Self::deposit_event(Event::EscrowCreated(from, asset, amount));
+            Ok(escrow_index)
+        }
+
+        fn release_escrow(from: T::AccountId, escrow_id: EscrowId) -> Result<(), DispatchError> {
+            // add the escrow detail to storage
+            Escrow::<T>::try_mutate(from.clone(), escrow_id, |maybe_escrow| -> DispatchResult {
                 let escrow = maybe_escrow.take().ok_or(Error::<T>::InvalidEscrow)?;
+                // ensure the escrow is in created state
+                ensure!(
+                    escrow.state == EscrowState::Created,
+                    Error::<T>::EscrowAlreadyReleased
+                );
                 // unreserve the amount from the owner account
-                T::Asset::unreserve(escrow.asset, &who, escrow.amount);
+                T::Asset::unreserve(escrow.asset, &from, escrow.amount);
                 // try to transfer the amount to recipent
-                T::Asset::transfer(escrow.asset, &who, &escrow.recipent, escrow.amount)?;
+                T::Asset::transfer(escrow.asset, &from, &escrow.recipent, escrow.amount)?;
                 *maybe_escrow = Some(EscrowDetail {
-                    state : EscrowState::Released,
+                    state: EscrowState::Released,
                     ..escrow
                 });
                 Ok(())
             })?;
-            Self::deposit_event(Event::EscrowReleased(who, escrow_id));
-            Ok(().into())
+            Self::deposit_event(Event::EscrowReleased(from, escrow_id));
+            Ok(())
+        }
+
+        fn get_escrow_details(
+            from: T::AccountId,
+            escrow_id: EscrowId,
+        ) -> Option<EscrowDetail<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>> {
+            Escrow::<T>::get(from, escrow_id)
         }
     }
 }
