@@ -21,7 +21,7 @@ pub mod pallet {
 
     type BalanceOf<T> =
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
-    type CurrencyIdOf<T> =
+    type AssetIdOf<T> =
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 
     #[pallet::config]
@@ -47,7 +47,7 @@ pub mod pallet {
         T::AccountId,
         Twox64Concat,
         EscrowId,
-        EscrowDetail<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>,
+        EscrowDetail<T::AccountId, AssetIdOf<T>, BalanceOf<T>>,
     >;
 
     /// Current escrow index for a user
@@ -61,7 +61,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         /// Rate has been updated
-        EscrowCreated(T::AccountId, CurrencyIdOf<T>, BalanceOf<T>),
+        EscrowCreated(T::AccountId, AssetIdOf<T>, BalanceOf<T>),
         /// Rates have been removed by LP
         EscrowReleased(T::AccountId, EscrowId),
     }
@@ -86,11 +86,11 @@ pub mod pallet {
         pub fn create_escrow(
             origin: OriginFor<T>,
             recipent: T::AccountId,
-            asset: CurrencyIdOf<T>,
+            asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            <Self as EscrowHandler<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>>::create_escrow(
+            <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_escrow(
                 who, recipent, asset, amount,
             )?;
             Ok(().into())
@@ -104,18 +104,18 @@ pub mod pallet {
             escrow_id: EscrowId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            <Self as EscrowHandler<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>>::release_escrow(
+            <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_escrow(
                 who, escrow_id,
             )?;
             Ok(().into())
         }
     }
 
-    impl<T: Config> EscrowHandler<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>> for Pallet<T> {
+    impl<T: Config> EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>> for Pallet<T> {
         fn create_escrow(
             from: T::AccountId,
             recipent: T::AccountId,
-            asset: CurrencyIdOf<T>,
+            asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
         ) -> Result<EscrowId, DispatchError> {
             // try to reserve the amount in the user balance
@@ -164,7 +164,7 @@ pub mod pallet {
         fn get_escrow_details(
             from: T::AccountId,
             escrow_id: EscrowId,
-        ) -> Option<EscrowDetail<T::AccountId, CurrencyIdOf<T>, BalanceOf<T>>> {
+        ) -> Option<EscrowDetail<T::AccountId, AssetIdOf<T>, BalanceOf<T>>> {
             Escrow::<T>::get(from, escrow_id)
         }
     }
