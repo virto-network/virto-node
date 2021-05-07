@@ -24,7 +24,6 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
-pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1", default-features = false, version = '3.0.0' }
 
 [features]
 default = ['std']

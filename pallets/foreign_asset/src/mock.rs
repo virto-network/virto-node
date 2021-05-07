@@ -1,7 +1,6 @@
 use crate as foreign_asset;
-use frame_support::parameter_types;
+use frame_support::{parameter_types, traits::Contains};
 use frame_system as system;
-use frame_system::EnsureRoot;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
@@ -22,7 +21,6 @@ frame_support::construct_runtime!(
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Assets: foreign_asset::{Pallet, Call, Storage, Event<T>},
         Tokens: orml_tokens::{Pallet, Event<T>},
-        Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
     }
 );
 
@@ -70,35 +68,26 @@ impl orml_tokens::Config for Test {
     type WeightInfo = ();
 }
 
+pub struct MockMembership;
+impl Contains<AccountId> for MockMembership {
+    fn contains(t: &AccountId) -> bool {
+        match t {
+            &10 => true,
+            _ => false,
+        }
+    }
+}
+
 impl foreign_asset::Config for Test {
     type Event = Event;
     type Assets = Tokens;
-    type Whitelist = Whitelist;
-}
-
-impl pallet_membership::Config for Test {
-    type Event = Event;
-    type AddOrigin = EnsureRoot<AccountId>;
-    type RemoveOrigin = EnsureRoot<AccountId>;
-    type SwapOrigin = EnsureRoot<AccountId>;
-    type ResetOrigin = EnsureRoot<AccountId>;
-    type PrimeOrigin = EnsureRoot<AccountId>;
-    type MembershipInitialized = ();
-    type MembershipChanged = ();
+    type Whitelist = MockMembership;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let mut t = system::GenesisConfig::default()
+    system::GenesisConfig::default()
         .build_storage::<Test>()
-        .unwrap();
-
-    pallet_membership::GenesisConfig::<Test> {
-        members: vec![10],
-        ..Default::default()
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-
-    t.into()
+        .unwrap()
+        .into()
 }
