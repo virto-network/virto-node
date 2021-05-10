@@ -45,9 +45,9 @@ pub mod pallet {
     /// that for any (sender,recipent) combo, only a single escrow is active. The history of escrow is not stored.
     pub(super) type Escrow<T: Config> = StorageDoubleMap<
         _,
-        Twox64Concat,
+        Blake2_128Concat,
         T::AccountId, // escrow creator
-        Twox64Concat,
+        Blake2_128Concat,
         T::AccountId, // escrow recipent
         EscrowDetail<AssetIdOf<T>, BalanceOf<T>>,
     >;
