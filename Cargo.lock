@@ -10933,6 +10933,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "vln-escrow"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "vln-primitives",
+]
+
+[[package]]
 name = "vln-foreign-asset"
 version = "0.1.0"
 dependencies = [
@@ -11136,6 +11152,7 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder 4.0.0",
  "vln-backed-asset",
+ "vln-escrow",
  "vln-foreign-asset",
  "vln-human-swap",
  "vln-primitives",
