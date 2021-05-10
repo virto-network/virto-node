@@ -1,6 +1,6 @@
 # Escrow Pallet
 
-This pallet will allow users to create an escrow onchain for a selected recipent. The pallet can be used to compliment the human swap pallet, to prove the existence of an escrow before the actual swap needs to be processed.
+This pallet will allow users to create an escrow onchain for a selected recipent. The pallet can be used to compliment the human swap pallet, to prove the existence of an escrow before the actual swap needs to be processed. The escrow pallet does not store the history of all the escrow transactions created by the user, it only cares about the current active escrow of the user/recipent.
 
 ## Terminology
 

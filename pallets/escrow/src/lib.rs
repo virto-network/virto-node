@@ -17,7 +17,7 @@ pub mod pallet {
     use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
-    use vln_primitives::{EscrowDetail, EscrowHandler, EscrowId, EscrowState};
+    use vln_primitives::{EscrowDetail, EscrowHandler, EscrowState};
 
     type BalanceOf<T> =
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -41,20 +41,16 @@ pub mod pallet {
     /// Escrows created by a user, this method of storageDoubleMap is chosen since there is no usecase for
     /// listing escrows by provider/currency. The escrow will only be referenced by the creator in
     /// any transaction of interest.
+    /// The storage map keys are the creator and the recipent, this also ensures
+    /// that for any (sender,recipent) combo, only a single escrow is active. The history of escrow is not stored.
     pub(super) type Escrow<T: Config> = StorageDoubleMap<
         _,
         Twox64Concat,
-        T::AccountId,
+        T::AccountId, // escrow creator
         Twox64Concat,
-        EscrowId,
-        EscrowDetail<T::AccountId, AssetIdOf<T>, BalanceOf<T>>,
+        T::AccountId, // escrow recipent
+        EscrowDetail<AssetIdOf<T>, BalanceOf<T>>,
     >;
-
-    /// Current escrow index for a user
-    #[pallet::storage]
-    #[pallet::getter(fn swap_index)]
-    pub(super) type EscrowIndex<T: Config> =
-        StorageMap<_, Twox64Concat, T::AccountId, EscrowId, ValueQuery>;
 
     #[pallet::event]
     #[pallet::metadata(T::AccountId = "AccountId")]
@@ -63,7 +59,7 @@ pub mod pallet {
         /// Rate has been updated
         EscrowCreated(T::AccountId, AssetIdOf<T>, BalanceOf<T>),
         /// Rates have been removed by LP
-        EscrowReleased(T::AccountId, EscrowId),
+        EscrowReleased(T::AccountId, T::AccountId),
     }
 
     #[pallet::error]
@@ -72,6 +68,8 @@ pub mod pallet {
         InvalidEscrow,
         /// The selected escrow cannot be released
         EscrowAlreadyReleased,
+        /// The selected escrow already exists and is in process
+        EscrowAlreadyInProcess,
     }
 
     #[pallet::hooks]
@@ -101,11 +99,11 @@ pub mod pallet {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn release_escrow(
             origin: OriginFor<T>,
-            escrow_id: EscrowId,
+            to: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_escrow(
-                who, escrow_id,
+                who, to,
             )?;
             Ok(().into())
         }
@@ -117,30 +115,39 @@ pub mod pallet {
             recipent: T::AccountId,
             asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
-        ) -> Result<EscrowId, DispatchError> {
-            // try to reserve the amount in the user balance
-            T::Asset::reserve(asset, &from, amount)?;
-            let escrow_index = EscrowIndex::<T>::get(from.clone()) + 1;
-            // add the escrow detail to storage
-            Escrow::<T>::insert(
-                from.clone(),
-                escrow_index,
-                EscrowDetail {
-                    recipent,
+        ) -> Result<(), DispatchError> {
+            Escrow::<T>::try_mutate(from.clone(), recipent, |maybe_escrow| -> DispatchResult {
+                let new_escrow = Some(EscrowDetail {
                     asset,
                     amount,
                     state: EscrowState::Created,
-                },
-            );
-            // update the escrow index
-            EscrowIndex::<T>::insert(from.clone(), escrow_index);
-            Self::deposit_event(Event::EscrowCreated(from, asset, amount));
-            Ok(escrow_index)
+                });
+                match maybe_escrow {
+                    Some(x) => {
+                        // do not overwrite an in-process escrow!
+                        // ensure the escrow is not in created state, it should
+                        // be in released/cancelled, in which case it can be overwritten
+                        ensure!(
+                            x.state != EscrowState::Created,
+                            Error::<T>::EscrowAlreadyInProcess
+                        );
+                        // reserve the amount from the escrow creator
+                        T::Asset::reserve(asset, &from, amount)?;
+                        *maybe_escrow = new_escrow
+                    }
+                    None => {
+                        // reserve the amount from the escrow creator
+                        T::Asset::reserve(asset, &from, amount)?;
+                        *maybe_escrow = new_escrow
+                    }
+                }
+                Ok(())
+            })
         }
 
-        fn release_escrow(from: T::AccountId, escrow_id: EscrowId) -> Result<(), DispatchError> {
+        fn release_escrow(from: T::AccountId, to: T::AccountId) -> Result<(), DispatchError> {
             // add the escrow detail to storage
-            Escrow::<T>::try_mutate(from.clone(), escrow_id, |maybe_escrow| -> DispatchResult {
+            Escrow::<T>::try_mutate(from.clone(), to.clone(), |maybe_escrow| -> DispatchResult {
                 let escrow = maybe_escrow.take().ok_or(Error::<T>::InvalidEscrow)?;
                 // ensure the escrow is in created state
                 ensure!(
@@ -150,22 +157,22 @@ pub mod pallet {
                 // unreserve the amount from the owner account
                 T::Asset::unreserve(escrow.asset, &from, escrow.amount);
                 // try to transfer the amount to recipent
-                T::Asset::transfer(escrow.asset, &from, &escrow.recipent, escrow.amount)?;
+                T::Asset::transfer(escrow.asset, &from, &to, escrow.amount)?;
                 *maybe_escrow = Some(EscrowDetail {
                     state: EscrowState::Released,
                     ..escrow
                 });
                 Ok(())
             })?;
-            Self::deposit_event(Event::EscrowReleased(from, escrow_id));
+            Self::deposit_event(Event::EscrowReleased(from, to));
             Ok(())
         }
 
         fn get_escrow_details(
             from: T::AccountId,
-            escrow_id: EscrowId,
-        ) -> Option<EscrowDetail<T::AccountId, AssetIdOf<T>, BalanceOf<T>>> {
-            Escrow::<T>::get(from, escrow_id)
+            to: T::AccountId,
+        ) -> Option<EscrowDetail<AssetIdOf<T>, BalanceOf<T>>> {
+            Escrow::<T>::get(from, to)
         }
     }
 }
