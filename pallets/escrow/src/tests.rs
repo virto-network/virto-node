@@ -84,7 +84,56 @@ fn test_release_escrow_works() {
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &ESCROW_CREATOR), 60);
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &ESCROW_RECIPENT), 0);
 
-        // should succeed for valid swap
+        // cancel should succeed for valid escrow
+        assert_ok!(Escrow::cancel_escrow(
+            Origin::signed(ESCROW_CREATOR),
+            ESCROW_RECIPENT
+        ));
+        // the escrow amount should be released back to creator
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &ESCROW_CREATOR), 100);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &ESCROW_RECIPENT), 0);
+        assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+        // should be in cancelled state
+        assert_eq!(
+            EscrowStore::<Test>::get(ESCROW_CREATOR, ESCROW_RECIPENT),
+            Some(EscrowDetail {
+                asset: CURRENCY_ID,
+                amount: 40,
+                state: EscrowState::Cancelled
+            })
+        );
+        // cannot call cancel again
+        assert_noop!(
+            Escrow::cancel_escrow(Origin::signed(ESCROW_CREATOR), ESCROW_RECIPENT),
+            crate::Error::<Test>::EscrowAlreadyReleased
+        );
+    });
+}
+
+#[test]
+fn test_cancel_escrow_works() {
+    new_test_ext().execute_with(|| {
+        // should be able to create an escrow with available balance
+        assert_ok!(Escrow::create_escrow(
+            Origin::signed(ESCROW_CREATOR),
+            ESCROW_RECIPENT,
+            CURRENCY_ID,
+            40
+        ));
+        assert_eq!(
+            EscrowStore::<Test>::get(ESCROW_CREATOR, ESCROW_RECIPENT),
+            Some(EscrowDetail {
+                asset: CURRENCY_ID,
+                amount: 40,
+                state: EscrowState::Created
+            })
+        );
+        // the escrow amount should be reserved
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &ESCROW_CREATOR), 60);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &ESCROW_RECIPENT), 0);
+
+        // should succeed for valid escrow
         assert_ok!(Escrow::release_escrow(
             Origin::signed(ESCROW_CREATOR),
             ESCROW_RECIPENT
