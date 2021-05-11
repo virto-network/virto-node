@@ -58,5 +58,17 @@
       "BankX",
       "BankY"
     ]
+  },
+  "EscrowDetail" : {
+    "asset": "Asset",
+    "amount": "Amount",
+    "state": "EscrowState"
+  },
+  "EscrowState" : {
+    "_enum": [
+      "Created",
+      "Released",
+      "Cancelled"
+    ]
   }
 }
