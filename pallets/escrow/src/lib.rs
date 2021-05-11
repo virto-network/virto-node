@@ -56,10 +56,12 @@ pub mod pallet {
     #[pallet::metadata(T::AccountId = "AccountId")]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// Rate has been updated
+        /// A new escrow has been created
         EscrowCreated(T::AccountId, AssetIdOf<T>, BalanceOf<T>),
-        /// Rates have been removed by LP
+        /// Escrow amount released to the recipent
         EscrowReleased(T::AccountId, T::AccountId),
+        /// Escrow has been cancelled by the creatot
+        EscrowCancelled(T::AccountId, T::AccountId),
     }
 
     #[pallet::error]
@@ -81,7 +83,7 @@ pub mod pallet {
         /// The only action is to store the details of this escrow in storage and reserve
         /// the specified amount.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn create_escrow(
+        pub fn create(
             origin: OriginFor<T>,
             recipent: T::AccountId,
             asset: AssetIdOf<T>,
@@ -97,13 +99,22 @@ pub mod pallet {
         /// Release any created escrow, this will transfer the reserved amount from the
         /// creator of the escrow to the assigned recipent
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn release_escrow(
-            origin: OriginFor<T>,
-            to: T::AccountId,
-        ) -> DispatchResultWithPostInfo {
+        pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_escrow(
                 who, to,
+            )?;
+            Ok(().into())
+        }
+
+        /// Cancel an escrow in created state, this will release the reserved back to
+        /// creator of the escrow. This extrinsic can only be called by the recipent
+        /// of the escrow
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_escrow(
+                creator, who, // the caller must be the provider, creator cannot cancel
             )?;
             Ok(().into())
         }
@@ -160,6 +171,27 @@ pub mod pallet {
                 T::Asset::transfer(escrow.asset, &from, &to, escrow.amount)?;
                 *maybe_escrow = Some(EscrowDetail {
                     state: EscrowState::Released,
+                    ..escrow
+                });
+                Ok(())
+            })?;
+            Self::deposit_event(Event::EscrowReleased(from, to));
+            Ok(())
+        }
+
+        fn cancel_escrow(from: T::AccountId, to: T::AccountId) -> Result<(), DispatchError> {
+            // add the escrow detail to storage
+            Escrow::<T>::try_mutate(from.clone(), to.clone(), |maybe_escrow| -> DispatchResult {
+                let escrow = maybe_escrow.take().ok_or(Error::<T>::InvalidEscrow)?;
+                // ensure the escrow is in created state
+                ensure!(
+                    escrow.state == EscrowState::Created,
+                    Error::<T>::EscrowAlreadyReleased
+                );
+                // unreserve the amount from the owner account
+                T::Asset::unreserve(escrow.asset, &from, escrow.amount);
+                *maybe_escrow = Some(EscrowDetail {
+                    state: EscrowState::Cancelled,
                     ..escrow
                 });
                 Ok(())
