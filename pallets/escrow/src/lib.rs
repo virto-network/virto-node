@@ -83,7 +83,7 @@ pub mod pallet {
         /// The only action is to store the details of this escrow in storage and reserve
         /// the specified amount.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn create_escrow(
+        pub fn create(
             origin: OriginFor<T>,
             recipent: T::AccountId,
             asset: AssetIdOf<T>,
@@ -99,10 +99,7 @@ pub mod pallet {
         /// Release any created escrow, this will transfer the reserved amount from the
         /// creator of the escrow to the assigned recipent
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn release_escrow(
-            origin: OriginFor<T>,
-            to: T::AccountId,
-        ) -> DispatchResultWithPostInfo {
+        pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_escrow(
                 who, to,
@@ -111,12 +108,13 @@ pub mod pallet {
         }
 
         /// Cancel an escrow in created state, this will release the reserved back to
-        /// creator of the escrow.
+        /// creator of the escrow. This extrinsic can only be called by the recipent
+        /// of the escrow
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn cancel_escrow(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_escrow(
-                who, to,
+                creator, who, // the caller must be the provider, creator cannot cancel
             )?;
             Ok(().into())
         }
