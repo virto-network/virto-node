@@ -25,6 +25,8 @@ pub mod pallet {
         AssetPair, PaymentMethod, RateCombinator, RateDetail, RatePremiumType, RateProvider,
     };
 
+    pub type RateDetailOf<T> = RateDetail<<T as Config>::OracleValue, RatePremiumType>;
+
     #[pallet::config]
     pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
@@ -60,7 +62,7 @@ pub mod pallet {
         AssetPair<T::Asset, T::BaseAsset>,
         Twox64Concat,
         PaymentMethod,
-        BTreeMap<T::AccountId, RateDetail<RatePremiumType>>,
+        BTreeMap<T::AccountId, RateDetailOf<T>>,
         ValueQuery,
     >;
 
@@ -96,7 +98,7 @@ pub mod pallet {
             base: T::Asset,
             quote: T::BaseAsset,
             medium: PaymentMethod,
-            rate: RatePremiumType,
+            rate: RateDetailOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
@@ -106,7 +108,7 @@ pub mod pallet {
                 AssetPair { base, quote },
                 medium,
                 |providers| -> DispatchResult {
-                    providers.insert(who.clone(), RateDetail { rate });
+                    providers.insert(who.clone(), rate);
                     Ok(())
                 },
             )?;
@@ -147,12 +149,19 @@ pub mod pallet {
             medium: PaymentMethod,
             who: T::AccountId,
         ) -> Option<T::OracleValue> {
-            let premium_map = Rates::<T>::get(pair.clone(), medium);
-            let premium = premium_map.get(&who)?;
+            let rate_map = Rates::<T>::get(pair.clone(), medium);
+            let rate = rate_map.get(&who)?;
             // asssuming that quote (base-currency) is USD or any value thats common between the price-feed
             // and the provider
-            let oracle_rate = T::PriceFeed::get(&pair.base)?;
-            Some(T::RateCombinator::combine_rates(oracle_rate, premium.rate))
+            match rate {
+                // return the fixed price added by the provider
+                RateDetail::Fixed(fx) => Some(*fx),
+                // combine the premium of the provider to oracle price
+                RateDetail::Premium(px) => {
+                    let oracle_rate = T::PriceFeed::get(&pair.base)?;
+                    Some(T::RateCombinator::combine_rates(oracle_rate, *px))
+                }
+            }
         }
     }
 }
