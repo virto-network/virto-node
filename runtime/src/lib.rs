@@ -419,6 +419,7 @@ impl vln_rate_provider::Config for Runtime {
 impl vln_escrow::Config for Runtime {
     type Event = Event;
     type Asset = Tokens;
+    type JudgeWhitelist = Whitelist;
 }
 
 #[cfg(feature = "standalone")]

@@ -14,7 +14,9 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+    use frame_support::{
+        dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
+    };
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
     use vln_primitives::{EscrowDetail, EscrowHandler, EscrowState};
@@ -30,6 +32,8 @@ pub mod pallet {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// the type of assets this pallet can hold in escrow
         type Asset: MultiReservableCurrency<Self::AccountId>;
+        /// whitelist of users allowed to settle disputes
+        type JudgeWhitelist: Contains<Self::AccountId>;
     }
 
     #[pallet::pallet]
@@ -72,6 +76,8 @@ pub mod pallet {
         EscrowAlreadyReleased,
         /// The selected escrow already exists and is in process
         EscrowAlreadyInProcess,
+        /// Action permitted only for whitelisted users
+        InvalidAction,
     }
 
     #[pallet::hooks]
@@ -116,6 +122,36 @@ pub mod pallet {
             <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_escrow(
                 creator, who, // the caller must be the provider, creator cannot cancel
             )?;
+            Ok(().into())
+        }
+
+        /// Allow admins to set state of an escrow
+        /// This extrinsic is used to resolve disputes between the creator and
+        /// recipent of the escrow.
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        pub fn set_state(
+            origin: OriginFor<T>,
+            from: T::AccountId,
+            recipent: T::AccountId,
+            new_state: EscrowState,
+        ) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            // ensure the caller is part of the whitelist
+            ensure!(T::JudgeWhitelist::contains(&who), Error::<T>::InvalidAction);
+            // try to update the escrow to new state
+            match new_state {
+                EscrowState::Cancelled => {
+                    <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_escrow(
+                        from, recipent,
+                    )
+                }
+                EscrowState::Released => <Self as EscrowHandler<
+                    T::AccountId,
+                    AssetIdOf<T>,
+                    BalanceOf<T>,
+                >>::release_escrow(from, recipent),
+                EscrowState::Created => Err(Error::<T>::InvalidAction.into()),
+            }?;
             Ok(().into())
         }
     }
