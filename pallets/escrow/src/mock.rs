@@ -1,5 +1,8 @@
 use crate as escrow;
-use frame_support::{parameter_types, traits::GenesisBuild};
+use frame_support::{
+    parameter_types,
+    traits::{Contains, GenesisBuild},
+};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -13,6 +16,7 @@ type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u8;
 pub const ESCROW_CREATOR: AccountId = 10;
 pub const ESCROW_RECIPENT: AccountId = 11;
+pub const JUDGE_ONE: AccountId = 11;
 pub const CURRENCY_ID: u32 = 2;
 
 frame_support::construct_runtime!(
@@ -74,9 +78,20 @@ impl orml_tokens::Config for Test {
     type WeightInfo = ();
 }
 
+pub struct MockMembership;
+impl Contains<AccountId> for MockMembership {
+    fn contains(t: &AccountId) -> bool {
+        match t {
+            &JUDGE_ONE => true,
+            _ => false,
+        }
+    }
+}
+
 impl escrow::Config for Test {
     type Event = Event;
     type Asset = Tokens;
+    type JudgeWhitelist = MockMembership;
 }
 
 // Build genesis storage according to the mock runtime.
