@@ -190,7 +190,7 @@ fn test_set_state_escrow_works() {
 
         // should fail for non whitelisted caller
         assert_noop!(
-            Escrow::set_state(
+            Escrow::resolve(
                 Origin::signed(ESCROW_CREATOR),
                 ESCROW_CREATOR,
                 ESCROW_RECIPENT,
@@ -200,7 +200,7 @@ fn test_set_state_escrow_works() {
         );
 
         // should be able to release an escrow
-        assert_ok!(Escrow::set_state(
+        assert_ok!(Escrow::resolve(
             Origin::signed(JUDGE_ONE),
             ESCROW_CREATOR,
             ESCROW_RECIPENT,
@@ -230,7 +230,7 @@ fn test_set_state_escrow_works() {
         ));
 
         // should be able to cancel an escrow
-        assert_ok!(Escrow::set_state(
+        assert_ok!(Escrow::resolve(
             Origin::signed(JUDGE_ONE),
             ESCROW_CREATOR,
             ESCROW_RECIPENT,

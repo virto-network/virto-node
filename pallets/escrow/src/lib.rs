@@ -129,7 +129,7 @@ pub mod pallet {
         /// This extrinsic is used to resolve disputes between the creator and
         /// recipent of the escrow.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub fn set_state(
+        pub fn resolve(
             origin: OriginFor<T>,
             from: T::AccountId,
             recipent: T::AccountId,

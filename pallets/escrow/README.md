@@ -17,10 +17,10 @@ This pallet will allow users to create an escrow onchain for a selected recipent
 
 #### Extrinsics
 
-`create(origin, recipent, currency_id, amount)` - Create an escrow for the given currencyid/amount
+`create(origin, recipient, currency_id, amount)` - Create an escrow for the given currencyid/amount
 `release(origin, escrow_id)` - Release the escrow amount to recipent
 `cancel(origin, escrow_id)` - Cancel the escrow and release the escrow amount to creator
-`set_state(origin, from, recipent, new_state)` - Allows whitelisted judges to release/cancel an escrow
+`resolve(origin, from, recipient, new_state)` - Allows whitelisted judges to release/cancel an escrow
 
 ## Implementations
 
