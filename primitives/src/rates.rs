@@ -6,10 +6,14 @@ use sp_runtime::{traits::Saturating, FixedPointNumber, FixedU128, Permill};
 // type to represent the premium charged by provider
 pub type RatePremiumType = Permill;
 
+// type to represent the fixed rate
+pub type RateFixedType = FixedU128;
+
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct RateDetail<T> {
-    pub rate: T,
+pub enum RateDetail<FixedType, PremiumType> {
+    Fixed(FixedType),
+    Premium(PremiumType),
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]

@@ -1,7 +1,8 @@
 # Rates Provider Pallet
 
-This pallet allows Liquidity providers to publish rates on chain for off-chain/on-chain transactions. The rates are determined based on the currency pair and the medium. The LPs dont publish the exact rates but rather the difference from the (official) oracle rates. 
-Assume that COP-USDv price is 100, but a certain provider can process the payments at a rate that is 1% above the price-feed/oracle rate. In this case, the actual price of 100 will be stored by the price feed (and updated continously), but the margin of 1% or 100 basis points will be stored in the rates provider pallet.
+This pallet allows Liquidity providers to publish rates on chain for off-chain/on-chain transactions. The rates are determined based on the currency pair and the medium. The LPs can choose to publish the exact rates or the premium they charge above the (official) oracle rates. It is recommended that the provider choose the premium type since it needs to be updated less frequently.
+
+In case the provider chooses to upload the premium only, it will work as follows : Assume that COP-USDv price is 100, but a certain provider can process the payments at a rate that is 1% above the price-feed/oracle rate. In this case, the actual price of 100 will be stored by the price feed (and updated continously), but the margin of 1% or 100 basis points will be stored in the rates provider pallet.
 
 ## Terminology
 
