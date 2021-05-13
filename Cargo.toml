@@ -7,7 +7,6 @@ members = [
     'node/standalone',
     'pallets/backed_asset',
     'pallets/foreign_asset',
-    'pallets/human_swap',
     'pallets/transfers',
     'pallets/rate_provider',
     'pallets/escrow',
