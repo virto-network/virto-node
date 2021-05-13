@@ -70,5 +70,13 @@
       "Released",
       "Cancelled"
     ]
-  }
+  },
+  "AssetIdOf" : "CurrencyId",
+  "RateDetail": {
+    "_enum": {
+      "Fixed": "FixedU128",
+      "Premium" : "Permill"
+    }
+  },
+  "RateDetailOf" : "RateDetail"
 }
