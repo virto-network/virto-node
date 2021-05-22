@@ -13,6 +13,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::traits::{
     AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
@@ -41,7 +42,6 @@ mod standalone_use {
     pub use pallet_grandpa::{
         fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
     };
-    pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
     pub use sp_core::sr25519;
     pub use sp_runtime::traits::NumberFor;
 }
@@ -54,7 +54,7 @@ mod currency_id_convert;
 use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
-    pub use crate::currency_id_convert::CurrencyIdConvert;
+    //pub use crate::currency_id_convert::CurrencyIdConvert;
     pub use frame_system::EnsureRoot;
     // pub use orml_xcm_support::{
     //     IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
@@ -66,19 +66,19 @@ mod parachain_use {
     };
     pub use sp_std::collections::btree_set::BTreeSet;
     pub use vln_primitives::NetworkAsset;
-    pub use xcm::v0::{
-        Junction::{Parachain, Parent},
-        MultiLocation::{self, X1, X2},
-        NetworkId, Xcm,
-    };
-    pub use xcm_builder::{
-        AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-        EnsureXcmOrigin, FixedRateOfConcreteFungible, FixedWeightBounds, IsConcrete,
-        LocationInverter, NativeAsset, ParentIsDefault, RelayChainAsNative,
-        SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-        SovereignSignedViaLocation, TakeWeightCredit,
-    };
-    pub use xcm_executor::{Config, XcmExecutor};
+    // pub use xcm::v0::{
+    //     Junction::{Parachain, Parent},
+    //     MultiLocation::{self, X1, X2},
+    //     NetworkId, Xcm,
+    // };
+    // pub use xcm_builder::{
+    //     AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+    //     EnsureXcmOrigin, FixedRateOfConcreteFungible, FixedWeightBounds, IsConcrete,
+    //     LocationInverter, NativeAsset, ParentIsDefault, RelayChainAsNative,
+    //     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+    //     SovereignSignedViaLocation, TakeWeightCredit,
+    // };
+    //pub use xcm_executor::{Config, XcmExecutor};
 }
 
 use frame_system::limits::{BlockLength, BlockWeights};
@@ -291,10 +291,18 @@ impl pallet_sudo::Config for Runtime {
     type Call = Call;
 }
 
+impl pallet_aura::Config for Runtime {
+    type AuthorityId = AuraId;
+}
+
 parameter_type_with_key! {
     pub ExistentialDeposits: |currency_id: Asset| -> Balance {
         Zero::zero()
     };
+}
+
+parameter_types! {
+    pub const MaxLocks: u32 = 50;
 }
 
 type GeneralInstance = orml_tokens::Instance1;
@@ -306,6 +314,7 @@ impl orml_tokens::Config<GeneralInstance> for Runtime {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
     type WeightInfo = ();
+    type MaxLocks = MaxLocks;
 }
 
 parameter_type_with_key! {
@@ -323,6 +332,7 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
     type ExistentialDeposits = ExistentialDepositsCollateral;
     type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
     type WeightInfo = ();
+    type MaxLocks = MaxLocks;
 }
 
 parameter_types! {
@@ -387,6 +397,7 @@ impl orml_oracle::Config for Runtime {
     type OracleValue = FixedU128;
     type RootOperatorAccountId = RootOperatorAccountId;
     type WeightInfo = ();
+    type Members = Whitelist;
 }
 
 parameter_types! {
@@ -436,10 +447,6 @@ mod standalone_impl {
         }
     }
 
-    impl pallet_aura::Config for Runtime {
-        type AuthorityId = AuraId;
-    }
-
     impl pallet_grandpa::Config for Runtime {
         type Call = Call;
         type Event = Event;
@@ -476,13 +483,19 @@ mod parachain_impl {
         type ExistentialDeposits = ExistentialDepositsForeign;
         type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
         type WeightInfo = ();
+        type MaxLocks = MaxLocks;
+    }
+
+    parameter_types! {
+        pub ReservedDmpWeight: Weight = RuntimeBlockWeights::get().max_block / 4;
     }
 
     impl cumulus_pallet_parachain_system::Config for Runtime {
         type Event = Event;
         type OnValidationData = ();
         type SelfParaId = ParachainInfo;
-        type DownwardMessageHandlers = ();
+        type DmpMessageHandler = ();
+        type ReservedDmpWeight = ReservedDmpWeight;
         type OutboundXcmpMessageSource = ();
         type XcmpMessageHandler = ();
         type ReservedXcmpWeight = ();
@@ -493,6 +506,8 @@ mod parachain_impl {
     // }
 
     impl parachain_info::Config for Runtime {}
+
+    impl cumulus_pallet_aura_ext::Config for Runtime {}
 
     // /// The means for routing XCM messages which are not for local execution into the right message
     // /// queues.
@@ -588,9 +603,9 @@ mod parachain_impl {
     //     type AccountIdConverter = LocationConverter;
     // }
 
-    parameter_types! {
-        pub const GetRelayChainId: NetworkId = NetworkId::Polkadot;
-    }
+    // parameter_types! {
+    //     pub const GetRelayChainId: NetworkId = NetworkId::Polkadot;
+    // }
 
     // pub struct AccountId32Convert;
     // impl Convert<AccountId, [u8; 32]> for AccountId32Convert {
@@ -647,6 +662,7 @@ macro_rules! construct_vln_runtime {
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
+                    Aura: pallet_aura::{Config<T>, Pallet},
                     $($modules)*
                 }
             }
@@ -655,7 +671,6 @@ macro_rules! construct_vln_runtime {
 
 #[cfg(feature = "standalone")]
 construct_vln_runtime! {
-    Aura: pallet_aura::{Config<T>, Pallet},
     Grandpa: pallet_grandpa::{Call, Config, Event, Pallet, Storage},
 }
 
@@ -664,6 +679,7 @@ construct_vln_runtime! {
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     NetworkAssets: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
+    AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
     // XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     // UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
     // PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin},
@@ -743,10 +759,6 @@ impl_runtime_apis! {
         ) -> sp_inherents::CheckInherentsResult {
             data.check_extrinsics(&block)
         }
-
-        fn random_seed() -> <Block as BlockT>::Hash {
-            RandomnessCollectiveFlip::random_seed().0
-        }
     }
 
     impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
@@ -776,7 +788,6 @@ impl_runtime_apis! {
         }
     }
 
-    #[cfg(feature = "standalone")]
     impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
         fn authorities() -> Vec<AuraId> {
             Aura::authorities()
@@ -784,6 +795,13 @@ impl_runtime_apis! {
 
         fn slot_duration() -> sp_consensus_aura::SlotDuration {
             sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+        }
+    }
+
+    #[cfg(not(feature = "standalone"))]
+    impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
+        fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
+            ParachainSystem::collect_collation_info()
         }
     }
 
@@ -856,4 +874,7 @@ impl_runtime_apis! {
 }
 
 #[cfg(not(feature = "standalone"))]
-cumulus_pallet_parachain_system::register_validate_block!(Runtime, Executive);
+cumulus_pallet_parachain_system::register_validate_block!(
+    Runtime,
+    cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+);

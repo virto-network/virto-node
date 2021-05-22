@@ -5,7 +5,7 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use vln_runtime::{AccountId, Signature};
+use vln_runtime::{AccountId, AuraId, Signature};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
@@ -51,7 +51,16 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         // ID
         "dev",
         ChainType::Local,
-        move || testnet_genesis(get_account_id_from_seed::<sr25519::Public>("Alice"), id),
+        move || {
+            testnet_genesis(
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                vec![
+                    get_from_seed::<AuraId>("Alice"),
+                    get_from_seed::<AuraId>("Bob"),
+                ],
+                id,
+            )
+        },
         vec![],
         None,
         None,
@@ -72,7 +81,16 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         // ID
         "testnet",
         ChainType::Live,
-        move || testnet_genesis(testnet_root_key.clone(), id),
+        move || {
+            testnet_genesis(
+                testnet_root_key.clone(),
+                vec![
+                    get_from_seed::<AuraId>("Alice"),
+                    get_from_seed::<AuraId>("Bob"),
+                ],
+                id,
+            )
+        },
         vec![],
         None,
         None,
@@ -84,7 +102,11 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
     )
 }
 
-fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfig {
+fn testnet_genesis(
+    root_key: AccountId,
+    initial_authorities: Vec<AuraId>,
+    id: ParaId,
+) -> vln_runtime::GenesisConfig {
     vln_runtime::GenesisConfig {
         frame_system: vln_runtime::SystemConfig {
             code: vln_runtime::WASM_BINARY
@@ -96,6 +118,10 @@ fn testnet_genesis(root_key: AccountId, id: ParaId) -> vln_runtime::GenesisConfi
             key: root_key.clone(),
         },
         parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
+        pallet_aura: vln_runtime::AuraConfig {
+            authorities: initial_authorities,
+        },
+        cumulus_pallet_aura_ext: Default::default(),
         orml_tokens_Instance1: vln_runtime::TokensConfig {
             endowed_accounts: vec![],
         },
