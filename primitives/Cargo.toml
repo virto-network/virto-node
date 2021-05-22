@@ -3,11 +3,11 @@ authors = ['The VLN team']
 categories = ['configuration']
 description = 'Valiu Liquidity Network - Primitives'
 edition = '2018'
-keywords = ['blockchain', 'valiu']
+keywords = ['blockchain', 'substrate']
 license = 'Unlicense'
 name = 'vln-primitives'
 readme = 'README.md'
-repository = 'https://github.com/valibre-org/node'
+repository = 'https://github.com/valibre-org/vln-node'
 version = '0.1.0'
 
 [dependencies]

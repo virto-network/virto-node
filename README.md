@@ -1,30 +1,18 @@
-# VLN Node ![Build](https://github.com/valibre-org/vln-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/valibre-org/vln-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+# VLN ![Build](https://github.com/valibre-org/vln-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/valibre-org/vln-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-A Substrate based blockchain node for the **Valiu Liquidity Network**, a blockchain where liquidity providers of fiat and crypto assets like [Valiu](https://www.valiu.com/en) come together to enable regular non crypto-savy users convert their local currency easily to *Valiu Dollars(USDv)*, a stable-coin backed by other USD pegged assets to protect them from their home country's volatile economy. To close the cycle, liquidity providers in different countries allow for an easy and decentralized way to cash-out USDv remittances without the final receipient being exposed to the complexities of the cryptocurrency world.
+The **Valibre Network** is a blockchain that aims to be Kusama and Polkadot's **bridge to the _real world_**, that is, the reality that most people live in where fiat money is the king and knowledge of blockchain related concepts like private key management is very limited.
+
+VLN enables users to swap fiat and crypto assets in a simple and decentralized p2p way combining a set of on-chain systems like escrows, oracles, liquidity contracts among others as well as off-chain and decentralization friendly technologies like a [Matrix](https://matrix.org) based wallet or our general purpose plugin system [Valor](github.com/valibre-org/valor) that help find the sweet spot between decentralization and easy of use.
+
+_Example of a cash-in interaction happening in an end-to-end encrypted matrix chat room:_
+![swap_flow](https://user-images.githubusercontent.com/1329925/119025875-db4d8d80-b9a4-11eb-9605-e7db6503156b.png)
+
 
 ## Local Development
 
-Follow these steps to prepare a local Substrate development environment :hammer_and_wrench:
-
-### Simple Setup
-
-Install all the required dependencies with a single command (be patient, this can take up to 30
-minutes).
-
-```bash
-curl https://getsubstrate.io -sSf | bash -s -- --fast
-```
-
-### Manual Setup
-
-Find manual setup instructions at the
-[Substrate Developer Hub](https://substrate.dev/docs/en/knowledgebase/getting-started/#manual-installation).
+Follow these steps to prepare a local development environment :hammer_and_wrench:
 
 ### Build
-
-Once the development environment is set up, build the node. This command will build the
-[Wasm](https://substrate.dev/docs/en/knowledgebase/advanced/executor#wasm-execution) and
-[native](https://substrate.dev/docs/en/knowledgebase/advanced/executor#native-execution) code:
 
 Please note that we have two different runtimes
 * `vln-node` - The standalone "validator" node runtime
@@ -42,7 +30,6 @@ make build-release-node
 # build the vln-parachain collator node 
 make build-release
 ```
-
 
 ## Run
 

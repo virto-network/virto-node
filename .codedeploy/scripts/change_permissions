@@ -1,3 +1,0 @@
-#!/bin/bash
-chmod 0750 /valiu/vln_parachain
-

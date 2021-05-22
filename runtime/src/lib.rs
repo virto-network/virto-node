@@ -373,10 +373,6 @@ impl vln_backed_asset::Config<UsdvInstance> for Runtime {
     type BaseCurrency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
 }
 
-impl vln_human_swap::Config for Runtime {
-    type Event = Event;
-}
-
 impl vln_transfers::Config for Runtime {
     type Event = Event;
     type Assets = Tokens;
@@ -657,7 +653,6 @@ macro_rules! construct_vln_runtime {
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     ForeignAssets: vln_foreign_asset::{Call, Event<T>, Pallet, Storage},
                     Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Pallet, Storage},
-                    Swaps: vln_human_swap::{Call, Event<T>, Pallet, Storage},
                     Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},

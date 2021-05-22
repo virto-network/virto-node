@@ -43,26 +43,7 @@ jobs:
           name: build
           if-no-files-found: error
           path: |
-            .codedeploy/**/*
             target/release/vln_parachain
             genesis-state
             genesis-wasm
-
-  package:
-    name: Codedeploy Node
-    runs-on: self-hosted
-    needs: build
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: build
-      - name: Create app.zip
-        run: zip -rj app target/release/vln_parachain .codedeploy/*
-      - name: S3 Upload
-        uses: hannut91/aws-cli@1.18.65
-        with:
-          args: s3 mv app.zip s3://${{ secrets.DEPLOY_BUCKET }}/valibre-org/node/
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_AKID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SAK }}
 

@@ -12896,19 +12896,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vln-human-swap"
-version = "0.1.0"
-dependencies = [
- "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.2)",
- "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.2)",
- "parity-scale-codec",
- "serde",
- "sp-core 3.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.2)",
- "sp-io 3.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.2)",
- "sp-runtime 3.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.2)",
-]
-
-[[package]]
 name = "vln-node"
 version = "2.0.0"
 dependencies = [
@@ -13089,7 +13076,6 @@ dependencies = [
  "vln-backed-asset",
  "vln-escrow",
  "vln-foreign-asset",
- "vln-human-swap",
  "vln-primitives",
  "vln-rate-provider",
  "vln-transfers",
