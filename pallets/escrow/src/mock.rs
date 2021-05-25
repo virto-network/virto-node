@@ -67,6 +67,9 @@ parameter_type_with_key! {
         0u32
     };
 }
+parameter_types! {
+    pub const MaxLocks: u32 = 50;
+}
 
 impl orml_tokens::Config for Test {
     type Amount = i64;
@@ -76,6 +79,7 @@ impl orml_tokens::Config for Test {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
     type WeightInfo = ();
+    type MaxLocks = MaxLocks;
 }
 
 pub struct MockMembership;
