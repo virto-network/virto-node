@@ -33,9 +33,9 @@ function startvlnparachain() {
  rpcport="$5"
 
  # create outputs for chainid
- ./target/debug/vln_parachain export-genesis-state --parachain-id "$chain" > genesis-state-"$chain"
+ ./target/release/vln_parachain export-genesis-state --parachain-id "$chain" > genesis-state-"$chain"
 
- ./target/debug/vln_parachain export-genesis-wasm > genesis-wasm-"$chain"
+ ./target/release/vln_parachain export-genesis-wasm > genesis-wasm-"$chain"
 
  screen -dmS "$screen_name" \
  ./target/release/vln_parachain --collator --tmp \
@@ -71,5 +71,5 @@ startrelaychain relay3 charlie 30335 9946 9935
 #startacalaparachain
 
 # start vln parachain
-startvlnparachain vln 200 40335 9947 30336
+startvlnparachain vln 2000 40335 9947 30336
 #startvlnparachain vln2 400 40336 9948 30337
