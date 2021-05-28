@@ -58,6 +58,9 @@ impl system::Config for Test {
 parameter_type_with_key! {
     pub ExistentialDeposits: |currency_id: ()| -> u32 { 0 };
 }
+parameter_types! {
+    pub const MaxLocks: u32 = 50;
+}
 impl orml_tokens::Config for Test {
     type Amount = i64;
     type Balance = u32;
@@ -66,6 +69,7 @@ impl orml_tokens::Config for Test {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
     type WeightInfo = ();
+    type MaxLocks = MaxLocks;
 }
 
 pub struct MockMembership;

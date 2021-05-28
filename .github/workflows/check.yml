@@ -16,7 +16,7 @@ jobs:
           override: true
           profile: minimal
           target: wasm32-unknown-unknown
-          toolchain: nightly-2021-02-17
+          toolchain: nightly-2021-03-01
 
       - name: Cache cargo directories
         uses: actions/cache@v2

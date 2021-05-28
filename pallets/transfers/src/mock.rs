@@ -60,6 +60,9 @@ impl system::Config for Test {
 parameter_type_with_key! {
     pub ExistentialDeposits: |_id: CurrencyId| -> Balance { 0 };
 }
+parameter_types! {
+    pub const MaxLocks: u32 = 50;
+}
 impl orml_tokens::Config for Test {
     type Amount = i64;
     type Balance = Balance;
@@ -68,6 +71,7 @@ impl orml_tokens::Config for Test {
     type ExistentialDeposits = ExistentialDeposits;
     type OnDust = ();
     type WeightInfo = ();
+    type MaxLocks = MaxLocks;
 }
 
 impl transfers::Config for Test {
