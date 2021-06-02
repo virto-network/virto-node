@@ -3,15 +3,15 @@ use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
+use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{AccountId, AuraId, Signature};
-use sp_core::{crypto::Ss58Codec};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
 
-const ROCOCO_RESERVED_PARA_ID : u32 = 2007u32; // modify as needed
+const ROCOCO_RESERVED_PARA_ID: u32 = 2007u32; // modify as needed
 const THOR_AURA_SS58: &str = "5Hgs2iwvqjFNdhQX5yXG4YJNy9CXWmFS1884VWLC353tmY8Q";
 const ODIN_AURA_SS58: &str = "5GN3Ne9KDobS3NknsqPvvbFXBPtU9mcMBmpxAyX2bidSmmGK";
 
