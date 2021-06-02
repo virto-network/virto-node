@@ -33,10 +33,13 @@ jobs:
         with:
           command: build
           args: --release -p vln-parachain
+      
       - name: Build parachain artifacts
         run: |
           ./target/release/vln_parachain export-genesis-state --chain testnet > genesis-state
           ./target/release/vln_parachain export-genesis-wasm --chain testnet > genesis-wasm
+          ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > testnet-chainspec
+      
       - name: Package files
         uses: actions/upload-artifact@v2
         with:
@@ -46,4 +49,6 @@ jobs:
             target/release/vln_parachain
             genesis-state
             genesis-wasm
+            testnet-chainspec
+          retention-days: 10 #keep artifacts only for 10 days to save on storage
 

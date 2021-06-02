@@ -10,6 +10,8 @@ use vln_runtime::{AccountId, AuraId, Signature};
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
 
+pub const ROCOCO_RESERVED_PARA_ID : u32 = 2007u32; // modify as needed
+
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
     TPublic::Pair::from_string(&format!("//{}", seed), None)
@@ -54,7 +56,10 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         move || {
             testnet_genesis(
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![get_from_seed::<AuraId>("Alice")],
+                vec![
+                    get_from_seed::<AuraId>("Alice"),
+                    get_from_seed::<AuraId>("Bob"),
+                ],
                 id,
             )
         },
@@ -64,7 +69,7 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         None,
         Extensions {
             relay_chain: "rococo-local".into(),
-            para_id: id.into(),
+            para_id: 2000u32,
         },
     )
 }
@@ -94,7 +99,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         None,
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: id.into(),
+            para_id: ROCOCO_RESERVED_PARA_ID,
         },
     )
 }

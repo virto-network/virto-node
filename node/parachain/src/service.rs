@@ -1,19 +1,11 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 #![allow(clippy::all, unused_qualifications)]
+// std
+use std::sync::Arc;
+
+// Local Runtime Types
+use vln_runtime::RuntimeApi;
+
+// Cumulus Imports
 use cumulus_client_consensus_aura::{
     build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
@@ -23,10 +15,14 @@ use cumulus_client_service::{
     prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
 use cumulus_primitives_core::ParaId;
+
+// Polkadot Imports
 use polkadot_primitives::v1::CollatorPair;
 
+// Substrate Imports
 use sc_client_api::ExecutorProvider;
 use sc_executor::native_executor_instance;
+pub use sc_executor::NativeExecutor;
 use sc_network::NetworkService;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -34,11 +30,9 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::SlotData;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
-use std::sync::Arc;
 use substrate_prometheus_endpoint::Registry;
 
-pub use sc_executor::NativeExecutor;
-
+// Runtime type overrides
 type BlockNumber = u32;
 type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
 pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
@@ -46,9 +40,10 @@ type Hash = sp_core::H256;
 
 // Native executor instance.
 native_executor_instance!(
-    pub RococoParachainRuntimeExecutor,
+    pub ParachainRuntimeExecutor,
     vln_runtime::api::dispatch,
     vln_runtime::native_version,
+    frame_benchmarking::benchmarking::HostFunctions,
 );
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -318,16 +313,16 @@ where
     Ok((task_manager, client))
 }
 
-/// Build the import queue for the rococo parachain runtime.
-pub fn rococo_parachain_build_import_queue(
-    client: Arc<TFullClient<Block, vln_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>,
+/// Build the import queue for the the parachain runtime.
+pub fn parachain_build_import_queue(
+    client: Arc<TFullClient<Block, RuntimeApi, ParachainRuntimeExecutor>>,
     config: &Configuration,
     telemetry: Option<TelemetryHandle>,
     task_manager: &TaskManager,
 ) -> Result<
     sp_consensus::DefaultImportQueue<
         Block,
-        TFullClient<Block, vln_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
+        TFullClient<Block, RuntimeApi, ParachainRuntimeExecutor>,
     >,
     sc_service::Error,
 > {
@@ -363,23 +358,23 @@ pub fn rococo_parachain_build_import_queue(
     .map_err(Into::into)
 }
 
-/// Start a rococo parachain node.
-pub async fn start_rococo_parachain_node(
+/// Start a normal parachain node.
+pub async fn start_node(
     parachain_config: Configuration,
     collator_key: CollatorPair,
     polkadot_config: Configuration,
     id: ParaId,
 ) -> sc_service::error::Result<(
     TaskManager,
-    Arc<TFullClient<Block, vln_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>,
+    Arc<TFullClient<Block, RuntimeApi, ParachainRuntimeExecutor>>,
 )> {
-    start_node_impl::<vln_runtime::RuntimeApi, RococoParachainRuntimeExecutor, _, _, _>(
+    start_node_impl::<RuntimeApi, ParachainRuntimeExecutor, _, _, _>(
         parachain_config,
         collator_key,
         polkadot_config,
         id,
         |_| Default::default(),
-        rococo_parachain_build_import_queue,
+        parachain_build_import_queue,
         |client,
          prometheus_registry,
          telemetry,
