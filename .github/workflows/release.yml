@@ -1,0 +1,69 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - automate-release
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    # name: Build project
+    # runs-on: self-hosted
+    # steps:
+    #   - uses: actions/checkout@v2
+
+    #   - name: Cache cargo directories
+    #     uses: actions/cache@v2
+    #     with:
+    #       path: |
+    #         ~/.cargo/registry
+    #         ~/.cargo/git
+    #       key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    #   - name: Cache cargo build
+    #     uses: actions/cache@v2
+    #     with:
+    #       path: target
+    #       key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }} 
+    #   - uses: actions-rs/toolchain@v1 
+    #     with:
+    #       toolchain: nightly-2021-02-17
+    #       target: wasm32-unknown-unknown 
+    #   - uses: actions-rs/cargo@v1
+    #     with:
+    #       command: build
+    #       args: --release -p vln-parachain
+      
+    #   - name: Build parachain artifacts
+    #     run: |
+    #       ./target/release/vln_parachain export-genesis-state --chain testnet > genesis-state
+    #       ./target/release/vln_parachain export-genesis-wasm --chain testnet > genesis-wasm
+    #       ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > testnet-chainspec
+      
+    #   - name: Package files
+    #     uses: actions/upload-artifact@v2
+    #     with:
+    #       name: build
+    #       if-no-files-found: error
+    #       path: |
+    #         target/release/vln_parachain
+    #         genesis-state
+    #         genesis-wasm
+    #         testnet-chainspec
+    #       retention-days: 10 #keep artifacts only for 10 days to save on storage
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          # fail_on_unmatched_files: true
+          # files: |
+          #   target/release/vln_parachain
+          #   genesis-state
+          #   genesis-wasm
+          #   testnet-chainspec
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

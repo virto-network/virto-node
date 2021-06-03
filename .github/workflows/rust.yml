@@ -1,7 +1,9 @@
-name: Build and Release
+name: Build and Pack
 
 on:
-  pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -49,18 +51,4 @@ jobs:
             genesis-wasm
             testnet-chainspec
           retention-days: 10 #keep artifacts only for 10 days to save on storage
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') # only triggered if the head is a tag
-        with:
-          prerelease: true
-          fail_on_unmatched_files: true
-          files: |
-            target/release/vln_parachain
-            genesis-state
-            genesis-wasm
-            testnet-chainspec
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
