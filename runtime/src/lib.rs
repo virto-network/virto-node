@@ -143,7 +143,9 @@ pub mod opaque {
 
 #[cfg(not(feature = "standalone"))]
 impl_opaque_keys! {
-    pub struct SessionKeys {}
+    pub struct SessionKeys {
+        pub aura: Aura,
+    }
 }
 
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -671,10 +673,10 @@ construct_vln_runtime! {
 
 #[cfg(not(feature = "standalone"))]
 construct_vln_runtime! {
+    AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     NetworkAssets: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
-    AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
     // XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     // UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
     // PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin},

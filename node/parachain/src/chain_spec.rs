@@ -3,12 +3,17 @@ use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
+use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{AccountId, AuraId, Signature};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
+
+const ROCOCO_RESERVED_PARA_ID: u32 = 2007u32; // modify as needed
+const THOR_AURA_SS58: &str = "5Hgs2iwvqjFNdhQX5yXG4YJNy9CXWmFS1884VWLC353tmY8Q";
+const ODIN_AURA_SS58: &str = "5GN3Ne9KDobS3NknsqPvvbFXBPtU9mcMBmpxAyX2bidSmmGK";
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -44,6 +49,10 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
+fn public_key_from_ss58<T: Public>(ss58: &str) -> T {
+    Ss58Codec::from_string(ss58).unwrap()
+}
+
 pub fn development_config(id: ParaId) -> ChainSpec {
     ChainSpec::from_genesis(
         // Name
@@ -54,7 +63,10 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         move || {
             testnet_genesis(
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                vec![get_from_seed::<AuraId>("Alice")],
+                vec![
+                    get_from_seed::<AuraId>("Alice"),
+                    get_from_seed::<AuraId>("Bob"),
+                ],
                 id,
             )
         },
@@ -64,7 +76,7 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         None,
         Extensions {
             relay_chain: "rococo-local".into(),
-            para_id: id.into(),
+            para_id: 2000u32,
         },
     )
 }
@@ -82,8 +94,8 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
             testnet_genesis(
                 testnet_root_key.clone(),
                 vec![
-                    get_from_seed::<AuraId>("Alice"),
-                    get_from_seed::<AuraId>("Bob"),
+                    public_key_from_ss58::<AuraId>(THOR_AURA_SS58),
+                    public_key_from_ss58::<AuraId>(ODIN_AURA_SS58),
                 ],
                 id,
             )
@@ -94,7 +106,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         None,
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: id.into(),
+            para_id: ROCOCO_RESERVED_PARA_ID,
         },
     )
 }

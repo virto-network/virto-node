@@ -1,20 +1,7 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 #![allow(clippy::all, unused_qualifications)]
 use crate::chain_spec;
+use cumulus_client_cli;
+use sc_cli;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -49,6 +36,10 @@ pub enum Subcommand {
 
     /// Revert the chain to a previous state.
     Revert(sc_cli::RevertCmd),
+
+    /// The custom benchmark subcommmand benchmarking runtime pallets.
+    #[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
+    Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 }
 
 /// Command for exporting the genesis state of the parachain
@@ -61,7 +52,7 @@ pub struct ExportGenesisStateCommand {
     /// Id of the parachain this state is for.
     ///
     /// Default: 100
-    #[structopt(long)]
+    #[structopt(long, conflicts_with = "chain")]
     pub parachain_id: Option<u32>,
 
     /// Write output in binary. Default is to write in hex.
@@ -69,7 +60,7 @@ pub struct ExportGenesisStateCommand {
     pub raw: bool,
 
     /// The name of the chain for that the genesis state should be exported.
-    #[structopt(long)]
+    #[structopt(long, conflicts_with = "parachain-id")]
     pub chain: Option<String>,
 }
 
