@@ -9,10 +9,10 @@ on:
 
 jobs:
   build:
-    # name: Build project
-    # runs-on: self-hosted
-    # steps:
-    #   - uses: actions/checkout@v2
+    name: Build project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
     #   - name: Cache cargo directories
     #     uses: actions/cache@v2
