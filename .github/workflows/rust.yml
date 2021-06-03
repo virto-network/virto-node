@@ -1,14 +1,12 @@
 name: Build and Release
 
 on:
-  push: 
-    branches:
-    - automate-release
+  pull_request:
 
 jobs:
   build:
     name: Build project
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
 
