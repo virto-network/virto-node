@@ -1,9 +1,9 @@
-name: Blockchain Node
+name: Build and Release
 
 on:
   push: 
     branches:
-    - master
+    - automate-release
 
 jobs:
   build:
@@ -51,4 +51,18 @@ jobs:
             genesis-wasm
             testnet-chainspec
           retention-days: 10 #keep artifacts only for 10 days to save on storage
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') # only triggered if the head is a tag
+        prerelease: true
+        fail_on_unmatched_files: true
+        with:
+          files: |
+            target/release/vln_parachain
+            genesis-state
+            genesis-wasm
+            testnet-chainspec
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
