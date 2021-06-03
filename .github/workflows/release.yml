@@ -1,9 +1,9 @@
-name: Build and Pack
+name: Create Release
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -40,15 +40,16 @@ jobs:
           ./target/release/vln_parachain export-genesis-wasm --chain testnet > genesis-wasm
           ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > testnet-chainspec
       
-      - name: Package files
-        uses: actions/upload-artifact@v2
+      - name: Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: build
-          if-no-files-found: error
-          path: |
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
             target/release/vln_parachain
             genesis-state
             genesis-wasm
             testnet-chainspec
-          retention-days: 10 #keep artifacts only for 10 days to save on storage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
