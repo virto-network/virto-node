@@ -362,24 +362,6 @@ impl pallet_proxy::Config for Runtime {
     type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
-impl vln_foreign_asset::Config for Runtime {
-    type Event = Event;
-    type Assets = Collateral;
-    type Whitelist = Whitelist;
-}
-
-type UsdvInstance = vln_backed_asset::Instance1;
-impl vln_backed_asset::Config<UsdvInstance> for Runtime {
-    type Event = Event;
-    type Collateral = Tokens;
-    type BaseCurrency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
-}
-
-impl vln_transfers::Config for Runtime {
-    type Event = Event;
-    type Assets = Tokens;
-}
-
 parameter_types! {
     pub const MinimumCount: u32 = 3;
     pub const ExpiresIn: u32 = 600;
@@ -653,9 +635,6 @@ macro_rules! construct_vln_runtime {
                     Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
                     Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
-                    ForeignAssets: vln_foreign_asset::{Call, Event<T>, Pallet, Storage},
-                    Usdv: vln_backed_asset::<Instance1>::{Call, Event<T>, Pallet, Storage},
-                    Transfers: vln_transfers::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},

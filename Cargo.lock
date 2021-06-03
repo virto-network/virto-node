@@ -10790,21 +10790,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
-name = "vln-backed-asset"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
-]
-
-[[package]]
 name = "vln-escrow"
 version = "0.1.0"
 dependencies = [
@@ -10818,21 +10803,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "vln-primitives",
-]
-
-[[package]]
-name = "vln-foreign-asset"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]
@@ -11002,27 +10972,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder 4.0.0",
- "vln-backed-asset",
  "vln-escrow",
- "vln-foreign-asset",
  "vln-primitives",
  "vln-rate-provider",
- "vln-transfers",
-]
-
-[[package]]
-name = "vln-transfers"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-tokens",
- "orml-traits",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
 ]
 
 [[package]]

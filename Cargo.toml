@@ -5,9 +5,6 @@ panic = 'unwind'
 members = [
     'node/parachain',
     'node/standalone',
-    'pallets/backed_asset',
-    'pallets/foreign_asset',
-    'pallets/transfers',
     'pallets/rate_provider',
     'pallets/escrow',
     'primitives',
