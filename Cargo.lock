@@ -4645,7 +4645,6 @@ dependencies = [
  "frame-system",
  "orml-traits",
  "parity-scale-codec",
- "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -10946,7 +10945,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal 0.3.1",
  "orml-oracle",
- "orml-tokens",
  "orml-traits",
  "pallet-aura",
  "pallet-grandpa",

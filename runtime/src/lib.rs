@@ -29,7 +29,6 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
-use orml_tokens::CurrencyAdapter;
 use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
@@ -155,7 +154,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("VLN-PC"),
     impl_name: create_runtime_str!("vln-runtime"),
     authoring_version: 1,
-    spec_version: 100, // >100 recommended for compatiblity https://github.com/polkadot-js/api/blob/master/CHANGELOG.md
+    spec_version: 1,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -297,70 +296,36 @@ impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |currency_id: Asset| -> Balance {
-        Zero::zero()
-    };
-}
+// parameter_type_with_key! {
+//     pub ExistentialDeposits: |currency_id: Asset| -> Balance {
+//         Zero::zero()
+//     };
+// }
 
-parameter_types! {
-    pub const MaxLocks: u32 = 50;
-}
+// parameter_types! {
+//     pub const ProxyDepositBase: Balance = 1;
+//     pub const ProxyDepositFactor: Balance = 1;
+//     pub const MaxProxies: u16 = 4;
+//     pub const MaxPending: u32 = 2;
+//     pub const AnnouncementDepositBase: Balance = 1;
+//     pub const AnnouncementDepositFactor: Balance = 1;
+//     pub const GetUsdvId: Asset = Asset::Usdv;
+// }
 
-type GeneralInstance = orml_tokens::Instance1;
-impl orml_tokens::Config<GeneralInstance> for Runtime {
-    type Amount = Amount;
-    type Balance = Balance;
-    type CurrencyId = Asset;
-    type Event = Event;
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
-    type WeightInfo = ();
-    type MaxLocks = MaxLocks;
-}
-
-parameter_type_with_key! {
-    pub ExistentialDepositsCollateral: |currency_id: CollateralType| -> Balance {
-        Zero::zero()
-    };
-}
-
-type CollateralInstance = orml_tokens::Instance2;
-impl orml_tokens::Config<CollateralInstance> for Runtime {
-    type Amount = Amount;
-    type Balance = Balance;
-    type CurrencyId = CollateralType;
-    type Event = Event;
-    type ExistentialDeposits = ExistentialDepositsCollateral;
-    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
-    type WeightInfo = ();
-    type MaxLocks = MaxLocks;
-}
-
-parameter_types! {
-    pub const ProxyDepositBase: Balance = 1;
-    pub const ProxyDepositFactor: Balance = 1;
-    pub const MaxProxies: u16 = 4;
-    pub const MaxPending: u32 = 2;
-    pub const AnnouncementDepositBase: Balance = 1;
-    pub const AnnouncementDepositFactor: Balance = 1;
-    pub const GetUsdvId: Asset = Asset::Usdv;
-}
-
-impl pallet_proxy::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
-    type Currency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
-    type ProxyType = ProxyType;
-    type ProxyDepositBase = ProxyDepositBase;
-    type ProxyDepositFactor = ProxyDepositFactor;
-    type MaxProxies = MaxProxies;
-    type WeightInfo = ();
-    type CallHasher = BlakeTwo256;
-    type MaxPending = MaxPending;
-    type AnnouncementDepositBase = AnnouncementDepositBase;
-    type AnnouncementDepositFactor = AnnouncementDepositFactor;
-}
+// impl pallet_proxy::Config for Runtime {
+//     type Event = Event;
+//     type Call = Call;
+//     type Currency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
+//     type ProxyType = ProxyType;
+//     type ProxyDepositBase = ProxyDepositBase;
+//     type ProxyDepositFactor = ProxyDepositFactor;
+//     type MaxProxies = MaxProxies;
+//     type WeightInfo = ();
+//     type CallHasher = BlakeTwo256;
+//     type MaxPending = MaxPending;
+//     type AnnouncementDepositBase = AnnouncementDepositBase;
+//     type AnnouncementDepositFactor = AnnouncementDepositFactor;
+// }
 
 parameter_types! {
     pub const MinimumCount: u32 = 3;
@@ -407,11 +372,11 @@ impl vln_rate_provider::Config for Runtime {
     type RateCombinator = DefaultRateCombinator;
 }
 
-impl vln_escrow::Config for Runtime {
-    type Event = Event;
-    type Asset = Tokens;
-    type JudgeWhitelist = Whitelist;
-}
+// impl vln_escrow::Config for Runtime {
+//     type Event = Event;
+//     type Asset = Tokens;
+//     type JudgeWhitelist = Whitelist;
+// }
 
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
@@ -454,17 +419,6 @@ mod parachain_impl {
         };
     }
 
-    type NetworkAssetsInstance = orml_tokens::Instance3;
-    impl orml_tokens::Config<NetworkAssetsInstance> for Runtime {
-        type Amount = Amount;
-        type Balance = Balance;
-        type CurrencyId = NetworkAsset;
-        type Event = Event;
-        type ExistentialDeposits = ExistentialDepositsForeign;
-        type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
-        type WeightInfo = ();
-        type MaxLocks = MaxLocks;
-    }
 
     parameter_types! {
         pub ReservedDmpWeight: Weight = RuntimeBlockWeights::get().max_block / 4;
@@ -632,12 +586,10 @@ macro_rules! construct_vln_runtime {
 
                     // vln dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
-                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
-                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
-                    Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
+                    //Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
-                    Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
+                    //Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
                     Aura: pallet_aura::{Config<T>, Pallet},
                     $($modules)*
                 }
@@ -655,7 +607,6 @@ construct_vln_runtime! {
     AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
-    NetworkAssets: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
     // XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     // UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
     // PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin},

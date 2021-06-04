@@ -131,15 +131,6 @@ fn testnet_genesis(
             authorities: initial_authorities,
         },
         cumulus_pallet_aura_ext: Default::default(),
-        orml_tokens_Instance1: vln_runtime::TokensConfig {
-            endowed_accounts: vec![],
-        },
-        orml_tokens_Instance2: vln_runtime::CollateralConfig {
-            endowed_accounts: vec![],
-        },
-        orml_tokens_Instance3: vln_runtime::NetworkAssetsConfig {
-            endowed_accounts: vec![],
-        },
         pallet_membership: vln_runtime::WhitelistConfig {
             members: vec![root_key],
             phantom: Default::default(),

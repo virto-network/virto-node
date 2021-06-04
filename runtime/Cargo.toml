@@ -58,7 +58,6 @@ polkadot-parachain = {git = "https://github.com/paritytech/polkadot", default-fe
 # pallet-xcm = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "polkadot-v0.9.3"}
 
 # Vln dependencies
-orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 orml-oracle = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.3", default-features = false }
@@ -109,7 +108,6 @@ std = [
 	"parachain-info/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-primitives-core/std",
-	'orml-tokens/std',
     'orml-oracle/std',
 	'pallet-proxy/std',
 	'vln-primitives/std',
