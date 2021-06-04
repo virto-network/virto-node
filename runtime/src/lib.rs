@@ -173,9 +173,10 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-pub const UNIT: Balance = 1_000_000_000_000;
-pub const MILLIUNIT: Balance = 1_000_000_000;
-pub const MICROUNIT: Balance = 1_000_000;
+pub const UNITS: Balance = 1_000_000_000_000;
+pub const CENTS: Balance = UNITS / 30_000;
+pub const GRAND: Balance = CENTS * 100_000;
+pub const MILLICENTS: Balance = CENTS / 1_000;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -392,7 +393,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: u128 = 1 * MICROUNIT;
+	pub const TransactionByteFee: u128 = 1 * MILLICENTS;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -400,6 +401,32 @@ impl pallet_transaction_payment::Config for Runtime {
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
+}
+
+parameter_types! {
+	pub const AssetDeposit: Balance = UNITS; // 1 UNIT deposit to create asset
+	pub const ApprovalDeposit: Balance = 1;
+	pub const StringLimit: u32 = 50;
+	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+	pub const MetadataDepositBase: Balance = 1;
+	pub const MetadataDepositPerByte: Balance = 1;
+}
+
+impl pallet_assets::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type AssetId = u32;
+	type Currency = Balances;
+	type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+	type AssetDeposit = AssetDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type ApprovalDeposit = ApprovalDeposit;
+	type StringLimit = StringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
 }
 
 // impl vln_escrow::Config for Runtime {
@@ -623,6 +650,7 @@ macro_rules! construct_vln_runtime {
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     //Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
                     Aura: pallet_aura::{Config<T>, Pallet},
+                    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
                     $($modules)*
                 }
             }
