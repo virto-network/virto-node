@@ -8,7 +8,7 @@ use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use vln_runtime::{
     AccountId, AuraConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-    SystemConfig, WhitelistConfig,
+    SystemConfig, WhitelistConfig, BalancesConfig
 };
 
 type AccountPublic = <Signature as Verify>::Signer;
@@ -16,6 +16,7 @@ pub(crate) type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 struct GenesisConfigBuilder<'a> {
     initial_authorities: &'a [(AuraId, GrandpaId)],
+    endowed_accounts: Vec<AccountId>,
     sudo_key: AccountId,
     wasm_binary: &'a [u8],
 }
@@ -43,6 +44,13 @@ impl GenesisConfigBuilder<'_> {
             },
             pallet_sudo: SudoConfig {
                 key: self.sudo_key.clone(),
+            },
+            pallet_balances: BalancesConfig {
+                balances: self.endowed_accounts
+                    .iter()
+                    .cloned()
+                    .map(|k| (k, 1 << 60))
+                    .collect(),
             },
             pallet_membership: WhitelistConfig {
                 members: vec![self.sudo_key],

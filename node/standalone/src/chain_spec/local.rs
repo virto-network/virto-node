@@ -18,6 +18,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
                     authority_keys_from_seed("Alice"),
                     authority_keys_from_seed("Bob"),
                 ],
+                endowed_accounts: vec![],
                 sudo_key: get_account_id_from_seed::<sr25519::Public>("Alice"),
                 wasm_binary,
             }

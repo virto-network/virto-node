@@ -54,6 +54,11 @@ fn public_key_from_ss58<T: Public>(ss58: &str) -> T {
 }
 
 pub fn development_config(id: ParaId) -> ChainSpec {
+
+    let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), "KSM".into());
+	properties.insert("tokenDecimals".into(), 10.into());
+
     ChainSpec::from_genesis(
         // Name
         "VLN PC Dev",
@@ -67,13 +72,27 @@ pub fn development_config(id: ParaId) -> ChainSpec {
                     get_from_seed::<AuraId>("Alice"),
                     get_from_seed::<AuraId>("Bob"),
                 ],
+                vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
                 id,
             )
         },
         vec![],
         None,
         None,
-        None,
+        Some(properties),
         Extensions {
             relay_chain: "rococo-local".into(),
             para_id: 2000u32,
@@ -97,6 +116,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
                     public_key_from_ss58::<AuraId>(THOR_AURA_SS58),
                     public_key_from_ss58::<AuraId>(ODIN_AURA_SS58),
                 ],
+                vec![],
                 id,
             )
         },
@@ -114,6 +134,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
 fn testnet_genesis(
     root_key: AccountId,
     initial_authorities: Vec<AuraId>,
+    endowed_accounts: Vec<AccountId>,
     id: ParaId,
 ) -> vln_runtime::GenesisConfig {
     vln_runtime::GenesisConfig {
@@ -126,6 +147,13 @@ fn testnet_genesis(
         pallet_sudo: vln_runtime::SudoConfig {
             key: root_key.clone(),
         },
+        pallet_balances: vln_runtime::BalancesConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
+		},
         parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
         pallet_aura: vln_runtime::AuraConfig {
             authorities: initial_authorities,

@@ -15,6 +15,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
         move || {
             GenesisConfigBuilder {
                 initial_authorities: &[authority_keys_from_seed("Alice")],
+                endowed_accounts: vec![],
                 sudo_key: get_account_id_from_seed::<sr25519::Public>("Alice"),
                 wasm_binary,
             }
