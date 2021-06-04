@@ -69,9 +69,6 @@ pallet-membership = { git = "https://github.com/paritytech/substrate", branch = 
 
 # Local dependencies
 vln-primitives = { default-features = false, path = '../primitives' }
-vln-foreign-asset = { default-features = false, path = '../pallets/foreign_asset' }
-vln-backed-asset = { default-features = false, path = '../pallets/backed_asset' }
-vln-transfers = { default-features = false, path = '../pallets/transfers' }
 vln-rate-provider = { default-features = false, path = '../pallets/rate_provider' }
 vln-escrow = { default-features = false, path = '../pallets/escrow' }
 
@@ -116,9 +113,6 @@ std = [
     'orml-oracle/std',
 	'pallet-proxy/std',
 	'vln-primitives/std',
-    'vln-foreign-asset/std',
-    'vln-backed-asset/std',
-    'vln-transfers/std',
 	'pallet-membership/std',
 	'vln-escrow/std',
 	"cumulus-pallet-aura-ext/std",
