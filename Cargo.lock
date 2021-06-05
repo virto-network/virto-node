@@ -4645,6 +4645,7 @@ dependencies = [
  "frame-system",
  "orml-traits",
  "parity-scale-codec",
+ "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -10958,7 +10959,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal 0.3.1",
  "orml-oracle",
- "orml-traits",
  "pallet-assets",
  "pallet-aura",
  "pallet-balances",
@@ -10987,7 +10987,6 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder 4.0.0",
- "vln-escrow",
  "vln-primitives",
  "vln-rate-provider",
 ]

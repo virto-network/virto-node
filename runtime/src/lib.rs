@@ -15,9 +15,7 @@ use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
-};
+use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -29,10 +27,9 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
-use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
+use vln_primitives::{Asset, DefaultRateCombinator};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -49,36 +46,36 @@ mod standalone_use {
 mod currency_id_convert;
 
 // XCM imports
-#[cfg(not(feature = "standalone"))]
-use parachain_use::*;
-#[cfg(not(feature = "standalone"))]
-mod parachain_use {
-    //pub use crate::currency_id_convert::CurrencyIdConvert;
-    pub use frame_system::EnsureRoot;
-    // pub use orml_xcm_support::{
-    //     IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
-    // };
-    pub use polkadot_parachain::primitives::Sibling;
-    pub use sp_runtime::{
-        traits::{Convert, Identity},
-        DispatchResult,
-    };
-    pub use sp_std::collections::btree_set::BTreeSet;
-    pub use vln_primitives::NetworkAsset;
-    // pub use xcm::v0::{
-    //     Junction::{Parachain, Parent},
-    //     MultiLocation::{self, X1, X2},
-    //     NetworkId, Xcm,
-    // };
-    // pub use xcm_builder::{
-    //     AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-    //     EnsureXcmOrigin, FixedRateOfConcreteFungible, FixedWeightBounds, IsConcrete,
-    //     LocationInverter, NativeAsset, ParentIsDefault, RelayChainAsNative,
-    //     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-    //     SovereignSignedViaLocation, TakeWeightCredit,
-    // };
-    //pub use xcm_executor::{Config, XcmExecutor};
-}
+// #[cfg(not(feature = "standalone"))]
+// use parachain_use::*;
+// #[cfg(not(feature = "standalone"))]
+// mod parachain_use {
+//     //pub use crate::currency_id_convert::CurrencyIdConvert;
+//     pub use frame_system::EnsureRoot;
+//     // pub use orml_xcm_support::{
+//     //     IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
+//     // };
+//     pub use polkadot_parachain::primitives::Sibling;
+//     pub use sp_runtime::{
+//         traits::{Convert, Identity},
+//         DispatchResult,
+//     };
+//     pub use sp_std::collections::btree_set::BTreeSet;
+//     pub use vln_primitives::NetworkAsset;
+//     // pub use xcm::v0::{
+//     //     Junction::{Parachain, Parent},
+//     //     MultiLocation::{self, X1, X2},
+//     //     NetworkId, Xcm,
+//     // };
+//     // pub use xcm_builder::{
+//     //     AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+//     //     EnsureXcmOrigin, FixedRateOfConcreteFungible, FixedWeightBounds, IsConcrete,
+//     //     LocationInverter, NativeAsset, ParentIsDefault, RelayChainAsNative,
+//     //     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+//     //     SovereignSignedViaLocation, TakeWeightCredit,
+//     // };
+//     //pub use xcm_executor::{Config, XcmExecutor};
+// }
 
 use frame_system::limits::{BlockLength, BlockWeights};
 
@@ -147,10 +144,8 @@ impl_opaque_keys! {
     }
 }
 
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    #[cfg(feature = "standalone")]
-    spec_name: create_runtime_str!("VLN"),
-    #[cfg(not(feature = "standalone"))]
     spec_name: create_runtime_str!("VLN-PC"),
     impl_name: create_runtime_str!("vln-runtime"),
     authoring_version: 1,
@@ -301,36 +296,29 @@ impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
 }
 
-// parameter_type_with_key! {
-//     pub ExistentialDeposits: |currency_id: Asset| -> Balance {
-//         Zero::zero()
-//     };
-// }
+parameter_types! {
+    pub const ProxyDepositBase: Balance = 1;
+    pub const ProxyDepositFactor: Balance = 1;
+    pub const MaxProxies: u16 = 4;
+    pub const MaxPending: u32 = 2;
+    pub const AnnouncementDepositBase: Balance = 1;
+    pub const AnnouncementDepositFactor: Balance = 1;
+}
 
-// parameter_types! {
-//     pub const ProxyDepositBase: Balance = 1;
-//     pub const ProxyDepositFactor: Balance = 1;
-//     pub const MaxProxies: u16 = 4;
-//     pub const MaxPending: u32 = 2;
-//     pub const AnnouncementDepositBase: Balance = 1;
-//     pub const AnnouncementDepositFactor: Balance = 1;
-//     pub const GetUsdvId: Asset = Asset::Usdv;
-// }
-
-// impl pallet_proxy::Config for Runtime {
-//     type Event = Event;
-//     type Call = Call;
-//     type Currency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
-//     type ProxyType = ProxyType;
-//     type ProxyDepositBase = ProxyDepositBase;
-//     type ProxyDepositFactor = ProxyDepositFactor;
-//     type MaxProxies = MaxProxies;
-//     type WeightInfo = ();
-//     type CallHasher = BlakeTwo256;
-//     type MaxPending = MaxPending;
-//     type AnnouncementDepositBase = AnnouncementDepositBase;
-//     type AnnouncementDepositFactor = AnnouncementDepositFactor;
-// }
+impl pallet_proxy::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type Currency = Balances;
+    type ProxyType = ProxyType;
+    type ProxyDepositBase = ProxyDepositBase;
+    type ProxyDepositFactor = ProxyDepositFactor;
+    type MaxProxies = MaxProxies;
+    type WeightInfo = ();
+    type CallHasher = BlakeTwo256;
+    type MaxPending = MaxPending;
+    type AnnouncementDepositBase = AnnouncementDepositBase;
+    type AnnouncementDepositFactor = AnnouncementDepositFactor;
+}
 
 parameter_types! {
     pub const MinimumCount: u32 = 3;
@@ -378,55 +366,55 @@ impl vln_rate_provider::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 0;
-	pub const MaxLocks: u32 = 50;
+    pub const ExistentialDeposit: Balance = 0;
+    pub const MaxLocks: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type Balance = Balance;
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+    type MaxLocks = MaxLocks;
+    type Balance = Balance;
+    type Event = Event;
+    type DustRemoval = ();
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = System;
+    type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
-	pub const TransactionByteFee: u128 = 1 * MILLICENTS;
+    pub const TransactionByteFee: u128 = MILLICENTS;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
-	type TransactionByteFee = TransactionByteFee;
-	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+    type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+    type TransactionByteFee = TransactionByteFee;
+    type WeightToFee = IdentityFee<Balance>;
+    type FeeMultiplierUpdate = ();
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = UNITS; // 1 UNIT deposit to create asset
-	pub const ApprovalDeposit: Balance = 1;
-	pub const StringLimit: u32 = 50;
-	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-	pub const MetadataDepositBase: Balance = 1;
-	pub const MetadataDepositPerByte: Balance = 1;
+    pub const AssetDeposit: Balance = UNITS; // 1 UNIT deposit to create asset
+    pub const ApprovalDeposit: Balance = UNITS;
+    pub const StringLimit: u32 = 50;
+    /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
+    // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
+    pub const MetadataDepositBase: Balance = UNITS;
+    pub const MetadataDepositPerByte: Balance = UNITS;
 }
 
 impl pallet_assets::Config for Runtime {
-	type Event = Event;
-	type Balance = Balance;
-	type AssetId = u32;
-	type Currency = Balances;
-	type ForceOrigin = EnsureRoot<AccountId>; // allow council later
-	type AssetDeposit = AssetDeposit;
-	type MetadataDepositBase = MetadataDepositBase;
-	type MetadataDepositPerByte = MetadataDepositPerByte;
-	type ApprovalDeposit = ApprovalDeposit;
-	type StringLimit = StringLimit;
-	type Freezer = ();
-	type Extra = ();
-	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u32;
+    type Currency = Balances;
+    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+    type AssetDeposit = AssetDeposit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type ApprovalDeposit = ApprovalDeposit;
+    type StringLimit = StringLimit;
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
 }
 
 // impl vln_escrow::Config for Runtime {
@@ -469,13 +457,6 @@ pub use parachain_impl::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_impl {
     use super::*;
-
-    parameter_type_with_key! {
-        pub ExistentialDepositsForeign: |currency_id: NetworkAsset| -> Balance {
-            Zero::zero()
-        };
-    }
-
 
     parameter_types! {
         pub ReservedDmpWeight: Weight = RuntimeBlockWeights::get().max_block / 4;
@@ -642,15 +623,15 @@ macro_rules! construct_vln_runtime {
                     Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
                     TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
                     Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+                    Aura: pallet_aura::{Config<T>, Pallet},
+                    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
 
                     // vln dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
-                    //Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
+                    Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     //Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
-                    Aura: pallet_aura::{Config<T>, Pallet},
-                    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
                     $($modules)*
                 }
             }
@@ -827,19 +808,19 @@ impl_runtime_apis! {
     }
 
     impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
-		fn query_info(
-			uxt: <Block as BlockT>::Extrinsic,
-			len: u32,
-		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
-			TransactionPayment::query_info(uxt, len)
-		}
-		fn query_fee_details(
-			uxt: <Block as BlockT>::Extrinsic,
-			len: u32,
-		) -> pallet_transaction_payment::FeeDetails<Balance> {
-			TransactionPayment::query_fee_details(uxt, len)
-		}
-	}
+        fn query_info(
+            uxt: <Block as BlockT>::Extrinsic,
+            len: u32,
+        ) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+            TransactionPayment::query_info(uxt, len)
+        }
+        fn query_fee_details(
+            uxt: <Block as BlockT>::Extrinsic,
+            len: u32,
+        ) -> pallet_transaction_payment::FeeDetails<Balance> {
+            TransactionPayment::query_fee_details(uxt, len)
+        }
+    }
 
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {

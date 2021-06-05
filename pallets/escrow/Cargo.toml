@@ -34,4 +34,5 @@ std = [
 	'frame-system/std',
 	'sp-runtime/std',
 	'orml-traits/std',
+	'orml-tokens/std'
 ]
