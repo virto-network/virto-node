@@ -30,6 +30,8 @@ mod proxy_type;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
 use vln_primitives::{Asset, DefaultRateCombinator};
+mod mocks;
+use mocks::MockAssets;
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -441,11 +443,11 @@ impl pallet_assets::Config<FiatAssets> for Runtime {
     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
 }
 
-// impl vln_escrow::Config for Runtime {
-//     type Event = Event;
-//     type Asset = Tokens;
-//     type JudgeWhitelist = Whitelist;
-// }
+impl vln_escrow::Config for Runtime {
+    type Event = Event;
+    type Asset = MockAssets;
+    type JudgeWhitelist = Whitelist;
+}
 
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
@@ -656,7 +658,7 @@ macro_rules! construct_vln_runtime {
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
-                    //Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
+                    Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
                     $($modules)*
                 }
             }

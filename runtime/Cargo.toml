@@ -72,7 +72,7 @@ pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 
 # Local dependencies
 vln-primitives = { default-features = false, path = '../primitives' }
 vln-rate-provider = { default-features = false, path = '../pallets/rate_provider' }
-#vln-escrow = { default-features = false, path = '../pallets/escrow' }
+vln-escrow = { default-features = false, path = '../pallets/escrow' }
 
 [features]
 default = ['std']
@@ -115,7 +115,7 @@ std = [
 	'pallet-proxy/std',
 	'vln-primitives/std',
 	'pallet-membership/std',
-	#'vln-escrow/std',
+	'vln-escrow/std',
 	'cumulus-pallet-aura-ext/std',
 	'vln-rate-provider/std',
 	# 'orml-xtokens/std',

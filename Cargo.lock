@@ -4637,20 +4637,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library#d7bca33577bd66ccdb7e76a67990f49fe9514a75"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "serde",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
 source = "git+https://github.com/valibre-org/open-runtime-module-library#d7bca33577bd66ccdb7e76a67990f49fe9514a75"
@@ -10808,8 +10794,6 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-tokens",
- "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -10987,6 +10971,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder 4.0.0",
+ "vln-escrow",
  "vln-primitives",
  "vln-rate-provider",
 ]
