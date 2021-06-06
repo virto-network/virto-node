@@ -392,26 +392,50 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-    pub const AssetDeposit: Balance = UNITS; // 1 UNIT deposit to create asset
-    pub const ApprovalDeposit: Balance = UNITS;
-    pub const StringLimit: u32 = 50;
-    /// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-    // https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-    pub const MetadataDepositBase: Balance = UNITS;
-    pub const MetadataDepositPerByte: Balance = UNITS;
+    pub const AssetDepositGeneral: Balance = UNITS; // 1 UNIT deposit to create asset
+    pub const ApprovalDepositGeneral: Balance = UNITS;
+    pub const StringLimitGeneral: u32 = 50;
+    pub const MetadataDepositBaseGeneral: Balance = UNITS;
+    pub const MetadataDepositPerByteGeneral: Balance = UNITS;
 }
 
-impl pallet_assets::Config for Runtime {
+type GeneralAssets = pallet_assets::Instance1;
+impl pallet_assets::Config<GeneralAssets> for Runtime {
     type Event = Event;
     type Balance = Balance;
     type AssetId = u32;
     type Currency = Balances;
     type ForceOrigin = EnsureRoot<AccountId>; // allow council later
-    type AssetDeposit = AssetDeposit;
-    type MetadataDepositBase = MetadataDepositBase;
-    type MetadataDepositPerByte = MetadataDepositPerByte;
-    type ApprovalDeposit = ApprovalDeposit;
-    type StringLimit = StringLimit;
+    type AssetDeposit = AssetDepositGeneral;
+    type MetadataDepositBase = MetadataDepositBaseGeneral;
+    type MetadataDepositPerByte = MetadataDepositPerByteGeneral;
+    type ApprovalDeposit = ApprovalDepositGeneral;
+    type StringLimit = StringLimitGeneral;
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const AssetDepositFiat: Balance = UNITS; // 1 UNIT deposit to create asset
+    pub const ApprovalDepositFiat: Balance = UNITS;
+    pub const StringLimitFiat: u32 = 50;
+    pub const MetadataDepositBaseFiat: Balance = UNITS;
+    pub const MetadataDepositPerByteFiat: Balance = UNITS;
+}
+
+type FiatAssets = pallet_assets::Instance2;
+impl pallet_assets::Config<FiatAssets> for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u32;
+    type Currency = Balances;
+    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+    type AssetDeposit = AssetDepositFiat;
+    type MetadataDepositBase = MetadataDepositBaseFiat;
+    type MetadataDepositPerByte = MetadataDepositPerByteFiat;
+    type ApprovalDeposit = ApprovalDepositFiat;
+    type StringLimit = StringLimitFiat;
     type Freezer = ();
     type Extra = ();
     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
@@ -624,7 +648,8 @@ macro_rules! construct_vln_runtime {
                     TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
                     Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
                     Aura: pallet_aura::{Config<T>, Pallet},
-                    Assets: pallet_assets::{Pallet, Call, Storage, Event<T>},
+                    Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
+                    Fiat: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>},
 
                     // vln dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
