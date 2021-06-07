@@ -15,9 +15,7 @@ use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
-};
+use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -29,11 +27,11 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
-use orml_tokens::CurrencyAdapter;
-use orml_traits::parameter_type_with_key;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
+use vln_primitives::{Asset, DefaultRateCombinator};
+mod mocks;
+use mocks::MockAssets;
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -50,36 +48,36 @@ mod standalone_use {
 mod currency_id_convert;
 
 // XCM imports
-#[cfg(not(feature = "standalone"))]
-use parachain_use::*;
-#[cfg(not(feature = "standalone"))]
-mod parachain_use {
-    //pub use crate::currency_id_convert::CurrencyIdConvert;
-    pub use frame_system::EnsureRoot;
-    // pub use orml_xcm_support::{
-    //     IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
-    // };
-    pub use polkadot_parachain::primitives::Sibling;
-    pub use sp_runtime::{
-        traits::{Convert, Identity},
-        DispatchResult,
-    };
-    pub use sp_std::collections::btree_set::BTreeSet;
-    pub use vln_primitives::NetworkAsset;
-    // pub use xcm::v0::{
-    //     Junction::{Parachain, Parent},
-    //     MultiLocation::{self, X1, X2},
-    //     NetworkId, Xcm,
-    // };
-    // pub use xcm_builder::{
-    //     AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-    //     EnsureXcmOrigin, FixedRateOfConcreteFungible, FixedWeightBounds, IsConcrete,
-    //     LocationInverter, NativeAsset, ParentIsDefault, RelayChainAsNative,
-    //     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-    //     SovereignSignedViaLocation, TakeWeightCredit,
-    // };
-    //pub use xcm_executor::{Config, XcmExecutor};
-}
+// #[cfg(not(feature = "standalone"))]
+// use parachain_use::*;
+// #[cfg(not(feature = "standalone"))]
+// mod parachain_use {
+//     //pub use crate::currency_id_convert::CurrencyIdConvert;
+//     pub use frame_system::EnsureRoot;
+//     // pub use orml_xcm_support::{
+//     //     IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, XcmHandler as XcmHandlerT,
+//     // };
+//     pub use polkadot_parachain::primitives::Sibling;
+//     pub use sp_runtime::{
+//         traits::{Convert, Identity},
+//         DispatchResult,
+//     };
+//     pub use sp_std::collections::btree_set::BTreeSet;
+//     pub use vln_primitives::NetworkAsset;
+//     // pub use xcm::v0::{
+//     //     Junction::{Parachain, Parent},
+//     //     MultiLocation::{self, X1, X2},
+//     //     NetworkId, Xcm,
+//     // };
+//     // pub use xcm_builder::{
+//     //     AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+//     //     EnsureXcmOrigin, FixedRateOfConcreteFungible, FixedWeightBounds, IsConcrete,
+//     //     LocationInverter, NativeAsset, ParentIsDefault, RelayChainAsNative,
+//     //     SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+//     //     SovereignSignedViaLocation, TakeWeightCredit,
+//     // };
+//     //pub use xcm_executor::{Config, XcmExecutor};
+// }
 
 use frame_system::limits::{BlockLength, BlockWeights};
 
@@ -148,14 +146,12 @@ impl_opaque_keys! {
     }
 }
 
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    #[cfg(feature = "standalone")]
-    spec_name: create_runtime_str!("VLN"),
-    #[cfg(not(feature = "standalone"))]
     spec_name: create_runtime_str!("VLN-PC"),
     impl_name: create_runtime_str!("vln-runtime"),
     authoring_version: 1,
-    spec_version: 100, // >100 recommended for compatiblity https://github.com/polkadot-js/api/blob/master/CHANGELOG.md
+    spec_version: 1,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 1,
@@ -173,6 +169,11 @@ pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+
+pub const UNITS: Balance = 1_000_000_000_000;
+pub const CENTS: Balance = UNITS / 30_000;
+pub const GRAND: Balance = CENTS * 100_000;
+pub const MILLICENTS: Balance = CENTS / 1_000;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -265,7 +266,7 @@ impl frame_system::Config for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// The data to be stored in an account.
-    type AccountData = ();
+    type AccountData = pallet_balances::AccountData<Balance>;
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
@@ -297,46 +298,6 @@ impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |currency_id: Asset| -> Balance {
-        Zero::zero()
-    };
-}
-
-parameter_types! {
-    pub const MaxLocks: u32 = 50;
-}
-
-type GeneralInstance = orml_tokens::Instance1;
-impl orml_tokens::Config<GeneralInstance> for Runtime {
-    type Amount = Amount;
-    type Balance = Balance;
-    type CurrencyId = Asset;
-    type Event = Event;
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
-    type WeightInfo = ();
-    type MaxLocks = MaxLocks;
-}
-
-parameter_type_with_key! {
-    pub ExistentialDepositsCollateral: |currency_id: CollateralType| -> Balance {
-        Zero::zero()
-    };
-}
-
-type CollateralInstance = orml_tokens::Instance2;
-impl orml_tokens::Config<CollateralInstance> for Runtime {
-    type Amount = Amount;
-    type Balance = Balance;
-    type CurrencyId = CollateralType;
-    type Event = Event;
-    type ExistentialDeposits = ExistentialDepositsCollateral;
-    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
-    type WeightInfo = ();
-    type MaxLocks = MaxLocks;
-}
-
 parameter_types! {
     pub const ProxyDepositBase: Balance = 1;
     pub const ProxyDepositFactor: Balance = 1;
@@ -344,13 +305,12 @@ parameter_types! {
     pub const MaxPending: u32 = 2;
     pub const AnnouncementDepositBase: Balance = 1;
     pub const AnnouncementDepositFactor: Balance = 1;
-    pub const GetUsdvId: Asset = Asset::Usdv;
 }
 
 impl pallet_proxy::Config for Runtime {
     type Event = Event;
     type Call = Call;
-    type Currency = CurrencyAdapter<Runtime, orml_tokens::Instance1, GetUsdvId>;
+    type Currency = Balances;
     type ProxyType = ProxyType;
     type ProxyDepositBase = ProxyDepositBase;
     type ProxyDepositFactor = ProxyDepositFactor;
@@ -407,9 +367,85 @@ impl vln_rate_provider::Config for Runtime {
     type RateCombinator = DefaultRateCombinator;
 }
 
+parameter_types! {
+    pub const ExistentialDeposit: Balance = 0;
+    pub const MaxLocks: u32 = 50;
+}
+
+impl pallet_balances::Config for Runtime {
+    type MaxLocks = MaxLocks;
+    type Balance = Balance;
+    type Event = Event;
+    type DustRemoval = ();
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = System;
+    type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const TransactionByteFee: u128 = MILLICENTS;
+}
+
+impl pallet_transaction_payment::Config for Runtime {
+    type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+    type TransactionByteFee = TransactionByteFee;
+    type WeightToFee = IdentityFee<Balance>;
+    type FeeMultiplierUpdate = ();
+}
+
+parameter_types! {
+    pub const AssetDepositGeneral: Balance = UNITS; // 1 UNIT deposit to create asset
+    pub const ApprovalDepositGeneral: Balance = UNITS;
+    pub const StringLimitGeneral: u32 = 50;
+    pub const MetadataDepositBaseGeneral: Balance = UNITS;
+    pub const MetadataDepositPerByteGeneral: Balance = UNITS;
+}
+
+type GeneralAssets = pallet_assets::Instance1;
+impl pallet_assets::Config<GeneralAssets> for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u32;
+    type Currency = Balances;
+    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+    type AssetDeposit = AssetDepositGeneral;
+    type MetadataDepositBase = MetadataDepositBaseGeneral;
+    type MetadataDepositPerByte = MetadataDepositPerByteGeneral;
+    type ApprovalDeposit = ApprovalDepositGeneral;
+    type StringLimit = StringLimitGeneral;
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+    pub const AssetDepositFiat: Balance = UNITS; // 1 UNIT deposit to create asset
+    pub const ApprovalDepositFiat: Balance = UNITS;
+    pub const StringLimitFiat: u32 = 50;
+    pub const MetadataDepositBaseFiat: Balance = UNITS;
+    pub const MetadataDepositPerByteFiat: Balance = UNITS;
+}
+
+type FiatAssets = pallet_assets::Instance2;
+impl pallet_assets::Config<FiatAssets> for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u32;
+    type Currency = Balances;
+    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+    type AssetDeposit = AssetDepositFiat;
+    type MetadataDepositBase = MetadataDepositBaseFiat;
+    type MetadataDepositPerByte = MetadataDepositPerByteFiat;
+    type ApprovalDeposit = ApprovalDepositFiat;
+    type StringLimit = StringLimitFiat;
+    type Freezer = ();
+    type Extra = ();
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+}
+
 impl vln_escrow::Config for Runtime {
     type Event = Event;
-    type Asset = Tokens;
+    type Asset = MockAssets;
     type JudgeWhitelist = Whitelist;
 }
 
@@ -447,24 +483,6 @@ pub use parachain_impl::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_impl {
     use super::*;
-
-    parameter_type_with_key! {
-        pub ExistentialDepositsForeign: |currency_id: NetworkAsset| -> Balance {
-            Zero::zero()
-        };
-    }
-
-    type NetworkAssetsInstance = orml_tokens::Instance3;
-    impl orml_tokens::Config<NetworkAssetsInstance> for Runtime {
-        type Amount = Amount;
-        type Balance = Balance;
-        type CurrencyId = NetworkAsset;
-        type Event = Event;
-        type ExistentialDeposits = ExistentialDepositsForeign;
-        type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance3>;
-        type WeightInfo = ();
-        type MaxLocks = MaxLocks;
-    }
 
     parameter_types! {
         pub ReservedDmpWeight: Weight = RuntimeBlockWeights::get().max_block / 4;
@@ -629,16 +647,18 @@ macro_rules! construct_vln_runtime {
                     Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
                     RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
                     Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
+                    TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+                    Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+                    Aura: pallet_aura::{Config<T>, Pallet},
+                    Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
+                    Fiat: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>},
 
                     // vln dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
-                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
-                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
-                    Aura: pallet_aura::{Config<T>, Pallet},
                     $($modules)*
                 }
             }
@@ -655,7 +675,6 @@ construct_vln_runtime! {
     AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
-    NetworkAssets: orml_tokens::<Instance3>::{Config<T>, Event<T>, Pallet, Storage},
     // XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     // UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
     // PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin},
@@ -681,6 +700,7 @@ pub type SignedExtra = (
     frame_system::CheckEra<Runtime>,
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
+    pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -811,6 +831,21 @@ impl_runtime_apis! {
     impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
         fn account_nonce(account: AccountId) -> Index {
             System::account_nonce(account)
+        }
+    }
+
+    impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+        fn query_info(
+            uxt: <Block as BlockT>::Extrinsic,
+            len: u32,
+        ) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+            TransactionPayment::query_info(uxt, len)
+        }
+        fn query_fee_details(
+            uxt: <Block as BlockT>::Extrinsic,
+            len: u32,
+        ) -> pallet_transaction_payment::FeeDetails<Balance> {
+            TransactionPayment::query_fee_details(uxt, len)
         }
     }
 

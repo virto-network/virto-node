@@ -1,7 +1,7 @@
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
-use sc_service::ChainType;
+use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair, Public};
@@ -54,6 +54,10 @@ fn public_key_from_ss58<T: Public>(ss58: &str) -> T {
 }
 
 pub fn development_config(id: ParaId) -> ChainSpec {
+    let mut properties = Properties::new();
+    properties.insert("tokenSymbol".into(), "KSM".into());
+    properties.insert("tokenDecimals".into(), 10.into());
+
     ChainSpec::from_genesis(
         // Name
         "VLN PC Dev",
@@ -67,13 +71,21 @@ pub fn development_config(id: ParaId) -> ChainSpec {
                     get_from_seed::<AuraId>("Alice"),
                     get_from_seed::<AuraId>("Bob"),
                 ],
+                vec![
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                    get_account_id_from_seed::<sr25519::Public>("Dave"),
+                    get_account_id_from_seed::<sr25519::Public>("Eve"),
+                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+                ],
                 id,
             )
         },
         vec![],
         None,
         None,
-        None,
+        Some(properties),
         Extensions {
             relay_chain: "rococo-local".into(),
             para_id: 2000u32,
@@ -97,6 +109,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
                     public_key_from_ss58::<AuraId>(THOR_AURA_SS58),
                     public_key_from_ss58::<AuraId>(ODIN_AURA_SS58),
                 ],
+                vec![],
                 id,
             )
         },
@@ -114,6 +127,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
 fn testnet_genesis(
     root_key: AccountId,
     initial_authorities: Vec<AuraId>,
+    endowed_accounts: Vec<AccountId>,
     id: ParaId,
 ) -> vln_runtime::GenesisConfig {
     vln_runtime::GenesisConfig {
@@ -126,20 +140,18 @@ fn testnet_genesis(
         pallet_sudo: vln_runtime::SudoConfig {
             key: root_key.clone(),
         },
+        pallet_balances: vln_runtime::BalancesConfig {
+            balances: endowed_accounts
+                .iter()
+                .cloned()
+                .map(|k| (k, 1 << 60))
+                .collect(),
+        },
         parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
         pallet_aura: vln_runtime::AuraConfig {
             authorities: initial_authorities,
         },
         cumulus_pallet_aura_ext: Default::default(),
-        orml_tokens_Instance1: vln_runtime::TokensConfig {
-            endowed_accounts: vec![],
-        },
-        orml_tokens_Instance2: vln_runtime::CollateralConfig {
-            endowed_accounts: vec![],
-        },
-        orml_tokens_Instance3: vln_runtime::NetworkAssetsConfig {
-            endowed_accounts: vec![],
-        },
         pallet_membership: vln_runtime::WhitelistConfig {
             members: vec![root_key],
             phantom: Default::default(),

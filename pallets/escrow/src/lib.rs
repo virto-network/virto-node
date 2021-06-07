@@ -6,32 +6,37 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
-#[cfg(test)]
-mod mock;
+// Restore once mock is replaced by pallet-assets-freezer
+// #[cfg(test)]
+// mod mock;
 
-#[cfg(test)]
-mod tests;
+// #[cfg(test)]
+// mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
-        dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
+        dispatch::DispatchResultWithPostInfo,
+        pallet_prelude::*,
+        traits::{
+            fungibles::{Inspect, MutateHold, Transfer},
+            Contains,
+        },
     };
     use frame_system::pallet_prelude::*;
-    use orml_traits::{MultiCurrency, MultiReservableCurrency};
     use vln_primitives::{EscrowDetail, EscrowHandler, EscrowState};
 
     type BalanceOf<T> =
-        <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+        <<T as Config>::Asset as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
     type AssetIdOf<T> =
-        <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
+        <<T as Config>::Asset as Inspect<<T as frame_system::Config>::AccountId>>::AssetId;
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         /// the type of assets this pallet can hold in escrow
-        type Asset: MultiReservableCurrency<Self::AccountId>;
+        type Asset: MutateHold<Self::AccountId>;
         /// whitelist of users allowed to settle disputes
         type JudgeWhitelist: Contains<Self::AccountId>;
     }
@@ -179,12 +184,12 @@ pub mod pallet {
                             Error::<T>::EscrowAlreadyInProcess
                         );
                         // reserve the amount from the escrow creator
-                        T::Asset::reserve(asset, &from, amount)?;
+                        T::Asset::hold(asset, &from, amount)?;
                         *maybe_escrow = new_escrow
                     }
                     None => {
                         // reserve the amount from the escrow creator
-                        T::Asset::reserve(asset, &from, amount)?;
+                        T::Asset::hold(asset, &from, amount)?;
                         *maybe_escrow = new_escrow
                     }
                 }
@@ -202,9 +207,9 @@ pub mod pallet {
                     Error::<T>::EscrowAlreadyReleased
                 );
                 // unreserve the amount from the owner account
-                T::Asset::unreserve(escrow.asset, &from, escrow.amount);
+                T::Asset::release(escrow.asset, &from, escrow.amount, false)?;
                 // try to transfer the amount to recipent
-                T::Asset::transfer(escrow.asset, &from, &to, escrow.amount)?;
+                T::Asset::transfer(escrow.asset, &from, &to, escrow.amount, true)?;
                 *maybe_escrow = Some(EscrowDetail {
                     state: EscrowState::Released,
                     ..escrow
@@ -225,7 +230,7 @@ pub mod pallet {
                     Error::<T>::EscrowAlreadyReleased
                 );
                 // unreserve the amount from the owner account
-                T::Asset::unreserve(escrow.asset, &from, escrow.amount);
+                T::Asset::release(escrow.asset, &from, escrow.amount, false)?;
                 *maybe_escrow = Some(EscrowDetail {
                     state: EscrowState::Cancelled,
                     ..escrow
