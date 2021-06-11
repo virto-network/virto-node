@@ -449,6 +449,34 @@ impl vln_escrow::Config for Runtime {
     type JudgeWhitelist = Whitelist;
 }
 
+parameter_types! {
+    pub const ClassDeposit: u64 = 2;
+    pub const InstanceDeposit: u64 = 1;
+    pub const KeyLimit: u32 = 50;
+    pub const ValueLimit: u32 = 50;
+    pub const StringLimit: u32 = 50;
+    pub const MetadataDepositBase: u64 = 1;
+    pub const AttributeDepositBase: u64 = 1;
+    pub const MetadataDepositPerByte: u64 = 1;
+}
+
+impl pallet_uniques::Config for Runtime {
+    type Event = Event;
+    type ClassId = u32;
+    type InstanceId = u32;
+    type Currency = Balances;
+    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+    type ClassDeposit = ClassDeposit;
+    type InstanceDeposit = InstanceDeposit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type AttributeDepositBase = AttributeDepositBase;
+    type DepositPerByte = MetadataDepositPerByte;
+    type StringLimit = StringLimit;
+    type KeyLimit = KeyLimit;
+    type ValueLimit = ValueLimit;
+    type WeightInfo = ();
+}
+
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -659,6 +687,7 @@ macro_rules! construct_vln_runtime {
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
+                    Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>},
                     $($modules)*
                 }
             }
