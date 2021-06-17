@@ -131,16 +131,16 @@ fn testnet_genesis(
     id: ParaId,
 ) -> vln_runtime::GenesisConfig {
     vln_runtime::GenesisConfig {
-        frame_system: vln_runtime::SystemConfig {
+        system: vln_runtime::SystemConfig {
             code: vln_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
                 .to_vec(),
             changes_trie_config: Default::default(),
         },
-        pallet_sudo: vln_runtime::SudoConfig {
+        sudo: vln_runtime::SudoConfig {
             key: root_key.clone(),
         },
-        pallet_balances: vln_runtime::BalancesConfig {
+        balances: vln_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .cloned()
@@ -148,13 +148,14 @@ fn testnet_genesis(
                 .collect(),
         },
         parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
-        pallet_aura: vln_runtime::AuraConfig {
+        aura: vln_runtime::AuraConfig {
             authorities: initial_authorities,
         },
-        cumulus_pallet_aura_ext: Default::default(),
-        pallet_membership: vln_runtime::WhitelistConfig {
+        aura_ext: Default::default(),
+        whitelist: vln_runtime::WhitelistConfig {
             members: vec![root_key],
             phantom: Default::default(),
         },
+        parachain_system: Default::default(),
     }
 }

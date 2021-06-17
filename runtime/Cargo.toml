@@ -53,6 +53,7 @@ cumulus-pallet-parachain-system = {git = 'https://github.com/paritytech/cumulus'
 cumulus-primitives-core = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.5'}
 parachain-info = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.5'}
 cumulus-pallet-aura-ext = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.5', default-features = false }
+cumulus-primitives-timestamp  = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.5', default-features = false }
 # xcm = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'polkadot-v0.9.5'}
 # xcm-builder = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.5'}
 # xcm-executor = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.5'}
@@ -134,7 +135,8 @@ std = [
 	'pallet-assets/std',
 	'pallet-transaction-payment-rpc-runtime-api/std',
 	'pallet-transaction-payment/std',
-	'pallet-uniques/std'
+	'pallet-uniques/std',
+	'cumulus-primitives-timestamp/std'
 ]
 standalone = []
 
