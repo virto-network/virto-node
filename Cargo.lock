@@ -2245,7 +2245,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#3bb42b9aaba65e956aea7aaef2c2fb3468fa3aaf"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#9c572625f6557dfdb19f47474369a0327d51dfbc"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -4683,7 +4683,7 @@ dependencies = [
 [[package]]
 name = "pallet-assets"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#3bb42b9aaba65e956aea7aaef2c2fb3468fa3aaf"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#9c572625f6557dfdb19f47474369a0327d51dfbc"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5252,7 +5252,7 @@ dependencies = [
 [[package]]
 name = "pallet-uniques"
 version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#3bb42b9aaba65e956aea7aaef2c2fb3468fa3aaf"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#9c572625f6557dfdb19f47474369a0327d51dfbc"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
