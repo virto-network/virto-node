@@ -57,6 +57,7 @@ impl GenesisConfigBuilder<'_> {
                 members: vec![self.sudo_key],
                 phantom: Default::default(),
             },
+            network_asset: vln_runtime::NetworkAssetConfig { balances: vec![] },
         }
     }
 }

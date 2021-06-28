@@ -73,7 +73,7 @@ enum_with_aux_fns! {
     pub enum NetworkAsset {
         ACA = "ACA",
         AUSD = "AUSD",
-        DOT = "DOT",
+        KSM = "KSM",
     }
 }
 
@@ -83,7 +83,7 @@ impl TryFrom<Vec<u8>> for Asset {
         match v.as_slice() {
             b"ACA" => Ok(Asset::Network(NetworkAsset::ACA)),
             b"AUSD" => Ok(Asset::Network(NetworkAsset::AUSD)),
-            b"DOT" => Ok(Asset::Network(NetworkAsset::DOT)),
+            b"KSM" => Ok(Asset::Network(NetworkAsset::KSM)),
             _ => Err(()),
         }
     }

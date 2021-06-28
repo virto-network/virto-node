@@ -157,5 +157,6 @@ fn testnet_genesis(
             phantom: Default::default(),
         },
         parachain_system: Default::default(),
+        network_asset: vln_runtime::NetworkAssetConfig { balances: vec![] },
     }
 }
