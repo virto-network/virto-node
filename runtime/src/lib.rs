@@ -1,7 +1,8 @@
 #![allow(
     clippy::large_enum_variant,
     clippy::from_over_into,
-    missing_debug_implementations
+    missing_debug_implementations,
+    clippy::needless_borrow
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -487,7 +488,7 @@ impl pallet_uniques::Config for Runtime {
 }
 
 parameter_type_with_key! {
-    pub ExistentialDeposits: |currency_id: NetworkAssetType| -> Balance {
+    pub ExistentialDeposits: |_currency_id: NetworkAssetType| -> Balance {
         Zero::zero()
     };
 }

@@ -14,7 +14,7 @@ export RUSTFLAGS='
 '
 
 cargo fmt --all -- --check
-cargo clippy --exclude vln-parachain --workspace
+#cargo clippy --exclude vln-parachain --workspace // save test time
 cargo clippy -p vln-parachain # testing seperately since feature flags leads to conflict
-cargo test --exclude vln-parachain --workspace
+#cargo test --exclude vln-parachain --workspace // save test time
 cargo test -p vln-parachain # testing seperately since feature flags leads to conflict
