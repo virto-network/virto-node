@@ -10,25 +10,11 @@ jobs:
     name: Build project
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Cache cargo directories
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v2
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }} 
       - uses: actions-rs/toolchain@v1 
         with:
-          toolchain: nightly-2021-02-17
+          toolchain: nightly-2021-06-27
           target: wasm32-unknown-unknown 
+
       - uses: actions-rs/cargo@v1
         with:
           command: build
