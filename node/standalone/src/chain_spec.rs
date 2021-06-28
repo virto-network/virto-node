@@ -24,28 +24,28 @@ struct GenesisConfigBuilder<'a> {
 impl GenesisConfigBuilder<'_> {
     fn build(self) -> GenesisConfig {
         GenesisConfig {
-            frame_system: SystemConfig {
+            system: SystemConfig {
                 code: self.wasm_binary.to_vec(),
                 changes_trie_config: Default::default(),
             },
-            pallet_aura: AuraConfig {
+            aura: AuraConfig {
                 authorities: self
                     .initial_authorities
                     .iter()
                     .map(|x| (x.0.clone()))
                     .collect(),
             },
-            pallet_grandpa: GrandpaConfig {
+            grandpa: GrandpaConfig {
                 authorities: self
                     .initial_authorities
                     .iter()
                     .map(|x| (x.1.clone(), 1))
                     .collect(),
             },
-            pallet_sudo: SudoConfig {
+            sudo: SudoConfig {
                 key: self.sudo_key.clone(),
             },
-            pallet_balances: BalancesConfig {
+            balances: BalancesConfig {
                 balances: self
                     .endowed_accounts
                     .iter()
@@ -53,7 +53,7 @@ impl GenesisConfigBuilder<'_> {
                     .map(|k| (k, 1 << 60))
                     .collect(),
             },
-            pallet_membership: WhitelistConfig {
+            whitelist: WhitelistConfig {
                 members: vec![self.sudo_key],
                 phantom: Default::default(),
             },

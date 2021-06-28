@@ -370,6 +370,7 @@ impl vln_rate_provider::Config for Runtime {
 parameter_types! {
     pub const ExistentialDeposit: Balance = 0;
     pub const MaxLocks: u32 = 50;
+    pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -380,6 +381,8 @@ impl pallet_balances::Config for Runtime {
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+    type MaxReserves = MaxReserves;
+    type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -400,6 +403,8 @@ parameter_types! {
     pub const MetadataDepositBaseGeneral: Balance = UNITS;
     pub const MetadataDepositPerByteGeneral: Balance = UNITS;
 }
+
+impl pallet_randomness_collective_flip::Config for Runtime {}
 
 type GeneralAssets = pallet_assets::Instance1;
 impl pallet_assets::Config<GeneralAssets> for Runtime {
@@ -702,7 +707,7 @@ construct_vln_runtime! {
 #[cfg(not(feature = "standalone"))]
 construct_vln_runtime! {
     AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
-    ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
+    ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, Config, ValidateUnsigned},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},
     // XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
     // UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
@@ -914,7 +919,32 @@ impl_runtime_apis! {
 }
 
 #[cfg(not(feature = "standalone"))]
+struct CheckInherents;
+#[cfg(not(feature = "standalone"))]
+impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
+    fn check_inherents(
+        block: &Block,
+        relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
+    ) -> sp_inherents::CheckInherentsResult {
+        let relay_chain_slot = relay_state_proof
+            .read_slot()
+            .expect("Could not read the relay chain slot from the proof");
+
+        let inherent_data =
+            cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
+                relay_chain_slot,
+                sp_std::time::Duration::from_secs(6),
+            )
+            .create_inherent_data()
+            .expect("Could not create the timestamp inherent data");
+
+        inherent_data.check_extrinsics(&block)
+    }
+}
+
+#[cfg(not(feature = "standalone"))]
 cumulus_pallet_parachain_system::register_validate_block!(
-    Runtime,
-    cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+    Runtime = Runtime,
+    BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
+    CheckInherents = CheckInherents,
 );
