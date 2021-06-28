@@ -7,9 +7,11 @@ on:
 
 jobs:
   build:
-    name: Build project
+    name: Build&Release project
     runs-on: self-hosted
     steps:
+      - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1 
         with:
           toolchain: nightly-2021-06-27
@@ -39,3 +41,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+  container:
+    name: Containerize
+    runs-on: self-hosted
+    steps:
+      - id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Build image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: valibre/vln
+          build-args: |
+            VCS_REF=${{ github.ref }}
+            IMAGE_NAME=valibre/vln
+            BUILD_DATE=${{ steps.date.outputs.date }}
+          dockerfiles: |
+            ./Containerfile
+
+      - name: Publish image
