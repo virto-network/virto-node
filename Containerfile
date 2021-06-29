@@ -39,7 +39,7 @@ COPY ./target/release/vln_parachain /usr/local/bin/vln
 USER vln
 
 # check if executable works in this container
-RUN /usr/local/bin/vln --version
+# RUN /usr/local/bin/vln --version
 
 EXPOSE 30333 9933 9944
 VOLUME ["/vln"]
