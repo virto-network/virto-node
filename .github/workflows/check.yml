@@ -16,6 +16,6 @@ jobs:
           override: true
           profile: minimal
           target: wasm32-unknown-unknown
-          toolchain: nightly-2021-06-27
+          toolchain: nightly-2021-04-22
 
       - run: ./scripts/tests.sh

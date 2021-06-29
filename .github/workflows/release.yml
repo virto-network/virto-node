@@ -1,4 +1,4 @@
-name: Create Release
+name: Release tag
 
 on:
   push:
@@ -7,47 +7,50 @@ on:
 
 jobs:
   build:
-    name: Build&Release project
+    name: Build node
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions-rs/toolchain@v1 
         with:
-          toolchain: nightly-2021-06-27
+          toolchain: nightly-2021-04-22
           target: wasm32-unknown-unknown 
 
-      - uses: actions-rs/cargo@v1
+      - name: Build parachain node
+        uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release -p vln-parachain
       
       - name: Build parachain artifacts
         run: |
-          ./target/release/vln_parachain export-genesis-state --chain testnet > genesis-state
-          ./target/release/vln_parachain export-genesis-wasm --chain testnet > genesis-wasm
-          ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > testnet-chainspec
+          mkdir -p build/
+          ./target/release/vln_parachain export-genesis-state --chain testnet > build/genesis-state
+          ./target/release/vln_parachain export-genesis-wasm --chain testnet > build/genesis-wasm
+          ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > build/testnet-chainspec
+          cp target/release/vln_parachain build/vln
       
+  release:
+    name: Create GH Release
+    needs: build
+    runs-on: self-hosted
+    steps:
       - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          prerelease: true
-          fail_on_unmatched_files: true
-          files: |
-            target/release/vln_parachain
-            genesis-state
-            genesis-wasm
-            testnet-chainspec
+        uses: fnkr/github-action-ghr@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          GHR_PATH: build/
+          GHR_COMPRESS: gz
 
   container:
-    name: Containerize
+    name: Containerize & Publish
+    needs: build
     runs-on: self-hosted
     steps:
       - id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+
       - name: Build image
         id: build-image
         uses: redhat-actions/buildah-build@v2
