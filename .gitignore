@@ -1,5 +1,6 @@
 .static/
 target/
+build/
 .DS_Store
 genesis-state
 genesis-wasm

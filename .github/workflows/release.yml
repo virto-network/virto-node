@@ -12,24 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions-rs/toolchain@v1 
-        with:
-          toolchain: nightly-2021-04-22
-          target: wasm32-unknown-unknown 
-
-      - name: Build parachain node
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release -p vln-parachain
-      
-      - name: Build parachain artifacts
-        run: |
-          mkdir -p build/
-          ./target/release/vln_parachain export-genesis-state --chain testnet > build/genesis-state
-          ./target/release/vln_parachain export-genesis-wasm --chain testnet > build/genesis-wasm
-          ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > build/testnet-chainspec
-          cp target/release/vln_parachain build/vln
+      - name: Build parachain node & artifacts
+        run: make build
       
   release:
     name: Create GH Release

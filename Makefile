@@ -1,35 +1,66 @@
-.PHONY: build-dev
-build-dev:
-	cargo build -p vln-parachain
+chain?=testnet
+# out directory
+BUILD=build
+BIN=vln
+SRC_DIRS=node runtime pallets primitives
+SRC_FILES=$(shell find $(SRC_DIRS) -type f)
 
-.PHONY: build-dev-node
-build-dev-node:
-	cargo build -p vln-node
+# passing a dev=yes argument builds in debug mode
+BUILD_FLAGS=--release
+ENV=release
+ifeq ($(dev), yes)
+	BUILD_FLAGS=
+	ENV=debug
+endif
 
-.PHONY: build-release
-build-release:
-	cargo build --release -p vln-parachain
+# whether to build in parachain or stand-alone mode
+MODES=parachain node
+TARGET=$(MODES:%=target/$(ENV)/$(BIN)_%)
+TEST=$(MODES:%=test_%)
+CLIPPY=$(MODES:%=clippy_%)
 
-.PHONY: build-release-node
-build-release-node:
-	cargo build --release -p vln-node
+.PHONY: build
+build: $(BUILD)/$(BIN) $(BUILD)/$(chain)_genesis_state \
+	$(BUILD)/$(chain)_genesis_wasm \
+	$(BUILD)/$(chain)_chainspec
 
-.PHONY: run-parachain-env
-run-parachain-env:
-	./scripts/parachain-dev-setup.sh
+# default bin is the parachain node
+$(BUILD)/$(BIN): target/$(ENV)/$(BIN)_parachain
+	@mkdir -p $(BUILD)
+	@cp $< $@
 
-.PHONY: run-dev-node
-run-dev-node:
-	./target/debug/vln_node --dev --tmp
+$(BUILD)/$(chain)_genesis_state: $(BUILD)/$(BIN)
+	$^ export-genesis-state --chain $(chain) > $@
+
+$(BUILD)/$(chain)_genesis_wasm: $(BUILD)/$(BIN)
+	$^ export-genesis-wasm --chain $(chain) > $@
+
+$(BUILD)/$(chain)_chainspec: $(BUILD)/$(BIN)
+	$^ build-spec --chain $(chain) --disable-default-bootnode > $@
+
+$(TARGET): $(SRC_FILES)
+	cargo build $(BUILD_FLAGS) -p $(BIN)-$(@:target/$(ENV)/$(BIN)_%=%)
 
 .PHONY: test
-test:
-	./scripts/tests.sh
+test: $(TEST)
 
-.PHONY: test-parachain
-test-parachain:
-	cargo test -p vln-parachain
+.PHONY: check
+check: $(CLIPPY)
+	cargo fmt --all -- --check
 
-.PHONY: test-node
-test-node:
-	cargo test -p vln-node
+$(TEST):
+	cargo test -p $(BIN)-$(@:test_%=%)
+
+$(CLIPPY):
+	cargo clippy -p $(BIN)-$(@:clippy_%=%)
+
+.PHONY: run run-parachain
+run: run-parachain
+
+run-parachain: $(TARGET)
+	./scripts/parachain-dev-setup.sh
+
+.PHONY: dev
+dev:
+	cargo run -p vln-node -- --dev --tmp
+

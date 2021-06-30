@@ -10,12 +10,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          components: clippy, rustfmt
-          override: true
-          profile: minimal
-          target: wasm32-unknown-unknown
-          toolchain: nightly-2021-04-22
-
-      - run: ./scripts/tests.sh
+      - run: make check
+      - run: make test_parachain
