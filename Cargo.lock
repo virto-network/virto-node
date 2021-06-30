@@ -4580,21 +4580,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#f718008a3ea88c9ece63f89fb1208f2e80522095"
-dependencies = [
- "frame-support",
- "frame-system",
- "max-encoded-len",
- "orml-traits",
- "parity-scale-codec",
- "serde",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library#f718008a3ea88c9ece63f89fb1208f2e80522095"
@@ -10960,7 +10945,6 @@ dependencies = [
  "hex-literal 0.3.1",
  "max-encoded-len",
  "orml-oracle",
- "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",

@@ -52,16 +52,20 @@ mod standalone_use {
 #[cfg(not(feature = "standalone"))]
 mod currency_id_convert;
 
+#[cfg(not(feature = "standalone"))]
+mod transact_asset;
+
 // XCM imports
 #[cfg(not(feature = "standalone"))]
 use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
     pub use crate::currency_id_convert::CurrencyIdConvert;
+    pub use crate::transact_asset::MultiCurrencyAdapter;
     pub use cumulus_primitives_core::ParaId;
     pub use frame_support::traits::All;
     pub use orml_xcm_support::{
-        ExecuteXcm as ExecuteXcmT, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
+        ExecuteXcm as ExecuteXcmT, IsNativeConcrete, MultiNativeAsset,
     };
     pub use pallet_xcm::XcmPassthrough;
     pub use polkadot_parachain::primitives::Sibling;
@@ -487,23 +491,6 @@ impl pallet_uniques::Config for Runtime {
     type WeightInfo = ();
 }
 
-parameter_type_with_key! {
-    pub ExistentialDeposits: |_currency_id: NetworkAssetType| -> Balance {
-        Zero::zero()
-    };
-}
-// for storing assets from other parachains
-impl orml_tokens::Config for Runtime {
-    type Event = Event;
-    type Balance = Balance;
-    type Amount = Amount;
-    type CurrencyId = NetworkAssetType;
-    type WeightInfo = ();
-    type ExistentialDeposits = ExistentialDeposits;
-    type OnDust = orml_tokens::BurnDust<Runtime>;
-    type MaxLocks = MaxLocks;
-}
-
 #[cfg(feature = "standalone")]
 pub use standalone_impl::*;
 
@@ -674,7 +661,7 @@ mod parachain_impl {
     }
 
     pub type LocalAssetTransactor = MultiCurrencyAdapter<
-        NetworkAsset,
+        Assets,
         UnknownTokens,
         IsNativeConcrete<NetworkAssetType, CurrencyIdConvert>,
         AccountId,
@@ -735,7 +722,6 @@ macro_rules! construct_vln_runtime {
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
                     Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
                     Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>},
-                    NetworkAsset: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
                     $($modules)*
                 }
             }

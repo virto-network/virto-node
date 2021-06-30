@@ -72,7 +72,6 @@ pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 
 orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 orml-xcm-support = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
-orml-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 orml-traits = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 
 # Local dependencies
@@ -140,7 +139,6 @@ std = [
 	'pallet-transaction-payment/std',
 	'pallet-uniques/std',
 	'cumulus-primitives-timestamp/std',
-	'orml-tokens/std'
 ]
 standalone = []
 
