@@ -10881,7 +10881,7 @@ dependencies = [
 
 [[package]]
 name = "vln-node"
-version = "2.0.0"
+version = "0.2.0"
 dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
@@ -10919,7 +10919,7 @@ dependencies = [
 
 [[package]]
 name = "vln-parachain"
-version = "2.0.0"
+version = "0.2.0"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -10979,7 +10979,7 @@ dependencies = [
 
 [[package]]
 name = "vln-primitives"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -11007,7 +11007,7 @@ dependencies = [
 
 [[package]]
 name = "vln-runtime"
-version = "2.0.0"
+version = "0.2.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-parachain-system",

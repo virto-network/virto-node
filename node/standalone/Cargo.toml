@@ -7,7 +7,7 @@ homepage = 'https://github.com/valibre-org/node'
 license = 'Unlicense'
 name = 'vln-node'
 repository = 'https://github.com/valibre-org/node'
-version = '2.0.0'
+version = '0.2.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -43,7 +43,7 @@ structopt = "0.3.21"
 sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", version = '3.0.0' }
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", version = '3.0.0' }
-vln-runtime = { package = "vln-runtime", path = '../../runtime/', features = ['standalone'], version = '2.0.0' }
+vln-runtime = { package = "vln-runtime", path = '../../runtime/', features = ['standalone'], version = '0.2.0' }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", version = '3.0.0' }

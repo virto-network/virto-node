@@ -5,7 +5,7 @@ homepage = 'https://github.com/valibre-org/node'
 license = 'Unlicense'
 name = 'vln-runtime'
 repository = 'https://github.com/valibre-org/node'
-version = '2.0.0'
+version = '0.2.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']

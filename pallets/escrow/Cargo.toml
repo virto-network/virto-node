@@ -17,7 +17,7 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
-vln-primitives = { version = "0.1.0", path = "../../primitives" }
+vln-primitives = { version = "0.2.0", path = "../../primitives" }
 
 [dev-dependencies]
 serde = { version = "1.0.101" }

@@ -1,4 +1,4 @@
-FROM debian:buillseye-slim
+FROM debian:bullseye-slim
 
 # metadata
 ARG VCS_REF
