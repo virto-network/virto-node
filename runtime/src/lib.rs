@@ -62,7 +62,7 @@ mod parachain_use {
     pub use crate::transact_asset::MultiCurrencyAdapter;
     pub use cumulus_primitives_core::ParaId;
     pub use frame_support::traits::All;
-    pub use orml_xcm_support::{ExecuteXcm as ExecuteXcmT, IsNativeConcrete, MultiNativeAsset};
+    pub use orml_xcm_support::{IsNativeConcrete, MultiNativeAsset};
     pub use pallet_xcm::XcmPassthrough;
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::traits::Convert;
