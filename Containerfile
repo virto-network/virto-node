@@ -27,11 +27,11 @@ RUN apt-get update && \
 	apt-get autoremove -y && \
 	apt-get clean && \
 	find /var/lib/apt/lists/ -type f -not -name lock -delete; \
-# add user and link ~/.local/share/polkadot to /data
-	useradd -m -u 1000 -U -s /bin/sh -d /polkadot polkadot && \
-	mkdir -p /data /polkadot/.local/share && \
-	chown -R polkadot:polkadot /data && \
-	ln -s /data /polkadot/.local/share/polkadot
+# add user and link ~/.local/share/vln to /data
+	useradd -m -u 1000 -U -s /bin/sh -d /vln vln && \
+	mkdir -p /data /vln/.local/share && \
+	chown -R vln:vln /data && \
+	ln -s /data /vln/.local/share/vln
 
 # add polkadot binary to docker image
 COPY ./target/release/vln_parachain /usr/local/bin/vln
@@ -39,7 +39,7 @@ COPY ./target/release/vln_parachain /usr/local/bin/vln
 USER vln
 
 # check if executable works in this container
-# RUN /usr/local/bin/vln --version
+RUN /usr/local/bin/vln --version
 
 EXPOSE 30333 9933 9944
 VOLUME ["/vln"]
