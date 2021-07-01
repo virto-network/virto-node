@@ -1,0 +1,125 @@
+version: "3.9"
+services:
+  ui:
+    image: jacogr/polkadot-js-apps
+    environment:
+      # Connecting to the relay chain by default for quick parachain on-boarding
+      WS_URL: ws://${HOST}:59944
+    ports:
+      - 58080:80
+
+  vln_a:
+    image: valibre/vln
+    container_name: devnet_vln_a
+    volumes:
+      - ./build/relay-chain.json:/data/relay-chain.json
+    command:
+      - --alice
+      - --tmp
+      - --unsafe-ws-external
+      - --ws-port=59945
+      - --rpc-cors=all
+      # have a well known peerID for the second collator to connect easily
+      - --node-key=0000000000000000000000000000000000000000000000000000000000000001 
+      - --port=50333
+      - --parachain-id=2086
+      # inner relay chain node params
+      - --
+      - --execution=wasm
+      - --chain=/data/relay-chain.json
+      - --ws-external
+      - --ws-port=59944
+      - --rpc-cors=all
+    ports:
+      - 50333:50333
+      - 59944:59944
+      - 59945:59945
+    networks:
+      - devnet
+
+  vln_b:
+    image: valibre/vln
+    container_name: devnet_vln_b
+    volumes:
+      - ./build/relay-chain.json:/data/relay-chain.json
+    command:
+      - --bob
+      - --tmp
+      - --parachain-id=2086
+      - --bootnodes=/dns/vln_a/tcp/50333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+      # relay chain node
+      - --
+      - --execution=wasm
+      - --chain=/data/relay-chain.json
+    networks:
+      - devnet
+
+  #
+  # Second parachain for cross-chain testing
+  #
+  karura_a:
+    image: acala/karura-node
+    container_name: devnet_karura_a
+    volumes:
+      - ./build/relay-chain.json:/acala/data/relay-chain.json
+    command:
+      - --chain=karura-dev
+      - --alice
+      - --tmp
+      - --unsafe-ws-external
+      - --ws-port=59946
+      - --rpc-cors=all
+      - --node-key=0000000000000000000000000000000000000000000000000000000000000002
+      - --port=50334
+      - --
+      - --execution=wasm
+      - --chain=/acala/data/relay-chain.json
+    ports:
+      - 59946:59946
+      - 50334:50334
+    networks:
+      - devnet
+
+  karura_b:
+    image: acala/karura-node
+    container_name: devnet_karura_b
+    volumes:
+      - ./build/relay-chain.json:/acala/data/relay-chain.json
+    command:
+      - --chain=karura-dev
+      - --bob
+      - --tmp
+      - --bootnodes=/dns/karura_a/tcp/50334/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+      - --
+      - --execution=wasm
+      - --chain=/acala/data/relay-chain.json
+    networks:
+      - devnet
+
+  #
+  # Relay chain validators
+  #
+  relay_a:
+    image: parity/polkadot:v0.9.7
+    container_name: devnet_relay_a
+    command:
+      - --chain=${SPEC}
+      - --alice
+      - --no-telemetry
+      - --tmp
+    networks:
+      - devnet
+
+  relay_b:
+    image: parity/polkadot:v0.9.7
+    container_name: devnet_relay_b
+    command:
+      - --chain=${SPEC}
+      - --bob
+      - --no-telemetry
+      - --tmp
+    networks:
+      - devnet
+
+networks:
+  devnet:
