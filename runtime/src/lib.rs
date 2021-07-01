@@ -16,9 +16,7 @@ use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::{
-    AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify, Zero,
-};
+use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
@@ -64,9 +62,7 @@ mod parachain_use {
     pub use crate::transact_asset::MultiCurrencyAdapter;
     pub use cumulus_primitives_core::ParaId;
     pub use frame_support::traits::All;
-    pub use orml_xcm_support::{
-        ExecuteXcm as ExecuteXcmT, IsNativeConcrete, MultiNativeAsset,
-    };
+    pub use orml_xcm_support::{ExecuteXcm as ExecuteXcmT, IsNativeConcrete, MultiNativeAsset};
     pub use pallet_xcm::XcmPassthrough;
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::traits::Convert;
