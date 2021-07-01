@@ -41,6 +41,19 @@ $(BUILD)/$(chain)_chainspec: $(BUILD)/$(BIN)
 $(TARGET): $(SRC_FILES)
 	cargo build $(BUILD_FLAGS) -p $(BIN)-$(@:target/$(ENV)/$(BIN)_%=%)
 
+# Containerize application. It uses the already built binary(e.g. during CI)
+# and puts it in a cointainer, since the target image is a debian based container
+# this won't likely work unless run in a similar debian installation.
+.PHONY: container
+DOCKER=podman
+img?=valibre/vln
+tag?=$(shell git describe --tags)
+container: $(BUILD)/$(BIN)
+	$(DOCKER) build . -t $(img):$(tag) -t $(img):latest \
+		--build-arg VCS_REF=$(tag) \
+		--build-arg IMAGE_NAME=$(img) \
+		--build-arg BUILD_DATE=$(shell date +'%Y-%m-%d')
+
 .PHONY: test
 test: $(TEST)
 
@@ -48,6 +61,8 @@ test: $(TEST)
 check: $(CLIPPY)
 	cargo fmt --all -- --check
 
+# The substitution $(@:test_%=%) extracts "node" or "parachain"
+# from the target that looks like test_node
 $(TEST):
 	cargo test -p $(BIN)-$(@:test_%=%)
 
