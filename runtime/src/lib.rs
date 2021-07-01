@@ -1,7 +1,8 @@
 #![allow(
     clippy::large_enum_variant,
     clippy::from_over_into,
-    missing_debug_implementations
+    missing_debug_implementations,
+    clippy::needless_borrow
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
@@ -326,6 +327,7 @@ parameter_types! {
     pub const MinimumCount: u32 = 3;
     pub const ExpiresIn: u32 = 600;
     pub RootOperatorAccountId: AccountId = Sudo::key();
+    pub const MaxHasDispatchedSize: u32 = 100;
 }
 
 impl orml_oracle::Config for Runtime {
@@ -338,6 +340,7 @@ impl orml_oracle::Config for Runtime {
     type RootOperatorAccountId = RootOperatorAccountId;
     type WeightInfo = ();
     type Members = Whitelist;
+    type MaxHasDispatchedSize = MaxHasDispatchedSize;
 }
 
 parameter_types! {
