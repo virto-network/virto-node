@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM debian:buillseye-slim
 
 # metadata
 ARG VCS_REF
@@ -33,16 +33,15 @@ RUN apt-get update && \
 	chown -R vln:vln /data && \
 	ln -s /data /vln/.local/share/vln
 
-# add polkadot binary to docker image
-COPY ./target/release/vln_parachain /usr/local/bin/vln
+# add vln binary to container image
+COPY ./build/vln /usr/local/bin/
 
 USER vln
 
 # check if executable works in this container
-RUN /usr/local/bin/vln --version
+# RUN /usr/local/bin/vln --version
 
 EXPOSE 30333 9933 9944
 VOLUME ["/vln"]
 
 ENTRYPOINT ["/usr/local/bin/vln"]
-

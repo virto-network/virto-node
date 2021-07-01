@@ -18,17 +18,15 @@ Please note that we have two different runtimes
 * `vln-node` - The standalone "validator" node runtime
 * `vln-parachain` - The parachain-compliant "collator" node runtime which runs on Rococo
 
-For development, we recommend to run the `vln-node`.
+For development, we recommend to run the `vln-node`. Our `Makefile` offers several ways to
+build and run the the two nodes. Here are some examples.
 
 ```bash
 # build in debug mode
-make build-dev
-
-# build the standalone vln node
-make build-release-node
+make build dev=yes
 
 # build the vln-parachain collator node 
-make build-release
+make build
 ```
 
 ## Run
