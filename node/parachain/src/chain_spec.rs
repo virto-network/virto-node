@@ -1,4 +1,3 @@
-use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::{ChainType, Properties};
@@ -11,7 +10,8 @@ use vln_runtime::{AccountId, AuraId, Signature};
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
 
-const ROCOCO_RESERVED_PARA_ID: u32 = 2007u32; // modify as needed
+pub const PARA_ID: u32 = 2086u32;
+
 const THOR_AURA_SS58: &str = "5Hgs2iwvqjFNdhQX5yXG4YJNy9CXWmFS1884VWLC353tmY8Q";
 const ODIN_AURA_SS58: &str = "5GN3Ne9KDobS3NknsqPvvbFXBPtU9mcMBmpxAyX2bidSmmGK";
 
@@ -53,7 +53,7 @@ fn public_key_from_ss58<T: Public>(ss58: &str) -> T {
     Ss58Codec::from_string(ss58).unwrap()
 }
 
-pub fn development_config(id: ParaId) -> ChainSpec {
+pub fn development_config() -> ChainSpec {
     let mut properties = Properties::new();
     properties.insert("tokenSymbol".into(), "KSM".into());
     properties.insert("tokenDecimals".into(), 10.into());
@@ -79,7 +79,6 @@ pub fn development_config(id: ParaId) -> ChainSpec {
                     get_account_id_from_seed::<sr25519::Public>("Eve"),
                     get_account_id_from_seed::<sr25519::Public>("Ferdie"),
                 ],
-                id,
             )
         },
         vec![],
@@ -88,12 +87,12 @@ pub fn development_config(id: ParaId) -> ChainSpec {
         Some(properties),
         Extensions {
             relay_chain: "rococo-local".into(),
-            para_id: 2000u32,
+            para_id: PARA_ID,
         },
     )
 }
 
-pub fn testnet_config(id: ParaId) -> ChainSpec {
+pub fn testnet_config() -> ChainSpec {
     let testnet_root_key: AccountId =
         hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into();
     ChainSpec::from_genesis(
@@ -110,7 +109,6 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
                     public_key_from_ss58::<AuraId>(ODIN_AURA_SS58),
                 ],
                 vec![],
-                id,
             )
         },
         vec![],
@@ -119,7 +117,7 @@ pub fn testnet_config(id: ParaId) -> ChainSpec {
         None,
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: ROCOCO_RESERVED_PARA_ID,
+            para_id: PARA_ID,
         },
     )
 }
@@ -128,7 +126,6 @@ fn testnet_genesis(
     root_key: AccountId,
     initial_authorities: Vec<AuraId>,
     endowed_accounts: Vec<AccountId>,
-    id: ParaId,
 ) -> vln_runtime::GenesisConfig {
     vln_runtime::GenesisConfig {
         system: vln_runtime::SystemConfig {
@@ -147,7 +144,9 @@ fn testnet_genesis(
                 .map(|k| (k, 1 << 60))
                 .collect(),
         },
-        parachain_info: vln_runtime::ParachainInfoConfig { parachain_id: id },
+        parachain_info: vln_runtime::ParachainInfoConfig {
+            parachain_id: PARA_ID.into(),
+        },
         aura: vln_runtime::AuraConfig {
             authorities: initial_authorities,
         },
