@@ -1,4 +1,4 @@
-name: Create Release
+name: Release tag
 
 on:
   push:
@@ -7,35 +7,46 @@ on:
 
 jobs:
   build:
-    name: Build project
+    name: Build node
     runs-on: self-hosted
     steps:
-      - uses: actions-rs/toolchain@v1 
-        with:
-          toolchain: nightly-2021-06-27
-          target: wasm32-unknown-unknown 
+      - uses: actions/checkout@v2
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release -p vln-parachain
+      - name: Build parachain node & artifacts
+        run: make build
       
-      - name: Build parachain artifacts
-        run: |
-          ./target/release/vln_parachain export-genesis-state --chain testnet > genesis-state
-          ./target/release/vln_parachain export-genesis-wasm --chain testnet > genesis-wasm
-          ./target/release/vln_parachain build-spec --chain testnet --disable-default-bootnode > testnet-chainspec
-      
+  release:
+    name: Create GH Release
+    needs: build
+    runs-on: self-hosted
+    steps:
       - name: Release
         uses: softprops/action-gh-release@v1
-        with:
-          prerelease: true
-          fail_on_unmatched_files: true
-          files: |
-            target/release/vln_parachain
-            genesis-state
-            genesis-wasm
-            testnet-chainspec
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            build/testnet_genesis_state
+            build/testnet_genesis_wasm
+            build/testnet_chainspec
+
+  container:
+    name: Containerize & Publish
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - run: make container tag=${GITHUB_REF#refs/tags/}
+
+      - name: Login to registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+          registry: docker.io
+
+      - name: Publish image
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: valibre/vln
+          registry: docker.io
 

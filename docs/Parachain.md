@@ -9,7 +9,7 @@ Please note that we have two different runtimes
 To build the `vln-parachain`.
 
 ```bash
-make build-release
+make build
 ```
 
 ### Run
@@ -24,7 +24,7 @@ cargo build --release
 
 Run VLN parachain with rococo collators:
 ```
-make run-parachain-env
+make run
 ```
 
 To test xcm asset transfer clone and run [vln-toolbox](https://github.com/valibre-org/vln-toolbox)

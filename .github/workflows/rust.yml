@@ -10,13 +10,6 @@ jobs:
     name: Build project
     runs-on: self-hosted
     steps:
-      - uses: actions-rs/toolchain@v1 
-        with:
-          toolchain: nightly-2021-06-27
-          target: wasm32-unknown-unknown 
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -p vln-parachain
-
+      - uses: actions/checkout@v2
+      - name: Test parachain
+        run: make test_parachain
