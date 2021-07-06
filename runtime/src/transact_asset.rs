@@ -15,30 +15,30 @@ use xcm_executor::{
 };
 
 // Asset transaction errors.
-// enum Error {
-//     /// Failed to match fungible.
-//     FailedToMatchFungible,
-//     /// `MultiLocation` to `AccountId` Conversion failed.
-//     AccountIdConversionFailed,
-//     /// `CurrencyId` conversion failed.
-//     CurrencyIdConversionFailed,
-// }
+enum Error {
+    /// Failed to match fungible.
+    FailedToMatchFungible,
+    /// `MultiLocation` to `AccountId` Conversion failed.
+    AccountIdConversionFailed,
+    /// `CurrencyId` conversion failed.
+    CurrencyIdConversionFailed,
+}
 
-// impl From<Error> for XcmError {
-//     fn from(e: Error) -> Self {
-//         match e {
-//             Error::FailedToMatchFungible => {
-//                 XcmError::FailedToTransactAsset("FailedToMatchFungible")
-//             }
-//             Error::AccountIdConversionFailed => {
-//                 XcmError::FailedToTransactAsset("AccountIdConversionFailed")
-//             }
-//             Error::CurrencyIdConversionFailed => {
-//                 XcmError::FailedToTransactAsset("CurrencyIdConversionFailed")
-//             }
-//         }
-//     }
-// }
+impl From<Error> for XcmError {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::FailedToMatchFungible => {
+                XcmError::FailedToTransactAsset("FailedToMatchFungible")
+            }
+            Error::AccountIdConversionFailed => {
+                XcmError::FailedToTransactAsset("AccountIdConversionFailed")
+            }
+            Error::CurrencyIdConversionFailed => {
+                XcmError::FailedToTransactAsset("CurrencyIdConversionFailed")
+            }
+        }
+    }
+}
 
 /// The `TransactAsset` implementation, to handle `MultiAsset` deposit/withdraw.
 /// Note that teleport related functions are unimplemented.
@@ -91,9 +91,9 @@ impl<
             Match::matches_fungible(&asset),
         ) {
             // known asset
-            // (Ok(who), Some(currency_id), Some(amount)) => {
-            // 	Mutate::mint_into(currency_id, &who, amount).map_err(|e| XcmError::FailedToTransactAsset(e.into()))
-            // }
+            (Ok(who), Some(currency_id), Some(amount)) => {
+            	Mutate::mint_into(currency_id, &who, amount).map_err(|e| XcmError::FailedToTransactAsset(e.into()))
+            }
             // unknown asset
             _ => UnknownAsset::deposit(asset, location)
                 .map_err(|e| XcmError::FailedToTransactAsset(e.into())),
@@ -105,15 +105,14 @@ impl<
         location: &MultiLocation,
     ) -> result::Result<Assets, XcmError> {
         UnknownAsset::withdraw(asset, location).or_else(|_| {
-            // let who = AccountIdConvert::convert_ref(location)
-            // 	.map_err(|_| XcmError::from(Error::AccountIdConversionFailed))?;
-            // let currency_id = CurrencyIdConvert::convert(asset.clone())
-            // 	.ok_or_else(|| XcmError::from(Error::CurrencyIdConversionFailed))?;
-            // let amount: Mutate::Balance = Match::matches_fungible(&asset)
-            // 	.ok_or_else(|| XcmError::from(Error::FailedToMatchFungible))?
-            // 	.saturated_into();
-            //Mutate::burn_from(currency_id, &who, amount)?;
-            Ok::<(), XcmError>(())
+            let who = AccountIdConvert::convert_ref(location)
+                .map_err(|_| XcmError::from(Error::AccountIdConversionFailed))?;
+            let currency_id = CurrencyIdConvert::convert(asset.clone())
+                .ok_or_else(|| XcmError::from(Error::CurrencyIdConversionFailed))?;
+            let amount: Mutate::Balance = Match::matches_fungible(&asset)
+                .ok_or_else(|| XcmError::from(Error::FailedToMatchFungible))?
+                .saturated_into();
+            Mutate::burn_from(currency_id, &who, amount)?;
         })?;
 
         Ok(asset.clone().into())

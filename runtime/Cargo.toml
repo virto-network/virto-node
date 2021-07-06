@@ -54,23 +54,25 @@ cumulus-primitives-core = {git = 'https://github.com/paritytech/cumulus', defaul
 parachain-info = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
 cumulus-pallet-aura-ext = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.7', default-features = false }
 cumulus-primitives-timestamp  = { git = 'https://github.com/paritytech/cumulus', branch = 'polkadot-v0.9.7', default-features = false }
-# xcm = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'polkadot-v0.9.7'}
-# xcm-builder = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.7'}
-# xcm-executor = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.7'}
+xcm = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.7'}
+xcm-builder = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.7'}
+xcm-executor = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.7'}
 polkadot-parachain = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'release-v0.9.7'}
-# cumulus-primitives-utility = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
-# cumulus-pallet-xcm = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
-# cumulus-pallet-xcmp-queue = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
-# pallet-xcm = {git = 'https://github.com/paritytech/polkadot', default-features = false, branch = 'polkadot-v0.9.7'}
+cumulus-primitives-utility = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
+cumulus-pallet-xcm = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
+cumulus-pallet-xcmp-queue = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
+cumulus-pallet-dmp-queue = {git = 'https://github.com/paritytech/cumulus', default-features = false, branch = 'polkadot-v0.9.7'}
 max-encoded-len = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.7", default-features = false }
+pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.7", default-features = false }
 
 # Vln dependencies
 orml-oracle = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.7', default-features = false }
 pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.7', default-features = false }
-# orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
-# orml-xcm-support = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
-# orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
+orml-xcm-support = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
+orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
+orml-traits = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
+orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 
 # Local dependencies
 vln-primitives = { default-features = false, path = '../primitives' }
@@ -121,7 +123,6 @@ std = [
 	'vln-escrow/std',
 	'cumulus-pallet-aura-ext/std',
 	'vln-rate-provider/std',
-	'orml-xtokens/std',
 	'orml-xcm-support/std',
 	'orml-unknown-tokens/std',
 	'cumulus-pallet-xcmp-queue/std',
@@ -137,6 +138,7 @@ std = [
 	'pallet-transaction-payment/std',
 	'pallet-uniques/std',
 	'cumulus-primitives-timestamp/std',
+	'pallet-xcm/std'
 ]
 standalone = []
 
