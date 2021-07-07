@@ -12,6 +12,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+// SBP1 review
+/// Missing weight (as you know), I would suggest to implement them early on
+
+
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
@@ -58,6 +62,7 @@ pub mod pallet {
     // module
     pub(super) type Rates<T: Config> = StorageDoubleMap<
         _,
+// SBP1 Externally feeded, might consider crypto hashes
         Twox64Concat,
         AssetPair<T::Asset, T::BaseAsset>,
         Twox64Concat,
@@ -100,6 +105,7 @@ pub mod pallet {
             medium: PaymentMethod,
             rate: RateDetailOf<T>,
         ) -> DispatchResultWithPostInfo {
+// SBP1 No need to use DispatchResultWithPostInfo if always returning default
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotPermitted);
@@ -134,6 +140,7 @@ pub mod pallet {
                     Ok(())
                 },
             )?;
+// SBP1 What if removing when no rate is provided? Shall the event be updated?
             Self::deposit_event(Event::RatesRemoved(who, base, quote));
             Ok(().into())
         }

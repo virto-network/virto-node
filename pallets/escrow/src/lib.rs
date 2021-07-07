@@ -209,6 +209,7 @@ pub mod pallet {
                 // unreserve the amount from the owner account
                 T::Asset::release(escrow.asset, &from, escrow.amount, false)?;
                 // try to transfer the amount to recipent
+// SP1 Can the release fail? Shall this be handled?
                 T::Asset::transfer(escrow.asset, &from, &to, escrow.amount, true)?;
                 *maybe_escrow = Some(EscrowDetail {
                     state: EscrowState::Released,
