@@ -144,18 +144,19 @@ pub mod pallet {
             // ensure the caller is part of the whitelist
             ensure!(T::JudgeWhitelist::contains(&who), Error::<T>::InvalidAction);
             // try to update the escrow to new state
+            use EscrowState::*;
             match new_state {
-                EscrowState::Cancelled => {
+                Cancelled => {
                     <Self as EscrowHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_escrow(
                         from, recipent,
                     )
                 }
-                EscrowState::Released => <Self as EscrowHandler<
+                Released => <Self as EscrowHandler<
                     T::AccountId,
                     AssetIdOf<T>,
                     BalanceOf<T>,
                 >>::release_escrow(from, recipent),
-                EscrowState::Created => Err(Error::<T>::InvalidAction.into()),
+                Created | NeedsReview => Err(Error::<T>::InvalidAction.into()),
             }?;
             Ok(().into())
         }
@@ -167,7 +168,7 @@ pub mod pallet {
             recipent: T::AccountId,
             asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
-        ) -> Result<(), DispatchError> {
+        ) -> DispatchResult {
             Escrow::<T>::try_mutate(from.clone(), recipent, |maybe_escrow| -> DispatchResult {
                 let new_escrow = Some(EscrowDetail {
                     asset,
@@ -197,30 +198,32 @@ pub mod pallet {
             })
         }
 
-        fn release_escrow(from: T::AccountId, to: T::AccountId) -> Result<(), DispatchError> {
+        fn release_escrow(from: T::AccountId, to: T::AccountId) -> DispatchResult {
+            use EscrowState::*;
             // add the escrow detail to storage
             Escrow::<T>::try_mutate(from.clone(), to.clone(), |maybe_escrow| -> DispatchResult {
-                let escrow = maybe_escrow.take().ok_or(Error::<T>::InvalidEscrow)?;
+                let escrow = maybe_escrow.as_mut().ok_or(Error::<T>::InvalidEscrow)?;
                 // ensure the escrow is in created state
-                ensure!(
-                    escrow.state == EscrowState::Created,
-                    Error::<T>::EscrowAlreadyReleased
-                );
-                // unreserve the amount from the owner account
-                T::Asset::release(escrow.asset, &from, escrow.amount, false)?;
-                // try to transfer the amount to recipent
-                T::Asset::transfer(escrow.asset, &from, &to, escrow.amount, true)?;
-                *maybe_escrow = Some(EscrowDetail {
-                    state: EscrowState::Released,
-                    ..escrow
-                });
+                ensure!(escrow.state == Created, Error::<T>::EscrowAlreadyReleased);
+                // unreserve the amount from the owner account.
+                // Shouldn't fail for escrows created successfully, if user manages to unreserve assets
+                // somehow and be left without enough balance we set the escrow to a "corrupted" state.
+                match T::Asset::release(escrow.asset, &from, escrow.amount, false) {
+                    Ok(amount) => {
+                        // try to transfer the amount to recipent
+                        T::Asset::transfer(escrow.asset, &from, &to, amount, true)?;
+                        escrow.state = Released;
+                    }
+                    Err(_) => escrow.state = NeedsReview,
+                }
                 Ok(())
             })?;
+
             Self::deposit_event(Event::EscrowReleased(from, to));
             Ok(())
         }
 
-        fn cancel_escrow(from: T::AccountId, to: T::AccountId) -> Result<(), DispatchError> {
+        fn cancel_escrow(from: T::AccountId, to: T::AccountId) -> DispatchResult {
             // add the escrow detail to storage
             Escrow::<T>::try_mutate(from.clone(), to.clone(), |maybe_escrow| -> DispatchResult {
                 let escrow = maybe_escrow.take().ok_or(Error::<T>::InvalidEscrow)?;
