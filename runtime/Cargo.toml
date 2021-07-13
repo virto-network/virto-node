@@ -138,7 +138,8 @@ std = [
 	'pallet-transaction-payment/std',
 	'pallet-uniques/std',
 	'cumulus-primitives-timestamp/std',
-	'pallet-xcm/std'
+	'pallet-xcm/std',
+	'orml-xtokens/std'
 ]
 standalone = []
 

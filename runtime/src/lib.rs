@@ -668,6 +668,7 @@ mod parachain_impl {
 
     parameter_types! {
         pub SelfLocation: MultiLocation = X2(Parent, Parachain(ParachainInfo::get().into()));
+        pub const BaseXcmWeight: Weight = 100_000_000; // configure later
     }
 
     pub struct AccountIdToMultiLocation;
@@ -689,6 +690,7 @@ mod parachain_impl {
         type SelfLocation = SelfLocation;
         type XcmExecutor = XcmExecutor<XcmConfig>;
         type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+        type BaseXcmWeight = BaseXcmWeight;
     }
 }
 

@@ -4673,7 +4673,7 @@ dependencies = [
 [[package]]
 name = "orml-oracle"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#443ee91bc2ca5f1fc155c0378eef6e89b67e2e97"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#51341d928687ef0b5fd8b038d307eade715a7fe2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4690,7 +4690,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#443ee91bc2ca5f1fc155c0378eef6e89b67e2e97"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#51341d928687ef0b5fd8b038d307eade715a7fe2"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -4707,7 +4707,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#443ee91bc2ca5f1fc155c0378eef6e89b67e2e97"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#51341d928687ef0b5fd8b038d307eade715a7fe2"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4721,7 +4721,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#443ee91bc2ca5f1fc155c0378eef6e89b67e2e97"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#51341d928687ef0b5fd8b038d307eade715a7fe2"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4734,7 +4734,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#443ee91bc2ca5f1fc155c0378eef6e89b67e2e97"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#51341d928687ef0b5fd8b038d307eade715a7fe2"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -4748,7 +4748,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#443ee91bc2ca5f1fc155c0378eef6e89b67e2e97"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#51341d928687ef0b5fd8b038d307eade715a7fe2"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -4756,6 +4756,7 @@ dependencies = [
  "orml-traits",
  "orml-xcm-support",
  "parity-scale-codec",
+ "serde",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -10806,7 +10807,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

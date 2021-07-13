@@ -66,7 +66,8 @@ pub struct MultiCurrencyAdapter<
 );
 
 impl<
-        Mutate: frame_support::traits::fungibles::Mutate<AccountId>,
+        Mutate: frame_support::traits::fungibles::Mutate<AccountId>
+            + frame_support::traits::fungibles::Inspect<AccountId, AssetId = CurrencyId>,
         UnknownAsset: orml_xcm_support::UnknownAsset,
         Match: MatchesFungible<Mutate::Balance>,
         AccountId: Clone,
@@ -92,7 +93,8 @@ impl<
         ) {
             // known asset
             (Ok(who), Some(currency_id), Some(amount)) => {
-            	Mutate::mint_into(currency_id, &who, amount).map_err(|e| XcmError::FailedToTransactAsset(e.into()))
+                Mutate::mint_into(currency_id, &who, amount)
+                    .map_err(|e| XcmError::FailedToTransactAsset(e.into()))
             }
             // unknown asset
             _ => UnknownAsset::deposit(asset, location)
@@ -104,16 +106,14 @@ impl<
         asset: &MultiAsset,
         location: &MultiLocation,
     ) -> result::Result<Assets, XcmError> {
-        UnknownAsset::withdraw(asset, location).or_else(|_| {
-            let who = AccountIdConvert::convert_ref(location)
-                .map_err(|_| XcmError::from(Error::AccountIdConversionFailed))?;
-            let currency_id = CurrencyIdConvert::convert(asset.clone())
-                .ok_or_else(|| XcmError::from(Error::CurrencyIdConversionFailed))?;
-            let amount: Mutate::Balance = Match::matches_fungible(&asset)
-                .ok_or_else(|| XcmError::from(Error::FailedToMatchFungible))?
-                .saturated_into();
-            Mutate::burn_from(currency_id, &who, amount)?;
-        })?;
+        let who = AccountIdConvert::convert_ref(location)
+            .map_err(|_| XcmError::from(Error::AccountIdConversionFailed))?;
+        let currency_id = CurrencyIdConvert::convert(asset.clone())
+            .ok_or_else(|| XcmError::from(Error::CurrencyIdConversionFailed))?;
+        let amount: Mutate::Balance = Match::matches_fungible(&asset)
+            .ok_or_else(|| XcmError::from(Error::FailedToMatchFungible))?;
+        Mutate::burn_from(currency_id, &who, amount)
+            .map_err(|e| XcmError::FailedToTransactAsset(e.into()))?;
 
         Ok(asset.clone().into())
     }
