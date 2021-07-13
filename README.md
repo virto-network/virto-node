@@ -31,68 +31,21 @@ make build
 
 ## Run
 
-[Refer this doc](./docs/Parachain.md) on how to run VLN parachain
-
 ### Single Node Development Chain
 
-Purge any existing dev chain state:
+For simple runtime development needs it's not necessary to run the parachain and relay chain nodes.
 
-```bash
-./target/release/vln_node purge-chain --dev
-```
-
-Start a dev chain:
-
-```bash
-./target/release/vln_node --dev
-```
-
-Or, start a dev chain with detailed logging:
-
-```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/vln_node -lruntime=debug --dev
-```
+**`make run-standalone`** and you are good to go! (you might need to `make clean-standalone` before).
 
 ### Multi-Node Local Testnet
 
-To see the multi-node consensus algorithm in action, run a local testnet with two validator nodes,
-Alice and Bob, that have been [configured](/node/src/chain_spec.rs) as the initial
-authorities of the `local` testnet chain and endowed with testnet units.
+To see the multi-node consensus algorithm in action, we have a container based recipe that
+sets up a "devnet" with two relay-chain validator nodes, two VLN collators, a second parachain(karura) for cross-chain testing scenarios and the polkadot.js UI pointing to a relay-chain node by default.
 
-Note: this will require two terminal sessions (one for each node).
+Running the parachain test environment is as simple as `make run-parachain` or **`make run`** for short. Nodes are launched in the background, then you can use podman/docker to follow the logs of any node in the multichain set-up(e.g. `podman logs -f devnet_vln_a`). Once you are done `make stop` will take care of removing the nodes.  
+Check the [`devnet.yml`](devnet.yml) file for more information on how the nodes are configured.
 
-Start Alice's node first. The command below uses the default TCP port (30333) and specifies
-`/tmp/alice` as the chain database location. Alice's node ID will be
-`12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp` (legacy representation:
-`QmRpheLN4JWdAnY7HGJfWFNbfkQCb6tFf4vvA6hgjMZKrR`); this is determined by the `node-key`.
-
-```bash
-cargo run -- \
-  --base-path /tmp/alice \
-  --chain=local \
-  --alice \
-  --node-key 0000000000000000000000000000000000000000000000000000000000000001 \
-  --telemetry-url 'ws://telemetry.polkadot.io:1024 0' \
-  --validator
-```
-
-In another terminal, use the following command to start Bob's node on a different TCP port (30334)
-and with a chain database location of `/tmp/bob`. The `--bootnodes` option will connect his node to
-Alice's on TCP port 30333:
-
-```bash
-cargo run -- \
-  --base-path /tmp/bob \
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp \
-  --chain=local \
-  --bob \
-  --port 30334 \
-  --ws-port 9945 \
-  --telemetry-url 'ws://telemetry.polkadot.io:1024 0' \
-  --validator
-```
-
-Execute `cargo run -- --help` to learn more about the node's CLI options.
+> To test xcm asset transfer check [vln-toolbox](https://github.com/valibre-org/vln-toolbox)
 
 ## Project Structure
 
