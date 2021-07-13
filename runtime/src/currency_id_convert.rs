@@ -32,8 +32,8 @@ impl Convert<MultiLocation, Option<u32>> for CurrencyIdConvert {
                 if let Ok(currency_id) = NetworkAsset::decode(&mut &key[..]) {
                     // check if `currency_id` is cross-chain asset
                     match currency_id {
-                        NetworkAsset::ACA => Some(NetworkAsset::ACA.into()),
-                        NetworkAsset::AUSD => Some(NetworkAsset::AUSD.into()),
+                        NetworkAsset::KAR => Some(NetworkAsset::KAR.into()),
+                        NetworkAsset::KUSD => Some(NetworkAsset::KUSD.into()),
                         _ => None,
                     }
                 } else {

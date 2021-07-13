@@ -547,7 +547,7 @@ mod parachain_impl {
 
     parameter_types! {
         pub const KsmLocation: MultiLocation = X1(Parent);
-        pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
+        pub const RelayNetwork: NetworkId = NetworkId::Kusama;
         pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
         pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
     }
@@ -658,7 +658,7 @@ mod parachain_impl {
 
     pub type LocalAssetTransactor = MultiCurrencyAdapter<
         Assets,
-        UnknownTokens,
+        UnknownAssets,
         IsNativeConcrete<u32, CurrencyIdConvert>,
         AccountId,
         LocationToAccountId,
@@ -741,7 +741,7 @@ construct_vln_runtime! {
     CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin},
     DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>},
     XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>},
-    UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event},
+    UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event},
 }
 
 /// The address format for describing accounts.
