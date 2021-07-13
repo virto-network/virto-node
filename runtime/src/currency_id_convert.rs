@@ -11,19 +11,20 @@ pub use xcm::v0::{
 };
 
 pub struct CurrencyIdConvert;
-impl Convert<NetworkAsset, Option<MultiLocation>> for CurrencyIdConvert {
-    fn convert(id: NetworkAsset) -> Option<MultiLocation> {
+impl Convert<u32, Option<MultiLocation>> for CurrencyIdConvert {
+    fn convert(id: u32) -> Option<MultiLocation> {
         match id {
-            NetworkAsset::KSM => Some(X1(Parent)),
-            NetworkAsset::ACA | NetworkAsset::AUSD => Some(native_currency_location(id)),
+            0 => Some(X1(Parent)),
+            1 | 2 => Some(native_currency_location(id)),
+            _ => None,
         }
     }
 }
 
-impl Convert<MultiLocation, Option<NetworkAsset>> for CurrencyIdConvert {
-    fn convert(location: MultiLocation) -> Option<NetworkAsset> {
+impl Convert<MultiLocation, Option<u32>> for CurrencyIdConvert {
+    fn convert(location: MultiLocation) -> Option<u32> {
         match location {
-            X1(Parent) => Some(NetworkAsset::KSM),
+            X1(Parent) => Some(0),
             X3(Parent, Parachain(id), GeneralKey(key))
                 if ParaId::from(id) == ParachainInfo::get() =>
             {
@@ -31,7 +32,8 @@ impl Convert<MultiLocation, Option<NetworkAsset>> for CurrencyIdConvert {
                 if let Ok(currency_id) = NetworkAsset::decode(&mut &key[..]) {
                     // check if `currency_id` is cross-chain asset
                     match currency_id {
-                        NetworkAsset::ACA | NetworkAsset::AUSD => Some(currency_id),
+                        NetworkAsset::ACA => Some(NetworkAsset::ACA.into()),
+                        NetworkAsset::AUSD => Some(NetworkAsset::AUSD.into()),
                         _ => None,
                     }
                 } else {
@@ -43,8 +45,8 @@ impl Convert<MultiLocation, Option<NetworkAsset>> for CurrencyIdConvert {
     }
 }
 
-impl Convert<MultiAsset, Option<NetworkAsset>> for CurrencyIdConvert {
-    fn convert(asset: MultiAsset) -> Option<NetworkAsset> {
+impl Convert<MultiAsset, Option<u32>> for CurrencyIdConvert {
+    fn convert(asset: MultiAsset) -> Option<u32> {
         if let MultiAsset::ConcreteFungible { id, amount: _ } = asset {
             Self::convert(id)
         } else {
@@ -53,7 +55,7 @@ impl Convert<MultiAsset, Option<NetworkAsset>> for CurrencyIdConvert {
     }
 }
 
-fn native_currency_location(id: NetworkAsset) -> MultiLocation {
+fn native_currency_location(id: u32) -> MultiLocation {
     X3(
         Parent,
         Parachain(ParachainInfo::get().into()),

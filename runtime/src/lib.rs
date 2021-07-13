@@ -659,10 +659,10 @@ mod parachain_impl {
     pub type LocalAssetTransactor = MultiCurrencyAdapter<
         Assets,
         UnknownTokens,
-        IsNativeConcrete<NetworkAssetType, CurrencyIdConvert>,
+        IsNativeConcrete<u32, CurrencyIdConvert>,
         AccountId,
         LocationToAccountId,
-        NetworkAssetType,
+        u32,
         CurrencyIdConvert,
     >;
 
@@ -684,7 +684,7 @@ mod parachain_impl {
     impl orml_xtokens::Config for Runtime {
         type Event = Event;
         type Balance = Balance;
-        type CurrencyId = NetworkAssetType;
+        type CurrencyId = u32;
         type CurrencyIdConvert = CurrencyIdConvert;
         type AccountIdToMultiLocation = AccountIdToMultiLocation;
         type SelfLocation = SelfLocation;
