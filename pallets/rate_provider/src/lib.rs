@@ -128,11 +128,12 @@ pub mod pallet {
                 AssetPair { base, quote },
                 medium,
                 |providers| -> DispatchResult {
-                    providers.remove(&who);
+                    providers.remove(&who).and_then(|_| {
+                        Self::deposit_event(Event::RatesRemoved(who, base, quote)).into()
+                    });
                     Ok(())
                 },
             )?;
-            Self::deposit_event(Event::RatesRemoved(who, base, quote));
             Ok(())
         }
     }
