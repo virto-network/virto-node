@@ -15,3 +15,4 @@ pub use escrow::*;
 pub use rates::*;
 
 pub type Share = sp_arithmetic::Permill;
+pub type GeneralAssetId = u32;

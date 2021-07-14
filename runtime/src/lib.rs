@@ -30,7 +30,7 @@ use sp_version::RuntimeVersion;
 mod proxy_type;
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, DefaultRateCombinator};
+use vln_primitives::{Asset, DefaultRateCombinator, GeneralAssetId};
 mod mocks;
 use mocks::MockAssets;
 pub use orml_traits::parameter_type_with_key;
@@ -415,7 +415,7 @@ type GeneralAssets = pallet_assets::Instance1;
 impl pallet_assets::Config<GeneralAssets> for Runtime {
     type Event = Event;
     type Balance = Balance;
-    type AssetId = u32;
+    type AssetId = GeneralAssetId;
     type Currency = Balances;
     type ForceOrigin = EnsureRoot<AccountId>; // allow council later
     type AssetDeposit = AssetDepositGeneral;
@@ -659,10 +659,10 @@ mod parachain_impl {
     pub type LocalAssetTransactor = MultiCurrencyAdapter<
         Assets,
         UnknownAssets,
-        IsNativeConcrete<u32, CurrencyIdConvert>,
+        IsNativeConcrete<GeneralAssetId, CurrencyIdConvert>,
         AccountId,
         LocationToAccountId,
-        u32,
+        GeneralAssetId,
         CurrencyIdConvert,
     >;
 
@@ -684,7 +684,7 @@ mod parachain_impl {
     impl orml_xtokens::Config for Runtime {
         type Event = Event;
         type Balance = Balance;
-        type CurrencyId = u32;
+        type CurrencyId = GeneralAssetId;
         type CurrencyIdConvert = CurrencyIdConvert;
         type AccountIdToMultiLocation = AccountIdToMultiLocation;
         type SelfLocation = SelfLocation;
