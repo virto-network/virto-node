@@ -59,7 +59,7 @@ use parachain_use::*;
 #[cfg(not(feature = "standalone"))]
 mod parachain_use {
     pub use crate::currency_id_convert::CurrencyIdConvert;
-    pub use crate::transact_asset::MultiCurrencyAdapter;
+    pub use crate::transact_asset::NetworkAssetAdapter;
     pub use cumulus_primitives_core::ParaId;
     pub use frame_support::traits::All;
     pub use orml_xcm_support::{IsNativeConcrete, MultiNativeAsset};
@@ -656,7 +656,7 @@ mod parachain_impl {
         type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
     }
 
-    pub type LocalAssetTransactor = MultiCurrencyAdapter<
+    pub type LocalAssetTransactor = NetworkAssetAdapter<
         Assets,
         UnknownAssets,
         IsNativeConcrete<GeneralAssetId, CurrencyIdConvert>,

@@ -45,7 +45,7 @@ impl From<Error> for XcmError {
 ///
 /// If the asset is known, deposit/withdraw will be handled by `MultiCurrency`,
 /// else by `UnknownAsset` if unknown.
-pub struct MultiCurrencyAdapter<
+pub struct NetworkAssetAdapter<
     Transfer,
     UnknownAsset,
     Match,
@@ -75,7 +75,7 @@ impl<
         CurrencyId: FullCodec + Eq + PartialEq + Copy + MaybeSerializeDeserialize + Debug,
         CurrencyIdConvert: Convert<MultiAsset, Option<CurrencyId>>,
     > TransactAsset
-    for MultiCurrencyAdapter<
+    for NetworkAssetAdapter<
         Mutate,
         UnknownAsset,
         Match,
