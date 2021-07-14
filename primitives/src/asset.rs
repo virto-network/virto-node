@@ -69,11 +69,21 @@ enum_with_aux_fns! {
     }
 }
 
-enum_with_aux_fns! {
-    pub enum NetworkAsset {
-        ACA = "ACA",
-        AUSD = "AUSD",
-        DOT = "DOT",
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum NetworkAsset {
+    KSM = 0,
+    KUSD = 1,
+    KAR = 2,
+}
+
+impl NetworkAsset {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            NetworkAsset::KAR => "KAR",
+            NetworkAsset::KUSD => "KUSD",
+            NetworkAsset::KSM => "KSM",
+        }
     }
 }
 
@@ -81,10 +91,20 @@ impl TryFrom<Vec<u8>> for Asset {
     type Error = ();
     fn try_from(v: Vec<u8>) -> Result<Asset, ()> {
         match v.as_slice() {
-            b"ACA" => Ok(Asset::Network(NetworkAsset::ACA)),
-            b"AUSD" => Ok(Asset::Network(NetworkAsset::AUSD)),
-            b"DOT" => Ok(Asset::Network(NetworkAsset::DOT)),
+            b"KAR" => Ok(Asset::Network(NetworkAsset::KAR)),
+            b"KUSD" => Ok(Asset::Network(NetworkAsset::KUSD)),
+            b"KSM" => Ok(Asset::Network(NetworkAsset::KSM)),
             _ => Err(()),
+        }
+    }
+}
+
+impl From<NetworkAsset> for u32 {
+    fn from(v: NetworkAsset) -> u32 {
+        match v {
+            NetworkAsset::KAR => 2,
+            NetworkAsset::KUSD => 1,
+            NetworkAsset::KSM => 0,
         }
     }
 }
