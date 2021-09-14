@@ -1,6 +1,7 @@
 #![allow(
     clippy::large_enum_variant,
     clippy::from_over_into,
+    clippy::needless_borrow,
     missing_debug_implementations
 )]
 #![cfg_attr(not(feature = "std"), no_std)]

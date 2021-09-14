@@ -4,3 +4,4 @@ target/
 genesis-state
 genesis-wasm
 testnet-chainspec
+/build
