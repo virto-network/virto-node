@@ -127,7 +127,7 @@ std = [
 	'orml-tokens/std',
 	# 'orml-xcm-support/std',
 	# 'orml-unknown-tokens/std',
-	# 'cumulus-pallet-xcmp-queue/std',
+	'cumulus-pallet-xcmp-queue/std',
 	# 'cumulus-pallet-xcm/std',
 	# 'xcm/std',
 	# 'xcm-builder/std',

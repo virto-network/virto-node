@@ -1,5 +1,6 @@
 use frame_support::{
-    traits::{InstanceFilter, MaxEncodedLen},
+    traits::{InstanceFilter},
+    pallet_prelude::MaxEncodedLen,
     RuntimeDebug,
 };
 

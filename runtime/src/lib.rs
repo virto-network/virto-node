@@ -58,7 +58,6 @@ mod parachain_use {
     pub use crate::currency_id_convert::CurrencyIdConvert;
     pub use crate::transact_asset::NetworkAssetAdapter;
     pub use cumulus_primitives_core::ParaId;
-    pub use frame_support::traits::All;
     pub use orml_xcm_support::{IsNativeConcrete, MultiNativeAsset};
     pub use pallet_xcm::XcmPassthrough;
     pub use polkadot_parachain::primitives::Sibling;
@@ -77,6 +76,7 @@ mod parachain_use {
         SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
     };
     pub use xcm_executor::{Config, XcmExecutor};
+    pub use vln_primitives::GeneralAssetId;
 }
 
 use frame_system::limits::{BlockLength, BlockWeights};
@@ -488,7 +488,7 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
 
 impl vln_escrow::Config for Runtime {
     type Event = Event;
-    type Asset = Tokens;
+    type Asset = Assets;
     type JudgeWhitelist = Whitelist;
 }
 
@@ -748,8 +748,8 @@ macro_rules! construct_vln_runtime {
 
                     // vln dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
-                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
-                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
+                    Assets: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
+                    Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
@@ -855,13 +855,14 @@ impl_runtime_apis! {
     }
 
     impl sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> for Runtime {
-        fn validate_transaction(
-            source: TransactionSource,
-            tx: <Block as BlockT>::Extrinsic,
-        ) -> TransactionValidity {
-            Executive::validate_transaction(source, tx)
-        }
-    }
+		fn validate_transaction(
+			source: TransactionSource,
+			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
+		) -> TransactionValidity {
+			Executive::validate_transaction(source, tx, block_hash)
+		}
+	}
 
     impl sp_offchain::OffchainWorkerApi<Block> for Runtime {
         fn offchain_worker(header: &<Block as BlockT>::Header) {

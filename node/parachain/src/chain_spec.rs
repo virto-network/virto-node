@@ -156,7 +156,7 @@ fn testnet_genesis(
             phantom: Default::default(),
         },
         parachain_system: Default::default(),
-        tokens: vln_runtime::TokensConfig { balances: vec![] },
-        collateral: vln_runtime::CollateralConfig { balances: vec![] },
+        assets: vln_runtime::AssetsConfig { balances: vec![] },
+        fiat: vln_runtime::FiatConfig { balances: vec![] },
     }
 }
