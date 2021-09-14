@@ -14,9 +14,7 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-    use frame_support::{
-        dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
-    };
+    use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::Contains};
     use frame_system::pallet_prelude::*;
     use orml_traits::DataProvider;
     use sp_runtime::FixedPointNumber;
@@ -99,7 +97,7 @@ pub mod pallet {
             quote: T::BaseAsset,
             medium: PaymentMethod,
             rate: RateDetailOf<T>,
-        ) -> DispatchResultWithPostInfo {
+        ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             // restrict calls to whitelisted LPs only
             ensure!(T::Whitelist::contains(&who), Error::<T>::NotPermitted);
@@ -113,7 +111,7 @@ pub mod pallet {
                 },
             )?;
             Self::deposit_event(Event::RatesUpdated(who, base, quote));
-            Ok(().into())
+            Ok(())
         }
 
         /// Remove any exising price stored by LP
@@ -124,18 +122,19 @@ pub mod pallet {
             base: T::Asset,
             quote: T::BaseAsset,
             medium: PaymentMethod,
-        ) -> DispatchResultWithPostInfo {
+        ) -> DispatchResult {
             let who = ensure_signed(origin)?;
             Rates::<T>::try_mutate(
                 AssetPair { base, quote },
                 medium,
                 |providers| -> DispatchResult {
-                    providers.remove(&who);
+                    providers.remove(&who).and_then(|_| {
+                        Self::deposit_event(Event::RatesRemoved(who, base, quote)).into()
+                    });
                     Ok(())
                 },
             )?;
-            Self::deposit_event(Event::RatesRemoved(who, base, quote));
-            Ok(().into())
+            Ok(())
         }
     }
 

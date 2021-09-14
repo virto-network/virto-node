@@ -19,13 +19,10 @@ use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 use vln_runtime::{Block, RuntimeApi};
 
-fn load_spec(
-    id: &str,
-    para_id: ParaId,
-) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
+fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
     Ok(match id {
-        "testnet" => Box::new(chain_spec::testnet_config(para_id)),
-        "" | "local" => Box::new(chain_spec::development_config(para_id)),
+        "testnet" => Box::new(chain_spec::testnet_config()),
+        "" | "local" => Box::new(chain_spec::development_config()),
         path => Box::new(chain_spec::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
@@ -64,7 +61,7 @@ impl SubstrateCli for Cli {
     }
 
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-        load_spec(id, self.run.parachain_id.unwrap_or(200).into())
+        load_spec(id)
     }
 
     fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -196,10 +193,8 @@ pub fn run() -> Result<()> {
             builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
             let _ = builder.init();
 
-            let block: Block = generate_genesis_block(&load_spec(
-                &params.chain.clone().unwrap_or_default(),
-                params.parachain_id.unwrap_or(200).into(),
-            )?)?;
+            let chain_spec = &load_spec(&params.chain.clone().unwrap_or_default())?;
+            let block: Block = generate_genesis_block(chain_spec)?;
             let raw_header = block.header().encode();
             let output_buf = if params.raw {
                 raw_header
@@ -261,7 +256,12 @@ pub fn run() -> Result<()> {
                         .chain(cli.relaychain_args.iter()),
                 );
 
-                let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(200));
+                let id = ParaId::from(
+                    cli.run
+                        .parachain_id
+                        .or(para_id)
+                        .unwrap_or(chain_spec::PARA_ID),
+                );
 
                 let parachain_account =
                     AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
