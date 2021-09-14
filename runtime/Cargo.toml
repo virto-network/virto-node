@@ -42,7 +42,7 @@ frame-system-rpc-runtime-api = {git = 'https://github.com/paritytech/substrate',
 sp-consensus-aura = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false, version = '0.9.0' }
 pallet-grandpa = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
 pallet-aura = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
-pallet-assets = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
+# pallet-assets = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
 pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
 pallet-transaction-payment = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
@@ -65,6 +65,8 @@ polkadot-parachain = {git = 'https://github.com/paritytech/polkadot', default-fe
 max-encoded-len = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.5", default-features = false }
 
 # Vln dependencies
+orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
 orml-oracle = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
 pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.5', default-features = false }
@@ -121,7 +123,7 @@ std = [
 	'vln-escrow/std',
 	'cumulus-pallet-aura-ext/std',
 	'vln-rate-provider/std',
-	# 'orml-xtokens/std',
+	'orml-tokens/std',
 	# 'orml-xcm-support/std',
 	# 'orml-unknown-tokens/std',
 	# 'cumulus-pallet-xcmp-queue/std',
@@ -130,9 +132,8 @@ std = [
 	# 'xcm-builder/std',
 	# 'xcm-executor/std',
 	# 'cumulus-pallet-xcm-handler/std',
-	'pallet-assets/std',
+	# 'pallet-assets/std',
 	'pallet-balances/std',
-	'pallet-assets/std',
 	'pallet-transaction-payment-rpc-runtime-api/std',
 	'pallet-transaction-payment/std',
 	'pallet-uniques/std',

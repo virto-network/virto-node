@@ -4498,12 +4498,27 @@ source = "git+https://github.com/open-web3-stack/open-runtime-module-library#ded
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits",
- "orml-utilities",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-application-crypto",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#c1f0f05875f5cc114694b91ef4266465a30adb9b"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "max-encoded-len",
+ "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "parity-scale-codec",
+ "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -4516,7 +4531,23 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities",
+ "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-traits"
+version = "0.4.1-dev"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#c1f0f05875f5cc114694b91ef4266465a30adb9b"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -4538,26 +4569,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-utilities"
+version = "0.4.1-dev"
+source = "git+https://github.com/valibre-org/open-runtime-module-library#c1f0f05875f5cc114694b91ef4266465a30adb9b"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "owning_ref"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ff55baddef9e4ad00f88b6c743a2a8062d4c6ade126c2a528644b8e444d52ce"
 dependencies = [
  "stable_deref_trait",
-]
-
-[[package]]
-name = "pallet-assets"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.5#3bb42b9aaba65e956aea7aaef2c2fb3468fa3aaf"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "max-encoded-len",
- "parity-scale-codec",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -10657,6 +10687,8 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "orml-tokens",
+ "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -10781,7 +10813,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -10808,7 +10840,8 @@ dependencies = [
  "hex-literal 0.3.1",
  "max-encoded-len",
  "orml-oracle",
- "pallet-assets",
+ "orml-tokens",
+ "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",

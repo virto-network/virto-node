@@ -105,7 +105,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .unwrap();
 
     orml_tokens::GenesisConfig::<Test> {
-        endowed_accounts: vec![(ESCROW_CREATOR, CURRENCY_ID, 100)],
+        balances: vec![(ESCROW_CREATOR, CURRENCY_ID, 100)],
     }
     .assimilate_storage(&mut t)
     .unwrap();

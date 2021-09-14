@@ -28,11 +28,10 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
+use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, DefaultRateCombinator};
-mod mocks;
-use mocks::MockAssets;
+use vln_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -407,51 +406,87 @@ parameter_types! {
 
 impl pallet_randomness_collective_flip::Config for Runtime {}
 
-type GeneralAssets = pallet_assets::Instance1;
-impl pallet_assets::Config<GeneralAssets> for Runtime {
-    type Event = Event;
-    type Balance = Balance;
-    type AssetId = u32;
-    type Currency = Balances;
-    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
-    type AssetDeposit = AssetDepositGeneral;
-    type MetadataDepositBase = MetadataDepositBaseGeneral;
-    type MetadataDepositPerByte = MetadataDepositPerByteGeneral;
-    type ApprovalDeposit = ApprovalDepositGeneral;
-    type StringLimit = StringLimitGeneral;
-    type Freezer = ();
-    type Extra = ();
-    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+parameter_type_with_key! {
+    pub ExistentialDeposits: |_currency_id: Asset| -> Balance {
+        Zero::zero()
+    };
 }
 
-parameter_types! {
-    pub const AssetDepositFiat: Balance = UNITS; // 1 UNIT deposit to create asset
-    pub const ApprovalDepositFiat: Balance = UNITS;
-    pub const StringLimitFiat: u32 = 50;
-    pub const MetadataDepositBaseFiat: Balance = UNITS;
-    pub const MetadataDepositPerByteFiat: Balance = UNITS;
+type GeneralInstance = orml_tokens::Instance1;
+impl orml_tokens::Config<GeneralInstance> for Runtime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = Asset;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDeposits;
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
+    type WeightInfo = ();
+    type MaxLocks = MaxLocks;
 }
 
-type FiatAssets = pallet_assets::Instance2;
-impl pallet_assets::Config<FiatAssets> for Runtime {
-    type Event = Event;
-    type Balance = Balance;
-    type AssetId = u32;
-    type Currency = Balances;
-    type ForceOrigin = EnsureRoot<AccountId>; // allow council later
-    type AssetDeposit = AssetDepositFiat;
-    type MetadataDepositBase = MetadataDepositBaseFiat;
-    type MetadataDepositPerByte = MetadataDepositPerByteFiat;
-    type ApprovalDeposit = ApprovalDepositFiat;
-    type StringLimit = StringLimitFiat;
-    type Freezer = ();
-    type Extra = ();
-    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+parameter_type_with_key! {
+    pub ExistentialDepositsCollateral: |_currency_id: CollateralType| -> Balance {
+        Zero::zero()
+    };
 }
+
+type CollateralInstance = orml_tokens::Instance2;
+impl orml_tokens::Config<CollateralInstance> for Runtime {
+    type Amount = Amount;
+    type Balance = Balance;
+    type CurrencyId = CollateralType;
+    type Event = Event;
+    type ExistentialDeposits = ExistentialDepositsCollateral;
+    type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
+    type WeightInfo = ();
+    type MaxLocks = MaxLocks;
+}
+
+// type GeneralAssets = pallet_assets::Instance1;
+// impl pallet_assets::Config<GeneralAssets> for Runtime {
+//     type Event = Event;
+//     type Balance = Balance;
+//     type AssetId = u32;
+//     type Currency = Balances;
+//     type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+//     type AssetDeposit = AssetDepositGeneral;
+//     type MetadataDepositBase = MetadataDepositBaseGeneral;
+//     type MetadataDepositPerByte = MetadataDepositPerByteGeneral;
+//     type ApprovalDeposit = ApprovalDepositGeneral;
+//     type StringLimit = StringLimitGeneral;
+//     type Freezer = ();
+//     type Extra = ();
+//     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+// }
+
+// parameter_types! {
+//     pub const AssetDepositFiat: Balance = UNITS; // 1 UNIT deposit to create asset
+//     pub const ApprovalDepositFiat: Balance = UNITS;
+//     pub const StringLimitFiat: u32 = 50;
+//     pub const MetadataDepositBaseFiat: Balance = UNITS;
+//     pub const MetadataDepositPerByteFiat: Balance = UNITS;
+// }
+
+// type FiatAssets = pallet_assets::Instance2;
+// impl pallet_assets::Config<FiatAssets> for Runtime {
+//     type Event = Event;
+//     type Balance = Balance;
+//     type AssetId = u32;
+//     type Currency = Balances;
+//     type ForceOrigin = EnsureRoot<AccountId>; // allow council later
+//     type AssetDeposit = AssetDepositFiat;
+//     type MetadataDepositBase = MetadataDepositBaseFiat;
+//     type MetadataDepositPerByte = MetadataDepositPerByteFiat;
+//     type ApprovalDeposit = ApprovalDepositFiat;
+//     type StringLimit = StringLimitFiat;
+//     type Freezer = ();
+//     type Extra = ();
+//     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+// }
 
 impl vln_escrow::Config for Runtime {
     type Event = Event;
-    type Asset = MockAssets;
+    type Asset = Tokens;
     type JudgeWhitelist = Whitelist;
 }
 
@@ -684,11 +719,13 @@ macro_rules! construct_vln_runtime {
                     TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
                     Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
                     Aura: pallet_aura::{Config<T>, Pallet},
-                    Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
-                    Fiat: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>},
+                    //Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
+                    //Fiat: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>},
 
                     // vln dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
+                    Tokens: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
+                    Collateral: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
                     RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},

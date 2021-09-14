@@ -57,6 +57,8 @@ impl GenesisConfigBuilder<'_> {
                 members: vec![self.sudo_key],
                 phantom: Default::default(),
             },
+            tokens: vln_runtime::TokensConfig { balances: vec![] },
+            collateral: vln_runtime::CollateralConfig { balances: vec![] },
         }
     }
 }
