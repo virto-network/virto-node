@@ -1,12 +1,13 @@
-# VLN ![Build](https://github.com/valibre-org/vln-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/valibre-org/vln-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+# Virto Node ![Build](https://github.com/virto-network/virto-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/virto-network/virto-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-The **Valibre Network** is a blockchain that aims to be Kusama and Polkadot's **bridge to the _real world_**, that is, the reality that most people live in where fiat money is the king and knowledge of blockchain related concepts like private key management is very limited.
+This is the blockchain node of the **Virto.network**, a parachain set to become [Kusama](https://kusama.network)'s *"bridge to humanity"* thanks to the implementation of the People Local Interactions Protocol that seeks to maximize economic development of local communities.
 
-VLN enables users to swap fiat and crypto assets in a simple and decentralized p2p way combining a set of on-chain systems like escrows, oracles, liquidity contracts among others as well as off-chain and decentralization friendly technologies like a [Matrix](https://matrix.org) based wallet or our general purpose plugin system [Valor](github.com/valibre-org/valor) that help find the sweet spot between decentralization and easy of use.
+Virto.network is the decentralized infastructure for **p2p marketplaces**, it tightly integrates with [Matrix](https://matrix.org), the decentralized communications protocol to allow communities around the world run any kind of local economic activity in a convenient way.
 
-_Example of a cash-in interaction happening in an end-to-end encrypted matrix chat room:_
+_Example of a p2p marketplace: fiat-crypto on-ramps_
 ![swap_flow](https://user-images.githubusercontent.com/1329925/119025875-db4d8d80-b9a4-11eb-9605-e7db6503156b.png)
 
+To create more advanced interactions we use [Valor](https://github.com/virto-network/valor) the plugin runtime for _decentralizable APIs_.
 
 ## Local Development
 
