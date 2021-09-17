@@ -1,8 +1,4 @@
-use frame_support::{
-    traits::{InstanceFilter},
-    pallet_prelude::MaxEncodedLen,
-    RuntimeDebug,
-};
+use frame_support::{pallet_prelude::MaxEncodedLen, traits::InstanceFilter, RuntimeDebug};
 
 /// Proxy type enum lists the type of calls that are supported by the proxy pallet
 #[derive(

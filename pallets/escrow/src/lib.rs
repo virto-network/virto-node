@@ -203,12 +203,10 @@ pub mod pallet {
                 // unreserve the amount from the owner account.
                 // Shouldn't fail for escrows created successfully, if user manages to unreserve assets
                 // somehow and be left without enough balance we set the escrow to a "corrupted" state.
-                T::Asset::unreserve(escrow.asset, &from, escrow.amount); 
+                T::Asset::unreserve(escrow.asset, &from, escrow.amount);
                 match T::Asset::transfer(escrow.asset, &from, &to, escrow.amount) {
-                    Ok(_) => {
-                        escrow.state = EscrowState::Released
-                    }
-                    Err(_) => escrow.state = EscrowState::NeedsReview
+                    Ok(_) => escrow.state = EscrowState::Released,
+                    Err(_) => escrow.state = EscrowState::NeedsReview,
                 }
                 Ok(())
             })?;

@@ -65,7 +65,7 @@ check: $(CLIPPY)
 # The substitution $(@:test_%=%) extracts "node" or "parachain"
 # from the target that looks like test_node
 $(TEST):
-	cargo test -p $(BIN)-$(@:test_%=%)
+	cargo test -p $(BIN)-parachain
 
 $(CLIPPY):
 	cargo clippy -p $(BIN)-$(@:clippy_%=%)
