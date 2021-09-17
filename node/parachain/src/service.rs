@@ -1,3 +1,10 @@
+#![allow(
+    clippy::large_enum_variant,
+    clippy::clone_on_copy,
+    clippy::needless_borrow,
+    clippy::type_complexity,
+    missing_debug_implementations
+)]
 // std
 use std::sync::Arc;
 
@@ -427,7 +434,7 @@ pub async fn start_node(
                 block_import: client.clone(),
                 relay_chain_client: relay_chain_node.client.clone(),
                 relay_chain_backend: relay_chain_node.backend.clone(),
-                para_client: client.clone(),
+                para_client: client,
                 backoff_authoring_blocks: Option::<()>::None,
                 sync_oracle,
                 keystore,

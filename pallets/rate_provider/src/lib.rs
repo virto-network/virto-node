@@ -1,5 +1,6 @@
 #![allow(
     clippy::unused_unit,
+    clippy::unit_arg,
     unused_qualifications,
     missing_debug_implementations
 )]
