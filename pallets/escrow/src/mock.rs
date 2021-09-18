@@ -71,6 +71,13 @@ parameter_types! {
     pub const MaxLocks: u32 = 50;
 }
 
+pub struct MockDustRemovalWhitelist;
+impl Contains<AccountId> for MockDustRemovalWhitelist {
+    fn contains(a: &AccountId) -> bool {
+        false
+    }
+}
+
 impl orml_tokens::Config for Test {
     type Amount = i64;
     type Balance = u32;
@@ -80,6 +87,7 @@ impl orml_tokens::Config for Test {
     type OnDust = ();
     type WeightInfo = ();
     type MaxLocks = MaxLocks;
+    type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
 
 pub struct MockMembership;
@@ -105,7 +113,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .unwrap();
 
     orml_tokens::GenesisConfig::<Test> {
-        endowed_accounts: vec![(ESCROW_CREATOR, CURRENCY_ID, 100)],
+        balances: vec![(ESCROW_CREATOR, CURRENCY_ID, 100)],
     }
     .assimilate_storage(&mut t)
     .unwrap();

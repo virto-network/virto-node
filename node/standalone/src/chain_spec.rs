@@ -57,6 +57,8 @@ impl GenesisConfigBuilder<'_> {
                 members: vec![self.sudo_key],
                 phantom: Default::default(),
             },
+            assets: vln_runtime::AssetsConfig { balances: vec![] },
+            fiat: vln_runtime::FiatConfig { balances: vec![] },
         }
     }
 }

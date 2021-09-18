@@ -68,7 +68,7 @@ $(TEST):
 	cargo test -p $(BIN)-$(@:test_%=%)
 
 $(CLIPPY):
-	cargo clippy -p $(BIN)-$(@:clippy_%=%)
+	cargo clippy -p $(BIN)-parachain
 
 #
 # Testing parachain locally

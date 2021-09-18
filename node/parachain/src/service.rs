@@ -1,5 +1,17 @@
-#![allow(clippy::all, unused_qualifications)]
+#![allow(
+    clippy::large_enum_variant,
+    clippy::clone_on_copy,
+    clippy::needless_borrow,
+    clippy::type_complexity,
+    missing_debug_implementations
+)]
+// std
+use std::sync::Arc;
 
+// Local Runtime Types
+use vln_runtime::RuntimeApi;
+
+// Cumulus Imports
 use cumulus_client_consensus_aura::{
     build_aura_consensus, BuildAuraConsensusParams, SlotProportion,
 };
@@ -10,8 +22,10 @@ use cumulus_client_service::{
 };
 use cumulus_primitives_core::ParaId;
 
+// Substrate Imports
 use sc_client_api::ExecutorProvider;
 use sc_executor::native_executor_instance;
+pub use sc_executor::NativeExecutor;
 use sc_network::NetworkService;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -19,11 +33,9 @@ use sp_api::ConstructRuntimeApi;
 use sp_consensus::SlotData;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
-use std::sync::Arc;
 use substrate_prometheus_endpoint::Registry;
 
-pub use sc_executor::NativeExecutor;
-
+// Runtime type overrides
 type BlockNumber = u32;
 type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
 pub type Block = sp_runtime::generic::Block<Header, sp_runtime::OpaqueExtrinsic>;
@@ -34,6 +46,7 @@ native_executor_instance!(
     pub ParachainRuntimeExecutor,
     vln_runtime::api::dispatch,
     vln_runtime::native_version,
+    frame_benchmarking::benchmarking::HostFunctions,
 );
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -48,7 +61,7 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
         TFullClient<Block, RuntimeApi, Executor>,
         TFullBackend<Block>,
         (),
-        sp_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, Executor>>,
+        sc_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, Executor>>,
         sc_transaction_pool::FullPool<Block, TFullClient<Block, RuntimeApi, Executor>>,
         (Option<Telemetry>, Option<TelemetryWorkerHandle>),
     >,
@@ -75,7 +88,7 @@ where
         Option<TelemetryHandle>,
         &TaskManager,
     ) -> Result<
-        sp_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, Executor>>,
+        sc_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, Executor>>,
         sc_service::Error,
     >,
 {
@@ -163,7 +176,7 @@ where
     Executor: sc_executor::NativeExecutionDispatch + 'static,
     RB: Fn(
             Arc<TFullClient<Block, RuntimeApi, Executor>>,
-        ) -> jsonrpc_core::IoHandler<sc_rpc::Metadata>
+        ) -> Result<jsonrpc_core::IoHandler<sc_rpc::Metadata>, sc_service::Error>
         + Send
         + 'static,
     BIQ: FnOnce(
@@ -172,7 +185,7 @@ where
         Option<TelemetryHandle>,
         &TaskManager,
     ) -> Result<
-        sp_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, Executor>>,
+        sc_consensus::DefaultImportQueue<Block, TFullClient<Block, RuntimeApi, Executor>>,
         sc_service::Error,
     >,
     BIC: FnOnce(
@@ -227,6 +240,7 @@ where
             import_queue: import_queue.clone(),
             on_demand: None,
             block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
+            warp_sync: None,
         })?;
 
     let rpc_client = client.clone();
@@ -297,16 +311,16 @@ where
     Ok((task_manager, client))
 }
 
-/// Build the import queue for the rococo parachain runtime.
+/// Build the import queue for the the parachain runtime.
 pub fn parachain_build_import_queue(
-    client: Arc<TFullClient<Block, vln_runtime::RuntimeApi, ParachainRuntimeExecutor>>,
+    client: Arc<TFullClient<Block, RuntimeApi, ParachainRuntimeExecutor>>,
     config: &Configuration,
     telemetry: Option<TelemetryHandle>,
     task_manager: &TaskManager,
 ) -> Result<
-    sp_consensus::DefaultImportQueue<
+    sc_consensus::DefaultImportQueue<
         Block,
-        TFullClient<Block, vln_runtime::RuntimeApi, ParachainRuntimeExecutor>,
+        TFullClient<Block, RuntimeApi, ParachainRuntimeExecutor>,
     >,
     sc_service::Error,
 > {
@@ -342,20 +356,20 @@ pub fn parachain_build_import_queue(
     .map_err(Into::into)
 }
 
-/// Start a rococo parachain node.
+/// Start a normal parachain node.
 pub async fn start_node(
     parachain_config: Configuration,
     polkadot_config: Configuration,
     id: ParaId,
 ) -> sc_service::error::Result<(
     TaskManager,
-    Arc<TFullClient<Block, vln_runtime::RuntimeApi, ParachainRuntimeExecutor>>,
+    Arc<TFullClient<Block, RuntimeApi, ParachainRuntimeExecutor>>,
 )> {
-    start_node_impl::<vln_runtime::RuntimeApi, ParachainRuntimeExecutor, _, _, _>(
+    start_node_impl::<RuntimeApi, ParachainRuntimeExecutor, _, _, _>(
         parachain_config,
         polkadot_config,
         id,
-        |_| Default::default(),
+        |_| Ok(Default::default()),
         parachain_build_import_queue,
         |client,
          prometheus_registry,
@@ -420,7 +434,7 @@ pub async fn start_node(
                 block_import: client.clone(),
                 relay_chain_client: relay_chain_node.client.clone(),
                 relay_chain_backend: relay_chain_node.backend.clone(),
-                para_client: client.clone(),
+                para_client: client,
                 backoff_authoring_blocks: Option::<()>::None,
                 sync_oracle,
                 keystore,
@@ -428,6 +442,8 @@ pub async fn start_node(
                 slot_duration,
                 // We got around 500ms for proposing
                 block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
+                // And a maximum of 750ms if slots are skipped
+                max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
                 telemetry,
             }))
         },
