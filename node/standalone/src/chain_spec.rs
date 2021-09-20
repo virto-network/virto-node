@@ -6,7 +6,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::Ss58Codec, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use vln_runtime::{
+use virto_runtime::{
     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WhitelistConfig,
 };
@@ -57,8 +57,8 @@ impl GenesisConfigBuilder<'_> {
                 members: vec![self.sudo_key],
                 phantom: Default::default(),
             },
-            assets: vln_runtime::AssetsConfig { balances: vec![] },
-            fiat: vln_runtime::FiatConfig { balances: vec![] },
+            assets: virto_runtime::AssetsConfig { balances: vec![] },
+            fiat: virto_runtime::FiatConfig { balances: vec![] },
         }
     }
 }

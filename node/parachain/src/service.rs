@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 // Local Runtime Types
-use vln_runtime::RuntimeApi;
+use virto_runtime::RuntimeApi;
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{
@@ -44,8 +44,8 @@ type Hash = sp_core::H256;
 // Native executor instance.
 native_executor_instance!(
     pub ParachainRuntimeExecutor,
-    vln_runtime::api::dispatch,
-    vln_runtime::native_version,
+    virto_runtime::api::dispatch,
+    virto_runtime::native_version,
     frame_benchmarking::benchmarking::HostFunctions,
 );
 

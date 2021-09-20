@@ -5,7 +5,7 @@ use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::sr25519;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use vln_runtime::WASM_BINARY;
+use virto_runtime::WASM_BINARY;
 
 const ODIN_AURA_SS58: &str = "5DodinBNh59Ew9bvRfoDmj1j1QXzPhvHqk5w6jpdAfq7DHZd";
 const ODIN_GRANDPA_SS58: &str = "5CodinauszfC7FeAnugMk1eXiBCsrJmg4pE6RQN9GzQ7nEpb";
@@ -35,7 +35,7 @@ pub fn chain_spec() -> Result<ChainSpec, String> {
     ];
 
     Ok(ChainSpec::from_genesis(
-        "VLN Testnet",
+        "Virto Testnet",
         "testnet",
         ChainType::Live,
         move || {

@@ -17,7 +17,7 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
-use vln_runtime::{Block, RuntimeApi};
+use virto_runtime::{Block, RuntimeApi};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
     Ok(match id {
@@ -31,7 +31,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "VLN Collator".into()
+        "Virto Collator".into()
     }
 
     fn impl_version() -> String {
@@ -53,7 +53,7 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "https://github.com/valibre-org/vln-node/issues/new".into()
+        "https://github.com/virto-network/virto-node/issues/new".into()
     }
 
     fn copyright_start_year() -> i32 {
@@ -65,13 +65,13 @@ impl SubstrateCli for Cli {
     }
 
     fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        &vln_runtime::VERSION
+        &virto_runtime::VERSION
     }
 }
 
 impl SubstrateCli for RelayChainCli {
     fn impl_name() -> String {
-        "VLN Collator".into()
+        "Virto Collator".into()
     }
 
     fn impl_version() -> String {
@@ -91,7 +91,7 @@ impl SubstrateCli for RelayChainCli {
     }
 
     fn support_url() -> String {
-        "https://github.com/valibre-org/vln-node/issues/new".into()
+        "https://github.com/virto-network/virto-node/issues/new".into()
     }
 
     fn copyright_start_year() -> i32 {

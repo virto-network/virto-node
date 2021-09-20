@@ -1,11 +1,11 @@
 [package]
 authors = ["Stanly Johnson <stanlyjohnson@outlook.com>"]
 edition = '2018'
-name = "vln-escrow"
+name = "virto-escrow"
 version = "0.1.0"
 license = "Unlicense"
-homepage = "https://github.com/valibre-org/vln-node/"
-repository = "https://github.com/valibre-org/vln-node/"
+homepage = "https://github.com/virto-network/virto-node"
+repository = "https://github.com/virto-network/virto-node"
 description = "Allows users to post escrow on-chain"
 readme = "README.md"
 
@@ -17,14 +17,14 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
-orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
-vln-primitives = { version = "0.2.0", path = "../../primitives" }
+orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
+virto-primitives = { version = "0.2.0", path = "../../primitives" }
 
 [dev-dependencies]
 serde = { version = "1.0.101" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
-orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+orml-tokens = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
 
 [features]
 default = ['std']

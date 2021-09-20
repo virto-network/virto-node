@@ -1,6 +1,6 @@
 = Contributing
 
-The `vln-node` project is an **OPENISH Open Source Project**
+The `virto-node` project is an **OPENISH Open Source Project**
 
 == What?
 
@@ -43,7 +43,7 @@ When reviewing a pull request, the end-goal is to suggest useful changes to the 
 
 == Helping out
 
-We are organizing issues in https://github.com/valibre-org/vln-node/issues[issues]. Best way to get started is to start a discussion on any issue for guidance on how to solve them.
+We are organizing issues in https://github.com/virto-network/virto-node/issues[issues]. Best way to get started is to start a discussion on any issue for guidance on how to solve them.
 
 == Releases
 

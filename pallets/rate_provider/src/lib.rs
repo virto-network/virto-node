@@ -20,7 +20,7 @@ pub mod pallet {
     use orml_traits::DataProvider;
     use sp_runtime::FixedPointNumber;
     use sp_std::collections::btree_map::BTreeMap;
-    use vln_primitives::{
+    use virto_primitives::{
         AssetPair, PaymentMethod, RateCombinator, RateDetail, RatePremiumType, RateProvider,
     };
 

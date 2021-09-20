@@ -1,10 +1,10 @@
 [package]
 authors = ['Daniel Olano <daniel@olanod.com>']
 edition = '2018'
-homepage = 'https://github.com/valibre-org/node'
+homepage = 'https://github.com/virto-network/virto-node'
 license = 'Unlicense'
-name = 'vln-runtime'
-repository = 'https://github.com/valibre-org/node'
+name = 'virto-runtime'
+repository = 'https://github.com/virto-network/virto-node'
 version = '0.2.0'
 
 [package.metadata.docs.rs]
@@ -65,9 +65,9 @@ cumulus-pallet-dmp-queue = {git = 'https://github.com/paritytech/cumulus', defau
 # max-encoded-len = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.9", default-features = false }
 
-# Vln dependencies
-orml-tokens = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
-orml-traits = { git = "https://github.com/valibre-org/open-runtime-module-library", default-features = false }
+# Virto dependencies
+orml-tokens = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
+orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
 orml-oracle = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.9', default-features = false }
 pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.9', default-features = false }
@@ -76,9 +76,9 @@ orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-m
 orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
 
 # Local dependencies
-vln-primitives = { default-features = false, path = '../primitives' }
-vln-rate-provider = { default-features = false, path = '../pallets/rate_provider' }
-vln-escrow = { default-features = false, path = '../pallets/escrow' }
+virto-primitives = { default-features = false, path = '../primitives' }
+virto-rate-provider = { default-features = false, path = '../pallets/rate_provider' }
+virto-escrow = { default-features = false, path = '../pallets/escrow' }
 
 [features]
 default = ['std']
@@ -119,11 +119,11 @@ std = [
 	'cumulus-primitives-core/std',
     'orml-oracle/std',
 	'pallet-proxy/std',
-	'vln-primitives/std',
+	'virto-primitives/std',
 	'pallet-membership/std',
-	'vln-escrow/std',
+	'virto-escrow/std',
 	'cumulus-pallet-aura-ext/std',
-	'vln-rate-provider/std',
+	'virto-rate-provider/std',
 	'orml-tokens/std',
 	# 'orml-xcm-support/std',
 	# 'orml-unknown-tokens/std',

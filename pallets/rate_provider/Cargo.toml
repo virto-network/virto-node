@@ -1,11 +1,11 @@
 [package]
 authors = ["Stanly Johnson <stanlyjohnson@outlook.com>"]
 edition = '2018'
-name = "vln-rate-provider"
+name = "virto-rate-provider"
 version = "0.1.0"
 license = "Unlicense"
-homepage = "https://github.com/valibre-org/vln-node/"
-repository = "https://github.com/valibre-org/vln-node/"
+homepage = "https://github.com/virto-network/virto-node"
+repository = "https://github.com/virto-network/virto-node"
 description = "Allows liquidity providers to publish rates"
 readme = "README.md"
 
@@ -19,7 +19,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false }
-vln-primitives = { version = "0.2.0", path = "../../primitives" }
+virto-primitives = { version = "0.2.0", path = "../../primitives" }
 
 [dev-dependencies]
 serde = { version = "1.0.101" }

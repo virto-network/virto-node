@@ -1,4 +1,4 @@
-//! Valiu Liquidity Network - Node
+//! Virto Network - Node
 
 mod chain_spec;
 mod cli;

@@ -1,13 +1,13 @@
 [package]
-authors = ['The VLN team']
+authors = ['The Virto team']
 categories = ['configuration']
-description = 'Valiu Liquidity Network - Primitives'
+description = 'Virto Network - Primitives'
 edition = '2018'
 keywords = ['blockchain', 'substrate']
 license = 'Unlicense'
-name = 'vln-primitives'
+name = 'virto-primitives'
 readme = 'README.md'
-repository = 'https://github.com/valibre-org/vln-node'
+repository = 'https://github.com/virto-network/virto-node'
 version = '0.2.0'
 
 [dependencies]

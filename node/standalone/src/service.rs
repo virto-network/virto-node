@@ -11,13 +11,13 @@ use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus::SlotData;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
-use vln_runtime::{self, opaque::Block, RuntimeApi};
+use virto_runtime::{self, opaque::Block, RuntimeApi};
 
 // Our native executor instance.
 native_executor_instance!(
     pub Executor,
-    vln_runtime::api::dispatch,
-    vln_runtime::native_version,
+    virto_runtime::api::dispatch,
+    virto_runtime::native_version,
     frame_benchmarking::benchmarking::HostFunctions,
 );
 

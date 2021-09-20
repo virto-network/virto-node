@@ -5,10 +5,10 @@ use serde::{Deserialize, Serialize};
 use sp_core::crypto::Ss58Codec;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use vln_runtime::{AccountId, AuraId, Signature};
+use virto_runtime::{AccountId, AuraId, Signature};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<vln_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<virto_runtime::GenesisConfig, Extensions>;
 
 pub const PARA_ID: u32 = 2086u32;
 
@@ -60,7 +60,7 @@ pub fn development_config() -> ChainSpec {
 
     ChainSpec::from_genesis(
         // Name
-        "VLN PC Dev",
+        "Virto PC Dev",
         // ID
         "dev",
         ChainType::Local,
@@ -97,7 +97,7 @@ pub fn testnet_config() -> ChainSpec {
         hex!["b2c27cac9a4a7f6003cde27ef5b37a0245efdd202c3a6759130dd5c846ee285b"].into();
     ChainSpec::from_genesis(
         // Name
-        "VLN PC",
+        "Virto PC",
         // ID
         "testnet",
         ChainType::Live,
@@ -126,37 +126,37 @@ fn testnet_genesis(
     root_key: AccountId,
     initial_authorities: Vec<AuraId>,
     endowed_accounts: Vec<AccountId>,
-) -> vln_runtime::GenesisConfig {
-    vln_runtime::GenesisConfig {
-        system: vln_runtime::SystemConfig {
-            code: vln_runtime::WASM_BINARY
+) -> virto_runtime::GenesisConfig {
+    virto_runtime::GenesisConfig {
+        system: virto_runtime::SystemConfig {
+            code: virto_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
                 .to_vec(),
             changes_trie_config: Default::default(),
         },
-        sudo: vln_runtime::SudoConfig {
+        sudo: virto_runtime::SudoConfig {
             key: root_key.clone(),
         },
-        balances: vln_runtime::BalancesConfig {
+        balances: virto_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .cloned()
                 .map(|k| (k, 1 << 60))
                 .collect(),
         },
-        parachain_info: vln_runtime::ParachainInfoConfig {
+        parachain_info: virto_runtime::ParachainInfoConfig {
             parachain_id: PARA_ID.into(),
         },
-        aura: vln_runtime::AuraConfig {
+        aura: virto_runtime::AuraConfig {
             authorities: initial_authorities,
         },
         aura_ext: Default::default(),
-        whitelist: vln_runtime::WhitelistConfig {
+        whitelist: virto_runtime::WhitelistConfig {
             members: vec![root_key],
             phantom: Default::default(),
         },
         parachain_system: Default::default(),
-        assets: vln_runtime::AssetsConfig { balances: vec![] },
-        fiat: vln_runtime::FiatConfig { balances: vec![] },
+        assets: virto_runtime::AssetsConfig { balances: vec![] },
+        fiat: virto_runtime::FiatConfig { balances: vec![] },
     }
 }

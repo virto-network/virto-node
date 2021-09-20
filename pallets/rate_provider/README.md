@@ -6,7 +6,7 @@ In case the provider chooses to upload the premium only, it will work as follows
 
 ## Terminology
 
-- Provider: Any external user/company that provides liquidity to VLN.
+- Provider: Any external user/company that provides liquidity to Virto.network.
 - Medium: The route of this transaction, eg : BankTransfer, CashDeposit etc..
 - Whitelist: Origin permitted to call the attestation extrinsic, must be a member of the whitelist membership pallet.
 

@@ -31,7 +31,7 @@ mod proxy_type;
 use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use vln_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
+use virto_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -62,7 +62,7 @@ mod parachain_use {
     pub use pallet_xcm::XcmPassthrough;
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::traits::Convert;
-    pub use vln_primitives::GeneralAssetId;
+    pub use virto_primitives::GeneralAssetId;
     pub use xcm::v0::{
         Junction::{AccountId32, GeneralKey, Parachain, Parent},
         MultiAsset,
@@ -148,8 +148,8 @@ impl_opaque_keys! {
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("VLN-PC"),
-    impl_name: create_runtime_str!("vln-runtime"),
+    spec_name: create_runtime_str!("Virto-PC"),
+    impl_name: create_runtime_str!("virto-runtime"),
     authoring_version: 1,
     spec_version: 1,
     impl_version: 1,
@@ -360,7 +360,7 @@ impl pallet_membership::Config for Runtime {
     type MembershipChanged = ();
 }
 
-impl vln_rate_provider::Config for Runtime {
+impl virto_rate_provider::Config for Runtime {
     type Event = Event;
     type Asset = Asset;
     type BaseAsset = Asset;
@@ -496,7 +496,7 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
 //     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
 // }
 
-impl vln_escrow::Config for Runtime {
+impl virto_escrow::Config for Runtime {
     type Event = Event;
     type Asset = Assets;
     type JudgeWhitelist = Whitelist;
@@ -738,7 +738,7 @@ mod parachain_impl {
     // }
 }
 
-macro_rules! construct_vln_runtime {
+macro_rules! construct_virto_runtime {
 	($( $modules:tt )*) => {
             // Create the runtime by composing the FRAME pallets that were previously configured.
             construct_runtime!{
@@ -757,14 +757,14 @@ macro_rules! construct_vln_runtime {
                     //Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>},
                     //Fiat: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>},
 
-                    // vln dependencies
+                    // virto dependencies
                     Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>},
                     Assets: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage},
                     Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
-                    RatesProvider: vln_rate_provider::{Call, Event<T>, Pallet, Storage},
-                    Escrow: vln_escrow::{Call, Event<T>, Pallet, Storage},
+                    RatesProvider: virto_rate_provider::{Call, Event<T>, Pallet, Storage},
+                    Escrow: virto_escrow::{Call, Event<T>, Pallet, Storage},
                     Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>},
                     $($modules)*
                 }
@@ -773,12 +773,12 @@ macro_rules! construct_vln_runtime {
 }
 
 #[cfg(feature = "standalone")]
-construct_vln_runtime! {
+construct_virto_runtime! {
     Grandpa: pallet_grandpa::{Call, Config, Event, Pallet, Storage},
 }
 
 #[cfg(not(feature = "standalone"))]
-construct_vln_runtime! {
+construct_virto_runtime! {
     AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
     ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, Config, ValidateUnsigned},
     ParachainInfo: parachain_info::{Pallet, Storage, Config},

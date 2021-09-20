@@ -4812,11 +4812,11 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-runtime",
@@ -4843,12 +4843,12 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-utilities 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -4886,7 +4886,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/valibre-org/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -11355,23 +11355,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
-name = "vln-escrow"
+name = "virto-escrow"
 version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
- "vln-primitives",
+ "virto-primitives",
 ]
 
 [[package]]
-name = "vln-parachain"
+name = "virto-parachain"
 version = "0.2.0"
 dependencies = [
  "cumulus-client-cli",
@@ -11427,11 +11427,11 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
- "vln-runtime",
+ "virto-runtime",
 ]
 
 [[package]]
-name = "vln-primitives"
+name = "virto-primitives"
 version = "0.2.0"
 dependencies = [
  "parity-scale-codec",
@@ -11443,7 +11443,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vln-rate-provider"
+name = "virto-rate-provider"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -11455,11 +11455,11 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "vln-primitives",
+ "virto-primitives",
 ]
 
 [[package]]
-name = "vln-runtime"
+name = "virto-runtime"
 version = "0.2.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
@@ -11479,7 +11479,7 @@ dependencies = [
  "hex-literal 0.3.1",
  "orml-oracle",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/valibre-org/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -11512,9 +11512,9 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder 4.0.0",
- "vln-escrow",
- "vln-primitives",
- "vln-rate-provider",
+ "virto-escrow",
+ "virto-primitives",
+ "virto-rate-provider",
  "xcm",
  "xcm-builder",
  "xcm-executor",

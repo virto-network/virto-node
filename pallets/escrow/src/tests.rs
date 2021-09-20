@@ -2,7 +2,7 @@ use crate::mock::*;
 use crate::Escrow as EscrowStore;
 use frame_support::{assert_noop, assert_ok};
 use orml_traits::MultiCurrency;
-use vln_primitives::{EscrowDetail, EscrowState};
+use virto_primitives::{EscrowDetail, EscrowState};
 
 #[test]
 fn test_create_escrow_works() {

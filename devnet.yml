@@ -8,9 +8,9 @@ services:
     ports:
       - 58080:80
 
-  vln_a:
-    image: valibre/vln
-    container_name: devnet_vln_a
+  virto_a:
+    image: virto-network/virto
+    container_name: devnet_virto_a
     volumes:
       - ./build/relay-chain.json:/data/relay-chain.json
     command:
@@ -37,16 +37,16 @@ services:
     networks:
       - devnet
 
-  vln_b:
-    image: valibre/vln
-    container_name: devnet_vln_b
+  virto_b:
+    image: virto-network/virto
+    container_name: devnet_virto_b
     volumes:
       - ./build/relay-chain.json:/data/relay-chain.json
     command:
       - --bob
       - --tmp
       - --parachain-id=2086
-      - --bootnodes=/dns/vln_a/tcp/50333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+      - --bootnodes=/dns/virto_a/tcp/50333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
       # relay chain node
       - --
       - --execution=wasm

@@ -3,7 +3,7 @@ pub use codec::{Decode, Encode};
 pub use cumulus_primitives_core::ParaId;
 pub use frame_support::traits::Get;
 pub use sp_runtime::traits::Convert;
-pub use vln_primitives::{Asset, GeneralAssetId, NetworkAsset};
+pub use virto_primitives::{Asset, GeneralAssetId, NetworkAsset};
 pub use xcm::v0::{
     Junction::{GeneralKey, Parachain, Parent},
     MultiAsset,

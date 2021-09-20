@@ -16,17 +16,17 @@ Follow these steps to prepare a local development environment :hammer_and_wrench
 ### Build
 
 Please note that we have two different runtimes
-* `vln-node` - The standalone "validator" node runtime
-* `vln-parachain` - The parachain-compliant "collator" node runtime which runs on Rococo
+* `virto-node` - The standalone "validator" node runtime
+* `virto-parachain` - The parachain-compliant "collator" node runtime which runs on Rococo
 
-For development, we recommend to run the `vln-node`. Our `Makefile` offers several ways to
+For development, we recommend to run the `virto-node`. Our `Makefile` offers several ways to
 build and run the the two nodes. Here are some examples.
 
 ```bash
 # build in debug mode
 make build dev=yes
 
-# build the vln-parachain collator node 
+# build the virto-parachain collator node 
 make build
 ```
 
@@ -41,12 +41,12 @@ For simple runtime development needs it's not necessary to run the parachain and
 ### Multi-Node Local Testnet
 
 To see the multi-node consensus algorithm in action, we have a container based recipe that
-sets up a "devnet" with two relay-chain validator nodes, two VLN collators, a second parachain(karura) for cross-chain testing scenarios and the polkadot.js UI pointing to a relay-chain node by default.
+sets up a "devnet" with two relay-chain validator nodes, two Virto collators, a second parachain(karura) for cross-chain testing scenarios and the polkadot.js UI pointing to a relay-chain node by default.
 
-Running the parachain test environment is as simple as `make run-parachain` or **`make run`** for short. Nodes are launched in the background, then you can use podman/docker to follow the logs of any node in the multichain set-up(e.g. `podman logs -f devnet_vln_a`). Once you are done `make stop` will take care of removing the nodes.  
+Running the parachain test environment is as simple as `make run-parachain` or **`make run`** for short. Nodes are launched in the background, then you can use podman/docker to follow the logs of any node in the multichain set-up(e.g. `podman logs -f devnet_virto_a`). Once you are done `make stop` will take care of removing the nodes.  
 Check the [`devnet.yml`](devnet.yml) file for more information on how the nodes are configured.
 
-> To test xcm asset transfer check [vln-toolbox](https://github.com/valibre-org/vln-toolbox)
+> To test xcm asset transfer check [vln-toolbox](https://github.com/virto-network/vln-toolbox)
 
 ## Project Structure
 
@@ -91,7 +91,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/vln_node --help
+./target/release/virto_node --help
 ```
 
 ### Runtime
@@ -140,6 +140,6 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 
 ## Polkadot-js UI
 
-The [polkadot-js UI](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ftestnet.valibre.dev#/explorer) UI can be used to interact with the vln-node. 
+The [polkadot-js UI](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ftestnet.valibre.dev#/explorer) UI can be used to interact with the virto-node. 
 Some custom types will need to be specified in the `Settings > Developer` section of the UI. The definitions for these types 
 can currently be found in the [types.json](types.json) file.

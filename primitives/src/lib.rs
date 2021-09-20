@@ -1,4 +1,4 @@
-//! Valiu Liquidity Network - Primitives
+//! Virto Network - Primitives
 //!
 //! Common types used to throughout the runtime, might be used by externals to correctly
 //! encode/decode messages comming to or from the chain.

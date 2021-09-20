@@ -4,7 +4,7 @@ use frame_support::{assert_noop, assert_ok};
 use sp_runtime::{FixedU128, Permill};
 use sp_std::collections::btree_map::BTreeMap;
 use std::iter::FromIterator;
-use vln_primitives::{
+use virto_primitives::{
     AssetPair, PaymentMethod, RateDetail, RateFixedType, RatePremiumType, RateProvider,
 };
 

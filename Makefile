@@ -1,7 +1,7 @@
 chain?=testnet
 # out directory
 BUILD=build
-BIN=vln
+BIN=virto
 SRC_DIRS=node runtime pallets primitives
 SRC_FILES=$(shell find $(SRC_DIRS) -type f)
 DOCKER=$(shell which podman 2>/dev/null || which docker)
@@ -47,7 +47,7 @@ $(TARGET): $(SRC_FILES)
 # and puts it in a cointainer, since the target image is a debian based container
 # this won't likely work unless run in a similar debian installation.
 .PHONY: container
-img?=valibre/vln
+img?=virto-network/virto
 tag?=$(shell git describe --tags)
 container: $(BUILD)/$(BIN)
 	$(DOCKER) build . -t $(img):$(tag) -t $(img):latest \
@@ -72,23 +72,23 @@ $(CLIPPY):
 
 #
 # Testing parachain locally
-# Run command sets up a "devnet" with relay-chain validators, karura and vln collators
+# Run command sets up a "devnet" with relay-chain validators, karura and virto collators
 #
 .PHONY: run run-parachain stop
 POLKADOT=parity/polkadot:v0.9.7
 KARURA=acala/karura-node
-VLN=valibre/vln
+IMG=virto-network/virto
 SPEC=rococo-local
 # for the UI WS endpoint
 HOST=$(firstword $(shell hostname -i))
 run: run-parachain
 run-parachain:
 	$(MAKE) -s build chain=local
-	# VLN devnet assets
-	$(DOCKER) run --rm $(VLN) export-genesis-state \
-		--parachain-id=2086 > $(BUILD)/local_vln_genesis_state
-	$(DOCKER) run --rm $(VLN) export-genesis-wasm \
-		--chain local > $(BUILD)/local_vln_genesis_wasm
+	# Virto devnet assets
+	$(DOCKER) run --rm $(IMG) export-genesis-state \
+		--parachain-id=2086 > $(BUILD)/local_virto_genesis_state
+	$(DOCKER) run --rm $(IMG) export-genesis-wasm \
+		--chain local > $(BUILD)/local_virto_genesis_wasm
 	# Karura devnet assets
 	$(DOCKER) run --rm $(KARURA) export-genesis-state \
 		--chain karura-dev > $(BUILD)/karura-dev_genesis_state
@@ -104,10 +104,10 @@ stop-parachain:
 	$(COMPOSE) -f devnet.yml down
 
 # For simple needs run the single node standalone development chain
-.PHONY: run-standalone
-run-standalone: target/$(ENV)/$(BIN)_node
-	$< --dev
+# .PHONY: run-standalone
+# run-standalone: target/$(ENV)/$(BIN)_node
+# 	$< --dev
 
-.PHONY: clean-standalone
-clean-standalone: target/$(ENV)/$(BIN)_node
-	$< purge-chain --dev
+# .PHONY: clean-standalone
+# clean-standalone: target/$(ENV)/$(BIN)_node
+# 	$< purge-chain --dev

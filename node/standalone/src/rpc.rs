@@ -11,7 +11,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_transaction_pool::TransactionPool;
-use vln_runtime::{opaque::Block, AccountId, Index};
+use virto_runtime::{opaque::Block, AccountId, Index};
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {

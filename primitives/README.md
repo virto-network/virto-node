@@ -1,6 +1,6 @@
-# Valiu Liquidity Network - Primitives
+# Virto Network - Primitives
 
-This module defines the basic primitives that form the basis of VLN.
+This module defines the basic primitives that form the basis of Virto Network.
 
 ## Asset
 
@@ -48,6 +48,3 @@ pub enum NetworkAsset {
     }
 ```
 
-#### Usdv
-
-This is the default asset of the VLN. USDv is backed by a combination of on-chain and foreign assets pegged to the US Dollar provided by liquidity providers of the VLN.

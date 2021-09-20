@@ -19,7 +19,7 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
-    use vln_primitives::{EscrowDetail, EscrowHandler, EscrowState};
+    use virto_primitives::{EscrowDetail, EscrowHandler, EscrowState};
 
     type BalanceOf<T> =
         <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;

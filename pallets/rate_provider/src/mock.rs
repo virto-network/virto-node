@@ -8,7 +8,7 @@ use sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
     FixedU128,
 };
-use vln_primitives::DefaultRateCombinator;
+use virto_primitives::DefaultRateCombinator;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
