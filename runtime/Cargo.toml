@@ -68,12 +68,12 @@ pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release
 # Virto dependencies
 orml-tokens = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
 orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
-orml-oracle = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
+orml-oracle = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
 pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.9', default-features = false }
 pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.9', default-features = false }
-orml-xcm-support = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
-orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
-orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false }
+orml-xcm-support = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
+orml-unknown-tokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
+orml-xtokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
 
 # Local dependencies
 virto-primitives = { default-features = false, path = '../primitives' }
@@ -128,6 +128,7 @@ std = [
 	# 'orml-xcm-support/std',
 	# 'orml-unknown-tokens/std',
 	'cumulus-pallet-xcmp-queue/std',
+	'cumulus-pallet-xcm/std',
 	# 'cumulus-pallet-xcm/std',
 	# 'xcm/std',
 	# 'xcm-builder/std',

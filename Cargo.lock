@@ -1712,6 +1712,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
+ "serde",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -4795,12 +4796,12 @@ dependencies = [
 [[package]]
 name = "orml-oracle"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#59df1dfc1a04d781906ee4442bbd410c9ca3ce68"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-utilities 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "parity-scale-codec",
  "serde",
  "sp-application-crypto",
@@ -4826,7 +4827,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#59df1dfc1a04d781906ee4442bbd410c9ca3ce68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#befa21562537b4a9a6de6a8d5985a10835d64df8"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -4860,7 +4861,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#59df1dfc1a04d781906ee4442bbd410c9ca3ce68"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4873,7 +4874,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#59df1dfc1a04d781906ee4442bbd410c9ca3ce68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library#befa21562537b4a9a6de6a8d5985a10835d64df8"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4899,10 +4900,10 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#59df1dfc1a04d781906ee4442bbd410c9ca3ce68"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
@@ -4913,12 +4914,12 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#59df1dfc1a04d781906ee4442bbd410c9ca3ce68"
+source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "orml-xcm-support",
  "parity-scale-codec",
  "serde",
@@ -11178,7 +11179,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.7.3",
+ "rand 0.3.23",
  "static_assertions",
 ]
 
