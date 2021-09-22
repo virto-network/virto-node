@@ -28,10 +28,10 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 mod proxy_type;
-use orml_traits::{arithmetic::Zero, parameter_type_with_key, MultiCurrency};
+use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
 use sp_std::prelude::*;
-use virto_primitives::{Asset, Collateral as CollateralType, DefaultRateCombinator, NetworkAsset};
+use virto_primitives::{Asset, Collateral as CollateralType};
 
 #[cfg(feature = "standalone")]
 use standalone_use::*;
@@ -47,9 +47,6 @@ mod standalone_use {
 #[cfg(not(feature = "standalone"))]
 mod currency_id_convert;
 
-#[cfg(not(feature = "standalone"))]
-mod transact_asset;
-
 // XCM imports
 #[cfg(not(feature = "standalone"))]
 use parachain_use::*;
@@ -58,7 +55,7 @@ mod parachain_use {
     pub use crate::currency_id_convert::CurrencyIdConvert;
     //pub use crate::transact_asset::NetworkAssetAdapter;
     pub use cumulus_primitives_core::ParaId;
-    pub use orml_xcm_support::{IsNativeConcrete, MultiNativeAsset, MultiCurrencyAdapter};
+    pub use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
     pub use pallet_xcm::XcmPassthrough;
     pub use polkadot_parachain::primitives::Sibling;
     pub use sp_runtime::traits::Convert;
@@ -359,16 +356,6 @@ impl pallet_membership::Config for Runtime {
     type MembershipChanged = ();
 }
 
-impl virto_rate_provider::Config for Runtime {
-    type Event = Event;
-    type Asset = Asset;
-    type BaseAsset = Asset;
-    type Whitelist = Whitelist;
-    type PriceFeed = Oracle;
-    type OracleValue = FixedU128;
-    type RateCombinator = DefaultRateCombinator;
-}
-
 parameter_types! {
     pub const ExistentialDeposit: Balance = 0;
     pub const MaxLocks: u32 = 50;
@@ -440,8 +427,8 @@ parameter_type_with_key! {
     };
 }
 
-type CollateralInstance = orml_tokens::Instance2;
-impl orml_tokens::Config<CollateralInstance> for Runtime {
+type FiatInstance = orml_tokens::Instance2;
+impl orml_tokens::Config<FiatInstance> for Runtime {
     type Amount = Amount;
     type Balance = Balance;
     type CurrencyId = CollateralType;
@@ -452,48 +439,6 @@ impl orml_tokens::Config<CollateralInstance> for Runtime {
     type MaxLocks = MaxLocks;
     type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
-
-// type GeneralAssets = pallet_assets::Instance1;
-// impl pallet_assets::Config<GeneralAssets> for Runtime {
-//     type Event = Event;
-//     type Balance = Balance;
-//     type AssetId = u32;
-//     type Currency = Balances;
-//     type ForceOrigin = EnsureRoot<AccountId>; // allow council later
-//     type AssetDeposit = AssetDepositGeneral;
-//     type MetadataDepositBase = MetadataDepositBaseGeneral;
-//     type MetadataDepositPerByte = MetadataDepositPerByteGeneral;
-//     type ApprovalDeposit = ApprovalDepositGeneral;
-//     type StringLimit = StringLimitGeneral;
-//     type Freezer = ();
-//     type Extra = ();
-//     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
-// }
-
-// parameter_types! {
-//     pub const AssetDepositFiat: Balance = UNITS; // 1 UNIT deposit to create asset
-//     pub const ApprovalDepositFiat: Balance = UNITS;
-//     pub const StringLimitFiat: u32 = 50;
-//     pub const MetadataDepositBaseFiat: Balance = UNITS;
-//     pub const MetadataDepositPerByteFiat: Balance = UNITS;
-// }
-
-// type FiatAssets = pallet_assets::Instance2;
-// impl pallet_assets::Config<FiatAssets> for Runtime {
-//     type Event = Event;
-//     type Balance = Balance;
-//     type AssetId = u32;
-//     type Currency = Balances;
-//     type ForceOrigin = EnsureRoot<AccountId>; // allow council later
-//     type AssetDeposit = AssetDepositFiat;
-//     type MetadataDepositBase = MetadataDepositBaseFiat;
-//     type MetadataDepositPerByte = MetadataDepositPerByteFiat;
-//     type ApprovalDeposit = ApprovalDepositFiat;
-//     type StringLimit = StringLimitFiat;
-//     type Freezer = ();
-//     type Extra = ();
-//     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
-// }
 
 impl virto_escrow::Config for Runtime {
     type Event = Event;
@@ -633,25 +578,7 @@ mod parachain_impl {
         pub KsmPerSecond: (MultiLocation, u128) = (X1(Parent), 100000);
     }
 
-    pub type Barrier = (
-        TakeWeightCredit,
-        AllowTopLevelPaidExecutionFrom<Everything>,
-    );
-
-    pub struct XcmConfig;
-    impl Config for XcmConfig {
-        type Call = Call;
-        type XcmSender = XcmRouter;
-        type AssetTransactor = LocalAssetTransactor;
-        type OriginConverter = XcmOriginToCallOrigin;
-        type IsReserve = MultiNativeAsset;
-        type IsTeleporter = ();
-        type LocationInverter = LocationInverter<Ancestry>;
-        type Barrier = Barrier;
-        type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
-        type Trader = FixedRateOfConcreteFungible<KsmPerSecond, ()>;
-        type ResponseHandler = ();
-    }
+    pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
 
     parameter_types! {
         pub MaxDownwardMessageWeight: Weight = RuntimeBlockWeights::get().max_block / 10;
@@ -702,10 +629,10 @@ mod parachain_impl {
     pub type LocalAssetTransactor = MultiCurrencyAdapter<
         Assets,
         UnknownAssets,
-        IsNativeConcrete<NetworkAsset, CurrencyIdConvert>,
+        IsNativeConcrete<Asset, CurrencyIdConvert>,
         AccountId,
         LocationToAccountId,
-        NetworkAsset,
+        Asset,
         CurrencyIdConvert,
     >;
 
@@ -724,10 +651,25 @@ mod parachain_impl {
         }
     }
 
+    pub struct XcmConfig;
+    impl Config for XcmConfig {
+        type Call = Call;
+        type XcmSender = XcmRouter;
+        type AssetTransactor = LocalAssetTransactor;
+        type OriginConverter = XcmOriginToCallOrigin;
+        type IsReserve = MultiNativeAsset;
+        type IsTeleporter = ();
+        type LocationInverter = LocationInverter<Ancestry>;
+        type Barrier = Barrier;
+        type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
+        type Trader = FixedRateOfConcreteFungible<KsmPerSecond, ()>;
+        type ResponseHandler = ();
+    }
+
     impl orml_xtokens::Config for Runtime {
         type Event = Event;
         type Balance = Balance;
-        type CurrencyId = NetworkAsset;
+        type CurrencyId = Asset;
         type CurrencyIdConvert = CurrencyIdConvert;
         type AccountIdToMultiLocation = AccountIdToMultiLocation;
         type SelfLocation = SelfLocation;
@@ -760,7 +702,6 @@ macro_rules! construct_virto_runtime {
                     Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
                     Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
                     Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
-                    RatesProvider: virto_rate_provider::{Call, Event<T>, Pallet, Storage},
                     Escrow: virto_escrow::{Call, Event<T>, Pallet, Storage},
                     Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>},
                     $($modules)*
