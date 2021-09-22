@@ -4800,8 +4800,8 @@ source = "git+https://github.com/virto-network/open-runtime-module-library#40be7
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
- "orml-utilities 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits",
+ "orml-utilities",
  "parity-scale-codec",
  "serde",
  "sp-application-crypto",
@@ -4817,28 +4817,11 @@ source = "git+https://github.com/virto-network/open-runtime-module-library#40be7
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#befa21562537b4a9a6de6a8d5985a10835d64df8"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm",
 ]
 
 [[package]]
@@ -4849,7 +4832,7 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-utilities",
  "parity-scale-codec",
  "serde",
  "sp-io",
@@ -4874,19 +4857,6 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library#befa21562537b4a9a6de6a8d5985a10835d64df8"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
 source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
@@ -4903,7 +4873,7 @@ version = "0.4.1-dev"
 source = "git+https://github.com/virto-network/open-runtime-module-library#40be7d465837feb5a529b7c355eb4e789c6c7fcb"
 dependencies = [
  "frame-support",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
@@ -4919,7 +4889,7 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits",
  "orml-xcm-support",
  "parity-scale-codec",
  "serde",
@@ -11362,7 +11332,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -11444,22 +11414,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "virto-rate-provider"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library)",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "virto-primitives",
-]
-
-[[package]]
 name = "virto-runtime"
 version = "0.2.0"
 dependencies = [
@@ -11480,7 +11434,7 @@ dependencies = [
  "hex-literal 0.3.1",
  "orml-oracle",
  "orml-tokens",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -11515,7 +11469,6 @@ dependencies = [
  "substrate-wasm-builder 4.0.0",
  "virto-escrow",
  "virto-primitives",
- "virto-rate-provider",
  "xcm",
  "xcm-builder",
  "xcm-executor",
