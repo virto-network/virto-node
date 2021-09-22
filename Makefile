@@ -16,7 +16,7 @@ ifeq ($(dev), yes)
 endif
 
 # whether to build in parachain or stand-alone mode
-MODES=parachain node
+MODES=parachain
 TARGET=$(MODES:%=target/$(ENV)/$(BIN)_%)
 TEST=$(MODES:%=test_%)
 CLIPPY=$(MODES:%=clippy_%)
