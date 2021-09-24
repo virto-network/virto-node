@@ -17,6 +17,7 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.9", default-features = false, optional = true }
 orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
 virto-primitives = { version = "0.2.0", path = "../../primitives" }
 
@@ -34,4 +35,12 @@ std = [
 	'frame-system/std',
 	'sp-runtime/std',
 	'orml-traits/std',
+	'frame-benchmarking/std',
+	'orml-tokens/std'
+]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-system/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
