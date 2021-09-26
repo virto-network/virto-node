@@ -1,6 +1,6 @@
 chain?=testnet
 # out directory
-BUILD=build
+BUILD=bin
 BIN=virto
 SRC_DIRS=node runtime pallets primitives
 SRC_FILES=$(shell find $(SRC_DIRS) -type f)
@@ -20,6 +20,11 @@ MODES=parachain
 TARGET=$(MODES:%=target/$(ENV)/$(BIN)_%)
 TEST=$(MODES:%=test_%)
 CLIPPY=$(MODES:%=clippy_%)
+
+# for new installations that are missing the required toolchain
+.PHONY: init
+init:
+	rustup target add wasm32-unknown-unknown --toolchain `cat rust-toolchain`
 
 .PHONY: build
 build: $(BUILD)/$(BIN) $(BUILD)/$(chain)_$(BIN)_genesis_state \
@@ -77,7 +82,7 @@ $(CLIPPY):
 .PHONY: run run-parachain stop
 POLKADOT=parity/polkadot:v0.9.7
 KARURA=acala/karura-node
-IMG=virto-network/virto
+IMG=ghcr.io/virto-network/virto
 SPEC=rococo-local
 # for the UI WS endpoint
 HOST=$(firstword $(shell hostname -i))
