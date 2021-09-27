@@ -48,5 +48,5 @@ jobs:
         uses: redhat-actions/push-to-registry@v2
         with:
           image: virto-network/virto
-          registry: docker.io
+          registry: ghcr.io
 
