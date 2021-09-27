@@ -9,10 +9,10 @@ services:
       - 58080:80
 
   virto_a:
-    image: virto-network/virto
+    image: ghcr.io/virto-network/virto:latest
     container_name: devnet_virto_a
     volumes:
-      - ./build/relay-chain.json:/data/relay-chain.json
+      - ./bin/relay-chain.json:/data/relay-chain.json
     command:
       - --alice
       - --tmp
@@ -38,10 +38,10 @@ services:
       - devnet
 
   virto_b:
-    image: virto-network/virto
+    image: ghcr.io/virto-network/virto:latest
     container_name: devnet_virto_b
     volumes:
-      - ./build/relay-chain.json:/data/relay-chain.json
+      - ./bin/relay-chain.json:/data/relay-chain.json
     command:
       - --bob
       - --tmp
@@ -61,7 +61,7 @@ services:
     image: acala/karura-node
     container_name: devnet_karura_a
     volumes:
-      - ./build/relay-chain.json:/acala/data/relay-chain.json
+      - ./bin/relay-chain.json:/acala/data/relay-chain.json
     command:
       - --chain=karura-dev
       - --alice
@@ -84,7 +84,7 @@ services:
     image: acala/karura-node
     container_name: devnet_karura_b
     volumes:
-      - ./build/relay-chain.json:/acala/data/relay-chain.json
+      - ./bin/relay-chain.json:/acala/data/relay-chain.json
     command:
       - --chain=karura-dev
       - --bob
