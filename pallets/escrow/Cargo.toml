@@ -2,7 +2,7 @@
 authors = ["Stanly Johnson <stanlyjohnson@outlook.com>"]
 edition = '2018'
 name = "virto-escrow"
-version = "0.1.0"
+version = "0.3.0"
 license = "Unlicense"
 homepage = "https://github.com/virto-network/virto-node"
 repository = "https://github.com/virto-network/virto-node"
