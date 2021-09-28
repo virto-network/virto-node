@@ -25,6 +25,8 @@ services:
       - --parachain-id=2086
       # inner relay chain node params
       - --
+      - --node-key=0000000000000000000000000000000000000000000000000000000000000002 
+      - --port=50334
       - --execution=wasm
       - --chain=/data/relay-chain.json
       - --ws-external
@@ -32,6 +34,7 @@ services:
       - --rpc-cors=all
     ports:
       - 50333:50333
+      - 50334:50334
       - 59944:59944
       - 59945:59945
     networks:
@@ -58,7 +61,7 @@ services:
   # Second parachain for cross-chain testing
   #
   karura_a:
-    image: acala/karura-node
+    image: docker.io/acala/karura-node:1.4.1
     container_name: devnet_karura_a
     volumes:
       - ./bin/relay-chain.json:/acala/data/relay-chain.json
@@ -69,19 +72,19 @@ services:
       - --unsafe-ws-external
       - --ws-port=59946
       - --rpc-cors=all
-      - --node-key=0000000000000000000000000000000000000000000000000000000000000002
-      - --port=50334
+      - --node-key=0000000000000000000000000000000000000000000000000000000000000003
+      - --port=50335
       - --
       - --execution=wasm
       - --chain=/acala/data/relay-chain.json
     ports:
       - 59946:59946
-      - 50334:50334
+      - 50335:50335
     networks:
       - devnet
 
   karura_b:
-    image: acala/karura-node
+    image: docker.io/acala/karura-node:1.4.1
     container_name: devnet_karura_b
     volumes:
       - ./bin/relay-chain.json:/acala/data/relay-chain.json
@@ -89,7 +92,7 @@ services:
       - --chain=karura-dev
       - --bob
       - --tmp
-      - --bootnodes=/dns/karura_a/tcp/50334/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+      - --bootnodes=/dns/karura_a/tcp/50335/p2p/12D3KooWSCufgHzV4fCwRijfH2k3abrpAJxTKxEvN1FDuRXA2U9
       - --
       - --execution=wasm
       - --chain=/acala/data/relay-chain.json
@@ -100,24 +103,26 @@ services:
   # Relay chain validators
   #
   relay_a:
-    image: parity/polkadot:v0.9.7
+    image: docker.io/parity/polkadot:v0.9.9
     container_name: devnet_relay_a
     command:
       - --chain=${SPEC}
       - --alice
       - --no-telemetry
       - --tmp
+      - --bootnodes=/dns/virto_a/tcp/50334/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
     networks:
       - devnet
 
   relay_b:
-    image: parity/polkadot:v0.9.7
+    image: docker.io/parity/polkadot:v0.9.9
     container_name: devnet_relay_b
     command:
       - --chain=${SPEC}
       - --bob
       - --no-telemetry
       - --tmp
+      - --bootnodes=/dns/virto_a/tcp/50334/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
     networks:
       - devnet
 
