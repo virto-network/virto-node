@@ -34,7 +34,7 @@ RUN apt-get update && \
 	ln -s /data /virto/.local/share/virto
 
 # add virto binary to container image
-COPY ./build/virto /usr/local/bin/
+COPY ./bin/virto /usr/local/bin/
 
 USER virto
 

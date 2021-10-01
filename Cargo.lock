@@ -11327,7 +11327,7 @@ checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
 name = "virto-escrow"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -11344,7 +11344,7 @@ dependencies = [
 
 [[package]]
 name = "virto-parachain"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -11404,7 +11404,7 @@ dependencies = [
 
 [[package]]
 name = "virto-primitives"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "parity-scale-codec",
  "scale-info 0.6.0",
@@ -11416,7 +11416,7 @@ dependencies = [
 
 [[package]]
 name = "virto-runtime"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",

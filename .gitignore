@@ -1,8 +1,4 @@
 .static/
 target/
-build/
+bin/
 .DS_Store
-genesis-state
-genesis-wasm
-testnet-chainspec
-/build

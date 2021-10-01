@@ -42,11 +42,11 @@ jobs:
         with:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_TOKEN }}
-          registry: docker.io
+          registry: ghcr.io
 
       - name: Publish image
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: valibre/vln
-          registry: docker.io
+          image: virto-network/virto
+          registry: ghcr.io
 
