@@ -1,4 +1,4 @@
-use crate as escrow;
+use crate as payment;
 use frame_support::{
     parameter_types,
     traits::{Contains, GenesisBuild},
@@ -14,8 +14,8 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u8;
-pub const ESCROW_CREATOR: AccountId = 10;
-pub const ESCROW_RECIPENT: AccountId = 11;
+pub const PAYMENT_CREATOR: AccountId = 10;
+pub const PAYMENT_RECIPENT: AccountId = 11;
 pub const JUDGE_ONE: AccountId = 11;
 pub const CURRENCY_ID: u32 = 2;
 
@@ -27,7 +27,7 @@ frame_support::construct_runtime!(
     {
         System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
         Tokens: orml_tokens::{Pallet, Call, Config<T>, Storage, Event<T>},
-        Escrow: escrow::{Pallet, Call, Storage, Event<T>},
+        Payment: payment::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -100,7 +100,7 @@ impl Contains<AccountId> for MockMembership {
     }
 }
 
-impl escrow::Config for Test {
+impl payment::Config for Test {
     type Event = Event;
     type Asset = Tokens;
     type JudgeWhitelist = MockMembership;
@@ -113,7 +113,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         .unwrap();
 
     orml_tokens::GenesisConfig::<Test> {
-        balances: vec![(ESCROW_CREATOR, CURRENCY_ID, 100)],
+        balances: vec![(PAYMENT_CREATOR, CURRENCY_ID, 100)],
     }
     .assimilate_storage(&mut t)
     .unwrap();

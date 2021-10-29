@@ -1,31 +1,31 @@
-# Escrow Pallet
+# Payment Pallet
 
-This pallet will allow users to create an escrow onchain for a selected recipent. The pallet can be used to compliment the human swap pallet, to prove the existence of an escrow before the actual swap needs to be processed. The escrow pallet does not store the history of all the escrow transactions created by the user, it only cares about the current active escrow of the user/recipent.
+This pallet will allow users to create an payment onchain for a selected recipent. The pallet can be used to compliment the human swap pallet, to prove the existence of an payment before the actual swap needs to be processed. The payment pallet does not store the history of all the payment transactions created by the user, it only cares about the current active payment of the user/recipent.
 
 ## Terminology
 
-- Created: An escrow has been created and amount reserved on chain.
-- Released: The escrow amount has been released to the selected recipent
+- Created: An payment has been created and amount reserved on chain.
+- Released: The payment amount has been released to the selected recipent
 
 ## Interface
 
 #### Events
 
-`EscrowCreated(T::AccountId, T::Asset, T::Amount)`,
-`EscrowReleased(T::AccountId, EscrowId)`,
-`EscrowCancelled(T::AccountId, T::AccountId)`
+`PaymentCreated(T::AccountId, T::Asset, T::Amount)`,
+`PaymentReleased(T::AccountId, PaymentId)`,
+`PaymentCancelled(T::AccountId, T::AccountId)`
 
 #### Extrinsics
 
-`create(origin, recipient, currency_id, amount)` - Create an escrow for the given currencyid/amount
-`release(origin, escrow_id)` - Release the escrow amount to recipent
-`cancel(origin, escrow_id)` - Cancel the escrow and release the escrow amount to creator
-`resolve(origin, from, recipient, new_state)` - Allows whitelisted judges to release/cancel an escrow
+`create(origin, recipient, currency_id, amount)` - Create an payment for the given currencyid/amount
+`release(origin, payment_id)` - Release the payment amount to recipent
+`cancel(origin, payment_id)` - Cancel the payment and release the payment amount to creator
+`resolve(origin, from, recipient, new_state)` - Allows whitelisted judges to release/cancel an payment
 
 ## Implementations
 
 The RatesProvider module provides implementations for the following traits.
-- [`EscrowHandler`](../../primitives/src/escrow.rs)
+- [`PaymentHandler`](../../primitives/src/payment.rs)
 
 ## GenesisConfig
 
