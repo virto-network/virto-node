@@ -77,7 +77,7 @@ orml-xtokens = { git = 'https://github.com/virto-network/open-runtime-module-lib
 
 # Local dependencies
 virto-primitives = { default-features = false, path = '../primitives' }
-virto-escrow = { default-features = false, path = '../pallets/escrow' }
+virto-payment = { default-features = false, path = '../pallets/payment' }
 
 [features]
 default = ['std']
@@ -120,7 +120,7 @@ std = [
 	'pallet-proxy/std',
 	'virto-primitives/std',
 	'pallet-membership/std',
-	'virto-escrow/std',
+	'virto-payment/std',
 	'cumulus-pallet-aura-ext/std',
 	'orml-tokens/std',
 	# 'orml-xcm-support/std',
