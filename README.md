@@ -9,42 +9,21 @@ _Example of a p2p marketplace: fiat-crypto on-ramps_
 
 To create more advanced interactions we use [Valor](https://github.com/virto-network/valor) the plugin runtime for _decentralizable APIs_.
 
-## Local Development
+## Running the parachain
 
-Follow these steps to prepare a local development environment :hammer_and_wrench:
+`virto` is a parachain node, which means it _must_ connect to a relay chain and be onboarded in order to
+produce blocks. To easy the pain of setting up the different nodes required to test the network we provide a 
+[`devnet.yml`](devnet.yml)recipe for a multi-node local testnet that can be run with **`make run`** that also generates the 
+required assets to on-board the network.
 
-### Build
+The devnet also spins up two Karura collators that can be onboarded to test cross-chain functionality.
 
-Please note that we have two different runtimes
-* `virto-node` - The standalone "validator" node runtime
-* `virto-parachain` - The parachain-compliant "collator" node runtime which runs on Rococo
+💡 Note that nodes are launched in the background, to debug their output you can use podman/docker to follow the logs of any node in the multichain set-up(e.g. `podman logs -f devnet_virto_a`). Once you are done `make stop` will take care of removing the nodes.  
 
-For development, we recommend to run the `virto-node`. Our `Makefile` offers several ways to
-build and run the the two nodes. Here are some examples.
+### Local development
 
-```bash
-# build in debug mode
-make build dev=yes
-
-# build the virto-parachain collator node 
-make build
-```
-
-## Run
-
-### Single Node Development Chain
-
-For simple runtime development needs it's not necessary to run the parachain and relay chain nodes.
-
-**`make run-standalone`** and you are good to go! (you might need to `make clean-standalone` before).
-
-### Multi-Node Local Testnet
-
-To see the multi-node consensus algorithm in action, we have a container based recipe that
-sets up a "devnet" with two relay-chain validator nodes, two Virto collators, a second parachain(karura) for cross-chain testing scenarios and the polkadot.js UI pointing to a relay-chain node by default.
-
-Running the parachain test environment is as simple as `make run-parachain` or **`make run`** for short. Nodes are launched in the background, then you can use podman/docker to follow the logs of any node in the multichain set-up(e.g. `podman logs -f devnet_virto_a`). Once you are done `make stop` will take care of removing the nodes.  
-Check the [`devnet.yml`](devnet.yml) file for more information on how the nodes are configured.
+In case you make changes to the runtime and what to test them in the parachain setup you can `make container` to 
+build and containerize the node with your latest changes.(⚠️ at the moment the command will only work if your build environment is the same debian version as the [`Containerfile`](Containerfile)).
 
 > To test xcm asset transfer check [vln-toolbox](https://github.com/virto-network/vln-toolbox)
 
