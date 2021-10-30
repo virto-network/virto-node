@@ -196,20 +196,24 @@ pub mod pallet {
         fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
             use PaymentState::*;
             // add the payment detail to storage
-            Payment::<T>::try_mutate(from.clone(), to.clone(), |maybe_payment| -> DispatchResult {
-                let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
-                // ensure the payment is in created state
-                ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-                // unreserve the amount from the owner account.
-                // Shouldn't fail for payments created successfully, if user manages to unreserve assets
-                // somehow and be left without enough balance we set the payment to a "corrupted" state.
-                T::Asset::unreserve(payment.asset, &from, payment.amount);
-                match T::Asset::transfer(payment.asset, &from, &to, payment.amount) {
-                    Ok(_) => payment.state = PaymentState::Released,
-                    Err(_) => payment.state = PaymentState::NeedsReview,
-                }
-                Ok(())
-            })?;
+            Payment::<T>::try_mutate(
+                from.clone(),
+                to.clone(),
+                |maybe_payment| -> DispatchResult {
+                    let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
+                    // ensure the payment is in created state
+                    ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
+                    // unreserve the amount from the owner account.
+                    // Shouldn't fail for payments created successfully, if user manages to unreserve assets
+                    // somehow and be left without enough balance we set the payment to a "corrupted" state.
+                    T::Asset::unreserve(payment.asset, &from, payment.amount);
+                    match T::Asset::transfer(payment.asset, &from, &to, payment.amount) {
+                        Ok(_) => payment.state = PaymentState::Released,
+                        Err(_) => payment.state = PaymentState::NeedsReview,
+                    }
+                    Ok(())
+                },
+            )?;
 
             Self::deposit_event(Event::PaymentReleased(from, to));
             Ok(())
@@ -217,21 +221,25 @@ pub mod pallet {
 
         fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
             // add the payment detail to storage
-            Payment::<T>::try_mutate(from.clone(), to.clone(), |maybe_payment| -> DispatchResult {
-                let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
-                // ensure the payment is in created state
-                ensure!(
-                    payment.state == PaymentState::Created,
-                    Error::<T>::PaymentAlreadyReleased
-                );
-                // unreserve the amount from the owner account
-                T::Asset::unreserve(payment.asset, &from, payment.amount);
-                *maybe_payment = Some(PaymentDetail {
-                    state: PaymentState::Cancelled,
-                    ..payment
-                });
-                Ok(())
-            })?;
+            Payment::<T>::try_mutate(
+                from.clone(),
+                to.clone(),
+                |maybe_payment| -> DispatchResult {
+                    let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
+                    // ensure the payment is in created state
+                    ensure!(
+                        payment.state == PaymentState::Created,
+                        Error::<T>::PaymentAlreadyReleased
+                    );
+                    // unreserve the amount from the owner account
+                    T::Asset::unreserve(payment.asset, &from, payment.amount);
+                    *maybe_payment = Some(PaymentDetail {
+                        state: PaymentState::Cancelled,
+                        ..payment
+                    });
+                    Ok(())
+                },
+            )?;
             Self::deposit_event(Event::PaymentReleased(from, to));
             Ok(())
         }
