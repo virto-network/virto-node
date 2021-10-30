@@ -1,11 +1,12 @@
-# Payment Pallet
+# Payments Pallet
 
-This pallet will allow users to create an payment onchain for a selected recipent. The pallet can be used to compliment the human swap pallet, to prove the existence of an payment before the actual swap needs to be processed. The payment pallet does not store the history of all the payment transactions created by the user, it only cares about the current active payment of the user/recipent.
+This pallet allows users to create secure reversible payments that keep funds locked in a merchant's account until the off-chain goods are confirmed to be received.
+Each payment gets assigned its own *judge* that can help resolve any disputes between the two parties. 
 
 ## Terminology
 
-- Created: An payment has been created and amount reserved on chain.
-- Released: The payment amount has been released to the selected recipent
+- Created: A payment has been created and the amount arrived to its destination but it's locked.
+- Released: The payment amount has been released and became free balance in the recipient's account.
 
 ## Interface
 
