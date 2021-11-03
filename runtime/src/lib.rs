@@ -410,7 +410,7 @@ impl orml_tokens::Config<FiatInstance> for Runtime {
     type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
 
-impl virto_escrow::Config for Runtime {
+impl virto_payment::Config for Runtime {
     type Event = Event;
     type Asset = Assets;
     type JudgeWhitelist = Whitelist;
@@ -634,7 +634,7 @@ construct_runtime! {
         Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage},
         Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage},
         Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage},
-        Escrow: virto_escrow::{Call, Event<T>, Pallet, Storage},
+        Payment: virto_payment::{Call, Event<T>, Pallet, Storage},
         Uniques: pallet_uniques::{Pallet, Call, Storage, Event<T>},
         AuraExt: cumulus_pallet_aura_ext::{Pallet, Config},
         ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, Config, ValidateUnsigned},

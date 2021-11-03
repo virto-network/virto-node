@@ -5,15 +5,15 @@ use sp_runtime::DispatchResult;
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct EscrowDetail<Asset, Amount> {
+pub struct PaymentDetail<Asset, Amount> {
     pub asset: Asset,
     pub amount: Amount,
-    pub state: EscrowState,
+    pub state: PaymentState,
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EscrowState {
+pub enum PaymentState {
     Created,
     Released,
     Cancelled,
@@ -21,30 +21,30 @@ pub enum EscrowState {
     NeedsReview,
 }
 
-// trait that defines how to create/release escrows for users
-pub trait EscrowHandler<Account, Asset, Amount> {
+// trait that defines how to create/release payments for users
+pub trait PaymentHandler<Account, Asset, Amount> {
     /// Attempt to reserve an amount of the given asset from the caller
     /// If not possible then return Error. Possible reasons for failure include:
     /// - User does not have enough balance.
-    fn create_escrow(from: Account, to: Account, asset: Asset, amount: Amount) -> DispatchResult;
+    fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount) -> DispatchResult;
 
-    /// Attempt to transfer an amount of the given asset from the given escrow_id
+    /// Attempt to transfer an amount of the given asset from the given payment_id
     /// If not possible then return Error. Possible reasons for failure include:
-    /// - The escrow does not exist
+    /// - The payment does not exist
     /// - The unreserve operation fails
     /// - The transfer operation fails
-    fn release_escrow(from: Account, to: Account) -> DispatchResult;
+    fn release_payment(from: Account, to: Account) -> DispatchResult;
 
-    /// Attempt to cancel an escrow in Created state. This will set the escrow
+    /// Attempt to cancel a payment in Created state. This will set the payment
     /// state to cancel and release the reserved amount back to the creator.
     /// If not possible then return Error. Possible reasons for failure include:
-    /// - The escrow does not exist
-    /// - The escrow is not in Created state
+    /// - The payment does not exist
+    /// - The payment is not in Created state
     /// - The unreserve operation fails
-    fn cancel_escrow(from: Account, to: Account) -> DispatchResult;
+    fn cancel_payment(from: Account, to: Account) -> DispatchResult;
 
-    /// Attempt to fetch the details of an escrow from the given escrow_id
+    /// Attempt to fetch the details of a payment from the given payment_id
     /// Possible reasons for failure include:
-    /// - The escrow does not exist
-    fn get_escrow_details(from: Account, to: Account) -> Option<EscrowDetail<Asset, Amount>>;
+    /// - The payment does not exist
+    fn get_payment_details(from: Account, to: Account) -> Option<PaymentDetail<Asset, Amount>>;
 }
