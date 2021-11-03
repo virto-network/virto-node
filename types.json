@@ -59,12 +59,12 @@
       "BankY"
     ]
   },
-  "EscrowDetail" : {
+  "PaymentDetail" : {
     "asset": "Asset",
     "amount": "Amount",
-    "state": "EscrowState"
+    "state": "PaymentState"
   },
-  "EscrowState" : {
+  "PaymentState" : {
     "_enum": [
       "Created",
       "Released",

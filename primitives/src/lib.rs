@@ -7,11 +7,11 @@
 #[macro_use]
 mod macros;
 mod asset;
-mod escrow;
+mod payment;
 mod rates;
 
 pub use asset::*;
-pub use escrow::*;
+pub use payment::*;
 pub use rates::*;
 
 pub type Share = sp_arithmetic::Permill;
