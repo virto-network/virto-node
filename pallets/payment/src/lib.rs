@@ -45,14 +45,14 @@ pub mod pallet {
     /// Payments created by a user, this method of storageDoubleMap is chosen since there is no usecase for
     /// listing payments by provider/currency. The payment will only be referenced by the creator in
     /// any transaction of interest.
-    /// The storage map keys are the creator and the recipent, this also ensures
-    /// that for any (sender,recipent) combo, only a single payment is active. The history of payment is not stored.
+    /// The storage map keys are the creator and the recipient, this also ensures
+    /// that for any (sender,recipient) combo, only a single payment is active. The history of payment is not stored.
     pub(super) type Payment<T: Config> = StorageDoubleMap<
         _,
         Blake2_128Concat,
         T::AccountId, // payment creator
         Blake2_128Concat,
-        T::AccountId, // payment recipent
+        T::AccountId, // payment recipient
         PaymentDetail<AssetIdOf<T>, BalanceOf<T>>,
     >;
 
@@ -62,7 +62,7 @@ pub mod pallet {
     pub enum Event<T: Config> {
         /// A new payment has been created
         PaymentCreated(T::AccountId, AssetIdOf<T>, BalanceOf<T>),
-        /// Payment amount released to the recipent
+        /// Payment amount released to the recipient
         PaymentReleased(T::AccountId, T::AccountId),
         /// Payment has been cancelled by the creator
         PaymentCancelled(T::AccountId, T::AccountId),
@@ -85,25 +85,30 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// This allows any user to create a new payment, that releases only to specified recipent
+        /// This allows any user to create a new payment, that releases only to specified recipient
         /// The only action is to store the details of this payment in storage and reserve
         /// the specified amount.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn create(
             origin: OriginFor<T>,
-            recipent: T::AccountId,
+            recipient: T::AccountId,
             asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
+            incentive_amount: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             <Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
-                who, recipent, asset, amount,
+                who,
+                recipient,
+                asset,
+                amount,
+                incentive_amount,
             )?;
             Ok(().into())
         }
 
         /// Release any created payment, this will transfer the reserved amount from the
-        /// creator of the payment to the assigned recipent
+        /// creator of the payment to the assigned recipient
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
@@ -114,7 +119,7 @@ pub mod pallet {
         }
 
         /// Cancel a payment in created state, this will release the reserved back to
-        /// creator of the payment. This extrinsic can only be called by the recipent
+        /// creator of the payment. This extrinsic can only be called by the recipient
         /// of the payment
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
@@ -127,12 +132,12 @@ pub mod pallet {
 
         /// Allow admins to set state of a payment
         /// This extrinsic is used to resolve disputes between the creator and
-        /// recipent of the payment.
+        /// recipient of the payment.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
         pub fn resolve(
             origin: OriginFor<T>,
             from: T::AccountId,
-            recipent: T::AccountId,
+            recipient: T::AccountId,
             new_state: PaymentState,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
@@ -143,14 +148,14 @@ pub mod pallet {
             match new_state {
                 Cancelled => {
                     <Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_payment(
-                        from, recipent,
+                        from, recipient,
                     )
                 }
                 Released => <Self as PaymentHandler<
                     T::AccountId,
                     AssetIdOf<T>,
                     BalanceOf<T>,
-                >>::release_payment(from, recipent),
+                >>::release_payment(from, recipient),
                 Created | NeedsReview => Err(Error::<T>::InvalidAction.into()),
             }?;
             Ok(().into())
@@ -160,14 +165,16 @@ pub mod pallet {
     impl<T: Config> PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>> for Pallet<T> {
         fn create_payment(
             from: T::AccountId,
-            recipent: T::AccountId,
+            recipient: T::AccountId,
             asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
+            incentive_amount: BalanceOf<T>,
         ) -> DispatchResult {
-            Payment::<T>::try_mutate(from.clone(), recipent, |maybe_payment| -> DispatchResult {
+            Payment::<T>::try_mutate(from.clone(), recipient, |maybe_payment| -> DispatchResult {
                 let new_payment = Some(PaymentDetail {
                     asset,
                     amount,
+                    incentive_amount,
                     state: PaymentState::Created,
                 });
                 match maybe_payment {
@@ -179,13 +186,13 @@ pub mod pallet {
                             x.state != PaymentState::Created,
                             Error::<T>::PaymentAlreadyInProcess
                         );
-                        // reserve the amount from the payment creator
-                        T::Asset::reserve(asset, &from, amount)?;
+                        // reserve the (payment amount + incentive amount) from the payment creator
+                        T::Asset::reserve(asset, &from, amount + incentive_amount)?;
                         *maybe_payment = new_payment
                     }
                     None => {
-                        // reserve the amount from the payment creator
-                        T::Asset::reserve(asset, &from, amount)?;
+                        // reserve the (payment amount + incentive amount)from the payment creator
+                        T::Asset::reserve(asset, &from, amount + incentive_amount)?;
                         *maybe_payment = new_payment
                     }
                 }
@@ -203,10 +210,11 @@ pub mod pallet {
                     let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
                     // ensure the payment is in created state
                     ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-                    // unreserve the amount from the owner account.
+                    // unreserve the (payment amount + incentive amount) from the owner account.
                     // Shouldn't fail for payments created successfully, if user manages to unreserve assets
                     // somehow and be left without enough balance we set the payment to a "corrupted" state.
-                    T::Asset::unreserve(payment.asset, &from, payment.amount);
+                    T::Asset::unreserve(payment.asset, &from, payment.amount + payment.incentive_amount);
+                    // transfer only the payment amount to the recipient 
                     match T::Asset::transfer(payment.asset, &from, &to, payment.amount) {
                         Ok(_) => payment.state = PaymentState::Released,
                         Err(_) => payment.state = PaymentState::NeedsReview,
@@ -231,8 +239,8 @@ pub mod pallet {
                         payment.state == PaymentState::Created,
                         Error::<T>::PaymentAlreadyReleased
                     );
-                    // unreserve the amount from the owner account
-                    T::Asset::unreserve(payment.asset, &from, payment.amount);
+                    // unreserve the (payment amount + incentive amount) from the owner account
+                    T::Asset::unreserve(payment.asset, &from, payment.amount + payment.incentive_amount);
                     *maybe_payment = Some(PaymentDetail {
                         state: PaymentState::Cancelled,
                         ..payment

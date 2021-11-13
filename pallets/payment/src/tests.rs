@@ -13,7 +13,8 @@ fn test_create_payment_works() {
                 Origin::signed(PAYMENT_CREATOR),
                 PAYMENT_RECIPENT,
                 CURRENCY_ID,
-                120
+                120,
+                0
             ),
             orml_tokens::Error::<Test>::BalanceTooLow
         );
@@ -26,13 +27,15 @@ fn test_create_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            20
+            20,
+            0
         ));
         assert_eq!(
             PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 20,
+                incentive_amount: 0,
                 state: PaymentState::Created
             })
         );
@@ -46,7 +49,8 @@ fn test_create_payment_works() {
                 Origin::signed(PAYMENT_CREATOR),
                 PAYMENT_RECIPENT,
                 CURRENCY_ID,
-                20
+                20,
+                0
             ),
             crate::Error::<Test>::PaymentAlreadyInProcess
         );
@@ -56,6 +60,70 @@ fn test_create_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 20,
+                incentive_amount: 0,
+                state: PaymentState::Created
+            })
+        );
+    });
+}
+
+#[test]
+fn test_create_payment_with_incentive_works() {
+    new_test_ext().execute_with(|| {
+        // should fail when (payment + incentive) is more than balance
+        assert_noop!(
+            Payment::create(
+                Origin::signed(PAYMENT_CREATOR),
+                PAYMENT_RECIPENT,
+                CURRENCY_ID,
+                100,
+                20
+            ),
+            orml_tokens::Error::<Test>::BalanceTooLow
+        );
+        // the payment amount should not be reserved
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+
+        // should be able to create a payment with available balance
+        assert_ok!(Payment::create(
+            Origin::signed(PAYMENT_CREATOR),
+            PAYMENT_RECIPENT,
+            CURRENCY_ID,
+            20,
+            10
+        ));
+        assert_eq!(
+            PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+            Some(PaymentDetail {
+                asset: CURRENCY_ID,
+                amount: 20,
+                incentive_amount: 10,
+                state: PaymentState::Created
+            })
+        );
+        // the payment amount should be reserved
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 70);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+
+        // the payment should not be overwritten
+        assert_noop!(
+            Payment::create(
+                Origin::signed(PAYMENT_CREATOR),
+                PAYMENT_RECIPENT,
+                CURRENCY_ID,
+                20,
+                0
+            ),
+            crate::Error::<Test>::PaymentAlreadyInProcess
+        );
+
+        assert_eq!(
+            PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+            Some(PaymentDetail {
+                asset: CURRENCY_ID,
+                amount: 20,
+                incentive_amount: 10,
                 state: PaymentState::Created
             })
         );
@@ -70,13 +138,15 @@ fn test_release_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
+            0
         ));
         assert_eq!(
             PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 0,
                 state: PaymentState::Created
             })
         );
@@ -106,6 +176,65 @@ fn test_release_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 0,
+                state: PaymentState::Cancelled
+            })
+        );
+        // cannot call cancel again
+        assert_noop!(
+            Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR),
+            crate::Error::<Test>::PaymentAlreadyReleased
+        );
+    });
+}
+
+#[test]
+fn test_release_payment_with_incentive_works() {
+    new_test_ext().execute_with(|| {
+        // should be able to create a payment with available balance
+        assert_ok!(Payment::create(
+            Origin::signed(PAYMENT_CREATOR),
+            PAYMENT_RECIPENT,
+            CURRENCY_ID,
+            40,
+            10
+        ));
+        assert_eq!(
+            PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+            Some(PaymentDetail {
+                asset: CURRENCY_ID,
+                amount: 40,
+                incentive_amount: 10,
+                state: PaymentState::Created
+            })
+        );
+        // the payment amount should be reserved
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 50);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+
+        // cancel should fail when called by user
+        assert_noop!(
+            Payment::cancel(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
+            crate::Error::<Test>::InvalidPayment
+        );
+
+        // cancel should succeed when caller is the recipent
+        assert_ok!(Payment::cancel(
+            Origin::signed(PAYMENT_RECIPENT),
+            PAYMENT_CREATOR
+        ));
+        // the payment amount should be released back to creator
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+        assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+        // should be in cancelled state
+        assert_eq!(
+            PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+            Some(PaymentDetail {
+                asset: CURRENCY_ID,
+                amount: 40,
+                incentive_amount: 10,
                 state: PaymentState::Cancelled
             })
         );
@@ -125,13 +254,15 @@ fn test_cancel_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
+            0
         ));
         assert_eq!(
             PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 0,
                 state: PaymentState::Created
             })
         );
@@ -155,6 +286,7 @@ fn test_cancel_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 0,
                 state: PaymentState::Released
             })
         );
@@ -169,10 +301,75 @@ fn test_cancel_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
+            0
         ));
         // the payment amount should be reserved
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 20);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
+    });
+}
+
+#[test]
+fn test_cancel_payment_with_incentive_works() {
+    new_test_ext().execute_with(|| {
+        // should be able to create a payment with available balance
+        assert_ok!(Payment::create(
+            Origin::signed(PAYMENT_CREATOR),
+            PAYMENT_RECIPENT,
+            CURRENCY_ID,
+            40,
+            10
+        ));
+        assert_eq!(
+            PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+            Some(PaymentDetail {
+                asset: CURRENCY_ID,
+                amount: 40,
+                incentive_amount: 10,
+                state: PaymentState::Created
+            })
+        );
+        // the payment amount should be reserved
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 50);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+
+        // should succeed for valid payment
+        assert_ok!(Payment::release(
+            Origin::signed(PAYMENT_CREATOR),
+            PAYMENT_RECIPENT
+        ));
+        // the payment amount should be transferred
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
+        assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+        // should be in released state
+        assert_eq!(
+            PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+            Some(PaymentDetail {
+                asset: CURRENCY_ID,
+                amount: 40,
+                incentive_amount: 10,
+                state: PaymentState::Released
+            })
+        );
+        // cannot call release again
+        assert_noop!(
+            Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
+            crate::Error::<Test>::PaymentAlreadyReleased
+        );
+
+        // should be able to create another payment since previous is released
+        assert_ok!(Payment::create(
+            Origin::signed(PAYMENT_CREATOR),
+            PAYMENT_RECIPENT,
+            CURRENCY_ID,
+            40,
+            10
+        ));
+        // the payment amount should be reserved
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 10);
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
     });
 }
@@ -185,7 +382,8 @@ fn test_set_state_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
+            0
         ));
 
         // should fail for non whitelisted caller
@@ -218,6 +416,7 @@ fn test_set_state_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 0,
                 state: PaymentState::Released
             })
         );
@@ -226,7 +425,8 @@ fn test_set_state_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
+            0
         ));
 
         // should be able to cancel a payment
@@ -248,6 +448,7 @@ fn test_set_state_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 0,
                 state: PaymentState::Cancelled
             })
         );

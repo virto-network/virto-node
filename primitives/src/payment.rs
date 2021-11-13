@@ -8,6 +8,7 @@ use sp_runtime::DispatchResult;
 pub struct PaymentDetail<Asset, Amount> {
     pub asset: Asset,
     pub amount: Amount,
+    pub incentive_amount: Amount,
     pub state: PaymentState,
 }
 
@@ -26,7 +27,7 @@ pub trait PaymentHandler<Account, Asset, Amount> {
     /// Attempt to reserve an amount of the given asset from the caller
     /// If not possible then return Error. Possible reasons for failure include:
     /// - User does not have enough balance.
-    fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount) -> DispatchResult;
+    fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount, incentive_amount: Amount) -> DispatchResult;
 
     /// Attempt to transfer an amount of the given asset from the given payment_id
     /// If not possible then return Error. Possible reasons for failure include:
