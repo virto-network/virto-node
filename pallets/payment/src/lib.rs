@@ -19,6 +19,7 @@ pub mod pallet {
     };
     use frame_system::pallet_prelude::*;
     use orml_traits::{MultiCurrency, MultiReservableCurrency};
+    use sp_runtime::Percent;
     use virto_primitives::{PaymentDetail, PaymentHandler, PaymentState};
 
     type BalanceOf<T> =
@@ -34,6 +35,9 @@ pub mod pallet {
         type Asset: MultiReservableCurrency<Self::AccountId>;
         /// whitelist of users allowed to settle disputes
         type JudgeWhitelist: Contains<Self::AccountId>;
+
+        #[pallet::constant]
+        type IncentivePercentage: Get<Percent>;
     }
 
     #[pallet::pallet]
@@ -94,15 +98,10 @@ pub mod pallet {
             recipient: T::AccountId,
             asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
-            incentive_amount: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             <Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
-                who,
-                recipient,
-                asset,
-                amount,
-                incentive_amount,
+                who, recipient, asset, amount,
             )?;
             Ok(().into())
         }
@@ -168,9 +167,9 @@ pub mod pallet {
             recipient: T::AccountId,
             asset: AssetIdOf<T>,
             amount: BalanceOf<T>,
-            incentive_amount: BalanceOf<T>,
         ) -> DispatchResult {
             Payment::<T>::try_mutate(from.clone(), recipient, |maybe_payment| -> DispatchResult {
+                let incentive_amount = T::IncentivePercentage::get() * amount;
                 let new_payment = Some(PaymentDetail {
                     asset,
                     amount,
@@ -213,8 +212,12 @@ pub mod pallet {
                     // unreserve the (payment amount + incentive amount) from the owner account.
                     // Shouldn't fail for payments created successfully, if user manages to unreserve assets
                     // somehow and be left without enough balance we set the payment to a "corrupted" state.
-                    T::Asset::unreserve(payment.asset, &from, payment.amount + payment.incentive_amount);
-                    // transfer only the payment amount to the recipient 
+                    T::Asset::unreserve(
+                        payment.asset,
+                        &from,
+                        payment.amount + payment.incentive_amount,
+                    );
+                    // transfer only the payment amount to the recipient
                     match T::Asset::transfer(payment.asset, &from, &to, payment.amount) {
                         Ok(_) => payment.state = PaymentState::Released,
                         Err(_) => payment.state = PaymentState::NeedsReview,
@@ -240,7 +243,11 @@ pub mod pallet {
                         Error::<T>::PaymentAlreadyReleased
                     );
                     // unreserve the (payment amount + incentive amount) from the owner account
-                    T::Asset::unreserve(payment.asset, &from, payment.amount + payment.incentive_amount);
+                    T::Asset::unreserve(
+                        payment.asset,
+                        &from,
+                        payment.amount + payment.incentive_amount,
+                    );
                     *maybe_payment = Some(PaymentDetail {
                         state: PaymentState::Cancelled,
                         ..payment
