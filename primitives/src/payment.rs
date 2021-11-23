@@ -8,6 +8,7 @@ use sp_runtime::DispatchResult;
 pub struct PaymentDetail<Asset, Amount> {
     pub asset: Asset,
     pub amount: Amount,
+    pub incentive_amount: Amount,
     pub state: PaymentState,
 }
 

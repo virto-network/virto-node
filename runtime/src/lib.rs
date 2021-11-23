@@ -20,7 +20,7 @@ use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Identify
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, FixedU128, MultiSignature,
+    ApplyExtrinsicResult, FixedU128, MultiSignature, Percent,
 };
 
 #[cfg(feature = "std")]
@@ -410,10 +410,15 @@ impl orml_tokens::Config<FiatInstance> for Runtime {
     type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
 
+parameter_types! {
+    pub const IncentivePercentage: Percent = Percent::from_percent(10);
+}
+
 impl virto_payment::Config for Runtime {
     type Event = Event;
     type Asset = Assets;
     type JudgeWhitelist = Whitelist;
+    type IncentivePercentage = IncentivePercentage;
 }
 
 parameter_types! {

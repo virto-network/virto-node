@@ -7,8 +7,11 @@ use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
-    testing::Header,
-    traits::{BlakeTwo256, IdentityLookup},
+    Percent,
+    {
+        testing::Header,
+        traits::{BlakeTwo256, IdentityLookup},
+    },
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -100,10 +103,15 @@ impl Contains<AccountId> for MockMembership {
     }
 }
 
+parameter_types! {
+    pub const IncentivePercentage: Percent = Percent::from_percent(10);
+}
+
 impl payment::Config for Test {
     type Event = Event;
     type Asset = Tokens;
     type JudgeWhitelist = MockMembership;
+    type IncentivePercentage = IncentivePercentage;
 }
 
 // Build genesis storage according to the mock runtime.
