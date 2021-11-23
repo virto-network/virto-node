@@ -13,7 +13,7 @@ fn test_create_payment_works() {
                 Origin::signed(PAYMENT_CREATOR),
                 PAYMENT_RECIPENT,
                 CURRENCY_ID,
-                120
+                120,
             ),
             orml_tokens::Error::<Test>::BalanceTooLow
         );
@@ -26,18 +26,19 @@ fn test_create_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            20
+            20,
         ));
         assert_eq!(
             PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 20,
+                incentive_amount: 2,
                 state: PaymentState::Created
             })
         );
         // the payment amount should be reserved
-        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
         // the payment should not be overwritten
@@ -46,7 +47,7 @@ fn test_create_payment_works() {
                 Origin::signed(PAYMENT_CREATOR),
                 PAYMENT_RECIPENT,
                 CURRENCY_ID,
-                20
+                20,
             ),
             crate::Error::<Test>::PaymentAlreadyInProcess
         );
@@ -56,6 +57,7 @@ fn test_create_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 20,
+                incentive_amount: 2,
                 state: PaymentState::Created
             })
         );
@@ -70,18 +72,19 @@ fn test_release_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
         ));
         assert_eq!(
             PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 4,
                 state: PaymentState::Created
             })
         );
         // the payment amount should be reserved
-        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
         // cancel should fail when called by user
@@ -106,6 +109,7 @@ fn test_release_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 4,
                 state: PaymentState::Cancelled
             })
         );
@@ -125,18 +129,19 @@ fn test_cancel_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
         ));
         assert_eq!(
             PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 4,
                 state: PaymentState::Created
             })
         );
         // the payment amount should be reserved
-        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
         // should succeed for valid payment
@@ -155,6 +160,7 @@ fn test_cancel_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 4,
                 state: PaymentState::Released
             })
         );
@@ -169,10 +175,10 @@ fn test_cancel_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
         ));
         // the payment amount should be reserved
-        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 20);
+        assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 16);
         assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
     });
 }
@@ -185,7 +191,7 @@ fn test_set_state_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
         ));
 
         // should fail for non whitelisted caller
@@ -218,6 +224,7 @@ fn test_set_state_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 4,
                 state: PaymentState::Released
             })
         );
@@ -226,7 +233,7 @@ fn test_set_state_payment_works() {
             Origin::signed(PAYMENT_CREATOR),
             PAYMENT_RECIPENT,
             CURRENCY_ID,
-            40
+            40,
         ));
 
         // should be able to cancel a payment
@@ -248,6 +255,7 @@ fn test_set_state_payment_works() {
             Some(PaymentDetail {
                 asset: CURRENCY_ID,
                 amount: 40,
+                incentive_amount: 4,
                 state: PaymentState::Cancelled
             })
         );
