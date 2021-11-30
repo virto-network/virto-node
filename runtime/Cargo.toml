@@ -134,6 +134,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
+	# "pallet-proxy/std"
 ]
 
 runtime-benchmarks = [
