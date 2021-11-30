@@ -208,5 +208,9 @@ fn testnet_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
+		whitelist: virto_runtime::WhitelistConfig {
+            members: vec![],
+            phantom: Default::default(),
+        },
 	}
 }
