@@ -4,9 +4,9 @@ macro_rules! count_idents {
 }
 // Erases `$_i` and returns `$sub`
 macro_rules! replace_expr {
-    ($_i:ident $sub:expr) => {
-        $sub
-    };
+	($_i:ident $sub:expr) => {
+		$sub
+	};
 }
 
 macro_rules! enum_with_aux_fns {

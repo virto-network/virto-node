@@ -7,104 +7,104 @@ use sp_std::{convert::TryFrom, prelude::*};
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub enum Asset {
-    Collateral(Collateral),
-    Fiat(Fiat),
-    Network(NetworkAsset),
-    Usdv,
+	Collateral(Collateral),
+	Fiat(Fiat),
+	Network(NetworkAsset),
+	Usdv,
 }
 
 impl Asset {
-    /// String representation
-    #[inline]
-    pub const fn as_str(&self) -> &'static str {
-        match *self {
-            Self::Collateral(c) => c.as_str(),
-            Self::Fiat(f) => f.as_str(),
-            Self::Network(n) => n.as_str(),
-            Self::Usdv => "USDv",
-        }
-    }
+	/// String representation
+	#[inline]
+	pub const fn as_str(&self) -> &'static str {
+		match *self {
+			Self::Collateral(c) => c.as_str(),
+			Self::Fiat(f) => f.as_str(),
+			Self::Network(n) => n.as_str(),
+			Self::Usdv => "USDv",
+		}
+	}
 }
 
 impl Default for Asset {
-    #[inline]
-    fn default() -> Self {
-        Self::Usdv
-    }
+	#[inline]
+	fn default() -> Self {
+		Self::Usdv
+	}
 }
 
 impl fmt::Display for Asset {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
+	#[inline]
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+		write!(f, "{}", self.as_str())
+	}
 }
 
 impl From<Collateral> for Asset {
-    #[inline]
-    fn from(c: Collateral) -> Self {
-        Asset::Collateral(c)
-    }
+	#[inline]
+	fn from(c: Collateral) -> Self {
+		Asset::Collateral(c)
+	}
 }
 
 impl From<Fiat> for Asset {
-    #[inline]
-    fn from(f: Fiat) -> Self {
-        Asset::Fiat(f)
-    }
+	#[inline]
+	fn from(f: Fiat) -> Self {
+		Asset::Fiat(f)
+	}
 }
 
 enum_with_aux_fns! {
-    /// Asset used to back other assets
-    pub enum Collateral {
-        USDC = "USDC",
-    }
+	/// Asset used to back other assets
+	pub enum Collateral {
+		USDC = "USDC",
+	}
 }
 
 enum_with_aux_fns! {
-    /// A currency issued by a goverment
-    pub enum Fiat {
-        COP = "COP",
-        VEZ = "VEZ",
-    }
+	/// A currency issued by a goverment
+	pub enum Fiat {
+		COP = "COP",
+		VEZ = "VEZ",
+	}
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum NetworkAsset {
-    KSM = 0,
-    KUSD = 1,
-    KAR = 2,
+	KSM = 0,
+	KUSD = 1,
+	KAR = 2,
 }
 
 impl NetworkAsset {
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            NetworkAsset::KAR => "KAR",
-            NetworkAsset::KUSD => "KUSD",
-            NetworkAsset::KSM => "KSM",
-        }
-    }
+	pub const fn as_str(&self) -> &'static str {
+		match self {
+			NetworkAsset::KAR => "KAR",
+			NetworkAsset::KUSD => "KUSD",
+			NetworkAsset::KSM => "KSM",
+		}
+	}
 }
 
 impl TryFrom<Vec<u8>> for Asset {
-    type Error = ();
-    fn try_from(v: Vec<u8>) -> Result<Asset, ()> {
-        match v.as_slice() {
-            b"KAR" => Ok(Asset::Network(NetworkAsset::KAR)),
-            b"KUSD" => Ok(Asset::Network(NetworkAsset::KUSD)),
-            b"KSM" => Ok(Asset::Network(NetworkAsset::KSM)),
-            _ => Err(()),
-        }
-    }
+	type Error = ();
+	fn try_from(v: Vec<u8>) -> Result<Asset, ()> {
+		match v.as_slice() {
+			b"KAR" => Ok(Asset::Network(NetworkAsset::KAR)),
+			b"KUSD" => Ok(Asset::Network(NetworkAsset::KUSD)),
+			b"KSM" => Ok(Asset::Network(NetworkAsset::KSM)),
+			_ => Err(()),
+		}
+	}
 }
 
 impl From<NetworkAsset> for u32 {
-    fn from(v: NetworkAsset) -> u32 {
-        match v {
-            NetworkAsset::KAR => 2,
-            NetworkAsset::KUSD => 1,
-            NetworkAsset::KSM => 0,
-        }
-    }
+	fn from(v: NetworkAsset) -> u32 {
+		match v {
+			NetworkAsset::KAR => 2,
+			NetworkAsset::KUSD => 1,
+			NetworkAsset::KSM => 0,
+		}
+	}
 }
