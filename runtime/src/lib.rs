@@ -13,7 +13,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiSignature,
+	ApplyExtrinsicResult, FixedU128, MultiSignature,
 };
 
 use sp_std::prelude::*;
@@ -23,7 +23,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Everything, Nothing},
+	traits::{Contains, Everything, Nothing},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -37,8 +37,6 @@ use frame_system::{
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
-mod proxy_type;
-use proxy_type::ProxyType;
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -59,6 +57,13 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+// Virto Imports
+mod proxy_type;
+use orml_traits::{arithmetic::Zero, parameter_type_with_key};
+use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
+use proxy_type::ProxyType;
+use virto_primitives::{Asset, Collateral as CollateralType};
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -68,6 +73,9 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 
 /// Balance of an account.
 pub type Balance = u128;
+
+/// Signed version of Balance.
+pub type Amount = i64;
 
 /// Index of a transaction in the chain.
 pub type Index = u32;
@@ -361,44 +369,44 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-    pub const ProxyDepositBase: Balance = 1;
-    pub const ProxyDepositFactor: Balance = 1;
-    pub const MaxProxies: u16 = 4;
-    pub const MaxPending: u32 = 2;
-    pub const AnnouncementDepositBase: Balance = 1;
-    pub const AnnouncementDepositFactor: Balance = 1;
+	pub const ProxyDepositBase: Balance = 1;
+	pub const ProxyDepositFactor: Balance = 1;
+	pub const MaxProxies: u16 = 4;
+	pub const MaxPending: u32 = 2;
+	pub const AnnouncementDepositBase: Balance = 1;
+	pub const AnnouncementDepositFactor: Balance = 1;
 }
 
 impl pallet_proxy::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
-    type Currency = Balances;
-    type ProxyType = ProxyType;
-    type ProxyDepositBase = ProxyDepositBase;
-    type ProxyDepositFactor = ProxyDepositFactor;
-    type MaxProxies = MaxProxies;
-    type WeightInfo = ();
-    type CallHasher = BlakeTwo256;
-    type MaxPending = MaxPending;
-    type AnnouncementDepositBase = AnnouncementDepositBase;
-    type AnnouncementDepositFactor = AnnouncementDepositFactor;
+	type Event = Event;
+	type Call = Call;
+	type Currency = Balances;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type CallHasher = BlakeTwo256;
+	type MaxPending = MaxPending;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
 parameter_types! {
-    pub const MaxMembers : u32 = 100;
+	pub const MaxMembers : u32 = 100;
 }
 
 impl pallet_membership::Config for Runtime {
-    type Event = Event;
-    type AddOrigin = EnsureRoot<AccountId>;
-    type RemoveOrigin = EnsureRoot<AccountId>;
-    type SwapOrigin = EnsureRoot<AccountId>;
-    type ResetOrigin = EnsureRoot<AccountId>;
-    type PrimeOrigin = EnsureRoot<AccountId>;
-    type MaxMembers = MaxMembers;
-    type WeightInfo = ();
-    type MembershipInitialized = ();
-    type MembershipChanged = ();
+	type Event = Event;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type RemoveOrigin = EnsureRoot<AccountId>;
+	type SwapOrigin = EnsureRoot<AccountId>;
+	type ResetOrigin = EnsureRoot<AccountId>;
+	type PrimeOrigin = EnsureRoot<AccountId>;
+	type MaxMembers = MaxMembers;
+	type WeightInfo = ();
+	type MembershipInitialized = ();
+	type MembershipChanged = ();
 }
 
 parameter_types! {
@@ -420,6 +428,76 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
+
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
+parameter_types! {
+	pub const MinimumCount: u32 = 3;
+	pub const ExpiresIn: u32 = 600;
+	pub RootOperatorAccountId: AccountId = Sudo::key();
+	pub const MaxHasDispatchedSize: u32 = 100;
+}
+
+impl orml_oracle::Config for Runtime {
+	type Event = Event;
+	type OnNewData = ();
+	type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
+	type Time = Timestamp;
+	type OracleKey = Asset;
+	type OracleValue = FixedU128;
+	type RootOperatorAccountId = RootOperatorAccountId;
+	type WeightInfo = ();
+	type Members = Whitelist;
+	type MaxHasDispatchedSize = MaxHasDispatchedSize;
+}
+
+pub struct MockDustRemovalWhitelist;
+impl Contains<AccountId> for MockDustRemovalWhitelist {
+	fn contains(_a: &AccountId) -> bool {
+		false
+	}
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: Asset| -> Balance {
+		Zero::zero()
+	};
+}
+
+type GeneralInstance = orml_tokens::Instance1;
+impl orml_tokens::Config<GeneralInstance> for Runtime {
+	type Amount = Amount;
+	type Balance = Balance;
+	type CurrencyId = Asset;
+	type Event = Event;
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
+	type WeightInfo = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = MockDustRemovalWhitelist;
+}
+
+parameter_type_with_key! {
+	pub ExistentialDepositsCollateral: |_currency_id: CollateralType| -> Balance {
+		Zero::zero()
+	};
+}
+
+type FiatInstance = orml_tokens::Instance2;
+impl orml_tokens::Config<FiatInstance> for Runtime {
+	type Amount = Amount;
+	type Balance = Balance;
+	type CurrencyId = CollateralType;
+	type Event = Event;
+	type ExistentialDeposits = ExistentialDepositsCollateral;
+	type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
+	type WeightInfo = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = MockDustRemovalWhitelist;
+}
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -658,6 +736,12 @@ construct_runtime!(
 		// Virto Dependencies
 		Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage} = 40,
 		Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>} = 41,
+		Assets: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage} = 42,
+		Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage} = 43,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 44,
+		Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage} = 45,
+		// XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 45,
+		// UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 46,
 	}
 );
 
