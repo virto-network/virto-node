@@ -30,7 +30,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Parachain Collator Template".into()
+		"Virto Parachain Collator".into()
 	}
 
 	fn impl_version() -> String {
