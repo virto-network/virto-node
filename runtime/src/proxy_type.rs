@@ -3,33 +3,33 @@ use scale_info::TypeInfo;
 
 /// Proxy type enum lists the type of calls that are supported by the proxy pallet
 #[derive(
-    Copy,
-    Clone,
-    Eq,
-    PartialEq,
-    Ord,
-    PartialOrd,
-    MaxEncodedLen,
-    codec::Decode,
-    codec::Encode,
-    RuntimeDebug,
-    TypeInfo
+	Copy,
+	Clone,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	MaxEncodedLen,
+	codec::Decode,
+	codec::Encode,
+	RuntimeDebug,
+	TypeInfo,
 )]
 pub enum ProxyType {
-    Any,
+	Any,
 }
 impl Default for ProxyType {
-    fn default() -> Self {
-        Self::Any
-    }
+	fn default() -> Self {
+		Self::Any
+	}
 }
 impl<Call> InstanceFilter<Call> for ProxyType {
-    fn filter(&self, _c: &Call) -> bool {
-        match self {
-            ProxyType::Any => true,
-        }
-    }
-    fn is_superset(&self, o: &Self) -> bool {
-        self == &ProxyType::Any || self == o
-    }
+	fn filter(&self, _c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		self == &ProxyType::Any || self == o
+	}
 }
