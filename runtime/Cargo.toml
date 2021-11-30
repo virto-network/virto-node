@@ -77,8 +77,8 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 # orml-tokens = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
 # orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
 # orml-oracle = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
-# pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.12', default-features = false }
-# pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.12', default-features = false }
+pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.12', default-features = false }
+pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.12', default-features = false }
 # orml-xcm-support = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
 # orml-unknown-tokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
 # orml-xtokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
@@ -134,7 +134,8 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
-	# "pallet-proxy/std"
+	"pallet-proxy/std",
+	"pallet-membership/std"
 ]
 
 runtime-benchmarks = [
