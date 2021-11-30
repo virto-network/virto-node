@@ -198,7 +198,7 @@ fn testnet_genesis(
 					(
 						acc.clone(),                 // account id
 						acc,                         // validator id
-						template_session_keys(aura), // session keys
+						virto_session_keys(aura), // session keys
 					)
 				})
 				.collect(),
