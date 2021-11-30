@@ -1,4 +1,5 @@
 use frame_support::{pallet_prelude::MaxEncodedLen, traits::InstanceFilter, RuntimeDebug};
+use scale_info::TypeInfo;
 
 /// Proxy type enum lists the type of calls that are supported by the proxy pallet
 #[derive(
@@ -12,6 +13,7 @@ use frame_support::{pallet_prelude::MaxEncodedLen, traits::InstanceFilter, Runti
     codec::Decode,
     codec::Encode,
     RuntimeDebug,
+    TypeInfo
 )]
 pub enum ProxyType {
     Any,
