@@ -159,7 +159,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("template-local"),
+		Some("virto-local"),
 		// Properties
 		Some(properties),
 		// Extensions
