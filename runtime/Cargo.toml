@@ -85,7 +85,7 @@ orml-xtokens = { git = 'https://github.com/virto-network/open-runtime-module-lib
 
 # # Local dependencies
 virto-primitives = { default-features = false, path = '../primitives' }
-# virto-payment = { default-features = false, path = '../pallets/payment' }
+virto-payment = { default-features = false, path = '../pallets/payment' }
 
 [features]
 default = [
@@ -141,6 +141,7 @@ std = [
 	"orml-unknown-tokens/std",
 	"orml-xtokens/std",
 	"virto-primitives/std",
+	"virto-payment/std",
 ]
 
 runtime-benchmarks = [
