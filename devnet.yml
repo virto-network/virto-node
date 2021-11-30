@@ -103,7 +103,7 @@ services:
   # Relay chain validators
   #
   relay_a:
-    image: docker.io/parity/polkadot:v0.9.9
+    image: docker.io/parity/polkadot:v0.9.12
     container_name: devnet_relay_a
     command:
       - --chain=${SPEC}
@@ -115,7 +115,7 @@ services:
       - devnet
 
   relay_b:
-    image: docker.io/parity/polkadot:v0.9.9
+    image: docker.io/parity/polkadot:v0.9.12
     container_name: devnet_relay_b
     command:
       - --chain=${SPEC}

@@ -11,9 +11,9 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedU128, MultiSignature,
+	ApplyExtrinsicResult, FixedU128, MultiSignature, Percent,
 };
 
 use sp_std::prelude::*;
@@ -23,7 +23,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, Nothing},
+	traits::{Contains, Everything, Get, Nothing},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -58,9 +58,10 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor};
 
 // Virto Imports
+mod currency_id_convert;
 mod proxy_type;
+use currency_id_convert::CurrencyIdConvert;
 use orml_traits::{arithmetic::Zero, parameter_type_with_key};
-use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use proxy_type::ProxyType;
 use virto_primitives::{Asset, Collateral as CollateralType};
 
@@ -647,6 +648,21 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 
+impl orml_unknown_tokens::Config for Runtime {
+	type Event = Event;
+}
+
+parameter_types! {
+	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+}
+
+impl virto_payment::Config for Runtime {
+	type Event = Event;
+	type Asset = Assets;
+	type JudgeWhitelist = Whitelist;
+	type IncentivePercentage = IncentivePercentage;
+}
+
 parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
@@ -701,6 +717,31 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
+pub struct AccountIdToMultiLocation;
+impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+	fn convert(account: AccountId) -> MultiLocation {
+		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
+	}
+}
+
+parameter_types! {
+	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+	pub const BaseXcmWeight: Weight = 100_000_000; // configure later
+}
+
+impl orml_xtokens::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type CurrencyId = Asset;
+	type CurrencyIdConvert = CurrencyIdConvert;
+	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type SelfLocation = SelfLocation;
+	type XcmExecutor = XcmExecutor<XcmConfig>;
+	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
+	type BaseXcmWeight = BaseXcmWeight;
+	type LocationInverter = LocationInverter<Ancestry>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -740,8 +781,9 @@ construct_runtime!(
 		Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage} = 43,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 44,
 		Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage} = 45,
-		// XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 45,
-		// UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 46,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 46,
+		UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 47,
+		Payment: virto_payment::{Call, Event<T>, Pallet, Storage} = 48,
 	}
 );
 
