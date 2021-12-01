@@ -196,8 +196,8 @@ fn testnet_genesis(
 				.into_iter()
 				.map(|(acc, aura)| {
 					(
-						acc.clone(),                 // account id
-						acc,                         // validator id
+						acc.clone(),              // account id
+						acc,                      // validator id
 						virto_session_keys(aura), // session keys
 					)
 				})
