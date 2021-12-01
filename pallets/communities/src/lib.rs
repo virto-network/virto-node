@@ -1,12 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use pallet::*;
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
+// TODO : Add benchmarks
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
 
@@ -32,7 +33,7 @@ pub mod pallet {
 	pub type CommunityRegistry<T> = StorageMap<
 		_,
 		Blake2_128Concat,
-		u32, // payment creator
+		u32, // TODO : Create communityId as speced in https://github.com/virto-network/virto-node/issues/133
 		Vec<u8>,
 		OptionQuery,
 	>;
