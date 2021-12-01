@@ -1,4 +1,4 @@
-//! Substrate Parachain Node Template CLI
+//! Virto Parachain Node CLI
 
 #![warn(missing_docs)]
 
