@@ -11,9 +11,9 @@ pub type CommunityIdRes = u16;
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CommunityId {
-    pub lower : CommunityIdLower,
-    pub upper : CommunityIdUpper,
-    pub res : CommunityIdRes
+	pub lower: CommunityIdLower,
+	pub upper: CommunityIdUpper,
+	pub res: CommunityIdRes,
 }
 
 pub type HomeServerUrl = Vec<u8>;

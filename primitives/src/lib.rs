@@ -7,13 +7,13 @@
 #[macro_use]
 mod macros;
 mod asset;
+mod communities;
 mod payment;
 mod rates;
-mod communities;
 
 pub use asset::*;
+pub use communities::*;
 pub use payment::*;
 pub use rates::*;
-pub use communities::*;
 
 pub type Share = sp_arithmetic::Permill;
