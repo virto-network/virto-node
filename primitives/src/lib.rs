@@ -9,9 +9,11 @@ mod macros;
 mod asset;
 mod payment;
 mod rates;
+mod communities;
 
 pub use asset::*;
 pub use payment::*;
 pub use rates::*;
+pub use communities::*;
 
 pub type Share = sp_arithmetic::Permill;

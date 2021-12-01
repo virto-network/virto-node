@@ -1,6 +1,10 @@
 use crate as virto_communities;
-use frame_support::{parameter_types, traits::Everything};
+use frame_support::{
+	parameter_types,
+	traits::{Contains, Everything, GenesisBuild},
+};
 use frame_system as system;
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -9,6 +13,7 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+pub type AccountId = u8;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -18,6 +23,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Communities: virto_communities::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -38,7 +44,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -53,8 +59,37 @@ impl system::Config for Test {
 	type OnSetCode = ();
 }
 
+parameter_type_with_key! {
+	pub ExistentialDeposits: |currency_id: u32| -> u32 {
+		0u32
+	};
+}
+parameter_types! {
+	pub const MaxLocks: u32 = 50;
+}
+
+pub struct MockDustRemovalWhitelist;
+impl Contains<AccountId> for MockDustRemovalWhitelist {
+	fn contains(_a: &AccountId) -> bool {
+		false
+	}
+}
+
+impl orml_tokens::Config for Test {
+	type Amount = i64;
+	type Balance = u32;
+	type CurrencyId = u32;
+	type Event = Event;
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type WeightInfo = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = MockDustRemovalWhitelist;
+}
+
 impl virto_communities::Config for Test {
 	type Event = Event;
+	type Asset = Tokens;
 }
 
 // Build genesis storage according to the mock runtime.

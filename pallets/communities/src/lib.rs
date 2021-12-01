@@ -15,11 +15,22 @@ mod tests;
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
+	use orml_traits::{MultiCurrency, MultiReservableCurrency};
+	use virto_primitives::{
+		CommunityId, CommunityIdLower, CommunityIdRes, CommunityIdUpper, HomeServerUrl,
+	};
+
+	type BalanceOf<T> =
+		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+	type AssetIdOf<T> =
+		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		/// the type of assets this pallet can hold in payment
+		type Asset: MultiReservableCurrency<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -28,13 +39,15 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type CommunityRegistry<T> = StorageMap<
+	// Community Registry Storage
+	pub type CommunityRegistry<T> = StorageNMap<
 		_,
-		Blake2_128Concat,
-		u32, // TODO : Create communityId as speced in https://github.com/virto-network/virto-node/issues/133
-		Vec<u8>,
+		(
+			NMapKey<Blake2_128Concat, CommunityIdLower>,
+			NMapKey<Blake2_128Concat, CommunityIdUpper>,
+			NMapKey<Blake2_128Concat, CommunityIdRes>,
+		),
+		HomeServerUrl,
 		OptionQuery,
 	>;
 
@@ -44,14 +57,16 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new community has been created
-		CommunityCreated(u32, Vec<u8>),
+		CommunityCreated(CommunityId, Vec<u8>),
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
+		/// Community Id should be unique
+		CommunityIdAlreadyExists,
+		/// Reserve amount failed
+		DepositReserveFailed,
 	}
 
 	#[pallet::hooks]
@@ -61,13 +76,31 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// This dispatchable allows users to generate new community on virto network
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn register(origin: OriginFor<T>, community_id: u32, home_server_url: Vec<u8>) -> DispatchResultWithPostInfo {
-			let _who = ensure_signed(origin)?;
+		pub fn register(
+			origin: OriginFor<T>,
+			community_id: CommunityId,
+			home_server_url: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
 
-			// reserve min deposit amount
+			// ensure communityId is unique
+			ensure!(
+				!CommunityRegistry::<T>::contains_key((
+					community_id.lower,
+					community_id.upper,
+					community_id.res
+				)),
+				Error::<T>::CommunityIdAlreadyExists
+			);
+
+			// TODO : reserve the community creation deposit from creator
+			//T::Asset::reserve(asset, &who, 1)?;
 
 			// Add new community to storage
-			<CommunityRegistry<T>>::insert(community_id, &home_server_url);
+			<CommunityRegistry<T>>::insert(
+				(community_id.lower, community_id.upper, community_id.res),
+				&home_server_url,
+			);
 
 			// Emit an event.
 			Self::deposit_event(Event::CommunityCreated(community_id, home_server_url));
