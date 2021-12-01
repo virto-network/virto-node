@@ -6,11 +6,6 @@ use virto_primitives::{PaymentDetail, PaymentState};
 #[test]
 fn test_create_payment_works() {
 	new_test_ext().execute_with(|| {
-		// should fail when payment is more than balance
-		assert_noop!(
-			Payment::create(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 120,),
-			orml_tokens::Error::<Test>::BalanceTooLow
-		);
 		// the payment amount should not be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
@@ -31,9 +26,14 @@ fn test_create_payment_works() {
 				state: PaymentState::Created
 			})
 		);
-		// the payment amount should be reserved
+		// the payment amount should be reserved correctly
+		// the amount + incentive should be removed from the sender account
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		// the incentive amount should be reserved in the sender account
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+		// the transferred amount should be reserved in the recipent account
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
 
 		// the payment should not be overwritten
 		assert_noop!(
