@@ -157,43 +157,61 @@ pub mod pallet {
 	}
 
 	impl<T: Config> PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>> for Pallet<T> {
+		/// The function will create a new payment. When a new payment is created, an amount + incentive
+		/// is reserved from the payment creator. The incentive amount is reserved in the creators account.
+		/// The amount is transferred to the payment recipent but kept in reserved state. Only when the release action
+		/// is triggered the amount is released to the recipent and incentive released to creator.
 		fn create_payment(
 			from: T::AccountId,
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 		) -> DispatchResult {
-			Payment::<T>::try_mutate(from.clone(), recipient, |maybe_payment| -> DispatchResult {
-				let incentive_amount = T::IncentivePercentage::get() * amount;
-				let new_payment = Some(PaymentDetail {
-					asset,
-					amount,
-					incentive_amount,
-					state: PaymentState::Created,
-				});
-				match maybe_payment {
-					Some(x) => {
-						// do not overwrite an in-process payment!
-						// ensure the payment is not in created state, it should
-						// be in released/cancelled, in which case it can be overwritten
-						ensure!(
-							x.state != PaymentState::Created,
-							Error::<T>::PaymentAlreadyInProcess
-						);
-						// reserve the (payment amount + incentive amount) from the payment creator
-						T::Asset::reserve(asset, &from, amount + incentive_amount)?;
-						*maybe_payment = new_payment
-					},
-					None => {
-						// reserve the (payment amount + incentive amount)from the payment creator
-						T::Asset::reserve(asset, &from, amount + incentive_amount)?;
-						*maybe_payment = new_payment
-					},
-				}
-				Ok(())
-			})
+			Payment::<T>::try_mutate(
+				from.clone(),
+				recipient.clone(),
+				|maybe_payment| -> DispatchResult {
+					let incentive_amount = T::IncentivePercentage::get() * amount;
+					let new_payment = Some(PaymentDetail {
+						asset,
+						amount,
+						incentive_amount,
+						state: PaymentState::Created,
+					});
+					match maybe_payment {
+						Some(x) => {
+							// do not overwrite an in-process payment!
+							// ensure the payment is not in created state, it should
+							// be in released/cancelled, in which case it can be overwritten
+							ensure!(
+								x.state != PaymentState::Created,
+								Error::<T>::PaymentAlreadyInProcess
+							);
+							// reserve the incentive amount from the payment creator
+							T::Asset::reserve(asset, &from, incentive_amount)?;
+							// transfer amount to recipient
+							T::Asset::transfer(asset, &from, &recipient, amount)?;
+							// reserved the amount in the recipient account
+							T::Asset::reserve(asset, &recipient, amount)?;
+							*maybe_payment = new_payment
+						},
+						None => {
+							// reserve the incentive amount from the payment creator
+							T::Asset::reserve(asset, &from, incentive_amount)?;
+							// transfer amount to recipient
+							T::Asset::transfer(asset, &from, &recipient, amount)?;
+							// reserved the amount in the recipient account
+							T::Asset::reserve(asset, &recipient, amount)?;
+							*maybe_payment = new_payment
+						},
+					}
+					Ok(())
+				},
+			)
 		}
 
+		/// The function will release an existing payment, a release action will remove the reserve
+		/// placed on both the incentive amount and the transfer amount and it will be "released" to the respective account.
 		fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
 			use PaymentState::*;
 			// add the payment detail to storage
@@ -204,19 +222,13 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-					// unreserve the (payment amount + incentive amount) from the owner account.
-					// Shouldn't fail for payments created successfully, if user manages to unreserve assets
-					// somehow and be left without enough balance we set the payment to a "corrupted" state.
-					T::Asset::unreserve(
-						payment.asset,
-						&from,
-						payment.amount + payment.incentive_amount,
-					);
-					// transfer only the payment amount to the recipient
-					match T::Asset::transfer(payment.asset, &from, &to, payment.amount) {
-						Ok(_) => payment.state = PaymentState::Released,
-						Err(_) => payment.state = PaymentState::NeedsReview,
-					}
+					// unreserve the incentive amount back to the creator
+					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+					// unreserve the amount to the recipent
+					T::Asset::unreserve(payment.asset, &to, payment.amount);
+
+					payment.state = PaymentState::Released;
+
 					Ok(())
 				},
 			)?;
@@ -225,6 +237,10 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// This function will allows user to cancel a payment. When cancelling a payment, steps are
+		/// - Unreserve the incentive amount
+		/// - Unreserve the payment amount
+		/// - Transfer amount from recipent to sender
 		fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
 			// add the payment detail to storage
 			Payment::<T>::try_mutate(
@@ -237,14 +253,19 @@ pub mod pallet {
 						payment.state == PaymentState::Created,
 						Error::<T>::PaymentAlreadyReleased
 					);
-					// unreserve the (payment amount + incentive amount) from the owner account
-					T::Asset::unreserve(
-						payment.asset,
-						&from,
-						payment.amount + payment.incentive_amount,
-					);
-					*maybe_payment =
-						Some(PaymentDetail { state: PaymentState::Cancelled, ..payment });
+					// unreserve the incentive amount from the owner account
+					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+					T::Asset::unreserve(payment.asset, &to, payment.amount);
+					// transfer amount to creator
+					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
+						Ok(_) =>
+							*maybe_payment =
+								Some(PaymentDetail { state: PaymentState::Cancelled, ..payment }),
+						Err(_) =>
+							*maybe_payment =
+								Some(PaymentDetail { state: PaymentState::NeedsReview, ..payment }),
+					}
+
 					Ok(())
 				},
 			)?;

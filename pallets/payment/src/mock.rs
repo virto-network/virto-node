@@ -1,7 +1,7 @@
 use crate as payment;
 use frame_support::{
 	parameter_types,
-	traits::{Contains, GenesisBuild},
+	traits::{Contains, Everything, GenesisBuild},
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -38,7 +38,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -64,7 +64,7 @@ impl system::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: u32| -> u32 {
+	pub ExistentialDeposits: |_currency_id: u32| -> u32 {
 		0u32
 	};
 }
@@ -74,7 +74,7 @@ parameter_types! {
 
 pub struct MockDustRemovalWhitelist;
 impl Contains<AccountId> for MockDustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
+	fn contains(_a: &AccountId) -> bool {
 		false
 	}
 }
