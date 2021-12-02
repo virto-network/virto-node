@@ -10,13 +10,11 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
-		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Contains,
-	};
+	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::Percent;
-	use virto_primitives::{PaymentDetail, PaymentHandler, PaymentState};
+	use virto_primitives::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
 
 	type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -29,8 +27,8 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// the type of assets this pallet can hold in payment
 		type Asset: MultiReservableCurrency<Self::AccountId>;
-		/// whitelist of users allowed to settle disputes
-		type JudgeWhitelist: Contains<Self::AccountId>;
+		/// Dispute resolution account
+		type DisputeResolver: DisputeResolver<Self::AccountId>;
 
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
@@ -53,7 +51,7 @@ pub mod pallet {
 		T::AccountId, // payment creator
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
-		PaymentDetail<AssetIdOf<T>, BalanceOf<T>>,
+		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId>,
 	>;
 
 	#[pallet::event]
@@ -93,10 +91,11 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			resolver: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
-				who, recipient, asset, amount,
+				who, recipient, asset, amount, resolver,
 			)?;
 			Ok(().into())
 		}
@@ -134,11 +133,15 @@ pub mod pallet {
 			recipient: T::AccountId,
 			new_state: PaymentState,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			// ensure the caller is part of the whitelist
-			ensure!(T::JudgeWhitelist::contains(&who), Error::<T>::InvalidAction);
-			// try to update the payment to new state
 			use PaymentState::*;
+			let who = ensure_signed(origin)?;
+			// ensure the caller is the assigned resolver
+			match Payment::<T>::get(from.clone(), recipient.clone()) {
+				Some(payment) =>
+					ensure!(&who == &payment.resolver_account, Error::<T>::InvalidAction),
+				None => (()), // better to throw descriptive error
+			};
+			// try to update the payment to new state
 			match new_state {
                 Cancelled => {
                     <Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_payment(
@@ -166,7 +169,12 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			resolver: Option<T::AccountId>,
 		) -> DispatchResult {
+			let resolver_account = match resolver {
+				Some(x) => x,
+				None => T::DisputeResolver::get_origin(),
+			};
 			Payment::<T>::try_mutate(
 				from.clone(),
 				recipient.clone(),
@@ -177,6 +185,7 @@ pub mod pallet {
 						amount,
 						incentive_amount,
 						state: PaymentState::Created,
+						resolver_account,
 					});
 					match maybe_payment {
 						Some(x) => {
@@ -276,7 +285,7 @@ pub mod pallet {
 		fn get_payment_details(
 			from: T::AccountId,
 			to: T::AccountId,
-		) -> Option<PaymentDetail<AssetIdOf<T>, BalanceOf<T>>> {
+		) -> Option<PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId>> {
 			Payment::<T>::get(from, to)
 		}
 	}

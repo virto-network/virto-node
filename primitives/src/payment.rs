@@ -5,11 +5,12 @@ use sp_runtime::DispatchResult;
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PaymentDetail<Asset, Amount> {
+pub struct PaymentDetail<Asset, Amount, Account> {
 	pub asset: Asset,
 	pub amount: Amount,
 	pub incentive_amount: Amount,
 	pub state: PaymentState,
+	pub resolver_account: Account
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
@@ -27,7 +28,7 @@ pub trait PaymentHandler<Account, Asset, Amount> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
 	/// - User does not have enough balance.
-	fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount) -> DispatchResult;
+	fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount, resolver: Option<Account>) -> DispatchResult;
 
 	/// Attempt to transfer an amount of the given asset from the given payment_id
 	/// If not possible then return Error. Possible reasons for failure include:
@@ -47,5 +48,11 @@ pub trait PaymentHandler<Account, Asset, Amount> {
 	/// Attempt to fetch the details of a payment from the given payment_id
 	/// Possible reasons for failure include:
 	/// - The payment does not exist
-	fn get_payment_details(from: Account, to: Account) -> Option<PaymentDetail<Asset, Amount>>;
+	fn get_payment_details(from: Account, to: Account) -> Option<PaymentDetail<Asset, Amount, Account>>;
+}
+
+/// DisputeResolver trait defines how to create/assing judges for solving payment disputes
+pub trait DisputeResolver<Account> {
+	/// Get a DisputeResolver (Judge) account
+	fn get_origin() -> Account;
 }

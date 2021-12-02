@@ -16,6 +16,7 @@ fn test_create_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			Some(RESOLVER_ACCOUNT)
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -23,7 +24,8 @@ fn test_create_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -37,7 +39,13 @@ fn test_create_payment_works() {
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::create(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			Payment::create(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				20,
+				Some(RESOLVER_ACCOUNT)
+			),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -47,7 +55,8 @@ fn test_create_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 	});
@@ -62,6 +71,7 @@ fn test_release_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			Some(RESOLVER_ACCOUNT)
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -69,7 +79,8 @@ fn test_release_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// the payment amount should be reserved
@@ -96,7 +107,8 @@ fn test_release_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Cancelled
+				state: PaymentState::Cancelled,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// cannot call cancel again
@@ -116,6 +128,7 @@ fn test_cancel_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			Some(RESOLVER_ACCOUNT)
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -123,7 +136,8 @@ fn test_cancel_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// the payment amount should be reserved
@@ -144,7 +158,8 @@ fn test_cancel_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Released
+				state: PaymentState::Released,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// cannot call release again
@@ -159,6 +174,7 @@ fn test_cancel_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			Some(RESOLVER_ACCOUNT)
 		));
 		// the payment amount should be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 16);
@@ -175,6 +191,7 @@ fn test_set_state_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			Some(RESOLVER_ACCOUNT)
 		));
 
 		// should fail for non whitelisted caller
@@ -190,7 +207,7 @@ fn test_set_state_payment_works() {
 
 		// should be able to release a payment
 		assert_ok!(Payment::resolve(
-			Origin::signed(JUDGE_ONE),
+			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
 			PaymentState::Released
@@ -208,7 +225,8 @@ fn test_set_state_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Released
+				state: PaymentState::Released,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 
@@ -217,14 +235,15 @@ fn test_set_state_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			Some(RESOLVER_ACCOUNT)
 		));
 
 		// should be able to cancel a payment
 		assert_ok!(Payment::resolve(
-			Origin::signed(JUDGE_ONE),
+			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
-			PaymentState::Cancelled
+			PaymentState::Cancelled,
 		));
 
 		// the payment amount should be transferred
@@ -239,7 +258,8 @@ fn test_set_state_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Cancelled
+				state: PaymentState::Cancelled,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 	});
