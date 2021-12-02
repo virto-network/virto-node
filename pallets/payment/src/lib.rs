@@ -136,11 +136,9 @@ pub mod pallet {
 			use PaymentState::*;
 			let who = ensure_signed(origin)?;
 			// ensure the caller is the assigned resolver
-			match Payment::<T>::get(from.clone(), recipient.clone()) {
-				Some(payment) =>
-					ensure!(&who == &payment.resolver_account, Error::<T>::InvalidAction),
-				None => (()), // better to throw descriptive error
-			};
+			if let Some(payment) = Payment::<T>::get(from.clone(), recipient.clone()) {
+				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
+			}
 			// try to update the payment to new state
 			match new_state {
                 Cancelled => {
