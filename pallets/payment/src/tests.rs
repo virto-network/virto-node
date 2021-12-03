@@ -6,11 +6,6 @@ use virto_primitives::{PaymentDetail, PaymentState};
 #[test]
 fn test_create_payment_works() {
 	new_test_ext().execute_with(|| {
-		// should fail when payment is more than balance
-		assert_noop!(
-			Payment::create(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 120,),
-			orml_tokens::Error::<Test>::BalanceTooLow
-		);
 		// the payment amount should not be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
@@ -28,12 +23,18 @@ fn test_create_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
-		// the payment amount should be reserved
+		// the payment amount should be reserved correctly
+		// the amount + incentive should be removed from the sender account
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		// the incentive amount should be reserved in the sender account
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+		// the transferred amount should be reserved in the recipent account
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
 
 		// the payment should not be overwritten
 		assert_noop!(
@@ -47,7 +48,8 @@ fn test_create_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 	});
@@ -69,7 +71,8 @@ fn test_release_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// the payment amount should be reserved
@@ -96,7 +99,8 @@ fn test_release_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Cancelled
+				state: PaymentState::Cancelled,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// cannot call cancel again
@@ -123,7 +127,8 @@ fn test_cancel_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Created
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// the payment amount should be reserved
@@ -144,7 +149,8 @@ fn test_cancel_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Released
+				state: PaymentState::Released,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 		// cannot call release again
@@ -190,7 +196,7 @@ fn test_set_state_payment_works() {
 
 		// should be able to release a payment
 		assert_ok!(Payment::resolve(
-			Origin::signed(JUDGE_ONE),
+			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
 			PaymentState::Released
@@ -208,7 +214,8 @@ fn test_set_state_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Released
+				state: PaymentState::Released,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 
@@ -221,10 +228,10 @@ fn test_set_state_payment_works() {
 
 		// should be able to cancel a payment
 		assert_ok!(Payment::resolve(
-			Origin::signed(JUDGE_ONE),
+			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
-			PaymentState::Cancelled
+			PaymentState::Cancelled,
 		));
 
 		// the payment amount should be transferred
@@ -239,7 +246,8 @@ fn test_set_state_payment_works() {
 				asset: CURRENCY_ID,
 				amount: 40,
 				incentive_amount: 4,
-				state: PaymentState::Cancelled
+				state: PaymentState::Cancelled,
+				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
 	});

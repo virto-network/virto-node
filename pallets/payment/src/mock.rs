@@ -1,7 +1,7 @@
 use crate as payment;
 use frame_support::{
 	parameter_types,
-	traits::{Contains, GenesisBuild},
+	traits::{Contains, Everything, GenesisBuild},
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -11,14 +11,15 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	Percent,
 };
+use virto_primitives::DisputeResolver;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
-pub const JUDGE_ONE: AccountId = 11;
 pub const CURRENCY_ID: u32 = 2;
+pub const RESOLVER_ACCOUNT: AccountId = 12;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -38,7 +39,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = ();
+	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -64,7 +65,7 @@ impl system::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: u32| -> u32 {
+	pub ExistentialDeposits: |_currency_id: u32| -> u32 {
 		0u32
 	};
 }
@@ -74,7 +75,7 @@ parameter_types! {
 
 pub struct MockDustRemovalWhitelist;
 impl Contains<AccountId> for MockDustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
+	fn contains(_a: &AccountId) -> bool {
 		false
 	}
 }
@@ -91,13 +92,10 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = MockDustRemovalWhitelist;
 }
 
-pub struct MockMembership;
-impl Contains<AccountId> for MockMembership {
-	fn contains(t: &AccountId) -> bool {
-		match t {
-			&JUDGE_ONE => true,
-			_ => false,
-		}
+pub struct MockDisputeResolver;
+impl DisputeResolver<AccountId> for MockDisputeResolver {
+	fn get_origin() -> AccountId {
+		RESOLVER_ACCOUNT
 	}
 }
 
@@ -108,7 +106,7 @@ parameter_types! {
 impl payment::Config for Test {
 	type Event = Event;
 	type Asset = Tokens;
-	type JudgeWhitelist = MockMembership;
+	type DisputeResolver = MockDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 }
 

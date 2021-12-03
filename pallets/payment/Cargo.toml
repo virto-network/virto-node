@@ -35,5 +35,5 @@ std = [
 	'frame-system/std',
 	'sp-runtime/std',
 	'scale-info/std',
-	'orml-traits/std',
+	'orml-traits/std',	
 ]

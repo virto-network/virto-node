@@ -63,7 +63,7 @@ mod proxy_type;
 use currency_id_convert::CurrencyIdConvert;
 use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
-use virto_primitives::{Asset, Collateral as CollateralType};
+use virto_primitives::{Asset, Collateral as CollateralType, DisputeResolver};
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -652,6 +652,13 @@ impl orml_unknown_tokens::Config for Runtime {
 	type Event = Event;
 }
 
+pub struct VirtoDisputeResolver;
+impl DisputeResolver<AccountId> for VirtoDisputeResolver {
+	fn get_origin() -> AccountId {
+		Sudo::key()
+	}
+}
+
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 }
@@ -659,7 +666,7 @@ parameter_types! {
 impl virto_payment::Config for Runtime {
 	type Event = Event;
 	type Asset = Assets;
-	type JudgeWhitelist = Whitelist;
+	type DisputeResolver = VirtoDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 }
 
