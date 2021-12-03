@@ -16,7 +16,6 @@ fn test_create_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			Some(RESOLVER_ACCOUNT)
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -39,13 +38,7 @@ fn test_create_payment_works() {
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::create(
-				Origin::signed(PAYMENT_CREATOR),
-				PAYMENT_RECIPENT,
-				CURRENCY_ID,
-				20,
-				Some(RESOLVER_ACCOUNT)
-			),
+			Payment::create(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -71,7 +64,6 @@ fn test_release_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
-			Some(RESOLVER_ACCOUNT)
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -128,7 +120,6 @@ fn test_cancel_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
-			Some(RESOLVER_ACCOUNT)
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -174,7 +165,6 @@ fn test_cancel_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
-			Some(RESOLVER_ACCOUNT)
 		));
 		// the payment amount should be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 16);
@@ -191,7 +181,6 @@ fn test_set_state_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
-			Some(RESOLVER_ACCOUNT)
 		));
 
 		// should fail for non whitelisted caller
@@ -235,7 +224,6 @@ fn test_set_state_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
-			Some(RESOLVER_ACCOUNT)
 		));
 
 		// should be able to cancel a payment

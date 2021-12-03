@@ -28,13 +28,7 @@ pub trait PaymentHandler<Account, Asset, Amount> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
 	/// - User does not have enough balance.
-	fn create_payment(
-		from: Account,
-		to: Account,
-		asset: Asset,
-		amount: Amount,
-		resolver: Option<Account>,
-	) -> DispatchResult;
+	fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount) -> DispatchResult;
 
 	/// Attempt to transfer an amount of the given asset from the given payment_id
 	/// If not possible then return Error. Possible reasons for failure include:

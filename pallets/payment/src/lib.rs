@@ -91,11 +91,10 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			resolver: Option<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
-				who, recipient, asset, amount, resolver,
+				who, recipient, asset, amount,
 			)?;
 			Ok(().into())
 		}
@@ -167,12 +166,7 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			resolver: Option<T::AccountId>,
 		) -> DispatchResult {
-			let resolver_account = match resolver {
-				Some(x) => x,
-				None => T::DisputeResolver::get_origin(),
-			};
 			Payment::<T>::try_mutate(
 				from.clone(),
 				recipient.clone(),
@@ -183,7 +177,7 @@ pub mod pallet {
 						amount,
 						incentive_amount,
 						state: PaymentState::Created,
-						resolver_account,
+						resolver_account: T::DisputeResolver::get_origin(),
 					});
 					match maybe_payment {
 						Some(x) => {
