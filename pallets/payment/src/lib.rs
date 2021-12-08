@@ -8,6 +8,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
@@ -16,9 +19,9 @@ pub mod pallet {
 	use sp_runtime::Percent;
 	use virto_primitives::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
 
-	type BalanceOf<T> =
+	pub type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
-	type AssetIdOf<T> =
+	pub type AssetIdOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 
 	#[pallet::config]
@@ -206,6 +209,7 @@ pub mod pallet {
 							*maybe_payment = new_payment
 						},
 					}
+					Self::deposit_event(Event::PaymentCreated(from, asset, amount));
 					Ok(())
 				},
 			)
