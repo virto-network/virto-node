@@ -11,7 +11,7 @@ const SEED: u32 = 0;
 fn setup_caller<T: Config>() -> T::AccountId {
 	let caller = whitelisted_caller();
 	let value: BalanceOf<T> = 10u32.into();
-	let asset: AssetIdOf<T> = "test";
+	let asset: AssetIdOf<T> = "test".into(); // TODO : figure out way to convert to type of CurrencyId of orml-tokens
 	let _ = T::Asset::deposit(asset, &caller, value);
 	caller
 }
