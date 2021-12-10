@@ -3,14 +3,12 @@ use core::fmt;
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_std::{convert::TryFrom, prelude::*};
+
 /// A resource or valuable thing.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, TypeInfo)]
 pub enum Asset {
-	Collateral(Collateral),
-	Fiat(Fiat),
 	Network(NetworkAsset),
-	Usdv,
 }
 
 impl Asset {
@@ -18,10 +16,7 @@ impl Asset {
 	#[inline]
 	pub const fn as_str(&self) -> &'static str {
 		match *self {
-			Self::Collateral(c) => c.as_str(),
-			Self::Fiat(f) => f.as_str(),
 			Self::Network(n) => n.as_str(),
-			Self::Usdv => "USDv",
 		}
 	}
 }
@@ -29,7 +24,7 @@ impl Asset {
 impl Default for Asset {
 	#[inline]
 	fn default() -> Self {
-		Self::Usdv
+		Self::Network(NetworkAsset::KSM)
 	}
 }
 
@@ -37,35 +32,6 @@ impl fmt::Display for Asset {
 	#[inline]
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.as_str())
-	}
-}
-
-impl From<Collateral> for Asset {
-	#[inline]
-	fn from(c: Collateral) -> Self {
-		Asset::Collateral(c)
-	}
-}
-
-impl From<Fiat> for Asset {
-	#[inline]
-	fn from(f: Fiat) -> Self {
-		Asset::Fiat(f)
-	}
-}
-
-enum_with_aux_fns! {
-	/// Asset used to back other assets
-	pub enum Collateral {
-		USDC = "USDC",
-	}
-}
-
-enum_with_aux_fns! {
-	/// A currency issued by a goverment
-	pub enum Fiat {
-		COP = "COP",
-		VEZ = "VEZ",
 	}
 }
 

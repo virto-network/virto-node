@@ -74,14 +74,12 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.12" }
 
 # Virto dependencies
-orml-tokens = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
-orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false }
-orml-oracle = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.12", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.12", default-features = false }
+orml-xcm-support = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', branch = "polkadot-v0.9.12", default-features = false }
+orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', branch = "polkadot-v0.9.12", default-features = false }
+orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', branch = "polkadot-v0.9.12", default-features = false }
 pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.12', default-features = false }
-pallet-membership = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.12', default-features = false }
-orml-xcm-support = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
-orml-unknown-tokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
-orml-xtokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false }
 
 # # Local dependencies
 virto-primitives = { default-features = false, path = '../primitives' }
@@ -135,9 +133,7 @@ std = [
 	"xcm-executor/std",
 	"xcm/std",
 	"pallet-proxy/std",
-	"pallet-membership/std",
 	"orml-tokens/std",
-	"orml-oracle/std",
 	"orml-unknown-tokens/std",
 	"orml-xtokens/std",
 	"virto-primitives/std",

@@ -13,7 +13,6 @@ impl Convert<Asset, Option<MultiLocation>> for CurrencyIdConvert {
 			Asset::Network(NetworkAsset::KSM) => Some(MultiLocation::parent()),
 			Asset::Network(NetworkAsset::KAR) | Asset::Network(NetworkAsset::KUSD) =>
 				Some(native_currency_location(id)),
-			_ => None,
 		}
 	}
 }

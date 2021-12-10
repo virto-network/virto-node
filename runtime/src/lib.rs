@@ -13,7 +13,7 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, FixedU128, MultiSignature, Percent,
+	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
 use sp_std::prelude::*;
@@ -63,7 +63,7 @@ mod proxy_type;
 use currency_id_convert::CurrencyIdConvert;
 use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
-use virto_primitives::{Asset, Collateral as CollateralType, DisputeResolver};
+use virto_primitives::{Asset, DisputeResolver};
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -394,23 +394,6 @@ impl pallet_proxy::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxMembers : u32 = 100;
-}
-
-impl pallet_membership::Config for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRoot<AccountId>;
-	type RemoveOrigin = EnsureRoot<AccountId>;
-	type SwapOrigin = EnsureRoot<AccountId>;
-	type ResetOrigin = EnsureRoot<AccountId>;
-	type PrimeOrigin = EnsureRoot<AccountId>;
-	type MaxMembers = MaxMembers;
-	type WeightInfo = ();
-	type MembershipInitialized = ();
-	type MembershipChanged = ();
-}
-
-parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 }
@@ -435,26 +418,6 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-parameter_types! {
-	pub const MinimumCount: u32 = 3;
-	pub const ExpiresIn: u32 = 600;
-	pub RootOperatorAccountId: AccountId = Sudo::key();
-	pub const MaxHasDispatchedSize: u32 = 100;
-}
-
-impl orml_oracle::Config for Runtime {
-	type Event = Event;
-	type OnNewData = ();
-	type CombineData = orml_oracle::DefaultCombineData<Runtime, MinimumCount, ExpiresIn>;
-	type Time = Timestamp;
-	type OracleKey = Asset;
-	type OracleValue = FixedU128;
-	type RootOperatorAccountId = RootOperatorAccountId;
-	type WeightInfo = ();
-	type Members = Whitelist;
-	type MaxHasDispatchedSize = MaxHasDispatchedSize;
-}
-
 pub struct MockDustRemovalWhitelist;
 impl Contains<AccountId> for MockDustRemovalWhitelist {
 	fn contains(_a: &AccountId) -> bool {
@@ -468,33 +431,13 @@ parameter_type_with_key! {
 	};
 }
 
-type GeneralInstance = orml_tokens::Instance1;
-impl orml_tokens::Config<GeneralInstance> for Runtime {
+impl orml_tokens::Config for Runtime {
 	type Amount = Amount;
 	type Balance = Balance;
 	type CurrencyId = Asset;
 	type Event = Event;
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance1>;
-	type WeightInfo = ();
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = MockDustRemovalWhitelist;
-}
-
-parameter_type_with_key! {
-	pub ExistentialDepositsCollateral: |_currency_id: CollateralType| -> Balance {
-		Zero::zero()
-	};
-}
-
-type FiatInstance = orml_tokens::Instance2;
-impl orml_tokens::Config<FiatInstance> for Runtime {
-	type Amount = Amount;
-	type Balance = Balance;
-	type CurrencyId = CollateralType;
-	type Event = Event;
-	type ExistentialDeposits = ExistentialDepositsCollateral;
-	type OnDust = orml_tokens::BurnDust<Runtime, orml_tokens::Instance2>;
+	type OnDust = orml_tokens::BurnDust<Runtime>;
 	type WeightInfo = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = MockDustRemovalWhitelist;
@@ -783,14 +726,11 @@ construct_runtime!(
 
 		// Virto Dependencies
 		Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage} = 40,
-		Whitelist: pallet_membership::{Call, Storage, Pallet, Event<T>, Config<T>} = 41,
-		Assets: orml_tokens::<Instance1>::{Config<T>, Event<T>, Pallet, Storage} = 42,
-		Fiat: orml_tokens::<Instance2>::{Config<T>, Event<T>, Pallet, Storage} = 43,
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 44,
-		Oracle: orml_oracle::{Call, Event<T>, Pallet, Storage} = 45,
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 46,
-		UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 47,
-		Payment: virto_payment::{Call, Event<T>, Pallet, Storage} = 48,
+		Assets: orml_tokens::{Config<T>, Event<T>, Pallet, Storage} = 42,
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 43,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
+		UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
+		Payment: virto_payment::{Call, Event<T>, Pallet, Storage} = 46,
 	}
 );
 

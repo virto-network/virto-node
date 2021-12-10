@@ -211,8 +211,6 @@ fn testnet_genesis(
 		sudo: virto_runtime::SudoConfig {
 			key: get_account_id_from_seed::<sr25519::Public>("Alice"),
 		},
-		whitelist: virto_runtime::WhitelistConfig { members: vec![], phantom: Default::default() },
 		assets: virto_runtime::AssetsConfig { balances: vec![] },
-		fiat: virto_runtime::FiatConfig { balances: vec![] },
 	}
 }
