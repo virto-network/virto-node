@@ -4425,19 +4425,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-oracle"
+name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library#82aba35dab457ba281f7225403c3b7a6da123767"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12#03fe5543968c3774738ab38c64323b1d1c7d58d4"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits",
- "orml-utilities",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-application-crypto",
- "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -4449,10 +4446,9 @@ source = "git+https://github.com/virto-network/open-runtime-module-library#82aba
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits",
+ "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-runtime",
  "sp-std",
 ]
@@ -4460,12 +4456,12 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library#82aba35dab457ba281f7225403c3b7a6da123767"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12#03fe5543968c3774738ab38c64323b1d1c7d58d4"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities",
+ "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -4476,9 +4472,26 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-unknown-tokens"
+name = "orml-traits"
 version = "0.4.1-dev"
 source = "git+https://github.com/virto-network/open-runtime-module-library#82aba35dab457ba281f7225403c3b7a6da123767"
+dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "num-traits",
+ "orml-utilities 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
+name = "orml-unknown-tokens"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12#03fe5543968c3774738ab38c64323b1d1c7d58d4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4493,7 +4506,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library#82aba35dab457ba281f7225403c3b7a6da123767"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12#03fe5543968c3774738ab38c64323b1d1c7d58d4"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4505,12 +4518,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-xcm-support"
+name = "orml-utilities"
 version = "0.4.1-dev"
 source = "git+https://github.com/virto-network/open-runtime-module-library#82aba35dab457ba281f7225403c3b7a6da123767"
 dependencies = [
  "frame-support",
- "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "orml-xcm-support"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12#03fe5543968c3774738ab38c64323b1d1c7d58d4"
+dependencies = [
+ "frame-support",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
@@ -4521,12 +4547,12 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library#82aba35dab457ba281f7225403c3b7a6da123767"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12#03fe5543968c3774738ab38c64323b1d1c7d58d4"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "orml-traits",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
  "orml-xcm-support",
  "parity-scale-codec",
  "scale-info",
@@ -10354,8 +10380,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "orml-tokens",
- "orml-traits",
+ "orml-tokens 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library)",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -10398,9 +10424,8 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex-literal",
  "log",
- "orml-oracle",
- "orml-tokens",
- "orml-traits",
+ "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.12)",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -10408,7 +10433,6 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
- "pallet-membership",
  "pallet-proxy",
  "pallet-session",
  "pallet-sudo",
