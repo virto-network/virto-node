@@ -11,13 +11,15 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod types;
+
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::types::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::Percent;
-	use virto_primitives::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
 
 	type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;

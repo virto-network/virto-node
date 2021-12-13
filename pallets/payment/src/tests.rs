@@ -1,7 +1,10 @@
-use crate::{mock::*, Payment as PaymentStore};
+use crate::{
+	mock::*,
+	types::{PaymentDetail, PaymentState},
+	Payment as PaymentStore,
+};
 use frame_support::{assert_noop, assert_ok};
 use orml_traits::MultiCurrency;
-use virto_primitives::{PaymentDetail, PaymentState};
 
 #[test]
 fn test_create_payment_works() {

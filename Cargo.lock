@@ -10341,7 +10341,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "virto-primitives",
 ]
 
 [[package]]

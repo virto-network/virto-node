@@ -63,7 +63,7 @@ mod proxy_type;
 use currency_id_convert::CurrencyIdConvert;
 use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
-use virto_primitives::{Asset, DisputeResolver};
+use virto_primitives::Asset;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -596,7 +596,7 @@ impl orml_unknown_tokens::Config for Runtime {
 }
 
 pub struct VirtoDisputeResolver;
-impl DisputeResolver<AccountId> for VirtoDisputeResolver {
+impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 	fn get_origin() -> AccountId {
 		Sudo::key()
 	}
