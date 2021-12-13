@@ -57,7 +57,7 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentReleased(caller, recipent).into());
 	}
 
-	// // resolve an existing payment succesfully - cancel since that is the most complex route
+	// resolve an existing payment succesfully - cancel since that is the most complex route
 	resolve {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(CURRENCY_ID, &caller, INITIAL_AMOUNT);
