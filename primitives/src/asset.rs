@@ -74,3 +74,9 @@ impl From<NetworkAsset> for u32 {
 		}
 	}
 }
+
+impl From<NetworkAsset> for Asset {
+	fn from(a: NetworkAsset) -> Self {
+		Asset::Network(a)
+	}
+}

@@ -19,9 +19,9 @@ pub mod pallet {
 	use sp_runtime::Percent;
 	use virto_primitives::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
 
-	pub type BalanceOf<T> =
+	type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
-	pub type AssetIdOf<T> =
+	type AssetIdOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 
 	#[pallet::config]
