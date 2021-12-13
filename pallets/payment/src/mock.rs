@@ -11,14 +11,13 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	Percent,
 };
-use virto_primitives::{Asset, DisputeResolver, NetworkAsset};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
-pub const CURRENCY_ID: Asset = Asset::Network(NetworkAsset::KSM);
+pub const CURRENCY_ID: u32 = 1u32;
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 
 frame_support::construct_runtime!(
@@ -65,7 +64,7 @@ impl system::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: Asset| -> u32 {
+	pub ExistentialDeposits: |_currency_id: u32| -> u32 {
 		0u32
 	};
 }
@@ -83,7 +82,7 @@ impl Contains<AccountId> for MockDustRemovalWhitelist {
 impl orml_tokens::Config for Test {
 	type Amount = i64;
 	type Balance = u32;
-	type CurrencyId = Asset;
+	type CurrencyId = u32;
 	type Event = Event;
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -93,7 +92,7 @@ impl orml_tokens::Config for Test {
 }
 
 pub struct MockDisputeResolver;
-impl DisputeResolver<AccountId> for MockDisputeResolver {
+impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 	fn get_origin() -> AccountId {
 		RESOLVER_ACCOUNT
 	}

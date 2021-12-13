@@ -5,7 +5,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod asset;
-mod payment;
 
 pub use asset::*;
-pub use payment::*;

@@ -1,13 +1,12 @@
 use super::*;
 
-use crate::Pallet as Payment;
+use crate::{Pallet as Payment, PaymentState};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
-use virto_primitives::{Asset, NetworkAsset, PaymentState};
 
 const SEED: u32 = 0;
-const CURRENCY_ID: Asset = Asset::Network(NetworkAsset::KSM);
+const CURRENCY_ID: u32 = 1u32;
 const INITIAL_AMOUNT: u32 = 100;
 const SOME_AMOUNT: u32 = 80;
 
@@ -22,7 +21,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 benchmarks! {
 	where_clause { where T::Asset: MultiCurrency<
 		<T as frame_system::Config>::AccountId,
-		CurrencyId = Asset, Balance = u32
+		CurrencyId = u32, Balance = u32
 	>
 }
 	// create a new payment succesfully
