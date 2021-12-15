@@ -19,7 +19,8 @@ pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
 pub const CURRENCY_ID: u32 = 1u32;
 pub const RESOLVER_ACCOUNT: AccountId = 12;
-pub const FEE_RECIPIENT_ACCOUNT : AccountId = 20;
+pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
+pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -101,8 +102,11 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 
 pub struct MockFeeHandler;
 impl crate::types::FeeHandler<AccountId, u32, u32> for MockFeeHandler {
-	fn apply_fees(_from: &AccountId, _to: &AccountId, _asset: u32, _amount: u32) -> u32 {
-		0u32
+	fn apply_fees(_from: &AccountId, to: &AccountId, _asset: u32, _amount: u32) -> u32 {
+		match to {
+			&PAYMENT_RECIPENT_FEE_CHARGED => 1u32,
+			_ => 0u32,
+		}
 	}
 }
 

@@ -15,7 +15,9 @@ mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use crate::types::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState, FeeHandler};
+	pub use crate::types::{
+		DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState,
+	};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
@@ -239,9 +241,15 @@ pub mod pallet {
 					// unreserve the amount to the recipent
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// calculate fee charged for transaction
-					let fee_amount = T::FeeHandler::apply_fees(&from, &to, payment.asset, payment.amount);
+					let fee_amount =
+						T::FeeHandler::apply_fees(&from, &to, payment.asset, payment.amount);
 					// transfer fee amount to marketplace
-					T::Asset::transfer(payment.asset, &from, &T::FeeRecipientAccount::get(), fee_amount)?;
+					T::Asset::transfer(
+						payment.asset,
+						&from,
+						&T::FeeRecipientAccount::get(),
+						fee_amount,
+					)?;
 					payment.state = PaymentState::Released;
 
 					Ok(())

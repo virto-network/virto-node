@@ -59,7 +59,7 @@ fn test_create_payment_works() {
 }
 
 #[test]
-fn test_release_payment_works() {
+fn test_cancel_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::create(
@@ -115,7 +115,7 @@ fn test_release_payment_works() {
 }
 
 #[test]
-fn test_cancel_payment_works() {
+fn test_release_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::create(
@@ -253,5 +253,39 @@ fn test_set_state_payment_works() {
 				resolver_account: RESOLVER_ACCOUNT
 			})
 		);
+	});
+}
+
+#[test]
+fn test_charging_fee_payment_works() {
+	new_test_ext().execute_with(|| {
+		// should be able to create a payment with available balance
+		assert_ok!(Payment::create(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT_FEE_CHARGED,
+			CURRENCY_ID,
+			40,
+		));
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 40,
+				incentive_amount: 4,
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT
+			})
+		);
+		// the payment amount should be reserved
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
+
+		// should succeed for valid payment
+		assert_ok!(Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT_FEE_CHARGED));
+		// the payment amount should be transferred
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 59);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 40);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
+		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 	});
 }
