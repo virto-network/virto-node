@@ -15,7 +15,7 @@ mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use crate::types::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
+	pub use crate::types::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState, FeeHandler};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
@@ -34,7 +34,12 @@ pub mod pallet {
 		type Asset: MultiReservableCurrency<Self::AccountId>;
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
-
+		/// Fee handler trait
+		type FeeHandler: FeeHandler<Self::AccountId, AssetIdOf<Self>, BalanceOf<Self>>;
+		/// Fee recipent account
+		#[pallet::constant]
+		type FeeRecipientAccount: Get<Self::AccountId>;
+		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
 	}
@@ -233,7 +238,10 @@ pub mod pallet {
 					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
 					// unreserve the amount to the recipent
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
-
+					// calculate fee charged for transaction
+					let fee_amount = T::FeeHandler::apply_fees(&from, &to, payment.asset, payment.amount);
+					// transfer fee amount to marketplace
+					T::Asset::transfer(payment.asset, &from, &T::FeeRecipientAccount::get(), fee_amount)?;
 					payment.state = PaymentState::Released;
 
 					Ok(())

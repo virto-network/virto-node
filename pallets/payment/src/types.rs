@@ -59,3 +59,7 @@ pub trait DisputeResolver<Account> {
 	/// Get a DisputeResolver (Judge) account
 	fn get_origin() -> Account;
 }
+
+pub trait FeeHandler<Account, Asset, Amount> {
+	fn apply_fees(from: &Account, to: &Account, asset: Asset, amount: Amount) -> Amount;
+}
