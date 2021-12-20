@@ -11,7 +11,7 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	pub incentive_amount: Amount,
 	pub state: PaymentState,
 	pub resolver_account: Account,
-	pub fee_detail: (Account, Amount)
+	pub fee_detail: (Account, Amount),
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]

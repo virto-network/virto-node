@@ -189,7 +189,7 @@ pub mod pallet {
 						incentive_amount,
 						state: PaymentState::Created,
 						resolver_account: T::DisputeResolver::get_origin(),
-						fee_detail: (fee_recipient, fee_amount)
+						fee_detail: (fee_recipient, fee_amount),
 					});
 					match maybe_payment {
 						Some(x) => {
@@ -245,7 +245,7 @@ pub mod pallet {
 						payment.asset,
 						&from,
 						&payment.fee_detail.0, // account
-						payment.fee_detail.1, // amount
+						payment.fee_detail.1,  // amount
 					)?;
 					payment.state = PaymentState::Released;
 
