@@ -101,18 +101,17 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 }
 
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<AccountId, u32, u32> for MockFeeHandler {
-	fn apply_fees(_from: &AccountId, to: &AccountId, _asset: u32, _amount: u32) -> u32 {
+impl crate::types::FeeHandler<AccountId> for MockFeeHandler {
+	fn apply_fees(_from: &AccountId, to: &AccountId) -> (AccountId, Percent) {
 		match to {
-			&PAYMENT_RECIPENT_FEE_CHARGED => 1u32,
-			_ => 0u32,
+			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
+			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
 		}
 	}
 }
 
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
-	pub const FeeRecipientAccount: AccountId = FEE_RECIPIENT_ACCOUNT;
 }
 
 impl payment::Config for Test {
@@ -121,7 +120,6 @@ impl payment::Config for Test {
 	type DisputeResolver = MockDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = MockFeeHandler;
-	type FeeRecipientAccount = FeeRecipientAccount;
 }
 
 // Build genesis storage according to the mock runtime.

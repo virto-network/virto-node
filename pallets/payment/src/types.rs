@@ -1,7 +1,7 @@
 #![allow(unused_qualifications)]
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_runtime::DispatchResult;
+use sp_runtime::{DispatchResult, Percent};
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -11,6 +11,7 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	pub incentive_amount: Amount,
 	pub state: PaymentState,
 	pub resolver_account: Account,
+	pub fee_detail: (Account, Amount)
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
@@ -60,6 +61,8 @@ pub trait DisputeResolver<Account> {
 	fn get_origin() -> Account;
 }
 
-pub trait FeeHandler<Account, Asset, Amount> {
-	fn apply_fees(from: &Account, to: &Account, asset: Asset, amount: Amount) -> Amount;
+/// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
+pub trait FeeHandler<Account> {
+	/// Get the distribution of fees to marketplace participants
+	fn apply_fees(from: &Account, to: &Account) -> (Account, Percent);
 }

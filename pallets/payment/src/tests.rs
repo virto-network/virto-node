@@ -27,7 +27,8 @@ fn test_create_payment_works() {
 				amount: 20,
 				incentive_amount: 2,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -52,7 +53,8 @@ fn test_create_payment_works() {
 				amount: 20,
 				incentive_amount: 2,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 	});
@@ -75,7 +77,8 @@ fn test_cancel_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 		// the payment amount should be reserved
@@ -103,7 +106,8 @@ fn test_cancel_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Cancelled,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 		// cannot call cancel again
@@ -131,7 +135,8 @@ fn test_release_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 		// the payment amount should be reserved
@@ -153,7 +158,8 @@ fn test_release_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Released,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 		// cannot call release again
@@ -218,7 +224,8 @@ fn test_set_state_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Released,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 
@@ -250,7 +257,8 @@ fn test_set_state_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Cancelled,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0)
 			})
 		);
 	});
@@ -273,7 +281,8 @@ fn test_charging_fee_payment_works() {
 				amount: 40,
 				incentive_amount: 4,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 4)
 			})
 		);
 		// the payment amount should be reserved
@@ -283,9 +292,9 @@ fn test_charging_fee_payment_works() {
 		// should succeed for valid payment
 		assert_ok!(Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT_FEE_CHARGED));
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 59);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 40);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 4);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 	});
 }

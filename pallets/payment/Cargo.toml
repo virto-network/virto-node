@@ -37,6 +37,5 @@ std = [
 	'scale-info/std',
 	'orml-traits/std',
 	'frame-benchmarking/std',
-	'orml-tokens/std'
 ]
 runtime-benchmarks = ["frame-benchmarking"]

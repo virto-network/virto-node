@@ -37,10 +37,7 @@ pub mod pallet {
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 		/// Fee handler trait
-		type FeeHandler: FeeHandler<Self::AccountId, AssetIdOf<Self>, BalanceOf<Self>>;
-		/// Fee recipent account
-		#[pallet::constant]
-		type FeeRecipientAccount: Get<Self::AccountId>;
+		type FeeHandler: FeeHandler<Self::AccountId>;
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
@@ -184,12 +181,15 @@ pub mod pallet {
 				recipient.clone(),
 				|maybe_payment| -> DispatchResult {
 					let incentive_amount = T::IncentivePercentage::get() * amount;
+					let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(&from, &recipient);
+					let fee_amount = fee_percent * amount;
 					let new_payment = Some(PaymentDetail {
 						asset,
 						amount,
 						incentive_amount,
 						state: PaymentState::Created,
 						resolver_account: T::DisputeResolver::get_origin(),
+						fee_detail: (fee_recipient, fee_amount)
 					});
 					match maybe_payment {
 						Some(x) => {
@@ -200,8 +200,8 @@ pub mod pallet {
 								x.state != PaymentState::Created,
 								Error::<T>::PaymentAlreadyInProcess
 							);
-							// reserve the incentive amount from the payment creator
-							T::Asset::reserve(asset, &from, incentive_amount)?;
+							// reserve the incentive + fees amount from the payment creator
+							T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
 							// transfer amount to recipient
 							T::Asset::transfer(asset, &from, &recipient, amount)?;
 							// reserved the amount in the recipient account
@@ -240,15 +240,12 @@ pub mod pallet {
 					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
 					// unreserve the amount to the recipent
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
-					// calculate fee charged for transaction
-					let fee_amount =
-						T::FeeHandler::apply_fees(&from, &to, payment.asset, payment.amount);
 					// transfer fee amount to marketplace
 					T::Asset::transfer(
 						payment.asset,
 						&from,
-						&T::FeeRecipientAccount::get(),
-						fee_amount,
+						&payment.fee_detail.0, // account
+						payment.fee_detail.1, // amount
 					)?;
 					payment.state = PaymentState::Released;
 
