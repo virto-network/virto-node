@@ -22,6 +22,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::Percent;
+	use sp_std::vec::Vec;
 
 	type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -103,7 +104,30 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
-				who, recipient, asset, amount,
+				who, recipient, asset, amount, None,
+			)?;
+			Ok(().into())
+		}
+
+		/// This allows any user to create a new payment with the option to add a remark, this remark
+		/// can then be used to run custom logic and trigger alternate payment flows.
+		/// the specified amount.
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn pay_with_remark(
+			origin: OriginFor<T>,
+			recipient: T::AccountId,
+			asset: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+			remark: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			// TODO : apply custom logic based on remark
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
+				who,
+				recipient,
+				asset,
+				amount,
+				Some(remark),
 			)?;
 			Ok(().into())
 		}
@@ -175,6 +199,7 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			remark: Option<Vec<u8>>,
 		) -> DispatchResult {
 			Payment::<T>::try_mutate(
 				from.clone(),
@@ -190,6 +215,7 @@ pub mod pallet {
 						state: PaymentState::Created,
 						resolver_account: T::DisputeResolver::get_origin(),
 						fee_detail: (fee_recipient, fee_amount),
+						remark,
 					});
 					match maybe_payment {
 						Some(x) => {
