@@ -605,7 +605,8 @@ impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 pub struct VirtoFeeHandler;
 impl virto_payment::FeeHandler<AccountId> for VirtoFeeHandler {
 	fn apply_fees(_from: &AccountId, _to: &AccountId) -> (AccountId, Percent) {
-		(Sudo::key(), Percent::from_percent(0))
+		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
+		(Sudo::key(), VIRTO_MARKETPLACE_FEE_PERCENT)
 	}
 }
 

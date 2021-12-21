@@ -243,9 +243,9 @@ pub mod pallet {
 					// transfer fee amount to marketplace
 					T::Asset::transfer(
 						payment.asset,
-						&from,
-						&payment.fee_detail.0, // account
-						payment.fee_detail.1,  // amount
+						&from,                 // fee is paid by payment creator
+						&payment.fee_detail.0, // account of fee recipient
+						payment.fee_detail.1,  // amount of fee
 					)?;
 					payment.state = PaymentState::Released;
 
