@@ -3,7 +3,7 @@ use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
 
-/* 
+/*
 The PaymentDetail struct stores information about the payment/escrow
 A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
 and can be released once an agreed upon condition has reached between the payment creator
@@ -25,7 +25,6 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	/// fee charged and recipient account details
 	pub fee_detail: (Account, Amount),
 }
-
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
