@@ -14,7 +14,7 @@ fn test_create_payment_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
@@ -42,7 +42,7 @@ fn test_create_payment_works() {
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::create(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -64,7 +64,7 @@ fn test_create_payment_works() {
 fn test_cancel_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
@@ -122,7 +122,7 @@ fn test_cancel_payment_works() {
 fn test_release_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
@@ -169,7 +169,7 @@ fn test_release_payment_works() {
 		);
 
 		// should be able to create another payment since previous is released
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
@@ -185,7 +185,7 @@ fn test_release_payment_works() {
 fn test_set_state_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
@@ -229,7 +229,7 @@ fn test_set_state_payment_works() {
 			})
 		);
 
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
@@ -268,7 +268,7 @@ fn test_set_state_payment_works() {
 fn test_charging_fee_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
@@ -304,7 +304,7 @@ fn test_charging_fee_payment_works() {
 fn test_charging_fee_payment_works_when_canceled() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::create(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,

@@ -95,7 +95,7 @@ pub mod pallet {
 		/// The only action is to store the details of this payment in storage and reserve
 		/// the specified amount.
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn create(
+		pub fn pay(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
