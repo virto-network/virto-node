@@ -210,7 +210,7 @@ pub mod pallet {
 						},
 						None => {
 							// reserve the incentive amount from the payment creator
-							T::Asset::reserve(asset, &from, incentive_amount)?;
+							T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
 							// transfer amount to recipient
 							T::Asset::transfer(asset, &from, &recipient, amount)?;
 							// reserved the amount in the recipient account
@@ -237,7 +237,11 @@ pub mod pallet {
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
 					// unreserve the incentive amount back to the creator
-					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+					T::Asset::unreserve(
+						payment.asset,
+						&from,
+						payment.incentive_amount + payment.fee_detail.1,
+					);
 					// unreserve the amount to the recipent
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer fee amount to marketplace
@@ -274,7 +278,11 @@ pub mod pallet {
 						Error::<T>::PaymentAlreadyReleased
 					);
 					// unreserve the incentive amount from the owner account
-					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+					T::Asset::unreserve(
+						payment.asset,
+						&from,
+						payment.incentive_amount + payment.fee_detail.1,
+					);
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer amount to creator
 					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
