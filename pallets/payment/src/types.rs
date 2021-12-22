@@ -1,23 +1,39 @@
 #![allow(unused_qualifications)]
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_runtime::DispatchResult;
+use sp_runtime::{DispatchResult, Percent};
 
+/*
+The PaymentDetail struct stores information about the payment/escrow
+A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
+and can be released once an agreed upon condition has reached between the payment creator
+and recipient. The payment lifecycle is tracked using the state field.
+*/
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaymentDetail<Asset, Amount, Account> {
+	/// type of asset used for payment
 	pub asset: Asset,
+	/// amount of asset used for payment
 	pub amount: Amount,
+	/// incentive amount that is credited to creator for resolving
 	pub incentive_amount: Amount,
+	/// enum to track payment lifecycle [Created, Released, Cancelled, NeedsReview]
 	pub state: PaymentState,
+	/// account that can settle any disputes created in the payment
 	pub resolver_account: Account,
+	/// fee charged and recipient account details
+	pub fee_detail: (Account, Amount),
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PaymentState {
+	/// Amounts have been reserved and waiting for release/cancel
 	Created,
+	/// Payment has been completed and amount transferred
 	Released,
+	/// All funds unreserved and sent to original owners
 	Cancelled,
 	/// A judge needs to review and release manually
 	NeedsReview,
@@ -58,4 +74,10 @@ pub trait PaymentHandler<Account, Asset, Amount> {
 pub trait DisputeResolver<Account> {
 	/// Get a DisputeResolver (Judge) account
 	fn get_origin() -> Account;
+}
+
+/// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
+pub trait FeeHandler<Account> {
+	/// Get the distribution of fees to marketplace participants
+	fn apply_fees(from: &Account, to: &Account) -> (Account, Percent);
 }

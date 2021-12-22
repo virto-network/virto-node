@@ -15,7 +15,9 @@ mod types;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use crate::types::{DisputeResolver, PaymentDetail, PaymentHandler, PaymentState};
+	pub use crate::types::{
+		DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState,
+	};
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
@@ -34,7 +36,9 @@ pub mod pallet {
 		type Asset: MultiReservableCurrency<Self::AccountId>;
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
-
+		/// Fee handler trait
+		type FeeHandler: FeeHandler<Self::AccountId>;
+		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
 	}
@@ -177,12 +181,15 @@ pub mod pallet {
 				recipient.clone(),
 				|maybe_payment| -> DispatchResult {
 					let incentive_amount = T::IncentivePercentage::get() * amount;
+					let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(&from, &recipient);
+					let fee_amount = fee_percent * amount;
 					let new_payment = Some(PaymentDetail {
 						asset,
 						amount,
 						incentive_amount,
 						state: PaymentState::Created,
 						resolver_account: T::DisputeResolver::get_origin(),
+						fee_detail: (fee_recipient, fee_amount),
 					});
 					match maybe_payment {
 						Some(x) => {
@@ -193,8 +200,8 @@ pub mod pallet {
 								x.state != PaymentState::Created,
 								Error::<T>::PaymentAlreadyInProcess
 							);
-							// reserve the incentive amount from the payment creator
-							T::Asset::reserve(asset, &from, incentive_amount)?;
+							// reserve the incentive + fees amount from the payment creator
+							T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
 							// transfer amount to recipient
 							T::Asset::transfer(asset, &from, &recipient, amount)?;
 							// reserved the amount in the recipient account
@@ -203,7 +210,7 @@ pub mod pallet {
 						},
 						None => {
 							// reserve the incentive amount from the payment creator
-							T::Asset::reserve(asset, &from, incentive_amount)?;
+							T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
 							// transfer amount to recipient
 							T::Asset::transfer(asset, &from, &recipient, amount)?;
 							// reserved the amount in the recipient account
@@ -230,10 +237,20 @@ pub mod pallet {
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
 					// unreserve the incentive amount back to the creator
-					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+					T::Asset::unreserve(
+						payment.asset,
+						&from,
+						payment.incentive_amount + payment.fee_detail.1,
+					);
 					// unreserve the amount to the recipent
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
-
+					// transfer fee amount to marketplace
+					T::Asset::transfer(
+						payment.asset,
+						&from,                 // fee is paid by payment creator
+						&payment.fee_detail.0, // account of fee recipient
+						payment.fee_detail.1,  // amount of fee
+					)?;
 					payment.state = PaymentState::Released;
 
 					Ok(())
@@ -261,7 +278,11 @@ pub mod pallet {
 						Error::<T>::PaymentAlreadyReleased
 					);
 					// unreserve the incentive amount from the owner account
-					T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+					T::Asset::unreserve(
+						payment.asset,
+						&from,
+						payment.incentive_amount + payment.fee_detail.1,
+					);
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer amount to creator
 					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {

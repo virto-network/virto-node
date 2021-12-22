@@ -602,6 +602,14 @@ impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 	}
 }
 
+pub struct VirtoFeeHandler;
+impl virto_payment::FeeHandler<AccountId> for VirtoFeeHandler {
+	fn apply_fees(_from: &AccountId, _to: &AccountId) -> (AccountId, Percent) {
+		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
+		(Sudo::key(), VIRTO_MARKETPLACE_FEE_PERCENT)
+	}
+}
+
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 }
@@ -611,6 +619,7 @@ impl virto_payment::Config for Runtime {
 	type Asset = Assets;
 	type DisputeResolver = VirtoDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
+	type FeeHandler = VirtoFeeHandler;
 }
 
 parameter_types! {
