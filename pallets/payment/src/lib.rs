@@ -217,33 +217,24 @@ pub mod pallet {
 						fee_detail: (fee_recipient, fee_amount),
 						remark,
 					});
-					match maybe_payment {
-						Some(x) => {
-							// do not overwrite an in-process payment!
-							// ensure the payment is not in created state, it should
-							// be in released/cancelled, in which case it can be overwritten
-							ensure!(
-								x.state != PaymentState::Created,
-								Error::<T>::PaymentAlreadyInProcess
-							);
-							// reserve the incentive + fees amount from the payment creator
-							T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
-							// transfer amount to recipient
-							T::Asset::transfer(asset, &from, &recipient, amount)?;
-							// reserved the amount in the recipient account
-							T::Asset::reserve(asset, &recipient, amount)?;
-							*maybe_payment = new_payment
-						},
-						None => {
-							// reserve the incentive amount from the payment creator
-							T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
-							// transfer amount to recipient
-							T::Asset::transfer(asset, &from, &recipient, amount)?;
-							// reserved the amount in the recipient account
-							T::Asset::reserve(asset, &recipient, amount)?;
-							*maybe_payment = new_payment
-						},
+					// ensure a payment is not already in process
+					if maybe_payment.is_some() {
+						// do not overwrite an in-process payment!
+						// ensure the payment is not in created state, it should
+						// be in released/cancelled, in which case it can be overwritten
+						ensure!(
+							maybe_payment.clone().unwrap().state != PaymentState::Created,
+							Error::<T>::PaymentAlreadyInProcess
+						);
 					}
+					// reserve the incentive amount from the payment creator
+					T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
+					// transfer amount to recipient
+					T::Asset::transfer(asset, &from, &recipient, amount)?;
+					// reserved the amount in the recipient account
+					T::Asset::reserve(asset, &recipient, amount)?;
+					*maybe_payment = new_payment;
+
 					Self::deposit_event(Event::PaymentCreated(from, asset, amount));
 					Ok(())
 				},
