@@ -86,7 +86,7 @@ pub trait DisputeResolver<Account> {
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
-pub trait FeeHandler<Account> {
+pub trait FeeHandler<Account, Remark> {
 	/// Get the distribution of fees to marketplace participants
-	fn apply_fees(from: &Account, to: &Account) -> (Account, Percent);
+	fn apply_fees(from: &Account, to: &Account, remark: &Option<Remark>) -> (Account, Percent);
 }

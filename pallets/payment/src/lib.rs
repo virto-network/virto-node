@@ -38,7 +38,7 @@ pub mod pallet {
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 		/// Fee handler trait
-		type FeeHandler: FeeHandler<Self::AccountId>;
+		type FeeHandler: FeeHandler<Self::AccountId, Vec<u8>>;
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
@@ -231,7 +231,8 @@ pub mod pallet {
 
 					// Calculate fee amount - this will be implemented based on the custom
 					// implementation of the marketplace
-					let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(&from, &recipient);
+					let (fee_recipient, fee_percent) =
+						T::FeeHandler::apply_fees(&from, &recipient, &remark);
 					let fee_amount = fee_percent * amount;
 
 					let new_payment = Some(PaymentDetail {

@@ -101,8 +101,12 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 }
 
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<AccountId> for MockFeeHandler {
-	fn apply_fees(_from: &AccountId, to: &AccountId) -> (AccountId, Percent) {
+impl crate::types::FeeHandler<AccountId, Vec<u8>> for MockFeeHandler {
+	fn apply_fees(
+		_from: &AccountId,
+		to: &AccountId,
+		_remark: &Option<Vec<u8>>,
+	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
 			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
