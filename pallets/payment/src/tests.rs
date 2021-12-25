@@ -345,3 +345,20 @@ fn test_charging_fee_payment_works_when_canceled() {
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 	});
 }
+
+#[test]
+fn test_remark_too_large_should_be_rejected() {
+	new_test_ext().execute_with(|| {
+		// payments with larger than limit remarks should be rejected
+		assert_noop!(
+			Payment::pay_with_remark(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT_FEE_CHARGED,
+				CURRENCY_ID,
+				40,
+				vec![1; 51]
+			),
+			crate::Error::<Test>::RemarkTooLarge
+		);
+	});
+}

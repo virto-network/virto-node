@@ -112,6 +112,7 @@ impl crate::types::FeeHandler<AccountId> for MockFeeHandler {
 
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+	pub const MaxRemarkLength: u32 = 50;
 }
 
 impl payment::Config for Test {
@@ -120,6 +121,7 @@ impl payment::Config for Test {
 	type DisputeResolver = MockDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = MockFeeHandler;
+	type MaxRemarkLength = MaxRemarkLength;
 }
 
 // Build genesis storage according to the mock runtime.

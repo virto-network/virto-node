@@ -42,6 +42,9 @@ pub mod pallet {
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
+		/// Incentive percentage - amount witheld from sender
+		#[pallet::constant]
+		type MaxRemarkLength: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -85,6 +88,8 @@ pub mod pallet {
 		PaymentAlreadyInProcess,
 		/// Action permitted only for whitelisted users
 		InvalidAction,
+		/// Remark size is larger than permitted
+		RemarkTooLarge,
 	}
 
 	#[pallet::hooks]
@@ -121,7 +126,12 @@ pub mod pallet {
 			remark: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// TODO : apply custom logic based on remark
+			// ensure remark is not too large
+			ensure!(
+				remark.len() <= T::MaxRemarkLength::get().try_into().unwrap(),
+				Error::<T>::RemarkTooLarge
+			);
+
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
 				who,
 				recipient,
@@ -205,18 +215,6 @@ pub mod pallet {
 				from.clone(),
 				recipient.clone(),
 				|maybe_payment| -> DispatchResult {
-					let incentive_amount = T::IncentivePercentage::get() * amount;
-					let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(&from, &recipient);
-					let fee_amount = fee_percent * amount;
-					let new_payment = Some(PaymentDetail {
-						asset,
-						amount,
-						incentive_amount,
-						state: PaymentState::Created,
-						resolver_account: T::DisputeResolver::get_origin(),
-						fee_detail: (fee_recipient, fee_amount),
-						remark,
-					});
 					// ensure a payment is not already in process
 					if maybe_payment.is_some() {
 						// do not overwrite an in-process payment!
@@ -227,12 +225,31 @@ pub mod pallet {
 							Error::<T>::PaymentAlreadyInProcess
 						);
 					}
+					// Calculate incentive amount - this is to insentivise the user to release
+					// the funds once a transaction has been completed
+					let incentive_amount = T::IncentivePercentage::get() * amount;
+
+					// Calculate fee amount - this will be implemented based on the custom
+					// implementation of the marketplace
+					let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(&from, &recipient);
+					let fee_amount = fee_percent * amount;
+
+					let new_payment = Some(PaymentDetail {
+						asset,
+						amount,
+						incentive_amount,
+						state: PaymentState::Created,
+						resolver_account: T::DisputeResolver::get_origin(),
+						fee_detail: (fee_recipient, fee_amount),
+						remark,
+					});
 					// reserve the incentive amount from the payment creator
 					T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
 					// transfer amount to recipient
 					T::Asset::transfer(asset, &from, &recipient, amount)?;
 					// reserved the amount in the recipient account
 					T::Asset::reserve(asset, &recipient, amount)?;
+
 					*maybe_payment = new_payment;
 
 					Self::deposit_event(Event::PaymentCreated(from, asset, amount));

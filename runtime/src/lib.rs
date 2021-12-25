@@ -612,6 +612,7 @@ impl virto_payment::FeeHandler<AccountId> for VirtoFeeHandler {
 
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+	pub const MaxRemarkLength: u32 = 50;
 }
 
 impl virto_payment::Config for Runtime {
@@ -620,6 +621,7 @@ impl virto_payment::Config for Runtime {
 	type DisputeResolver = VirtoDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = VirtoFeeHandler;
+	type MaxRemarkLength = MaxRemarkLength;
 }
 
 parameter_types! {
