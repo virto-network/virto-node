@@ -90,6 +90,8 @@ pub mod pallet {
 		InvalidAction,
 		/// Remark size is larger than permitted
 		RemarkTooLarge,
+		/// Selected payment is currently disputed
+		PaymentNeedsReview,
 	}
 
 	#[pallet::hooks]
@@ -218,11 +220,16 @@ pub mod pallet {
 					// ensure a payment is not already in process
 					if maybe_payment.is_some() {
 						// do not overwrite an in-process payment!
-						// ensure the payment is not in created state, it should
+						// ensure the payment is not in created/needsreview state, it should
 						// be in released/cancelled, in which case it can be overwritten
+						let current_state = maybe_payment.clone().unwrap().state;
 						ensure!(
-							maybe_payment.clone().unwrap().state != PaymentState::Created,
+							current_state != PaymentState::Created,
 							Error::<T>::PaymentAlreadyInProcess
+						);
+						ensure!(
+							current_state != PaymentState::NeedsReview,
+							Error::<T>::PaymentNeedsReview
 						);
 					}
 					// Calculate incentive amount - this is to insentivise the user to release

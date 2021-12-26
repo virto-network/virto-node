@@ -402,3 +402,42 @@ fn test_pay_with_remark_works() {
 		);
 	});
 }
+
+#[test]
+fn test_do_not_overwrite_logic_works() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay_with_remark(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+			"test".into()
+		));
+
+		assert_noop!(
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			crate::Error::<Test>::PaymentAlreadyInProcess
+		);
+
+		// set payment state to NeedsReview
+		PaymentStore::<Test>::insert(
+			PAYMENT_CREATOR,
+			PAYMENT_RECIPENT,
+			PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::NeedsReview,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				remark: Some("test".into()),
+			},
+		);
+
+		// the payment should not be overwritten
+		assert_noop!(
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			crate::Error::<Test>::PaymentNeedsReview
+		);
+	});
+}
