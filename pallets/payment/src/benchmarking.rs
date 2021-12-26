@@ -53,7 +53,7 @@ benchmarks! {
 		Payment::<T>::create(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), CURRENCY_ID, SOME_AMOUNT)?;
 	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentReleased(caller, recipent).into());
+		assert_last_event::<T>(Event::<T>::PaymentCancelled(caller, recipent).into());
 	}
 
 	// resolve an existing payment succesfully - cancel since that is the most complex route
