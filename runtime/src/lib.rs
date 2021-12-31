@@ -603,12 +603,11 @@ impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 }
 
 pub struct VirtoFeeHandler;
-pub type Remark = Vec<u8>;
-impl virto_payment::FeeHandler<AccountId, Remark> for VirtoFeeHandler {
+impl virto_payment::FeeHandler<Asset, Balance, AccountId> for VirtoFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		_to: &AccountId,
-		_remark: &Option<Remark>,
+		_remark: &virto_payment::PaymentDetail<Asset, Balance, AccountId>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
 		(Sudo::key(), VIRTO_MARKETPLACE_FEE_PERCENT)
