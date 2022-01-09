@@ -2,6 +2,7 @@
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
+use sp_std::vec::Vec;
 
 /*
 The PaymentDetail struct stores information about the payment/escrow
@@ -23,7 +24,9 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: Account,
 	/// fee charged and recipient account details
-	pub fee_detail: (Account, Amount),
+	pub fee_detail: Option<(Account, Amount)>,
+	/// remarks to give context to payment
+	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
 }
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
@@ -44,7 +47,13 @@ pub trait PaymentHandler<Account, Asset, Amount> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
 	/// - User does not have enough balance.
-	fn create_payment(from: Account, to: Account, asset: Asset, amount: Amount) -> DispatchResult;
+	fn create_payment(
+		from: Account,
+		to: Account,
+		asset: Asset,
+		amount: Amount,
+		remark: Option<Vec<u8>>,
+	) -> DispatchResult;
 
 	/// Attempt to transfer an amount of the given asset from the given payment_id
 	/// If not possible then return Error. Possible reasons for failure include:
@@ -77,7 +86,11 @@ pub trait DisputeResolver<Account> {
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
-pub trait FeeHandler<Account> {
+pub trait FeeHandler<Asset, Amount, Account> {
 	/// Get the distribution of fees to marketplace participants
-	fn apply_fees(from: &Account, to: &Account) -> (Account, Percent);
+	fn apply_fees(
+		from: &Account,
+		to: &Account,
+		detail: &PaymentDetail<Asset, Amount, Account>,
+	) -> (Account, Percent);
 }

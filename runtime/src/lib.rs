@@ -603,8 +603,12 @@ impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 }
 
 pub struct VirtoFeeHandler;
-impl virto_payment::FeeHandler<AccountId> for VirtoFeeHandler {
-	fn apply_fees(_from: &AccountId, _to: &AccountId) -> (AccountId, Percent) {
+impl virto_payment::FeeHandler<Asset, Balance, AccountId> for VirtoFeeHandler {
+	fn apply_fees(
+		_from: &AccountId,
+		_to: &AccountId,
+		_remark: &virto_payment::PaymentDetail<Asset, Balance, AccountId>,
+	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
 		(Sudo::key(), VIRTO_MARKETPLACE_FEE_PERCENT)
 	}
@@ -612,6 +616,7 @@ impl virto_payment::FeeHandler<AccountId> for VirtoFeeHandler {
 
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+	pub const MaxRemarkLength: u32 = 50;
 }
 
 impl virto_payment::Config for Runtime {
@@ -620,6 +625,7 @@ impl virto_payment::Config for Runtime {
 	type DisputeResolver = VirtoDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = VirtoFeeHandler;
+	type MaxRemarkLength = MaxRemarkLength;
 }
 
 parameter_types! {

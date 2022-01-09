@@ -1,4 +1,5 @@
 use crate as payment;
+use crate::PaymentDetail;
 use frame_support::{
 	parameter_types,
 	traits::{Contains, Everything, GenesisBuild},
@@ -101,8 +102,12 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 }
 
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<AccountId> for MockFeeHandler {
-	fn apply_fees(_from: &AccountId, to: &AccountId) -> (AccountId, Percent) {
+impl crate::types::FeeHandler<u32, u32, AccountId> for MockFeeHandler {
+	fn apply_fees(
+		_from: &AccountId,
+		to: &AccountId,
+		_remark: &PaymentDetail<u32, u32, AccountId>,
+	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
 			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
@@ -112,6 +117,7 @@ impl crate::types::FeeHandler<AccountId> for MockFeeHandler {
 
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+	pub const MaxRemarkLength: u32 = 50;
 }
 
 impl payment::Config for Test {
@@ -120,6 +126,7 @@ impl payment::Config for Test {
 	type DisputeResolver = MockDisputeResolver;
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = MockFeeHandler;
+	type MaxRemarkLength = MaxRemarkLength;
 }
 
 // Build genesis storage according to the mock runtime.
