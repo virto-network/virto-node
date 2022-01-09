@@ -1,4 +1,5 @@
 use crate as payment;
+use crate::PaymentDetail;
 use frame_support::{
 	parameter_types,
 	traits::{Contains, Everything, GenesisBuild},
@@ -101,11 +102,11 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 }
 
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<AccountId, Vec<u8>> for MockFeeHandler {
+impl crate::types::FeeHandler<u32, u32, AccountId> for MockFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		to: &AccountId,
-		_remark: &Option<Vec<u8>>,
+		_remark: &PaymentDetail<u32, u32, AccountId>,
 	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
