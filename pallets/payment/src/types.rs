@@ -24,7 +24,7 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: Account,
 	/// fee charged and recipient account details
-	pub fee_detail: (Account, Amount),
+	pub fee_detail: Option<(Account, Amount)>,
 	/// remarks to give context to payment
 	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
 }
@@ -86,7 +86,11 @@ pub trait DisputeResolver<Account> {
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
-pub trait FeeHandler<Account, Remark> {
+pub trait FeeHandler<Asset, Amount, Account> {
 	/// Get the distribution of fees to marketplace participants
-	fn apply_fees(from: &Account, to: &Account, remark: &Option<Remark>) -> (Account, Percent);
+	fn apply_fees(
+		from: &Account,
+		to: &Account,
+		detail: &PaymentDetail<Asset, Amount, Account>,
+	) -> (Account, Percent);
 }

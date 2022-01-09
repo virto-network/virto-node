@@ -28,7 +28,7 @@ fn test_create_payment_works() {
 				incentive_amount: 2,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -55,7 +55,7 @@ fn test_create_payment_works() {
 				incentive_amount: 2,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -80,7 +80,7 @@ fn test_cancel_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -110,7 +110,7 @@ fn test_cancel_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Cancelled,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -140,7 +140,7 @@ fn test_release_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -164,7 +164,7 @@ fn test_release_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Released,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -231,7 +231,7 @@ fn test_set_state_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Released,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -265,7 +265,7 @@ fn test_set_state_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Cancelled,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
 			})
 		);
@@ -290,7 +290,7 @@ fn test_charging_fee_payment_works() {
 				incentive_amount: 4,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 4),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
 				remark: None
 			})
 		);
@@ -327,7 +327,7 @@ fn test_charging_fee_payment_works_when_canceled() {
 				incentive_amount: 4,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 4),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
 				remark: None
 			})
 		);
@@ -382,7 +382,7 @@ fn test_pay_with_remark_works() {
 				incentive_amount: 2,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: Some("test".into())
 			})
 		);
@@ -399,45 +399,6 @@ fn test_pay_with_remark_works() {
 		assert_noop!(
 			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
 			crate::Error::<Test>::PaymentAlreadyInProcess
-		);
-	});
-}
-
-#[test]
-fn test_do_not_overwrite_logic_works() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay_with_remark(
-			Origin::signed(PAYMENT_CREATOR),
-			PAYMENT_RECIPENT,
-			CURRENCY_ID,
-			20,
-			"test".into()
-		));
-
-		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
-			crate::Error::<Test>::PaymentAlreadyInProcess
-		);
-
-		// set payment state to NeedsReview
-		PaymentStore::<Test>::insert(
-			PAYMENT_CREATOR,
-			PAYMENT_RECIPENT,
-			PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
-				state: PaymentState::NeedsReview,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
-				remark: Some("test".into()),
-			},
-		);
-
-		// the payment should not be overwritten
-		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
-			crate::Error::<Test>::PaymentNeedsReview
 		);
 	});
 }

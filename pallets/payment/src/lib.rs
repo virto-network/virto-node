@@ -38,7 +38,7 @@ pub mod pallet {
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 		/// Fee handler trait
-		type FeeHandler: FeeHandler<Self::AccountId, Vec<u8>>;
+		type FeeHandler: FeeHandler<AssetIdOf<Self>, BalanceOf<Self>, Self::AccountId>;
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
@@ -90,8 +90,6 @@ pub mod pallet {
 		InvalidAction,
 		/// Remark size is larger than permitted
 		RemarkTooLarge,
-		/// Selected payment is currently disputed
-		PaymentNeedsReview,
 	}
 
 	#[pallet::hooks]
@@ -108,8 +106,15 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			remark: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			// ensure remark is not too large
+			ensure!(
+				remark.len() <= T::MaxRemarkLength::get().try_into().unwrap(),
+				Error::<T>::RemarkTooLarge
+			);
+
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
 				who, recipient, asset, amount, None,
 			)?;
@@ -220,37 +225,34 @@ pub mod pallet {
 					// ensure a payment is not already in process
 					if maybe_payment.is_some() {
 						// do not overwrite an in-process payment!
-						// ensure the payment is not in created/needsreview state, it should
+						// ensure the payment is not in created state, it should
 						// be in released/cancelled, in which case it can be overwritten
-						let current_state = maybe_payment.clone().unwrap().state;
 						ensure!(
-							current_state != PaymentState::Created,
+							maybe_payment.clone().unwrap().state != PaymentState::Created,
 							Error::<T>::PaymentAlreadyInProcess
-						);
-						ensure!(
-							current_state != PaymentState::NeedsReview,
-							Error::<T>::PaymentNeedsReview
 						);
 					}
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
 					let incentive_amount = T::IncentivePercentage::get() * amount;
 
-					// Calculate fee amount - this will be implemented based on the custom
-					// implementation of the marketplace
-					let (fee_recipient, fee_percent) =
-						T::FeeHandler::apply_fees(&from, &recipient, &remark);
-					let fee_amount = fee_percent * amount;
-
-					let new_payment = Some(PaymentDetail {
+					let mut new_payment = PaymentDetail {
 						asset,
 						amount,
 						incentive_amount,
 						state: PaymentState::Created,
 						resolver_account: T::DisputeResolver::get_origin(),
-						fee_detail: (fee_recipient, fee_amount),
+						fee_detail: None,
 						remark,
-					});
+					};
+
+					// Calculate fee amount - this will be implemented based on the custom
+					// implementation of the marketplace
+					let (fee_recipient, fee_percent) =
+						T::FeeHandler::apply_fees(&from, &recipient, &new_payment);
+					let fee_amount = fee_percent * amount;
+					new_payment.fee_detail = Some((fee_recipient, fee_amount));
+
 					// reserve the incentive amount from the payment creator
 					T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
 					// transfer amount to recipient
@@ -258,9 +260,9 @@ pub mod pallet {
 					// reserved the amount in the recipient account
 					T::Asset::reserve(asset, &recipient, amount)?;
 
-					*maybe_payment = new_payment;
+					*maybe_payment = Some(new_payment);
 
-					Self::deposit_event(Event::PaymentCreated { from, asset, amount });
+					Self::deposit_event(Event::PaymentCreated(from, asset, amount));
 					Ok(())
 				},
 			)
@@ -278,20 +280,22 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
+					let (fee_recipient_account, fee_amount) =
+						payment.fee_detail.clone().unwrap_or_default();
 					// unreserve the incentive amount back to the creator
 					T::Asset::unreserve(
 						payment.asset,
 						&from,
-						payment.incentive_amount + payment.fee_detail.1,
+						payment.incentive_amount + fee_amount,
 					);
 					// unreserve the amount to the recipent
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer fee amount to marketplace
 					T::Asset::transfer(
 						payment.asset,
-						&from,                 // fee is paid by payment creator
-						&payment.fee_detail.0, // account of fee recipient
-						payment.fee_detail.1,  // amount of fee
+						&from,                  // fee is paid by payment creator
+						&fee_recipient_account, // account of fee recipient
+						fee_amount,             // amount of fee
 					)?;
 					payment.state = PaymentState::Released;
 
@@ -323,7 +327,7 @@ pub mod pallet {
 					T::Asset::unreserve(
 						payment.asset,
 						&from,
-						payment.incentive_amount + payment.fee_detail.1,
+						payment.incentive_amount + payment.fee_detail.clone().unwrap_or_default().1,
 					);
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer amount to creator
