@@ -298,12 +298,11 @@ pub mod pallet {
 						&fee_recipient_account, // account of fee recipient
 						fee_amount,             // amount of fee
 					)?;
-					payment.state = PaymentState::Released;
-
+					// clear payment data from storage
+					*maybe_payment = None;
 					Ok(())
 				},
 			)?;
-			Payment::<T>::remove(from.clone(), to.clone());
 			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(())
 		}
@@ -333,9 +332,7 @@ pub mod pallet {
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer amount to creator
 					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
-						Ok(_) =>
-							*maybe_payment =
-								Some(PaymentDetail { state: PaymentState::Cancelled, ..payment }),
+						Ok(_) => *maybe_payment = None, // delete canceled payment from storage
 						Err(_) =>
 							*maybe_payment =
 								Some(PaymentDetail { state: PaymentState::NeedsReview, ..payment }),
