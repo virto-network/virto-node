@@ -71,11 +71,11 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new payment has been created
-		PaymentCreated(T::AccountId, AssetIdOf<T>, BalanceOf<T>),
+		PaymentCreated { from: T::AccountId, asset: AssetIdOf<T>, amount: BalanceOf<T> },
 		/// Payment amount released to the recipient
-		PaymentReleased(T::AccountId, T::AccountId),
+		PaymentReleased { from: T::AccountId, to: T::AccountId },
 		/// Payment has been cancelled by the creator
-		PaymentCancelled(T::AccountId, T::AccountId),
+		PaymentCancelled { from: T::AccountId, to: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -263,7 +263,7 @@ pub mod pallet {
 
 					*maybe_payment = Some(new_payment);
 
-					Self::deposit_event(Event::PaymentCreated(from, asset, amount));
+					Self::deposit_event(Event::PaymentCreated { from, asset, amount });
 					Ok(())
 				},
 			)
@@ -304,7 +304,7 @@ pub mod pallet {
 				},
 			)?;
 
-			Self::deposit_event(Event::PaymentReleased(from, to));
+			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(())
 		}
 
@@ -344,7 +344,7 @@ pub mod pallet {
 					Ok(())
 				},
 			)?;
-			Self::deposit_event(Event::PaymentReleased(from, to));
+			Self::deposit_event(Event::PaymentCancelled { from, to });
 			Ok(())
 		}
 
