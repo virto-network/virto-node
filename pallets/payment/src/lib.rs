@@ -90,6 +90,8 @@ pub mod pallet {
 		InvalidAction,
 		/// Remark size is larger than permitted
 		RemarkTooLarge,
+		/// Payment is in review state and cannot be modified
+		PaymentNeedsReview,
 	}
 
 	#[pallet::hooks]
@@ -106,14 +108,8 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// ensure remark is not too large
-			ensure!(
-				remark.len() <= T::MaxRemarkLength::get().try_into().unwrap(),
-				Error::<T>::RemarkTooLarge
-			);
 
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
 				who, recipient, asset, amount, None,
@@ -225,11 +221,16 @@ pub mod pallet {
 					// ensure a payment is not already in process
 					if maybe_payment.is_some() {
 						// do not overwrite an in-process payment!
-						// ensure the payment is not in created state, it should
+						// ensure the payment is not in created/needsreview state, it should
 						// be in released/cancelled, in which case it can be overwritten
+						let current_state = maybe_payment.clone().unwrap().state;
 						ensure!(
-							maybe_payment.clone().unwrap().state != PaymentState::Created,
+							current_state != PaymentState::Created,
 							Error::<T>::PaymentAlreadyInProcess
+						);
+						ensure!(
+							current_state != PaymentState::NeedsReview,
+							Error::<T>::PaymentNeedsReview
 						);
 					}
 					// Calculate incentive amount - this is to insentivise the user to release
