@@ -263,7 +263,7 @@ pub mod pallet {
 
 					*maybe_payment = Some(new_payment);
 
-					Self::deposit_event(Event::PaymentCreated(from, asset, amount));
+					Self::deposit_event(Event::PaymentCreated { from, asset, amount });
 					Ok(())
 				},
 			)
