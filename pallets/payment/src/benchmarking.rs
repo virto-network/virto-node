@@ -31,7 +31,7 @@ benchmarks! {
 		let recipent = account("recipient", 0, SEED);
 	}: _(RawOrigin::Signed(caller.clone()), recipent, CURRENCY_ID, SOME_AMOUNT)
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCreated(caller, CURRENCY_ID, SOME_AMOUNT).into());
+		assert_last_event::<T>(Event::<T>::PaymentCreated { from : caller, asset: CURRENCY_ID, amount: SOME_AMOUNT}.into());
 	}
 
 	// create a new payment with remark sucessfully
@@ -41,7 +41,7 @@ benchmarks! {
 		let recipent = account("recipient", 0, SEED);
 	}: _(RawOrigin::Signed(caller.clone()), recipent, CURRENCY_ID, SOME_AMOUNT, "test".into())
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCreated(caller, CURRENCY_ID, SOME_AMOUNT).into());
+		assert_last_event::<T>(Event::<T>::PaymentCreated { from: caller, asset: CURRENCY_ID, amount: SOME_AMOUNT}.into());
 	}
 
 	// release an existing payment succesfully
@@ -52,7 +52,7 @@ benchmarks! {
 		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), CURRENCY_ID, SOME_AMOUNT)?;
 	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentReleased(caller, recipent).into());
+		assert_last_event::<T>(Event::<T>::PaymentReleased { from: caller, to: recipent}.into());
 	}
 
 	// cancel an existing payment succesfully
@@ -63,7 +63,7 @@ benchmarks! {
 		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), CURRENCY_ID, SOME_AMOUNT)?;
 	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCancelled(caller, recipent).into());
+		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
 
 	// resolve an existing payment succesfully - cancel since that is the most complex route
@@ -75,7 +75,7 @@ benchmarks! {
 		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), CURRENCY_ID, SOME_AMOUNT)?;
 	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone(), PaymentState::Cancelled)
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCancelled(caller, recipent).into());
+		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
 }
 
