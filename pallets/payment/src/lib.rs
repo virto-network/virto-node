@@ -303,7 +303,7 @@ pub mod pallet {
 					Ok(())
 				},
 			)?;
-
+			Payment::<T>::remove(from.clone(), to.clone());
 			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(())
 		}

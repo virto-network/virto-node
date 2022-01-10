@@ -155,23 +155,10 @@ fn test_release_payment_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
-		// should be in released state
+		// should be deleted from storage
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
-				state: PaymentState::Released,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
-			})
-		);
-		// cannot call release again
-		assert_noop!(
-			Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::PaymentAlreadyReleased
+			None
 		);
 
 		// should be able to create another payment since previous is released
@@ -222,18 +209,10 @@ fn test_set_state_payment_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
-		// should be in released state
+		// should be removed from storage
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
-				state: PaymentState::Released,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
-			})
+			None
 		);
 
 		assert_ok!(Payment::pay(
