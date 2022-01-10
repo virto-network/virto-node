@@ -90,6 +90,8 @@ pub mod pallet {
 		InvalidAction,
 		/// Remark size is larger than permitted
 		RemarkTooLarge,
+		/// Payment is in review state and cannot be modified
+		PaymentNeedsReview,
 	}
 
 	#[pallet::hooks]
@@ -106,14 +108,8 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// ensure remark is not too large
-			ensure!(
-				remark.len() <= T::MaxRemarkLength::get().try_into().unwrap(),
-				Error::<T>::RemarkTooLarge
-			);
 
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
 				who, recipient, asset, amount, None,

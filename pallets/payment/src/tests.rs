@@ -429,7 +429,7 @@ fn test_do_not_overwrite_logic_works() {
 				incentive_amount: 2,
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: (FEE_RECIPIENT_ACCOUNT, 0),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: Some("test".into()),
 			},
 		);
