@@ -170,34 +170,44 @@ pub mod pallet {
 
 		/// Allow admins to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
-		/// recipient of the payment.
+		/// recipient of the payment. This extrinsic allows the assigned judge to cancel the payment
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn resolve(
+		pub fn resolve_cancel_payment(
 			origin: OriginFor<T>,
 			from: T::AccountId,
 			recipient: T::AccountId,
-			new_state: PaymentState,
 		) -> DispatchResultWithPostInfo {
-			use PaymentState::*;
 			let who = ensure_signed(origin)?;
 			// ensure the caller is the assigned resolver
 			if let Some(payment) = Payment::<T>::get(from.clone(), recipient.clone()) {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			match new_state {
-                Cancelled => {
-                    <Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_payment(
-                        from, recipient,
-                    )
-                }
-                Released => <Self as PaymentHandler<
-                    T::AccountId,
-                    AssetIdOf<T>,
-                    BalanceOf<T>,
-                >>::release_payment(from, recipient),
-                Created | NeedsReview => Err(Error::<T>::InvalidAction.into()),
-            }?;
+
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_payment(
+				from, recipient,
+			)?;
+			Ok(().into())
+		}
+
+		/// Allow admins to set state of a payment
+		/// This extrinsic is used to resolve disputes between the creator and
+		/// recipient of the payment. This extrinsic allows the assigned judge to send the payment to recipient
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn resolve_release_payment(
+			origin: OriginFor<T>,
+			from: T::AccountId,
+			recipient: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			// ensure the caller is the assigned resolver
+			if let Some(payment) = Payment::<T>::get(from.clone(), recipient.clone()) {
+				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
+			}
+			// try to update the payment to new state
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_payment(
+				from, recipient,
+			)?;
 			Ok(().into())
 		}
 	}
