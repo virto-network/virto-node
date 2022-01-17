@@ -10,7 +10,7 @@ use sp_std::vec::Vec;
 /// and recipient. The payment lifecycle is tracked using the state field.
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PaymentDetail<Asset, Amount, Account> {
+pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
 	/// type of asset used for payment
 	pub asset: Asset,
 	/// amount of asset used for payment
@@ -18,7 +18,7 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	/// incentive amount that is credited to creator for resolving
 	pub incentive_amount: Amount,
 	/// enum to track payment lifecycle [Created, NeedsReview]
-	pub state: PaymentState,
+	pub state: PaymentState<BlockNumber>,
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: Account,
 	/// fee charged and recipient account details
@@ -29,15 +29,17 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum PaymentState {
+pub enum PaymentState<BlockNumber> {
 	/// Amounts have been reserved and waiting for release/cancel
 	Created,
 	/// A judge needs to review and release manually
 	NeedsReview,
+	/// The user has requested refund and will be processed by `BlockNumber`
+	RefundRequested(BlockNumber),
 }
 
 /// trait that defines how to create/release payments for users
-pub trait PaymentHandler<Account, Asset, Amount> {
+pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
 	/// - User does not have enough balance.
@@ -70,7 +72,7 @@ pub trait PaymentHandler<Account, Asset, Amount> {
 	fn get_payment_details(
 		from: Account,
 		to: Account,
-	) -> Option<PaymentDetail<Asset, Amount, Account>>;
+	) -> Option<PaymentDetail<Asset, Amount, Account, BlockNumber>>;
 }
 
 /// DisputeResolver trait defines how to create/assing judges for solving payment disputes
@@ -80,11 +82,11 @@ pub trait DisputeResolver<Account> {
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
-pub trait FeeHandler<Asset, Amount, Account> {
+pub trait FeeHandler<Asset, Amount, Account, BlockNumber> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
 		from: &Account,
 		to: &Account,
-		detail: &PaymentDetail<Asset, Amount, Account>,
+		detail: &PaymentDetail<Asset, Amount, Account, BlockNumber>,
 	) -> (Account, Percent);
 }
