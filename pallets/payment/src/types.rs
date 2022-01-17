@@ -4,12 +4,11 @@ use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
 use sp_std::vec::Vec;
 
-/*
-The PaymentDetail struct stores information about the payment/escrow
-A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
-and can be released once an agreed upon condition has reached between the payment creator
-and recipient. The payment lifecycle is tracked using the state field.
-*/
+
+/// The PaymentDetail struct stores information about the payment/escrow
+/// A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
+/// and can be released once an agreed upon condition has reached between the payment creator
+/// and recipient. The payment lifecycle is tracked using the state field.
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaymentDetail<Asset, Amount, Account> {
@@ -19,7 +18,7 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 	pub amount: Amount,
 	/// incentive amount that is credited to creator for resolving
 	pub incentive_amount: Amount,
-	/// enum to track payment lifecycle [Created, Released, Cancelled, NeedsReview]
+	/// enum to track payment lifecycle [Created, NeedsReview]
 	pub state: PaymentState,
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: Account,
@@ -38,7 +37,7 @@ pub enum PaymentState {
 	NeedsReview,
 }
 
-// trait that defines how to create/release payments for users
+/// trait that defines how to create/release payments for users
 pub trait PaymentHandler<Account, Asset, Amount> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
