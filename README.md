@@ -73,6 +73,18 @@ capabilities and configuration parameters that it exposes:
 ./target/release/virto_node --help
 ```
 
+### Build
+
+Use the following command to build the node without launching it:
+
+```sh
+make dev=yes
+```
+Then build the target release with the following command:
+```sh
+cargo build --release
+```
+
 ### Runtime
 
 In Substrate, the terms
