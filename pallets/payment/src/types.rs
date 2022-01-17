@@ -34,10 +34,6 @@ pub struct PaymentDetail<Asset, Amount, Account> {
 pub enum PaymentState {
 	/// Amounts have been reserved and waiting for release/cancel
 	Created,
-	/// Payment has been completed and amount transferred
-	Released,
-	/// All funds unreserved and sent to original owners
-	Cancelled,
 	/// A judge needs to review and release manually
 	NeedsReview,
 }
