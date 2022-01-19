@@ -128,7 +128,7 @@ impl payment::Config for Test {
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = MockFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
-	type CancelBufferBlockLength =  CancelBufferBlockLength;
+	type CancelBufferBlockLength = CancelBufferBlockLength;
 }
 
 // Build genesis storage according to the mock runtime.
