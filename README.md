@@ -12,18 +12,18 @@ To create more advanced interactions we use [Valor](https://github.com/virto-net
 ## Running the parachain
 
 `virto` is a parachain node, which means it _must_ connect to a relay chain and be onboarded in order to
-produce blocks. To easy the pain of setting up the different nodes required to test the network we provide a 
-[`devnet.yml`](devnet.yml)recipe for a multi-node local testnet that can be run with **`make run`** that also generates the 
+produce blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
+[`devnet.yml`](devnet.yml) recipe for a multi-node local testnet that can be run with **`make run`** that also generates the 
 required assets to on-board the network.
 
 The devnet also spins up two Karura collators that can be onboarded to test cross-chain functionality.
 
-💡 Note that nodes are launched in the background, to debug their output you can use podman/docker to follow the logs of any node in the multichain set-up(e.g. `podman logs -f devnet_virto_a`). Once you are done `make stop` will take care of removing the nodes.  
+💡 Note that nodes are launched in the background. To debug their output you can use podman/docker to follow the logs of any node in the multichain set-up (e.g. `podman logs -f devnet_virto_a`). Once you are done `make stop` will take care of removing the nodes.  
 
 ### Local development
 
 In case you make changes to the runtime and what to test them in the parachain setup you can `make container` to 
-build and containerize the node with your latest changes.(⚠️ at the moment the command will only work if your build environment is the same debian version as the [`Containerfile`](Containerfile)).
+build and containerize the node with your latest changes. (⚠️ at the moment the command will only work if your build environment is the same debian version as the [`Containerfile`](Containerfile)).
 
 > To test xcm asset transfer check [vln-toolbox](https://github.com/virto-network/vln-toolbox)
 
@@ -73,9 +73,9 @@ capabilities and configuration parameters that it exposes:
 ./target/release/virto_node --help
 ```
 
-### Build
+#### Build
 
-Use the following command to build the node without launching it:
+In the root directory run the following command to build the node without launching it:
 
 ```sh
 make dev=yes
@@ -89,7 +89,7 @@ cargo build --release
 
 In Substrate, the terms
 "[runtime](https://substrate.dev/docs/en/knowledgebase/getting-started/glossary#runtime)" and
-"[state transition function](https://substrate.dev/docs/en/knowledgebase/getting-started/glossary#stf-state-transition-function)"
+"[state transition function](https://docs.substrate.io/v3/getting-started/glossary/#state-transition-function-stf)"
 are analogous - they refer to the core logic of the blockchain that is responsible for validating
 blocks and executing the state changes they define. The Substrate project in this repository uses
 the [FRAME](https://substrate.dev/docs/en/knowledgebase/runtime/frame) framework to construct a
