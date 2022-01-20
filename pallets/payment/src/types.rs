@@ -4,12 +4,10 @@ use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
 use sp_std::vec::Vec;
 
-/*
-The PaymentDetail struct stores information about the payment/escrow
-A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
-and can be released once an agreed upon condition has reached between the payment creator
-and recipient. The payment lifecycle is tracked using the state field.
-*/
+/// The PaymentDetail struct stores information about the payment/escrow
+/// A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
+/// and can be released once an agreed upon condition has reached between the payment creator
+/// and recipient. The payment lifecycle is tracked using the state field.
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaymentDetail<Asset, Amount, Account> {

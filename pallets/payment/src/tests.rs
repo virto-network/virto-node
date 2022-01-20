@@ -6,6 +6,10 @@ use crate::{
 use frame_support::{assert_noop, assert_ok};
 use orml_traits::MultiCurrency;
 
+fn last_event() -> Event {
+	System::events().pop().expect("Event expected").event
+}
+
 #[test]
 fn test_create_payment_works() {
 	new_test_ext().execute_with(|| {
@@ -20,6 +24,15 @@ fn test_create_payment_works() {
 			CURRENCY_ID,
 			20,
 		));
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCreated {
+				from: PAYMENT_CREATOR,
+				asset: CURRENCY_ID,
+				amount: 20
+			}
+			.into()
+		);
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
@@ -96,29 +109,18 @@ fn test_cancel_payment_works() {
 
 		// cancel should succeed when caller is the recipent
 		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
 		// the payment amount should be released back to creator
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
-		// should be in cancelled state
-		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
-				state: PaymentState::Cancelled,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
-			})
-		);
-		// cannot call cancel again
-		assert_noop!(
-			Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR),
-			crate::Error::<Test>::PaymentAlreadyReleased
-		);
+		// should be released from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 	});
 }
 
@@ -155,24 +157,8 @@ fn test_release_payment_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
-		// should be in released state
-		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
-				state: PaymentState::Released,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
-			})
-		);
-		// cannot call release again
-		assert_noop!(
-			Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::PaymentAlreadyReleased
-		);
+		// should be deleted from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
 		// should be able to create another payment since previous is released
 		assert_ok!(Payment::pay(
@@ -200,21 +186,19 @@ fn test_set_state_payment_works() {
 
 		// should fail for non whitelisted caller
 		assert_noop!(
-			Payment::resolve(
+			Payment::resolve_cancel_payment(
 				Origin::signed(PAYMENT_CREATOR),
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
-				PaymentState::Released
 			),
 			crate::Error::<Test>::InvalidAction
 		);
 
 		// should be able to release a payment
-		assert_ok!(Payment::resolve(
+		assert_ok!(Payment::resolve_release_payment(
 			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
-			PaymentState::Released
 		));
 
 		// the payment amount should be transferred
@@ -222,19 +206,8 @@ fn test_set_state_payment_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
-		// should be in released state
-		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
-				state: PaymentState::Released,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
-			})
-		);
+		// should be removed from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
@@ -244,11 +217,10 @@ fn test_set_state_payment_works() {
 		));
 
 		// should be able to cancel a payment
-		assert_ok!(Payment::resolve(
+		assert_ok!(Payment::resolve_cancel_payment(
 			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
-			PaymentState::Cancelled,
 		));
 
 		// the payment amount should be transferred
@@ -256,19 +228,8 @@ fn test_set_state_payment_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
-		// should be in cancelled state
-		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
-				state: PaymentState::Cancelled,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
-			})
-		);
+		// should be released from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 	});
 }
 
