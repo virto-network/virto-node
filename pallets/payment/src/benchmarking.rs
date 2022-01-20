@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::{Pallet as Payment, PaymentState};
+use crate::{Pallet as Payment, PaymentState, Payment as PaymentStore};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
@@ -9,6 +9,7 @@ const SEED: u32 = 0;
 const CURRENCY_ID: u32 = 1u32;
 const INITIAL_AMOUNT: u32 = 100;
 const SOME_AMOUNT: u32 = 80;
+const RESOLVER_ACCOUNT: u8 = 10;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	let events = frame_system::Pallet::<T>::events();
@@ -67,13 +68,13 @@ benchmarks! {
 	}
 
 	// resolve an existing payment succesfully - cancel since that is the most complex route
-	resolve {
+	resolve_cancel_payment {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(CURRENCY_ID, &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		let resolver : T::AccountId = account("resolver", 0, 12);
 		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), CURRENCY_ID, SOME_AMOUNT)?;
-	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone(), PaymentState::Cancelled)
+		let resolver = PaymentStore::<T>::get(caller.clone(), recipent.clone()).unwrap().resolver_account;
+	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
