@@ -85,6 +85,19 @@ Then build the target release with the following command:
 cargo build --release
 ```
 
+### Benchmark
+
+Use the following command to run the benchmark, use the desired pallet name as required:
+
+```sh
+cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=<pallet_name> --steps=1 --repeat=1 --heap-pages=4096 --output .
+```
+
+To benchmark the payment pallet, run the command
+```sh
+cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=virto_payment --steps=1 --repeat=1 --heap-pages=4096 --output .
+```
+
 ### Runtime
 
 In Substrate, the terms
