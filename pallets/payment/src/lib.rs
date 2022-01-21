@@ -47,7 +47,7 @@ pub mod pallet {
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
-		/// Incentive percentage - amount witheld from sender
+		/// Maximum permitted size of `Remark`
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
