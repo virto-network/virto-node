@@ -84,6 +84,19 @@ Then build the target release with the following command:
 cargo build --release
 ```
 
+### Test
+
+Use the following command to run tests:
+
+```sh
+cargo test
+```
+
+To run tests with benchmarks
+```sh
+cargo test --features runtime-benchmarks
+```
+
 ### Benchmark
 
 Use the following command to run the benchmark, use the desired pallet name as required:

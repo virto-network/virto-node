@@ -1,8 +1,6 @@
 # Payments Pallet
 
-This pallet allows users to create secure reversible payments that keep funds locked in a merchant's account until the off-chain goods are confirmed to be received.
-Each payment gets assigned its own *judge* that can help resolve any disputes between the two parties. 
-
+This pallet allows users to create secure reversible payments that keep funds locked in a merchant's account until the off-chain goods are confirmed to be received. Each payment gets assigned its own *judge* that can help resolve any disputes between the two parties. 
 
 ## Terminology
 
@@ -11,27 +9,67 @@ Each payment gets assigned its own *judge* that can help resolve any disputes be
 - IncentivePercentage: A small share of the payment amount is held in escrow until a payment is completed/cancelled. The Incentive Percentage represents this value.
 - Resolver Account: A resolver account is assigned to every payment created, this account has the privilege to cancel/release a payment that has been disputed.
 - Remark: The pallet allows to create payments by optionally providing some extra(limited) amount of bytes, this is reffered to as Remark. This can be used by a marketplace to seperate/tag payments.
+- CancelBufferBlockLength: This is the time window where the recipient can dispute a cancellation request from the payment creator.
 
 ## Interface
 
 #### Events
 
-`PaymentCreated(T::AccountId, T::Asset, T::Amount)`,
-`PaymentReleased(T::AccountId, PaymentId)`,
-`PaymentCancelled(T::AccountId, T::AccountId)`
+- `PaymentCreated { from: T::AccountId, asset: AssetIdOf<T>, amount: BalanceOf<T> },`,
+- `PaymentReleased { from: T::AccountId, to: T::AccountId }`,
+- `PaymentCancelled { from: T::AccountId, to: T::AccountId }`,
+- `PaymentCreatorRequestedRefund { from: T::AccountId, to: T::AccountId, expiry: T::BlockNumber}`
 
 #### Extrinsics
 
-`create(origin, recipient, currency_id, amount)` - Create an payment for the given currencyid/amount
-`release(origin, payment_id)` - Release the payment amount to recipent
-`cancel(origin, payment_id)` - Cancel the payment and release the payment amount to creator
-`resolve_release_payment(origin, from, recipient)` - Allows assigned judge to release a payment
-`resolve_cancel_payment(origin, from, recipient)` - Allows assigned judge to cancel a payment
+- `pay` - Create an payment for the given currencyid/amount
+- `pay_with_remark` - Create a payment with a remark, can be used to tag payments
+- `release` - Release the payment amount to recipent
+- `cancel` - Allows the recipient to cancel the payment and release the payment amount to creator
+- `resolve_release_payment` - Allows assigned judge to release a payment
+- `resolve_cancel_payment` - Allows assigned judge to cancel a payment
+- `request_refund` - Allows the creator of the payment to trigger cancel with a buffer time.
 
 ## Implementations
 
 The RatesProvider module provides implementations for the following traits.
-- [`PaymentHandler`](../../primitives/src/payment.rs)
+- [`PaymentHandler`](./src/types.rs)
+
+## Types 
+
+The `PaymentDetail` struct stores information about the payment/escrow. A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds and can be released once an agreed upon condition has reached between the payment creator and recipient. The payment lifecycle is tracked using the state field.
+
+```rust 
+pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
+	/// type of asset used for payment
+	pub asset: Asset,
+	/// amount of asset used for payment
+	pub amount: Amount,
+	/// incentive amount that is credited to creator for resolving
+	pub incentive_amount: Amount,
+	/// enum to track payment lifecycle [Created, NeedsReview]
+	pub state: PaymentState<BlockNumber>,
+	/// account that can settle any disputes created in the payment
+	pub resolver_account: Account,
+	/// fee charged and recipient account details
+	pub fee_detail: Option<(Account, Amount)>,
+	/// remarks to give context to payment
+	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
+}
+```
+
+The `PaymentState` enum tracks the possible states that a payment can be in. When a payment is 'completed' or 'cancelled' it is removed from storage and hence not tracked by a state.
+
+```rust
+pub enum PaymentState<BlockNumber> {
+	/// Amounts have been reserved and waiting for release/cancel
+	Created,
+	/// A judge needs to review and release manually
+	NeedsReview,
+	/// The user has requested refund and will be processed by `BlockNumber`
+	RefundRequested(BlockNumber),
+}
+```
 
 ## GenesisConfig
 
