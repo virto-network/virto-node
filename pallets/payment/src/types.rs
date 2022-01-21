@@ -27,7 +27,7 @@ pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
 	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
 }
 
-/// The `PaymentState` enum tracks the possible states that a payment can be in. 
+/// The `PaymentState` enum tracks the possible states that a payment can be in.
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and hence not tracked by a state.
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
