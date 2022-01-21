@@ -11,8 +11,7 @@ To create more advanced interactions we use [Valor](https://github.com/virto-net
 
 ## Running the parachain
 
-`virto` is a parachain node, which means it _must_ connect to a relay chain and be onboarded in order to
-produce blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
+`virto` is a parachain node, which means it needs to connect to a relay chain to finalise blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
 [`devnet.yml`](devnet.yml) recipe for a multi-node local testnet that can be run with **`make run`** that also generates the 
 required assets to on-board the network.
 
@@ -90,12 +89,12 @@ cargo build --release
 Use the following command to run the benchmark, use the desired pallet name as required:
 
 ```sh
-cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=<pallet_name> --steps=1 --repeat=1 --heap-pages=4096 --output .
+cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=<pallet_name> --steps=20 --repeat=1 --heap-pages=4096 --output .
 ```
 
 To benchmark the payment pallet, run the command
 ```sh
-cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=virto_payment --steps=1 --repeat=1 --heap-pages=4096 --output .
+cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=virto-payment --steps=20 --repeat=1 --heap-pages=4096 --output .
 ```
 
 ### Runtime

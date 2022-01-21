@@ -70,7 +70,7 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
 
-	// resolve an existing payment succesfully - cancel since that is the most complex route
+	// resolve an existing payment to cancellation
 	resolve_cancel_payment {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
@@ -80,6 +80,29 @@ benchmarks! {
 	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
+	}
+
+	// resolve an existing payment to release
+	resolve_release_payment {
+		let caller = whitelisted_caller();
+		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
+		let recipent : T::AccountId = account("recipient", 0, SEED);
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		let resolver = PaymentStore::<T>::get(caller.clone(), recipent.clone()).unwrap().resolver_account;
+	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
+	verify {
+		assert_last_event::<T>(Event::<T>::PaymentReleased { from: caller, to: recipent}.into());
+	}
+
+	// creator of payment creates a refund request
+	request_refund {
+		let caller = whitelisted_caller();
+		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
+		let recipent : T::AccountId = account("recipient", 0, SEED);
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
+	verify {
+		assert_last_event::<T>(Event::<T>::PaymentCreatorRequestedRefund { from: caller, to: recipent, expiry: 601u32.into() }.into());
 	}
 }
 

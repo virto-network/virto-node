@@ -24,15 +24,15 @@ fn test_create_payment_works() {
 			CURRENCY_ID,
 			20,
 		));
-		// assert_eq!(
-		// 	last_event(),
-		// 	crate::Event::<Test>::PaymentCreated {
-		// 		from: PAYMENT_CREATOR,
-		// 		asset: CURRENCY_ID,
-		// 		amount: 20
-		// 	}
-		// 	.into()
-		// );
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCreated {
+				from: PAYMENT_CREATOR,
+				asset: CURRENCY_ID,
+				amount: 20
+			}
+			.into()
+		);
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
@@ -109,11 +109,11 @@ fn test_cancel_payment_works() {
 
 		// cancel should succeed when caller is the recipent
 		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
-		// assert_eq!(
-		// 	last_event(),
-		// 	crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
-		// 		.into()
-		// );
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
 		// the payment amount should be released back to creator
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
@@ -152,6 +152,11 @@ fn test_release_payment_works() {
 
 		// should succeed for valid payment
 		assert_ok!(Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentReleased { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
@@ -361,6 +366,16 @@ fn test_pay_with_remark_works() {
 			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCreated {
+				from: PAYMENT_CREATOR,
+				asset: CURRENCY_ID,
+				amount: 20
+			}
+			.into()
+		);
 	});
 }
 
@@ -399,6 +414,44 @@ fn test_do_not_overwrite_logic_works() {
 		assert_noop!(
 			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
 			crate::Error::<Test>::PaymentNeedsReview
+		);
+	});
+}
+
+#[test]
+fn test_request_refund() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay_with_remark(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+			"test".into()
+		));
+
+		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::RefundRequested(601u64.into()),
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: Some("test".into())
+			})
+		);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCreatorRequestedRefund {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+				expiry: 601u64.into()
+			}
+			.into()
 		);
 	});
 }

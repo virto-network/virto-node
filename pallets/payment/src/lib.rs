@@ -11,14 +11,19 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-mod types;
+pub mod types;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use crate::types::{
-		DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState,
+	pub use crate::{
+		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState},
+		weights::WeightInfo,
 	};
-	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
+	use frame_support::{
+		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, require_transactional,
+		transactional,
+	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::CheckedAdd, Percent};
@@ -53,6 +58,8 @@ pub mod pallet {
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
+		//// Type representing the weight of this pallet
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -84,6 +91,12 @@ pub mod pallet {
 		PaymentReleased { from: T::AccountId, to: T::AccountId },
 		/// Payment has been cancelled by the creator
 		PaymentCancelled { from: T::AccountId, to: T::AccountId },
+		/// the payment creator has created a refund request
+		PaymentCreatorRequestedRefund {
+			from: T::AccountId,
+			to: T::AccountId,
+			expiry: T::BlockNumber,
+		},
 	}
 
 	#[pallet::error]
@@ -112,7 +125,8 @@ pub mod pallet {
 		/// This allows any user to create a new payment, that releases only to specified recipient
 		/// The only action is to store the details of this payment in storage and reserve
 		/// the specified amount.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::pay())]
 		pub fn pay(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
@@ -130,7 +144,8 @@ pub mod pallet {
 		/// This allows any user to create a new payment with the option to add a remark, this remark
 		/// can then be used to run custom logic and trigger alternate payment flows.
 		/// the specified amount.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::pay_with_remark())]
 		pub fn pay_with_remark(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
@@ -157,7 +172,8 @@ pub mod pallet {
 
 		/// Release any created payment, this will transfer the reserved amount from the
 		/// creator of the payment to the assigned recipient
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
@@ -169,7 +185,8 @@ pub mod pallet {
 		/// Cancel a payment in created state, this will release the reserved back to
 		/// creator of the payment. This extrinsic can only be called by the recipient
 		/// of the payment
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::cancel())]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
@@ -181,7 +198,8 @@ pub mod pallet {
 		/// Allow admins to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
 		/// recipient of the payment. This extrinsic allows the assigned judge to cancel the payment
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::resolve_cancel_payment())]
 		pub fn resolve_cancel_payment(
 			origin: OriginFor<T>,
 			from: T::AccountId,
@@ -203,7 +221,8 @@ pub mod pallet {
 		/// Allow admins to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
 		/// recipient of the payment. This extrinsic allows the assigned judge to send the payment to recipient
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::resolve_release_payment())]
 		pub fn resolve_release_payment(
 			origin: OriginFor<T>,
 			from: T::AccountId,
@@ -224,25 +243,21 @@ pub mod pallet {
 		/// Allow payment creator to set payment to NeedsReview
 		/// This extrinsic is used to mark the payment as disputed so the assigned judge can tigger a resolution
 		/// and that the funds are no longer locked.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::request_refund())]
 		pub fn request_refund(
 			origin: OriginFor<T>,
-			from: T::AccountId,
 			recipient: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
 			Payment::<T>::try_mutate(
-				from.clone(),
+				who.clone(),
 				recipient.clone(),
 				|maybe_payment| -> DispatchResult {
-					// ensure caller is payment creator
-					ensure!(who == from.into(), Error::<T>::InvalidAction);
-
-					// ensure a payment is not already in process
+					// ensure the payment exists
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is not in needsreview state
-
 					ensure!(
 						payment.state != PaymentState::NeedsReview,
 						Error::<T>::PaymentNeedsReview
@@ -254,6 +269,12 @@ pub mod pallet {
 						.checked_add(&T::CancelBufferBlockLength::get())
 						.ok_or(Error::<T>::MathError)?;
 					payment.state = PaymentState::RefundRequested(can_cancel_block);
+
+					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
+						from: who,
+						to: recipient,
+						expiry: can_cancel_block,
+					});
 
 					Ok(())
 				},
@@ -270,6 +291,7 @@ pub mod pallet {
 		/// is reserved from the payment creator. The incentive amount is reserved in the creators account.
 		/// The amount is transferred to the payment recipent but kept in reserved state. Only when the release action
 		/// is triggered the amount is released to the recipent and incentive released to creator.
+		#[require_transactional]
 		fn create_payment(
 			from: T::AccountId,
 			recipient: T::AccountId,
@@ -334,6 +356,7 @@ pub mod pallet {
 
 		/// The function will release an existing payment, a release action will remove the reserve
 		/// placed on both the incentive amount and the transfer amount and it will be "released" to the respective account.
+		#[require_transactional]
 		fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
 			use PaymentState::*;
 			// add the payment detail to storage
@@ -374,6 +397,7 @@ pub mod pallet {
 		/// - Unreserve the incentive amount
 		/// - Unreserve the payment amount
 		/// - Transfer amount from recipent to sender
+		#[require_transactional]
 		fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
 			// add the payment detail to storage
 			Payment::<T>::try_mutate(

@@ -629,6 +629,7 @@ impl virto_payment::Config for Runtime {
 	type FeeHandler = VirtoFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
+	type WeightInfo = virto_payment::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -869,7 +870,6 @@ impl_runtime_apis! {
 			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
-			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 
