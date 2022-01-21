@@ -21,7 +21,7 @@ pub mod pallet {
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
-	use sp_runtime::Percent;
+	use sp_runtime::{traits::CheckedAdd, Percent};
 	use sp_std::vec::Vec;
 
 	type BalanceOf<T> =
@@ -38,13 +38,21 @@ pub mod pallet {
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 		/// Fee handler trait
-		type FeeHandler: FeeHandler<AssetIdOf<Self>, BalanceOf<Self>, Self::AccountId>;
+		type FeeHandler: FeeHandler<
+			AssetIdOf<Self>,
+			BalanceOf<Self>,
+			Self::AccountId,
+			Self::BlockNumber,
+		>;
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
-		/// Incentive percentage - amount witheld from sender
+		/// Maximum permitted size of `Remark`
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
+		/// Buffer period - number of blocks to wait before user can claim canceled payment
+		#[pallet::constant]
+		type CancelBufferBlockLength: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::pallet]
@@ -64,7 +72,7 @@ pub mod pallet {
 		T::AccountId, // payment creator
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
-		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId>,
+		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber>,
 	>;
 
 	#[pallet::event]
@@ -92,6 +100,8 @@ pub mod pallet {
 		RemarkTooLarge,
 		/// Payment is in review state and cannot be modified
 		PaymentNeedsReview,
+		/// Unexpeted math error
+		MathError,
 	}
 
 	#[pallet::hooks]
@@ -111,7 +121,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::create_payment(
 				who, recipient, asset, amount, None,
 			)?;
 			Ok(().into())
@@ -135,7 +145,7 @@ pub mod pallet {
 				Error::<T>::RemarkTooLarge
 			);
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::create_payment(
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::create_payment(
 				who,
 				recipient,
 				asset,
@@ -150,7 +160,7 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_payment(
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
 				who, to,
 			)?;
 			Ok(().into())
@@ -162,7 +172,7 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_payment(
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
 				creator, who, // the caller must be the provider, creator cannot cancel
 			)?;
 			Ok(().into())
@@ -184,7 +194,7 @@ pub mod pallet {
 			}
 			// try to update the payment to new state
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::cancel_payment(
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
 				from, recipient,
 			)?;
 			Ok(().into())
@@ -205,14 +215,57 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>>>::release_payment(
+			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
 				from, recipient,
 			)?;
 			Ok(().into())
 		}
+
+		/// Allow payment creator to set payment to NeedsReview
+		/// This extrinsic is used to mark the payment as disputed so the assigned judge can tigger a resolution
+		/// and that the funds are no longer locked.
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		pub fn request_refund(
+			origin: OriginFor<T>,
+			from: T::AccountId,
+			recipient: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+
+			Payment::<T>::try_mutate(
+				from.clone(),
+				recipient.clone(),
+				|maybe_payment| -> DispatchResult {
+					// ensure caller is payment creator
+					ensure!(who == from.into(), Error::<T>::InvalidAction);
+
+					// ensure a payment is not already in process
+					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
+					// ensure the payment is not in needsreview state
+
+					ensure!(
+						payment.state != PaymentState::NeedsReview,
+						Error::<T>::PaymentNeedsReview
+					);
+
+					// set the payment to requested refund
+					let current_block = frame_system::Pallet::<T>::block_number();
+					let can_cancel_block = current_block
+						.checked_add(&T::CancelBufferBlockLength::get())
+						.ok_or(Error::<T>::MathError)?;
+					payment.state = PaymentState::RefundRequested(can_cancel_block);
+
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
 	}
 
-	impl<T: Config> PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>> for Pallet<T> {
+	impl<T: Config> PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>
+		for Pallet<T>
+	{
 		/// The function will create a new payment. When a new payment is created, an amount + incentive
 		/// is reserved from the payment creator. The incentive amount is reserved in the creators account.
 		/// The amount is transferred to the payment recipent but kept in reserved state. Only when the release action
@@ -358,7 +411,7 @@ pub mod pallet {
 		fn get_payment_details(
 			from: T::AccountId,
 			to: T::AccountId,
-		) -> Option<PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId>> {
+		) -> Option<PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber>> {
 			Payment::<T>::get(from, to)
 		}
 	}
