@@ -11,8 +11,7 @@ To create more advanced interactions we use [Valor](https://github.com/virto-net
 
 ## Running the parachain
 
-`virto` is a parachain node, which means it _must_ connect to a relay chain and be onboarded in order to
-produce blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
+`virto` is a parachain node, which means it needs to connect to a relay chain to finalise blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
 [`devnet.yml`](devnet.yml) recipe for a multi-node local testnet that can be run with **`make run`** that also generates the 
 required assets to on-board the network.
 
@@ -83,6 +82,32 @@ make dev=yes
 Then build the target release with the following command:
 ```sh
 cargo build --release
+```
+
+### Test
+
+Use the following command to run tests:
+
+```sh
+cargo test
+```
+
+To run tests with benchmarks
+```sh
+cargo test --features runtime-benchmarks
+```
+
+### Benchmark
+
+Use the following command to run the benchmark, use the desired pallet name as required:
+
+```sh
+make benchmark pallet=<pallet_name>
+```
+
+To benchmark the payment pallet, run the command
+```sh
+make benchmark pallet=virto-payment
 ```
 
 ### Runtime

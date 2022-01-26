@@ -12,13 +12,17 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	Percent,
 };
+use virto_primitives::{Asset, NetworkAsset};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Balance = u128;
+type BlockNumber = u64;
+
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
-pub const CURRENCY_ID: u32 = 1u32;
+pub const CURRENCY_ID: Asset = Asset::Network(NetworkAsset::KSM);
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
@@ -67,8 +71,8 @@ impl system::Config for Test {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: u32| -> u32 {
-		0u32
+	pub ExistentialDeposits: |_currency_id: Asset| -> Balance {
+		0u128
 	};
 }
 parameter_types! {
@@ -84,8 +88,8 @@ impl Contains<AccountId> for MockDustRemovalWhitelist {
 
 impl orml_tokens::Config for Test {
 	type Amount = i64;
-	type Balance = u32;
-	type CurrencyId = u32;
+	type Balance = Balance;
+	type CurrencyId = Asset;
 	type Event = Event;
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -102,11 +106,11 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 }
 
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<u32, u32, AccountId, u64> for MockFeeHandler {
+impl crate::types::FeeHandler<Asset, Balance, AccountId, BlockNumber> for MockFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		to: &AccountId,
-		_remark: &PaymentDetail<u32, u32, AccountId, u64>,
+		_remark: &PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
 	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
@@ -118,7 +122,7 @@ impl crate::types::FeeHandler<u32, u32, AccountId, u64> for MockFeeHandler {
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
-	pub const CancelBufferBlockLength: u64 = 5;
+	pub const CancelBufferBlockLength: u64 = 600;
 }
 
 impl payment::Config for Test {
@@ -129,6 +133,7 @@ impl payment::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
@@ -139,5 +144,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-	t.into()
+	let mut ext: sp_io::TestExternalities = t.into();
+	// need to set block number to 1 to test events
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }

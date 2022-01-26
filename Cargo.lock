@@ -10342,6 +10342,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "virto-primitives",
 ]
 
 [[package]]
@@ -10386,6 +10387,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
+ "pallet-collective",
  "pallet-proxy",
  "pallet-session",
  "pallet-sudo",

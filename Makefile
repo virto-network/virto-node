@@ -116,3 +116,7 @@ stop-parachain:
 # .PHONY: clean-standalone
 # clean-standalone: target/$(ENV)/$(BIN)_node
 # 	$< purge-chain --dev
+
+.PHONY: benchmark
+benchmark:
+	cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=$(pallet) --steps=20 --repeat=1 --heap-pages=4096 --output .
