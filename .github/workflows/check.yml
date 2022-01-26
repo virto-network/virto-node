@@ -20,7 +20,7 @@ jobs:
       - run: cargo test
 
   benchmarks:
-    name: Unit tests
+    name: Benchmarks
     runs-on: self-hosted
     needs: tests
     steps:
