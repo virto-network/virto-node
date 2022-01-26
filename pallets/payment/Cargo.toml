@@ -21,13 +21,13 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false, optional = true }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.13", default-features = false }
 scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
-virto-primitives = { default-features = false, path = "../../primitives" }
 
 [dev-dependencies]
 serde = { version = "1.0.101" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.13" }
+virto-primitives = { default-features = false, path = "../../primitives" }
 
 [features]
 default = ['std']
