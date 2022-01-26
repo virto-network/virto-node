@@ -1,17 +1,20 @@
-# Virto Node ![Build](https://github.com/virto-network/virto-node/workflows/Blockchain%20Node/badge.svg) ![Checks](https://github.com/virto-network/virto-node/workflows/Checks/badge.svg) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+# Virto Node ![Build][build_badge] ![Checks][checks_badge] [![PRs Welcome][pr_badge]](docs/CONTRIBUTING.adoc)
 
-This is the blockchain node of the **Virto.network**, a parachain set to become [Kusama](https://kusama.network)'s *"bridge to humanity"* thanks to the implementation of the People Local Interactions Protocol that seeks to maximize economic development of local communities.
+![Virto Logo](https://virto.network/img/logo-virto.svg)
 
-Virto.network is the decentralized infastructure for **p2p marketplaces**, it tightly integrates with [Matrix](https://matrix.org), the decentralized communications protocol to allow communities around the world run any kind of local economic activity in a convenient way.
+[build_badge]: https://github.com/virto-network/virto-node/workflows/Blockchain%20Node/badge.svg
+[checks_badge]: https://github.com/virto-network/virto-node/workflows/Checks/badge.svg
+[pr_badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg
+[whitepaper]: https://virto.network/docs/whitepaper.html
 
-_Example of a p2p marketplace: fiat-crypto on-ramps_
-![swap_flow](https://user-images.githubusercontent.com/1329925/119025875-db4d8d80-b9a4-11eb-9605-e7db6503156b.png)
+[**Virto.Network**](https://virto.network), is the implementation of the [**Local Incentives Protocol**][whitepaper], the decentralized marketplace infrastructure with local economic impact.
 
-To create more advanced interactions we use [Valor](https://github.com/virto-network/valor) the plugin runtime for _decentralizable APIs_.
+This repository contains the Virto node, a parachain for Polkadot that brings de-commerce and community management primitives to the ecosystem.  
+As part of our decentralized technology stack we tightly integrate with [Matrix](https://matrix.org), the decentralized communications protocol and [Valor](https://github.com/virto-network/valor) our plugin runtime that allows the creation of high-level and convenient _decentralizable APIs_.
 
 ## Running the parachain
 
-`virto` is a parachain node, which means it needs to connect to a relay chain to finalise blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
+`virto` is a parachain node, which means it needs to connect to a relay chain to finalize blocks. To ease the pain of setting up the different nodes required to test the network we provide a 
 [`devnet.yml`](devnet.yml) recipe for a multi-node local testnet that can be run with **`make run`** that also generates the 
 required assets to on-board the network.
 
