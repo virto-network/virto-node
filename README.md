@@ -102,12 +102,12 @@ cargo test --features runtime-benchmarks
 Use the following command to run the benchmark, use the desired pallet name as required:
 
 ```sh
-cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=<pallet_name> --steps=20 --repeat=1 --heap-pages=4096 --output .
+make benchmark pallet=<pallet_name>
 ```
 
 To benchmark the payment pallet, run the command
 ```sh
-cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=virto-payment --steps=20 --repeat=1 --heap-pages=4096 --output .
+make benchmark pallet=virto-payment
 ```
 
 ### Runtime
