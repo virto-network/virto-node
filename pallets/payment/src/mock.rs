@@ -16,8 +16,8 @@ use virto_primitives::{Asset, NetworkAsset};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-type Balance = u128;
-type BlockNumber = u64;
+pub type Balance = u128;
+pub type BlockNumber = u64;
 
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
