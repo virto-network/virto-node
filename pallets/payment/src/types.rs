@@ -1,14 +1,31 @@
 #![allow(unused_qualifications)]
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
-use sp_std::vec::Vec;
+use sp_std::{ops::Deref, vec::Vec};
+
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
+pub struct Remark(Vec<u8>); // TODO : switch to BoundedVec if possible
+
+impl MaxEncodedLen for Remark {
+	fn max_encoded_len() -> usize {
+		100 // TODO : switch to BoundedVec if possible - temp fix
+	}
+}
+
+impl Deref for Remark {
+	type Target = Vec<u8>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
 /// and can be released once an agreed upon condition has reached between the payment creator
 /// and recipient. The payment lifecycle is tracked using the state field.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
 	/// type of asset used for payment
@@ -24,12 +41,12 @@ pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
 	/// fee charged and recipient account details
 	pub fee_detail: Option<(Account, Amount)>,
 	/// remarks to give context to payment
-	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
+	pub remark: Option<Remark>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and hence not tracked by a state.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PaymentState<BlockNumber> {
 	/// Amounts have been reserved and waiting for release/cancel
@@ -50,7 +67,7 @@ pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
 		to: Account,
 		asset: Asset,
 		amount: Amount,
-		remark: Option<Vec<u8>>,
+		remark: Option<Remark>,
 	) -> DispatchResult;
 
 	/// Attempt to transfer an amount of the given asset from the given payment_id

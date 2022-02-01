@@ -17,7 +17,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::{
-		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState},
+		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState, Remark},
 		weights::WeightInfo,
 	};
 	use frame_support::{
@@ -151,7 +151,7 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Vec<u8>,
+			remark: Remark,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// ensure remark is not too large
@@ -297,7 +297,7 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Option<Vec<u8>>,
+			remark: Option<Remark>,
 		) -> DispatchResult {
 			Payment::<T>::try_mutate(
 				from.clone(),
@@ -367,23 +367,33 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-					let (fee_recipient_account, fee_amount) =
-						payment.fee_detail.clone().unwrap_or_default();
-					// unreserve the incentive amount back to the creator
-					T::Asset::unreserve(
-						payment.asset,
-						&from,
-						payment.incentive_amount + fee_amount,
-					);
-					// unreserve the amount to the recipent
-					T::Asset::unreserve(payment.asset, &to, payment.amount);
-					// transfer fee amount to marketplace
-					T::Asset::transfer(
-						payment.asset,
-						&from,                  // fee is paid by payment creator
-						&fee_recipient_account, // account of fee recipient
-						fee_amount,             // amount of fee
-					)?;
+
+					match payment.fee_detail {
+						Some((fee_recipient_account, fee_amount)) => {
+							// unreserve the incentive amount + fees back to the creator
+							T::Asset::unreserve(
+								payment.asset,
+								&from,
+								payment.incentive_amount + fee_amount,
+							);
+							// unreserve the amount to the recipent
+							T::Asset::unreserve(payment.asset, &to, payment.amount);
+							// transfer fee amount to marketplace
+							T::Asset::transfer(
+								payment.asset,
+								&from,                  // fee is paid by payment creator
+								&fee_recipient_account, // account of fee recipient
+								fee_amount,             // amount of fee
+							)?;
+						},
+						None => {
+							// unreserve the incentive amount back to the creator
+							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+							// unreserve the amount to the recipent
+							T::Asset::unreserve(payment.asset, &to, payment.amount);
+						},
+					}
+
 					// clear payment data from storage
 					*maybe_payment = None;
 					Ok(())
@@ -411,11 +421,19 @@ pub mod pallet {
 						Error::<T>::PaymentAlreadyReleased
 					);
 					// unreserve the incentive amount from the owner account
-					T::Asset::unreserve(
-						payment.asset,
-						&from,
-						payment.incentive_amount + payment.fee_detail.clone().unwrap_or_default().1,
-					);
+					match payment.fee_detail {
+						Some((_, fee_amount)) => {
+							T::Asset::unreserve(
+								payment.asset,
+								&from,
+								payment.incentive_amount + fee_amount,
+							);
+						},
+						None => {
+							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+						},
+					};
+
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer amount to creator
 					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
