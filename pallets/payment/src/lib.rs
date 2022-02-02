@@ -17,7 +17,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::{
-		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState, Remark},
+		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState},
 		weights::WeightInfo,
 	};
 	use frame_support::{
@@ -27,11 +27,13 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::CheckedAdd, Percent};
+	use sp_std::vec::Vec;
 
 	type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 	type AssetIdOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
+	type BoundedStringOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -47,6 +49,7 @@ pub mod pallet {
 			BalanceOf<Self>,
 			Self::AccountId,
 			Self::BlockNumber,
+			BoundedStringOf<Self>,
 		>;
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
@@ -78,7 +81,7 @@ pub mod pallet {
 		T::AccountId, // payment creator
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
-		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber>,
+		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber, BoundedStringOf<T>>,
 	>;
 
 	#[pallet::event]
@@ -134,9 +137,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::create_payment(
-				who, recipient, asset, amount, None,
-			)?;
+			<Self as PaymentHandler<
+				T::AccountId,
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>>::create_payment(who, recipient, asset, amount, None)?;
 			Ok(().into())
 		}
 
@@ -150,22 +157,20 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Remark,
+			remark: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// ensure remark is not too large
-			ensure!(
-				remark.len() <= T::MaxRemarkLength::get().try_into().unwrap(),
-				Error::<T>::RemarkTooLarge
-			);
+			let bounded_remark: BoundedStringOf<T> =
+				remark.try_into().map_err(|_| Error::<T>::RemarkTooLarge)?;
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::create_payment(
-				who,
-				recipient,
-				asset,
-				amount,
-				Some(remark),
-			)?;
+			<Self as PaymentHandler<
+				T::AccountId,
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>>::create_payment(who, recipient, asset, amount, Some(bounded_remark))?;
 			Ok(().into())
 		}
 
@@ -175,9 +180,13 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
-				who, to,
-			)?;
+			<Self as PaymentHandler<
+				T::AccountId,
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>>::release_payment(who, to)?;
 			Ok(().into())
 		}
 
@@ -188,7 +197,13 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::cancel())]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
+			<Self as PaymentHandler<
+				T::AccountId,
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>>::cancel_payment(
 				creator, who, // the caller must be the provider, creator cannot cancel
 			)?;
 			Ok(().into())
@@ -211,9 +226,13 @@ pub mod pallet {
 			}
 			// try to update the payment to new state
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
-				from, recipient,
-			)?;
+			<Self as PaymentHandler<
+				T::AccountId,
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>>::cancel_payment(from, recipient)?;
 			Ok(().into())
 		}
 
@@ -233,9 +252,13 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
-				from, recipient,
-			)?;
+			<Self as PaymentHandler<
+				T::AccountId,
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>>::release_payment(from, recipient)?;
 			Ok(().into())
 		}
 
@@ -283,7 +306,8 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>
+	impl<T: Config>
+		PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber, BoundedStringOf<T>>
 		for Pallet<T>
 	{
 		/// The function will create a new payment. When a new payment is created, an amount + incentive
@@ -296,7 +320,7 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Option<Remark>,
+			remark: Option<BoundedStringOf<T>>,
 		) -> DispatchResult {
 			Payment::<T>::try_mutate(
 				from.clone(),
@@ -452,7 +476,15 @@ pub mod pallet {
 		fn get_payment_details(
 			from: T::AccountId,
 			to: T::AccountId,
-		) -> Option<PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber>> {
+		) -> Option<
+			PaymentDetail<
+				AssetIdOf<T>,
+				BalanceOf<T>,
+				T::AccountId,
+				T::BlockNumber,
+				BoundedStringOf<T>,
+			>,
+		> {
 			Payment::<T>::get(from, to)
 		}
 	}

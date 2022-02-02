@@ -351,7 +351,7 @@ fn test_pay_with_remark_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].into())
+				remark: Some(vec![1u8; 10].try_into().unwrap())
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -384,12 +384,11 @@ fn test_pay_with_remark_works() {
 #[test]
 fn test_do_not_overwrite_logic_works() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay_with_remark(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			vec![1u8; 10].into()
 		));
 
 		assert_noop!(
@@ -408,7 +407,7 @@ fn test_do_not_overwrite_logic_works() {
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].into()),
+				remark: None,
 			},
 		);
 
@@ -423,12 +422,11 @@ fn test_do_not_overwrite_logic_works() {
 #[test]
 fn test_request_refund() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay_with_remark(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			vec![1u8; 10].into()
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
@@ -442,7 +440,7 @@ fn test_request_refund() {
 				state: PaymentState::RefundRequested(601u64.into()),
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].into())
+				remark: None
 			})
 		);
 
@@ -462,15 +460,13 @@ fn test_request_refund() {
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_create_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
-				CURRENCY_ID,
-				20,
-				None,
-			)
-		);
+		assert_ok!(<Payment as PaymentHandler<
+			AccountId,
+			Asset,
+			Balance,
+			BlockNumber,
+			BoundedString,
+		>>::create_payment(PAYMENT_CREATOR, PAYMENT_RECIPENT, CURRENCY_ID, 20, None,));
 	});
 }
 
@@ -483,12 +479,12 @@ fn test_create_payment_works() {
 
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::create_payment(
+			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::create_payment(
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				20,
-				Some(vec![1u8; 10].into()),
+				Some(vec![1u8; 10].try_into().unwrap()),
 			)
 		})));
 
@@ -510,7 +506,7 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].into()),
+				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -525,12 +521,12 @@ fn test_create_payment_works() {
 		// the payment should not be overwritten
 		assert_noop!(
 			with_transaction(|| TransactionOutcome::Commit({
-				<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::create_payment(
+				<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::create_payment(
 					PAYMENT_CREATOR,
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					20,
-					Some(vec![1u8; 10].into()),
+					Some(vec![1u8; 10].try_into().unwrap()),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess
@@ -545,7 +541,7 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].into()),
+				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 	});
@@ -555,12 +551,13 @@ fn test_create_payment_works() {
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_cancel_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::cancel_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
-			)
-		);
+		assert_ok!(<Payment as PaymentHandler<
+			AccountId,
+			Asset,
+			Balance,
+			BlockNumber,
+			BoundedString,
+		>>::cancel_payment(PAYMENT_CREATOR, PAYMENT_RECIPENT,));
 	});
 }
 
@@ -569,7 +566,7 @@ fn test_cancel_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::create_payment(
+			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::create_payment(
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
@@ -597,7 +594,7 @@ fn test_cancel_payment_works() {
 		// cancel should fail when called by user
 		assert_noop!(
 			with_transaction(|| TransactionOutcome::Commit({
-				<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::cancel_payment(
+				<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::cancel_payment(
 					PAYMENT_RECIPENT,
 					PAYMENT_CREATOR,
 				)
@@ -607,7 +604,7 @@ fn test_cancel_payment_works() {
 
 		// cancel should succeed when caller is the recipent
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::cancel_payment(
+			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::cancel_payment(
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 			)
@@ -631,12 +628,13 @@ fn test_cancel_payment_works() {
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_release_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::release_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
-			)
-		);
+		assert_ok!(<Payment as PaymentHandler<
+			AccountId,
+			Asset,
+			Balance,
+			BlockNumber,
+			BoundedString,
+		>>::release_payment(PAYMENT_CREATOR, PAYMENT_RECIPENT,));
 	});
 }
 
@@ -645,7 +643,7 @@ fn test_release_payment_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::create_payment(
+			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::create_payment(
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
@@ -671,7 +669,7 @@ fn test_release_payment_works() {
 
 		// should succeed for valid payment
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber>>::release_payment(
+			<Payment as PaymentHandler<AccountId, Asset, Balance, BlockNumber, BoundedString>>::release_payment(
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 			)

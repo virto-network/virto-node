@@ -3,6 +3,7 @@ use crate::PaymentDetail;
 use frame_support::{
 	parameter_types,
 	traits::{Contains, Everything, GenesisBuild},
+	BoundedVec,
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -106,12 +107,16 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 	}
 }
 
+pub type BoundedString = BoundedVec<u8, MaxRemarkLength>;
+
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<Asset, Balance, AccountId, BlockNumber> for MockFeeHandler {
+impl crate::types::FeeHandler<Asset, Balance, AccountId, BlockNumber, BoundedString>
+	for MockFeeHandler
+{
 	fn apply_fees(
 		_from: &AccountId,
 		to: &AccountId,
-		_remark: &PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
+		_remark: &PaymentDetail<Asset, Balance, AccountId, BlockNumber, BoundedString>,
 	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),

@@ -2,30 +2,6 @@
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
-use sp_std::{ops::Deref, vec::Vec};
-
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
-pub struct Remark(Vec<u8>); // TODO : switch to BoundedVec
-
-impl MaxEncodedLen for Remark {
-	fn max_encoded_len() -> usize {
-		50 // TODO : switch to BoundedVec - temp fix
-	}
-}
-
-impl Deref for Remark {
-	type Target = Vec<u8>;
-
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-
-impl From<Vec<u8>> for Remark {
-	fn from(v: Vec<u8>) -> Remark {
-		Remark(v)
-	}
-}
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
@@ -33,7 +9,7 @@ impl From<Vec<u8>> for Remark {
 /// and recipient. The payment lifecycle is tracked using the state field.
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
+pub struct PaymentDetail<Asset, Amount, Account, BlockNumber, BoundedString> {
 	/// type of asset used for payment
 	pub asset: Asset,
 	/// amount of asset used for payment
@@ -47,7 +23,7 @@ pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
 	/// fee charged and recipient account details
 	pub fee_detail: Option<(Account, Amount)>,
 	/// remarks to give context to payment
-	pub remark: Option<Remark>,
+	pub remark: Option<BoundedString>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
@@ -64,7 +40,7 @@ pub enum PaymentState<BlockNumber> {
 }
 
 /// trait that defines how to create/release payments for users
-pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
+pub trait PaymentHandler<Account, Asset, Amount, BlockNumber, BoundedString> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
 	/// - User does not have enough balance.
@@ -73,7 +49,7 @@ pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
 		to: Account,
 		asset: Asset,
 		amount: Amount,
-		remark: Option<Remark>,
+		remark: Option<BoundedString>,
 	) -> DispatchResult;
 
 	/// Attempt to transfer an amount of the given asset from the given payment_id
@@ -97,7 +73,7 @@ pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
 	fn get_payment_details(
 		from: Account,
 		to: Account,
-	) -> Option<PaymentDetail<Asset, Amount, Account, BlockNumber>>;
+	) -> Option<PaymentDetail<Asset, Amount, Account, BlockNumber, BoundedString>>;
 }
 
 /// DisputeResolver trait defines how to create/assing judges for solving payment disputes
@@ -107,11 +83,11 @@ pub trait DisputeResolver<Account> {
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
-pub trait FeeHandler<Asset, Amount, Account, BlockNumber> {
+pub trait FeeHandler<Asset, Amount, Account, BlockNumber, BoundedString> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
 		from: &Account,
 		to: &Account,
-		detail: &PaymentDetail<Asset, Amount, Account, BlockNumber>,
+		detail: &PaymentDetail<Asset, Amount, Account, BlockNumber, BoundedString>,
 	) -> (Account, Percent);
 }

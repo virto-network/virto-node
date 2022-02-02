@@ -29,7 +29,7 @@ use frame_support::{
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
-	PalletId,
+	BoundedVec, PalletId,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -609,11 +609,25 @@ impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 }
 
 pub struct VirtoFeeHandler;
-impl virto_payment::FeeHandler<Asset, Balance, AccountId, BlockNumber> for VirtoFeeHandler {
+impl
+	virto_payment::FeeHandler<
+		Asset,
+		Balance,
+		AccountId,
+		BlockNumber,
+		BoundedVec<u8, MaxRemarkLength>,
+	> for VirtoFeeHandler
+{
 	fn apply_fees(
 		_from: &AccountId,
 		_to: &AccountId,
-		_remark: &virto_payment::PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
+		_remark: &virto_payment::PaymentDetail<
+			Asset,
+			Balance,
+			AccountId,
+			BlockNumber,
+			BoundedVec<u8, MaxRemarkLength>,
+		>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
 		let fee_receiver = match Sudo::key() {
