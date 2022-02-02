@@ -13,10 +13,7 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::{
-	config::{BasePath, PrometheusConfig},
-	TaskManager,
-};
+use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
@@ -242,23 +239,6 @@ pub fn run() -> Result<()> {
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
 			},
-		Some(Subcommand::TryRuntime(cmd)) => {
-			if cfg!(feature = "try-runtime") {
-				let runner = cli.create_runner(cmd)?;
-
-				// grab the task manager.
-				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-				let task_manager =
-					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-						.map_err(|e| format!("Error: {:?}", e))?;
-
-				runner.async_run(|config| {
-					Ok((cmd.run::<Block, TemplateRuntimeExecutor>(config), task_manager))
-				})
-			} else {
-				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-			}
-		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 

@@ -4,6 +4,7 @@ use crate::{Pallet as Payment, Payment as PaymentStore};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
+use sp_std::vec;
 use virto_primitives::Asset;
 
 const SEED: u32 = 0;

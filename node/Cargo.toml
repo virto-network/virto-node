@@ -21,7 +21,6 @@ path = "src/main.rs"
 
 [features]
 runtime-benchmarks = ["virto-runtime/runtime-benchmarks"]
-try-runtime = [ "virto-runtime/try-runtime" ]
 
 [dependencies]
 derive_more = "0.99.2"
@@ -40,7 +39,6 @@ virto-runtime = { path = "../runtime" }
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
