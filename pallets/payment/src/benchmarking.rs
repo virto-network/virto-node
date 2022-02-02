@@ -43,7 +43,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent = account("recipient", 0, SEED);
-	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT, "test".into())
+	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT, vec![1u8, 50].into())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCreated { from: caller, asset: get_currency_id(), amount: SOME_AMOUNT}.into());
 	}

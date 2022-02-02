@@ -10558,6 +10558,7 @@ dependencies = [
  "pallet-collective",
  "pallet-proxy",
  "pallet-session",
+ "pallet-society",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",

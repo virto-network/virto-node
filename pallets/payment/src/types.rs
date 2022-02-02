@@ -9,7 +9,7 @@ pub struct Remark(Vec<u8>); // TODO : switch to BoundedVec
 
 impl MaxEncodedLen for Remark {
 	fn max_encoded_len() -> usize {
-		100 // TODO : switch to BoundedVec - temp fix
+		50 // TODO : switch to BoundedVec - temp fix
 	}
 }
 
@@ -18,6 +18,12 @@ impl Deref for Remark {
 
 	fn deref(&self) -> &Self::Target {
 		&self.0
+	}
+}
+
+impl From<Vec<u8>> for Remark {
+	fn from(v: Vec<u8>) -> Remark {
+		Remark(v)
 	}
 }
 

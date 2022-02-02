@@ -324,7 +324,7 @@ fn test_remark_too_large_should_be_rejected() {
 				PAYMENT_RECIPENT_FEE_CHARGED,
 				CURRENCY_ID,
 				40,
-				vec![1; 51]
+				vec![1u8; 51].into()
 			),
 			crate::Error::<Test>::RemarkTooLarge
 		);
@@ -340,7 +340,7 @@ fn test_pay_with_remark_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			"test".into()
+			vec![1u8; 10].into()
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -351,7 +351,7 @@ fn test_pay_with_remark_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some("test".into())
+				remark: Some(vec![1u8; 10].into())
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -389,7 +389,7 @@ fn test_do_not_overwrite_logic_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			"test".into()
+			vec![1u8; 10].into()
 		));
 
 		assert_noop!(
@@ -408,7 +408,7 @@ fn test_do_not_overwrite_logic_works() {
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some("test".into()),
+				remark: Some(vec![1u8; 10].into()),
 			},
 		);
 
@@ -428,7 +428,7 @@ fn test_request_refund() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			"test".into()
+			vec![1u8; 10].into()
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
@@ -442,7 +442,7 @@ fn test_request_refund() {
 				state: PaymentState::RefundRequested(601u64.into()),
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some("test".into())
+				remark: Some(vec![1u8; 10].into())
 			})
 		);
 
@@ -488,7 +488,7 @@ fn test_create_payment_works() {
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				20,
-				Some("test".into()),
+				Some(vec![1u8; 10].into()),
 			)
 		})));
 
@@ -510,7 +510,7 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some("test".into()),
+				remark: Some(vec![1u8; 10].into()),
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -530,7 +530,7 @@ fn test_create_payment_works() {
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					20,
-					Some("test".into()),
+					Some(vec![1u8; 10].into()),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess
@@ -545,7 +545,7 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some("test".into()),
+				remark: Some(vec![1u8; 10].into()),
 			})
 		);
 	});
