@@ -5,11 +5,11 @@ use sp_runtime::{DispatchResult, Percent};
 use sp_std::{ops::Deref, vec::Vec};
 
 #[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
-pub struct Remark(Vec<u8>); // TODO : switch to BoundedVec if possible
+pub struct Remark(Vec<u8>); // TODO : switch to BoundedVec
 
 impl MaxEncodedLen for Remark {
 	fn max_encoded_len() -> usize {
-		100 // TODO : switch to BoundedVec if possible - temp fix
+		100 // TODO : switch to BoundedVec - temp fix
 	}
 }
 

@@ -53,7 +53,7 @@ where
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn virto_session_keys(keys: AuraId) -> virto_runtime::SessionKeys {
+pub fn template_session_keys(keys: AuraId) -> virto_runtime::SessionKeys {
 	virto_runtime::SessionKeys { aura: keys }
 }
 
@@ -101,6 +101,7 @@ pub fn development_config() -> ChainSpec {
 			)
 		},
 		Vec::new(),
+		None,
 		None,
 		None,
 		None,
@@ -159,7 +160,9 @@ pub fn local_testnet_config() -> ChainSpec {
 		// Telemetry
 		None,
 		// Protocol ID
-		Some("virto-local"),
+		Some("template-local"),
+		// Fork ID
+		None,
 		// Properties
 		Some(properties),
 		// Extensions
@@ -195,9 +198,9 @@ fn testnet_genesis(
 				.into_iter()
 				.map(|(acc, aura)| {
 					(
-						acc.clone(),              // account id
-						acc,                      // validator id
-						virto_session_keys(aura), // session keys
+						acc.clone(),                 // account id
+						acc,                         // validator id
+						template_session_keys(aura), // session keys
 					)
 				})
 				.collect(),
@@ -208,7 +211,7 @@ fn testnet_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		sudo: virto_runtime::SudoConfig {
-			key: get_account_id_from_seed::<sr25519::Public>("Alice"),
+			key: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
 		},
 		assets: virto_runtime::AssetsConfig { balances: vec![] },
 	}

@@ -27,7 +27,6 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::CheckedAdd, Percent};
-	use sp_std::vec::Vec;
 
 	type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -368,13 +367,13 @@ pub mod pallet {
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
 
-					match payment.fee_detail {
+					match &payment.fee_detail {
 						Some((fee_recipient_account, fee_amount)) => {
 							// unreserve the incentive amount + fees back to the creator
 							T::Asset::unreserve(
 								payment.asset,
 								&from,
-								payment.incentive_amount + fee_amount,
+								payment.incentive_amount + *fee_amount,
 							);
 							// unreserve the amount to the recipent
 							T::Asset::unreserve(payment.asset, &to, payment.amount);
@@ -383,7 +382,7 @@ pub mod pallet {
 								payment.asset,
 								&from,                  // fee is paid by payment creator
 								&fee_recipient_account, // account of fee recipient
-								fee_amount,             // amount of fee
+								*fee_amount,            // amount of fee
 							)?;
 						},
 						None => {

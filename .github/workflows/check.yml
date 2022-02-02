@@ -12,7 +12,7 @@ jobs:
       - run: make check
 
   tests:
-    name: Unit tests
+    name: Check project
     runs-on: self-hosted
     needs: build
     steps:
