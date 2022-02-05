@@ -601,10 +601,7 @@ impl orml_unknown_tokens::Config for Runtime {
 pub struct VirtoDisputeResolver;
 impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 	fn get_origin() -> AccountId {
-		match Sudo::key() {
-			Some(key) => key,
-			None => [0; 32].into(), // TODO : Use a better alternative
-		}
+		Sudo::key().expect("Sudo key not set!")
 	}
 }
 
@@ -616,10 +613,7 @@ impl virto_payment::FeeHandler<Asset, Balance, AccountId, BlockNumber> for Virto
 		_remark: &virto_payment::PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
-		let fee_receiver = match Sudo::key() {
-			Some(key) => key,
-			None => [0; 32].into(), // TODO : Use a better alternative
-		};
+		let fee_receiver = Sudo::key().expect("Sudo key not set!");
 		(fee_receiver, VIRTO_MARKETPLACE_FEE_PERCENT)
 	}
 }
