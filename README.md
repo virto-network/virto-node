@@ -157,8 +157,5 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 -   Trait: The `Trait` configuration interface is used to define the types and parameters upon which
     a FRAME pallet depends.
 
-## Polkadot-js UI
 
-The [polkadot-js UI](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Ftestnet.valibre.dev#/explorer) UI can be used to interact with the virto-node. 
-Some custom types will need to be specified in the `Settings > Developer` section of the UI. The definitions for these types 
-can currently be found in the [types.json](types.json) file.
+
