@@ -606,11 +606,11 @@ impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 }
 
 pub struct VirtoFeeHandler;
-impl virto_payment::FeeHandler<Asset, Balance, AccountId, BlockNumber> for VirtoFeeHandler {
+impl virto_payment::FeeHandler<Runtime> for VirtoFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		_to: &AccountId,
-		_remark: &virto_payment::PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
+		_remark: &virto_payment::PaymentDetail<Runtime>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
 		let fee_receiver = Sudo::key().expect("Sudo key not set!");

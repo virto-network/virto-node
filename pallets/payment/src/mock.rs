@@ -17,7 +17,6 @@ use virto_primitives::{Asset, NetworkAsset};
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
-pub type BlockNumber = u64;
 
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
@@ -107,11 +106,11 @@ impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
 }
 
 pub struct MockFeeHandler;
-impl crate::types::FeeHandler<Asset, Balance, AccountId, BlockNumber> for MockFeeHandler {
+impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		to: &AccountId,
-		_remark: &PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
+		_remark: &PaymentDetail<Test>,
 	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
