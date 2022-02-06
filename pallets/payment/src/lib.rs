@@ -21,7 +21,7 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use frame_support::{
-		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, require_transactional,
+		dispatch::DispatchResultWithPostInfo, fail, pallet_prelude::*, require_transactional,
 		transactional,
 	};
 	use frame_system::pallet_prelude::*;
@@ -111,6 +111,10 @@ pub mod pallet {
 		PaymentNeedsReview,
 		/// Unexpeted math error
 		MathError,
+		/// Payment request has not been created
+		RefundNotRequested,
+		/// Dispute period has not passed
+		DisputePeriodNotPassed,
 	}
 
 	#[pallet::hooks]
@@ -179,9 +183,15 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::cancel())]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T>>::cancel_payment(
-				creator, who, // the caller must be the provider, creator cannot cancel
-			)?;
+			if let Some(payment) = Payment::<T>::get(creator.clone(), who.clone()) {
+				match payment.state {
+					PaymentState::Created =>
+						<Self as PaymentHandler<T>>::cancel_payment(creator.clone(), who.clone())?,
+					_ => fail!(Error::<T>::InvalidAction),
+				}
+			} else {
+				fail!(Error::<T>::InvalidPayment);
+			}
 			Ok(().into())
 		}
 
@@ -201,7 +211,6 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-
 			<Self as PaymentHandler<T>>::cancel_payment(from, recipient)?;
 			Ok(().into())
 		}
@@ -265,6 +274,41 @@ pub mod pallet {
 					Ok(())
 				},
 			)?;
+
+			Ok(().into())
+		}
+
+		/// Allow payment creator to claim the refund if the payment recipent has not disputed
+		/// After the payment creator has `request_refund` can then call this extrinsic to
+		/// cancel the payment and receive the reserved amount to the account if the dispute period
+		/// has passed.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::claim_refund())]
+		pub fn claim_refund(
+			origin: OriginFor<T>,
+			recipient: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			use PaymentState::*;
+			let who = ensure_signed(origin)?;
+
+			if let Some(payment) = Payment::<T>::get(who.clone(), recipient.clone()) {
+				match payment.state {
+					NeedsReview => fail!(Error::<T>::PaymentNeedsReview),
+					Created => fail!(Error::<T>::RefundNotRequested),
+					RefundRequested(cancel_block) => {
+						let current_block = frame_system::Pallet::<T>::block_number();
+						// ensure the dispute period has passed
+						ensure!(current_block > cancel_block, Error::<T>::DisputePeriodNotPassed);
+						// cancel the payment and refund the creator
+						<Self as PaymentHandler<T>>::cancel_payment(
+							who.clone(),
+							recipient.clone(),
+						)?;
+					},
+				}
+			} else {
+				fail!(Error::<T>::InvalidPayment);
+			}
 
 			Ok(().into())
 		}
@@ -399,11 +443,7 @@ pub mod pallet {
 				to.clone(),
 				|maybe_payment| -> DispatchResult {
 					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
-					// ensure the payment is in created state
-					ensure!(
-						payment.state == PaymentState::Created,
-						Error::<T>::PaymentAlreadyReleased
-					);
+
 					// unreserve the incentive amount from the owner account
 					match payment.fee_detail {
 						Some((_, fee_amount)) => {

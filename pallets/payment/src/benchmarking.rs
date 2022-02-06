@@ -2,8 +2,10 @@ use super::*;
 
 use crate::{Pallet as Payment, Payment as PaymentStore};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_support::traits::{OnFinalize, OnInitialize};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
+use sp_runtime::traits::One;
 use sp_std::vec;
 use virto_primitives::Asset;
 
@@ -21,6 +23,16 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	// compare to the last event record
 	let frame_system::EventRecord { event, .. } = &events[events.len() - 1];
 	assert_eq!(event, &system_event);
+}
+
+pub fn run_to_block<T: Config>(n: T::BlockNumber) {
+	while frame_system::Pallet::<T>::block_number() < n {
+		frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
+		frame_system::Pallet::<T>::set_block_number(
+			frame_system::Pallet::<T>::block_number() + One::one(),
+		);
+		frame_system::Pallet::<T>::on_initialize(frame_system::Pallet::<T>::block_number());
+	}
 }
 
 benchmarks! {
@@ -104,6 +116,19 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCreatorRequestedRefund { from: caller, to: recipent, expiry: 601u32.into() }.into());
+	}
+
+	// creator of payment can claim a refund
+	claim_refund {
+		let caller = whitelisted_caller();
+		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
+		let recipent : T::AccountId = account("recipient", 0, SEED);
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::request_refund(RawOrigin::Signed(caller.clone()).into(), recipent.clone())?;
+		run_to_block::<T>(700u32.into());
+	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
+	verify {
+		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
 }
 
