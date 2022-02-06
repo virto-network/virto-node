@@ -156,6 +156,3 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 -   Errors: When a dispatchable fails, it returns an error.
 -   Trait: The `Trait` configuration interface is used to define the types and parameters upon which
     a FRAME pallet depends.
-
-
-
