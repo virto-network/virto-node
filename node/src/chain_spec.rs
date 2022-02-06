@@ -104,6 +104,7 @@ pub fn development_config() -> ChainSpec {
 		None,
 		None,
 		None,
+		None,
 		Extensions {
 			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: 1000,
@@ -160,6 +161,8 @@ pub fn local_testnet_config() -> ChainSpec {
 		None,
 		// Protocol ID
 		Some("virto-local"),
+		// Fork ID
+		None,
 		// Properties
 		Some(properties),
 		// Extensions
@@ -208,7 +211,7 @@ fn testnet_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		sudo: virto_runtime::SudoConfig {
-			key: get_account_id_from_seed::<sr25519::Public>("Alice"),
+			key: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
 		},
 		assets: virto_runtime::AssetsConfig { balances: vec![] },
 	}

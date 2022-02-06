@@ -29,10 +29,11 @@ pub mod pallet {
 	use sp_runtime::{traits::CheckedAdd, Percent};
 	use sp_std::vec::Vec;
 
-	type BalanceOf<T> =
+	pub type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
-	type AssetIdOf<T> =
+	pub type AssetIdOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
+	pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -43,12 +44,7 @@ pub mod pallet {
 		/// Dispute resolution account
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 		/// Fee handler trait
-		type FeeHandler: FeeHandler<
-			AssetIdOf<Self>,
-			BalanceOf<Self>,
-			Self::AccountId,
-			Self::BlockNumber,
-		>;
+		type FeeHandler: FeeHandler<Self>;
 		/// Incentive percentage - amount witheld from sender
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
@@ -79,7 +75,7 @@ pub mod pallet {
 		T::AccountId, // payment creator
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
-		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber>,
+		PaymentDetail<T>,
 	>;
 
 	#[pallet::event]
@@ -135,9 +131,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::create_payment(
-				who, recipient, asset, amount, None,
-			)?;
+			<Self as PaymentHandler<T>>::create_payment(who, recipient, asset, amount, None)?;
 			Ok(().into())
 		}
 
@@ -155,17 +149,15 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// ensure remark is not too large
-			ensure!(
-				remark.len() <= T::MaxRemarkLength::get().try_into().unwrap(),
-				Error::<T>::RemarkTooLarge
-			);
+			let bounded_remark: BoundedDataOf<T> =
+				remark.try_into().map_err(|_| Error::<T>::RemarkTooLarge)?;
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::create_payment(
+			<Self as PaymentHandler<T>>::create_payment(
 				who,
 				recipient,
 				asset,
 				amount,
-				Some(remark),
+				Some(bounded_remark),
 			)?;
 			Ok(().into())
 		}
@@ -176,9 +168,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
-				who, to,
-			)?;
+			<Self as PaymentHandler<T>>::release_payment(who, to)?;
 			Ok(().into())
 		}
 
@@ -189,7 +179,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::cancel())]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
+			<Self as PaymentHandler<T>>::cancel_payment(
 				creator, who, // the caller must be the provider, creator cannot cancel
 			)?;
 			Ok(().into())
@@ -212,9 +202,7 @@ pub mod pallet {
 			}
 			// try to update the payment to new state
 
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::cancel_payment(
-				from, recipient,
-			)?;
+			<Self as PaymentHandler<T>>::cancel_payment(from, recipient)?;
 			Ok(().into())
 		}
 
@@ -234,9 +222,7 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>>::release_payment(
-				from, recipient,
-			)?;
+			<Self as PaymentHandler<T>>::release_payment(from, recipient)?;
 			Ok(().into())
 		}
 
@@ -284,9 +270,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> PaymentHandler<T::AccountId, AssetIdOf<T>, BalanceOf<T>, T::BlockNumber>
-		for Pallet<T>
-	{
+	impl<T: Config> PaymentHandler<T> for Pallet<T> {
 		/// The function will create a new payment. When a new payment is created, an amount + incentive
 		/// is reserved from the payment creator. The incentive amount is reserved in the creators account.
 		/// The amount is transferred to the payment recipent but kept in reserved state. Only when the release action
@@ -297,7 +281,7 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Option<Vec<u8>>,
+			remark: Option<BoundedDataOf<T>>,
 		) -> DispatchResult {
 			Payment::<T>::try_mutate(
 				from.clone(),
@@ -367,23 +351,33 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is in created state
 					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-					let (fee_recipient_account, fee_amount) =
-						payment.fee_detail.clone().unwrap_or_default();
-					// unreserve the incentive amount back to the creator
-					T::Asset::unreserve(
-						payment.asset,
-						&from,
-						payment.incentive_amount + fee_amount,
-					);
-					// unreserve the amount to the recipent
-					T::Asset::unreserve(payment.asset, &to, payment.amount);
-					// transfer fee amount to marketplace
-					T::Asset::transfer(
-						payment.asset,
-						&from,                  // fee is paid by payment creator
-						&fee_recipient_account, // account of fee recipient
-						fee_amount,             // amount of fee
-					)?;
+
+					match &payment.fee_detail {
+						Some((fee_recipient_account, fee_amount)) => {
+							// unreserve the incentive amount + fees back to the creator
+							T::Asset::unreserve(
+								payment.asset,
+								&from,
+								payment.incentive_amount + *fee_amount,
+							);
+							// unreserve the amount to the recipent
+							T::Asset::unreserve(payment.asset, &to, payment.amount);
+							// transfer fee amount to marketplace
+							T::Asset::transfer(
+								payment.asset,
+								&from,                  // fee is paid by payment creator
+								&fee_recipient_account, // account of fee recipient
+								*fee_amount,            // amount of fee
+							)?;
+						},
+						None => {
+							// unreserve the incentive amount back to the creator
+							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+							// unreserve the amount to the recipent
+							T::Asset::unreserve(payment.asset, &to, payment.amount);
+						},
+					}
+
 					// clear payment data from storage
 					*maybe_payment = None;
 					Ok(())
@@ -411,11 +405,19 @@ pub mod pallet {
 						Error::<T>::PaymentAlreadyReleased
 					);
 					// unreserve the incentive amount from the owner account
-					T::Asset::unreserve(
-						payment.asset,
-						&from,
-						payment.incentive_amount + payment.fee_detail.clone().unwrap_or_default().1,
-					);
+					match payment.fee_detail {
+						Some((_, fee_amount)) => {
+							T::Asset::unreserve(
+								payment.asset,
+								&from,
+								payment.incentive_amount + fee_amount,
+							);
+						},
+						None => {
+							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
+						},
+					};
+
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 					// transfer amount to creator
 					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
@@ -432,10 +434,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn get_payment_details(
-			from: T::AccountId,
-			to: T::AccountId,
-		) -> Option<PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, T::BlockNumber>> {
+		fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>> {
 			Payment::<T>::get(from, to)
 		}
 	}

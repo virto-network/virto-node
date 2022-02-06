@@ -1,35 +1,36 @@
 #![allow(unused_qualifications)]
-use parity_scale_codec::{Decode, Encode};
+use crate::{pallet, AssetIdOf, BalanceOf, BoundedDataOf};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
-use sp_std::vec::Vec;
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds
 /// and can be released once an agreed upon condition has reached between the payment creator
 /// and recipient. The payment lifecycle is tracked using the state field.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: pallet::Config))]
+pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
-	pub asset: Asset,
+	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
-	pub amount: Amount,
+	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
-	pub incentive_amount: Amount,
+	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview]
-	pub state: PaymentState<BlockNumber>,
+	pub state: PaymentState<T::BlockNumber>,
 	/// account that can settle any disputes created in the payment
-	pub resolver_account: Account,
+	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
-	pub fee_detail: Option<(Account, Amount)>,
+	pub fee_detail: Option<(T::AccountId, BalanceOf<T>)>,
 	/// remarks to give context to payment
-	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
+	pub remark: Option<BoundedDataOf<T>>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and hence not tracked by a state.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PaymentState<BlockNumber> {
 	/// Amounts have been reserved and waiting for release/cancel
@@ -41,16 +42,16 @@ pub enum PaymentState<BlockNumber> {
 }
 
 /// trait that defines how to create/release payments for users
-pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
+pub trait PaymentHandler<T: pallet::Config> {
 	/// Attempt to reserve an amount of the given asset from the caller
 	/// If not possible then return Error. Possible reasons for failure include:
 	/// - User does not have enough balance.
 	fn create_payment(
-		from: Account,
-		to: Account,
-		asset: Asset,
-		amount: Amount,
-		remark: Option<Vec<u8>>,
+		from: T::AccountId,
+		to: T::AccountId,
+		asset: AssetIdOf<T>,
+		amount: BalanceOf<T>,
+		remark: Option<BoundedDataOf<T>>,
 	) -> DispatchResult;
 
 	/// Attempt to transfer an amount of the given asset from the given payment_id
@@ -58,7 +59,7 @@ pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
 	/// - The payment does not exist
 	/// - The unreserve operation fails
 	/// - The transfer operation fails
-	fn release_payment(from: Account, to: Account) -> DispatchResult;
+	fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult;
 
 	/// Attempt to cancel a payment in Created state. This will set the payment
 	/// state to cancel and release the reserved amount back to the creator.
@@ -66,15 +67,12 @@ pub trait PaymentHandler<Account, Asset, Amount, BlockNumber> {
 	/// - The payment does not exist
 	/// - The payment is not in Created state
 	/// - The unreserve operation fails
-	fn cancel_payment(from: Account, to: Account) -> DispatchResult;
+	fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult;
 
 	/// Attempt to fetch the details of a payment from the given payment_id
 	/// Possible reasons for failure include:
 	/// - The payment does not exist
-	fn get_payment_details(
-		from: Account,
-		to: Account,
-	) -> Option<PaymentDetail<Asset, Amount, Account, BlockNumber>>;
+	fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>>;
 }
 
 /// DisputeResolver trait defines how to create/assing judges for solving payment disputes
@@ -84,11 +82,11 @@ pub trait DisputeResolver<Account> {
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
-pub trait FeeHandler<Asset, Amount, Account, BlockNumber> {
+pub trait FeeHandler<T: pallet::Config> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
-		from: &Account,
-		to: &Account,
-		detail: &PaymentDetail<Asset, Amount, Account, BlockNumber>,
-	) -> (Account, Percent);
+		from: &T::AccountId,
+		to: &T::AccountId,
+		detail: &PaymentDetail<T>,
+	) -> (T::AccountId, Percent);
 }

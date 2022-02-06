@@ -80,7 +80,7 @@ $(CLIPPY):
 # Run command sets up a "devnet" with relay-chain validators, karura and virto collators
 #
 .PHONY: run run-parachain stop
-POLKADOT=parity/polkadot:v0.9.13
+POLKADOT=parity/polkadot:v0.9.16
 KARURA=acala/karura-node
 IMG=ghcr.io/virto-network/virto
 SPEC=rococo-local

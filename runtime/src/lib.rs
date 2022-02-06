@@ -125,7 +125,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 >;
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -187,6 +187,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
+	state_version: 0,
 };
 
 /// This determines the average expected block time that we are targeting.
@@ -310,6 +311,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
+	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -400,7 +402,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type Event = Event;
-	type OnValidationData = ();
+	type OnSystemEvent = ();
 	type SelfParaId = parachain_info::Pallet<Runtime>;
 	type DmpMessageHandler = DmpQueue;
 	type ReservedDmpWeight = ReservedDmpWeight;
@@ -583,6 +585,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
+	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -598,19 +601,20 @@ impl orml_unknown_tokens::Config for Runtime {
 pub struct VirtoDisputeResolver;
 impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
 	fn get_origin() -> AccountId {
-		Sudo::key()
+		Sudo::key().expect("Sudo key not set!")
 	}
 }
 
 pub struct VirtoFeeHandler;
-impl virto_payment::FeeHandler<Asset, Balance, AccountId, BlockNumber> for VirtoFeeHandler {
+impl virto_payment::FeeHandler<Runtime> for VirtoFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		_to: &AccountId,
-		_remark: &virto_payment::PaymentDetail<Asset, Balance, AccountId, BlockNumber>,
+		_remark: &virto_payment::PaymentDetail<Runtime>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
-		(Sudo::key(), VIRTO_MARKETPLACE_FEE_PERCENT)
+		let fee_receiver = Sudo::key().expect("Sudo key not set!");
+		(fee_receiver, VIRTO_MARKETPLACE_FEE_PERCENT)
 	}
 }
 
@@ -696,6 +700,7 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 parameter_types! {
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 	pub const BaseXcmWeight: Weight = 100_000_000; // configure later
+	pub const MaxAssetsForTransfer: usize = 2; // configure later
 }
 
 impl orml_xtokens::Config for Runtime {
@@ -709,6 +714,7 @@ impl orml_xtokens::Config for Runtime {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
+	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -855,8 +861,8 @@ impl_runtime_apis! {
 	}
 
 	impl cumulus_primitives_core::CollectCollationInfo<Block> for Runtime {
-		fn collect_collation_info() -> cumulus_primitives_core::CollationInfo {
-			ParachainSystem::collect_collation_info()
+		fn collect_collation_info(header: &<Block as BlockT>::Header) -> cumulus_primitives_core::CollationInfo {
+			ParachainSystem::collect_collation_info(header)
 		}
 	}
 
