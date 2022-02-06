@@ -36,6 +36,7 @@ pub trait WeightInfo {
 	fn resolve_release_payment() -> Weight;
 	fn request_refund() -> Weight;
 	fn claim_refund() -> Weight;
+	fn dispute_refund() -> Weight;
 }
 
 /// Weight functions for `virto_payment`.
@@ -103,6 +104,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: Payment Payment (r:1 w:1)
+	fn dispute_refund() -> Weight {
+		(18_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }
 
 // For backwards compatibility and tests
@@ -168,5 +175,11 @@ impl WeightInfo for () {
 		(49_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+	// Storage: Payment Payment (r:1 w:1)
+	fn dispute_refund() -> Weight {
+		(18_000_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

@@ -498,6 +498,55 @@ fn test_claim_refund() {
 }
 
 #[test]
+fn test_dispute_refund() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+		));
+
+		// cannot dispute if refund is not requested
+		assert_noop!(
+			Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR),
+			crate::Error::<Test>::InvalidAction
+		);
+		// creator requests a refund
+		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+		// recipient disputes the refund request
+		assert_ok!(Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
+		// payment cannot be claimed after disputed
+		assert_noop!(
+			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
+			crate::Error::<Test>::PaymentNeedsReview
+		);
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::NeedsReview,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: None
+			})
+		);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRefundDisputed {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_create_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {

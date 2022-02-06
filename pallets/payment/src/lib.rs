@@ -93,6 +93,8 @@ pub mod pallet {
 			to: T::AccountId,
 			expiry: T::BlockNumber,
 		},
+		/// the refund request from creator was disputed by recipient
+		PaymentRefundDisputed { from: T::AccountId, to: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -309,6 +311,44 @@ pub mod pallet {
 			} else {
 				fail!(Error::<T>::InvalidPayment);
 			}
+
+			Ok(().into())
+		}
+
+		/// Allow payment recipient to dispute the refund request from the payment creator
+		/// This does not cancel the request, instead sends the payment to a NeedsReview state
+		/// The assigned resolver account can then change the state of the payment after review.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::dispute_refund())]
+		pub fn dispute_refund(
+			origin: OriginFor<T>,
+			creator: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			use PaymentState::*;
+			let who = ensure_signed(origin)?;
+
+			Payment::<T>::try_mutate(
+				creator.clone(),
+				who.clone(), // should be called by the payment recipient
+				|maybe_payment| -> DispatchResult {
+					// ensure the payment exists
+					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
+					// ensure the payment is in Requested Refund state
+					match payment.state {
+						RefundRequested(_) => {
+							payment.state = PaymentState::NeedsReview;
+
+							Self::deposit_event(Event::PaymentRefundDisputed {
+								from: creator,
+								to: who,
+							});
+						},
+						_ => fail!(Error::<T>::InvalidAction),
+					}
+
+					Ok(())
+				},
+			)?;
 
 			Ok(().into())
 		}

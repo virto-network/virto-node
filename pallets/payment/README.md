@@ -19,6 +19,7 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `PaymentReleased { from: T::AccountId, to: T::AccountId }`,
 - `PaymentCancelled { from: T::AccountId, to: T::AccountId }`,
 - `PaymentCreatorRequestedRefund { from: T::AccountId, to: T::AccountId, expiry: T::BlockNumber}`
+- `PaymentRefundDisputed { from: T::AccountId, to: T::AccountId }`
 
 #### Extrinsics
 
@@ -30,6 +31,7 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `resolve_cancel_payment` - Allows assigned judge to cancel a payment
 - `request_refund` - Allows the creator of the payment to trigger cancel with a buffer time.
 - `claim_refund` - Allows the creator to claim payment refund after buffer time
+- `dispute_refund` - Allows the recipient to dispute the payment request of sender
 
 ## Implementations
 

@@ -130,6 +130,18 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
+
+	// recipient of a payment can dispute a refund request
+	dispute_refund {
+		let caller = whitelisted_caller();
+		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
+		let recipent : T::AccountId = account("recipient", 0, SEED);
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::request_refund(RawOrigin::Signed(caller.clone()).into(), recipent.clone())?;
+	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
+	verify {
+		assert_last_event::<T>(Event::<T>::PaymentRefundDisputed { from: caller, to: recipent}.into());
+	}
 }
 
 impl_benchmark_test_suite!(Payment, crate::mock::new_test_ext(), crate::mock::Test,);
