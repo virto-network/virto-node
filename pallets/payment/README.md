@@ -29,6 +29,7 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `resolve_release_payment` - Allows assigned judge to release a payment
 - `resolve_cancel_payment` - Allows assigned judge to cancel a payment
 - `request_refund` - Allows the creator of the payment to trigger cancel with a buffer time.
+- `claim_refund` - Allows the creator to claim payment refund after buffer time
 
 ## Implementations
 
@@ -40,21 +41,21 @@ The RatesProvider module provides implementations for the following traits.
 The `PaymentDetail` struct stores information about the payment/escrow. A "payment" in virto network is similar to an escrow, it is used to guarantee proof of funds and can be released once an agreed upon condition has reached between the payment creator and recipient. The payment lifecycle is tracked using the state field.
 
 ```rust 
-pub struct PaymentDetail<Asset, Amount, Account, BlockNumber> {
+pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
-	pub asset: Asset,
+	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
-	pub amount: Amount,
+	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
-	pub incentive_amount: Amount,
+	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview]
-	pub state: PaymentState<BlockNumber>,
+	pub state: PaymentState<T::BlockNumber>,
 	/// account that can settle any disputes created in the payment
-	pub resolver_account: Account,
+	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
-	pub fee_detail: Option<(Account, Amount)>,
+	pub fee_detail: Option<(T::AccountId, BalanceOf<T>)>,
 	/// remarks to give context to payment
-	pub remark: Option<Vec<u8>>, // TODO : switch to BoundedVec if possible
+	pub remark: Option<BoundedDataOf<T>>,
 }
 ```
 
