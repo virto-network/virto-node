@@ -2,7 +2,7 @@ use crate as payment;
 use crate::PaymentDetail;
 use frame_support::{
 	parameter_types,
-	traits::{Contains, Everything, GenesisBuild},
+	traits::{Contains, Everything, GenesisBuild, OnFinalize, OnInitialize},
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -148,4 +148,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	// need to set block number to 1 to test events
 	ext.execute_with(|| System::set_block_number(1));
 	ext
+}
+
+pub fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		System::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+		System::on_initialize(System::block_number());
+	}
 }
