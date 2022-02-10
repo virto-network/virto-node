@@ -173,8 +173,13 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T>>::release_payment(who, to)?;
+			let from = ensure_signed(origin)?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from.clone(),
+				to.clone(),
+				Percent::from_percent(100),
+			)?;
+			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(().into())
 		}
 
@@ -240,7 +245,11 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::release_payment(from, recipient)?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from,
+				recipient,
+				Percent::from_percent(100),
+			)?;
 			Ok(().into())
 		}
 
@@ -431,58 +440,12 @@ pub mod pallet {
 			)
 		}
 
-		/// The function will release an existing payment, a release action will remove the reserve
-		/// placed on both the incentive amount and the transfer amount and it will be "released" to the respective account.
-		#[require_transactional]
-		fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
-			use PaymentState::*;
-			// add the payment detail to storage
-			Payment::<T>::try_mutate(
-				from.clone(),
-				to.clone(),
-				|maybe_payment| -> DispatchResult {
-					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
-					// ensure the payment is in created state
-					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-
-					match &payment.fee_detail {
-						Some((fee_recipient_account, fee_amount)) => {
-							// unreserve the incentive amount + fees back to the creator
-							T::Asset::unreserve(
-								payment.asset,
-								&from,
-								payment.incentive_amount + *fee_amount,
-							);
-							// unreserve the amount to the recipent
-							T::Asset::unreserve(payment.asset, &to, payment.amount);
-							// transfer fee amount to marketplace
-							T::Asset::transfer(
-								payment.asset,
-								&from,                  // fee is paid by payment creator
-								&fee_recipient_account, // account of fee recipient
-								*fee_amount,            // amount of fee
-							)?;
-						},
-						None => {
-							// unreserve the incentive amount back to the creator
-							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
-							// unreserve the amount to the recipent
-							T::Asset::unreserve(payment.asset, &to, payment.amount);
-						},
-					}
-
-					// clear payment data from storage
-					*maybe_payment = None;
-					Ok(())
-				},
-			)?;
-			Self::deposit_event(Event::PaymentReleased { from, to });
-			Ok(())
-		}
-
 		/// This function allows the caller to settle the payment by specifying a recipient_share
+		/// this will unreserve the fee+incentive to sender and unreserve transferred amount to recipient
+		/// if the settlement is a release (ie recipient_share=100), the fee is transferred to marketplace
 		/// For cancelling a payment, recipient_share = 0
 		/// For releasing a payment, recipient_share = 100
+		/// In other cases, the custom recipient_share can be specified
 		#[require_transactional]
 		fn settle_payment(
 			from: T::AccountId,
@@ -497,12 +460,21 @@ pub mod pallet {
 
 					// unreserve the incentive amount and fees from the owner account
 					match payment.fee_detail {
-						Some((_, fee_amount)) => {
+						Some((fee_recipient, fee_amount)) => {
 							T::Asset::unreserve(
 								payment.asset,
 								&from,
 								payment.incentive_amount + fee_amount,
 							);
+							// if the settlement is a release, transfer fee to marketplace
+							if recipient_share == Percent::one() {
+								T::Asset::transfer(
+									payment.asset,
+									&from,          // fee is paid by payment creator
+									&fee_recipient, // account of fee recipient
+									fee_amount,     // amount of fee
+								)?;
+							}
 						},
 						None => {
 							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);

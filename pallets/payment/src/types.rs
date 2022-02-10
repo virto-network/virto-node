@@ -54,19 +54,8 @@ pub trait PaymentHandler<T: pallet::Config> {
 		remark: Option<BoundedDataOf<T>>,
 	) -> DispatchResult;
 
-	/// Attempt to transfer an amount of the given asset from the given payment_id
-	/// If not possible then return Error. Possible reasons for failure include:
-	/// - The payment does not exist
-	/// - The unreserve operation fails
-	/// - The transfer operation fails
-	fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult;
-
-	/// Attempt to fetch the details of a payment from the given payment_id
-	/// Possible reasons for failure include:
-	/// - The payment does not exist
-	fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>>;
-
-	// Settle a payment of `from` to `to`
+	// Settle a payment of `from` to `to`. To release a payment, the recipient_share=100,
+	// to cancel a payment recipient_share=0
 	// Possible reasonse for failure include
 	/// - The payment does not exist
 	/// - The unreserve operation fails
@@ -76,6 +65,11 @@ pub trait PaymentHandler<T: pallet::Config> {
 		to: T::AccountId,
 		recipient_share: Percent,
 	) -> DispatchResult;
+
+	/// Attempt to fetch the details of a payment from the given payment_id
+	/// Possible reasons for failure include:
+	/// - The payment does not exist
+	fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>>;
 }
 
 /// DisputeResolver trait defines how to create/assing judges for solving payment disputes
