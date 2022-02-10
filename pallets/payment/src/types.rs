@@ -61,14 +61,6 @@ pub trait PaymentHandler<T: pallet::Config> {
 	/// - The transfer operation fails
 	fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult;
 
-	/// Attempt to cancel a payment in Created state. This will set the payment
-	/// state to cancel and release the reserved amount back to the creator.
-	/// If not possible then return Error. Possible reasons for failure include:
-	/// - The payment does not exist
-	/// - The payment is not in Created state
-	/// - The unreserve operation fails
-	fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult;
-
 	/// Attempt to fetch the details of a payment from the given payment_id
 	/// Possible reasons for failure include:
 	/// - The payment does not exist

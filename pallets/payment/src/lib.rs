@@ -187,8 +187,15 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			if let Some(payment) = Payment::<T>::get(creator.clone(), who.clone()) {
 				match payment.state {
-					PaymentState::Created =>
-						<Self as PaymentHandler<T>>::cancel_payment(creator.clone(), who.clone())?,
+					// call settle payment with recipient_share=0, this refunds the sender
+					PaymentState::Created => {
+						<Self as PaymentHandler<T>>::settle_payment(
+							creator.clone(),
+							who.clone(),
+							Percent::from_percent(0),
+						)?;
+						Self::deposit_event(Event::PaymentCancelled { from: creator, to: who });
+					},
 					_ => fail!(Error::<T>::InvalidAction),
 				}
 			} else {
@@ -213,7 +220,7 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::cancel_payment(from, recipient)?;
+			<Self as PaymentHandler<T>>::settle_payment(from, recipient, Percent::from_percent(0))?;
 			Ok(().into())
 		}
 
@@ -302,10 +309,12 @@ pub mod pallet {
 						// ensure the dispute period has passed
 						ensure!(current_block > cancel_block, Error::<T>::DisputePeriodNotPassed);
 						// cancel the payment and refund the creator
-						<Self as PaymentHandler<T>>::cancel_payment(
+						<Self as PaymentHandler<T>>::settle_payment(
 							who.clone(),
 							recipient.clone(),
+							Percent::from_percent(0),
 						)?;
+						Self::deposit_event(Event::PaymentCancelled { from: who, to: recipient });
 					},
 				}
 			} else {
@@ -471,17 +480,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// This function will allows user to cancel a payment. When cancelling a payment, steps are
-		/// - Unreserve the incentive amount
-		/// - Unreserve the payment amount
-		/// - Transfer amount from recipent to sender
-		#[require_transactional]
-		fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
-			Self::settle_payment(from.clone(), to.clone(), Percent::from_percent(0))?;
-			Self::deposit_event(Event::PaymentCancelled { from, to });
-			Ok(())
-		}
-
+		/// This function allows the caller to settle the payment by specifying a recipient_share
+		/// For cancelling a payment, recipient_share = 0
+		/// For releasing a payment, recipient_share = 100
 		#[require_transactional]
 		fn settle_payment(
 			from: T::AccountId,
