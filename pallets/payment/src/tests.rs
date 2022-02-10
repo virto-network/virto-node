@@ -206,6 +206,11 @@ fn test_set_state_payment_works() {
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
 		));
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentReleased { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
 
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
@@ -228,6 +233,11 @@ fn test_set_state_payment_works() {
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
 		));
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
 
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);

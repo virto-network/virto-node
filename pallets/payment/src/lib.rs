@@ -228,7 +228,8 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::settle_payment(from, recipient, Percent::from_percent(0))?;
+			<Self as PaymentHandler<T>>::settle_payment(from.clone(), recipient.clone(), Percent::from_percent(0))?;
+			Self::deposit_event(Event::PaymentCancelled { from, to: recipient });
 			Ok(().into())
 		}
 
@@ -249,10 +250,11 @@ pub mod pallet {
 			}
 			// try to update the payment to new state
 			<Self as PaymentHandler<T>>::settle_payment(
-				from,
-				recipient,
+				from.clone(),
+				recipient.clone(),
 				Percent::from_percent(100),
 			)?;
+			Self::deposit_event(Event::PaymentReleased { from, to: recipient });
 			Ok(().into())
 		}
 
