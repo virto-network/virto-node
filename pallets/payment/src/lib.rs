@@ -26,7 +26,10 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
-	use sp_runtime::{traits::CheckedAdd, Percent};
+	use sp_runtime::{
+		traits::{CheckedAdd, Saturating},
+		Percent,
+	};
 	use sp_std::vec::Vec;
 
 	pub type BalanceOf<T> =
@@ -406,7 +409,7 @@ pub mod pallet {
 					}
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
-					let incentive_amount = T::IncentivePercentage::get() * amount;
+					let incentive_amount = T::IncentivePercentage::get().mul_floor(amount);
 
 					let mut new_payment = PaymentDetail {
 						asset,
@@ -422,7 +425,7 @@ pub mod pallet {
 					// implementation of the marketplace
 					let (fee_recipient, fee_percent) =
 						T::FeeHandler::apply_fees(&from, &recipient, &new_payment);
-					let fee_amount = fee_percent * amount;
+					let fee_amount = fee_percent.mul_floor(amount);
 					new_payment.fee_detail = Some((fee_recipient, fee_amount));
 
 					// reserve the incentive amount from the payment creator
@@ -484,8 +487,8 @@ pub mod pallet {
 					// Unreserve the transfer amount
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
 
-					let amount_to_recipient = recipient_share * payment.amount;
-					let amount_to_sender = payment.amount - amount_to_recipient;
+					let amount_to_recipient = recipient_share.mul_floor(payment.amount);
+					let amount_to_sender = payment.amount.saturating_sub(amount_to_recipient);
 					// send share to recipient
 					T::Asset::transfer(payment.asset, &to, &from, amount_to_sender)?;
 
