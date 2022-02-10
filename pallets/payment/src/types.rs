@@ -73,6 +73,17 @@ pub trait PaymentHandler<T: pallet::Config> {
 	/// Possible reasons for failure include:
 	/// - The payment does not exist
 	fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>>;
+
+	// Settle a payment of `from` to `to`
+	// Possible reasonse for failure include
+	/// - The payment does not exist
+	/// - The unreserve operation fails
+	/// - The transfer operation fails
+	fn settle_payment(
+		from: T::AccountId,
+		to: T::AccountId,
+		recipient_share: Percent,
+	) -> DispatchResult;
 }
 
 /// DisputeResolver trait defines how to create/assing judges for solving payment disputes

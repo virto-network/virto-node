@@ -477,14 +477,24 @@ pub mod pallet {
 		/// - Transfer amount from recipent to sender
 		#[require_transactional]
 		fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
-			// add the payment detail to storage
+			Self::settle_payment(from.clone(), to.clone(), Percent::from_percent(0))?;
+			Self::deposit_event(Event::PaymentCancelled { from, to });
+			Ok(())
+		}
+
+		#[require_transactional]
+		fn settle_payment(
+			from: T::AccountId,
+			to: T::AccountId,
+			recipient_share: Percent,
+		) -> DispatchResult {
 			Payment::<T>::try_mutate(
 				from.clone(),
 				to.clone(),
 				|maybe_payment| -> DispatchResult {
 					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
-					// unreserve the incentive amount from the owner account
+					// unreserve the incentive amount and fees from the owner account
 					match payment.fee_detail {
 						Some((_, fee_amount)) => {
 							T::Asset::unreserve(
@@ -498,19 +508,17 @@ pub mod pallet {
 						},
 					};
 
+					// Unreserve the transfer amount
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
-					// transfer amount to creator
-					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
-						Ok(_) => *maybe_payment = None, // delete canceled payment from storage
-						Err(_) =>
-							*maybe_payment =
-								Some(PaymentDetail { state: PaymentState::NeedsReview, ..payment }),
-					}
+
+					let amount_to_recipient = recipient_share * payment.amount;
+					let amount_to_sender = payment.amount - amount_to_recipient;
+					// send share to recipient
+					T::Asset::transfer(payment.asset, &to, &from, amount_to_sender)?;
 
 					Ok(())
 				},
 			)?;
-			Self::deposit_event(Event::PaymentCancelled { from, to });
 			Ok(())
 		}
 
