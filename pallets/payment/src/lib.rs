@@ -98,6 +98,8 @@ pub mod pallet {
 		},
 		/// the refund request from creator was disputed by recipient
 		PaymentRefundDisputed { from: T::AccountId, to: T::AccountId },
+		/// Payment request was created by recipient
+		PaymentRequestCreated { from: T::AccountId, to: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -120,6 +122,8 @@ pub mod pallet {
 		RefundNotRequested,
 		/// Dispute period has not passed
 		DisputePeriodNotPassed,
+		/// Requested payments cannot be settled
+		RequestedPaymentCannotBeSettled,
 	}
 
 	#[pallet::hooks]
@@ -228,7 +232,11 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::settle_payment(from.clone(), recipient.clone(), Percent::from_percent(0))?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from.clone(),
+				recipient.clone(),
+				Percent::from_percent(0),
+			)?;
 			Self::deposit_event(Event::PaymentCancelled { from, to: recipient });
 			Ok(().into())
 		}
@@ -317,7 +325,7 @@ pub mod pallet {
 			if let Some(payment) = Payment::<T>::get(who.clone(), recipient.clone()) {
 				match payment.state {
 					NeedsReview => fail!(Error::<T>::PaymentNeedsReview),
-					Created => fail!(Error::<T>::RefundNotRequested),
+					Created | Requested => fail!(Error::<T>::RefundNotRequested),
 					RefundRequested(cancel_block) => {
 						let current_block = frame_system::Pallet::<T>::block_number();
 						// ensure the dispute period has passed
@@ -368,6 +376,46 @@ pub mod pallet {
 						},
 						_ => fail!(Error::<T>::InvalidAction),
 					}
+
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+
+		/// Allow payment creator to claim the refund if the payment recipent has not disputed
+		/// After the payment creator has `request_refund` can then call this extrinsic to
+		/// cancel the payment and receive the reserved amount to the account if the dispute period
+		/// has passed.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::claim_refund())]
+		pub fn request_payment(
+			origin: OriginFor<T>,
+			from: T::AccountId,
+			asset: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let to = ensure_signed(origin)?;
+
+			Payment::<T>::try_mutate(
+				from.clone(),
+				to.clone(),
+				|maybe_payment| -> DispatchResult {
+					ensure!(maybe_payment.is_none(), Error::<T>::PaymentAlreadyInProcess);
+					// simply create an entry in storage, cannot reserve any payment
+					let new_payment = PaymentDetail::<T> {
+						asset,
+						amount,
+						incentive_amount: 0_u32.into(),
+						state: PaymentState::Requested,
+						resolver_account: T::DisputeResolver::get_origin(),
+						fee_detail: None,
+						remark: None,
+					};
+					*maybe_payment = Some(new_payment);
+
+					Self::deposit_event(Event::PaymentRequestCreated { from, to });
 
 					Ok(())
 				},
@@ -462,6 +510,12 @@ pub mod pallet {
 				to.clone(),
 				|maybe_payment| -> DispatchResult {
 					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
+
+					// cannot settle a requested payment since no funds were reserved
+					ensure!(
+						payment.state != PaymentState::Requested,
+						Error::<T>::RequestedPaymentCannotBeSettled
+					);
 
 					// unreserve the incentive amount and fees from the owner account
 					match payment.fee_detail {

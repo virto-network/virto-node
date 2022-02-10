@@ -557,6 +557,40 @@ fn test_dispute_refund() {
 }
 
 #[test]
+fn test_request_payment() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 0_u128,
+				state: PaymentState::Requested,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: None,
+				remark: None
+			})
+		);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRequestCreated {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_create_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {

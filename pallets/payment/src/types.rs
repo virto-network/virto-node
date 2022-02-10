@@ -18,7 +18,7 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
 	pub incentive_amount: BalanceOf<T>,
-	/// enum to track payment lifecycle [Created, NeedsReview]
+	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested, Requested]
 	pub state: PaymentState<T::BlockNumber>,
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: T::AccountId,
@@ -39,6 +39,8 @@ pub enum PaymentState<BlockNumber> {
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
 	RefundRequested(BlockNumber),
+	/// The recipient of this transaction has created a request
+	Requested,
 }
 
 /// trait that defines how to create/release payments for users
