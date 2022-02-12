@@ -228,7 +228,11 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::settle_payment(from.clone(), recipient.clone(), Percent::from_percent(0))?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from.clone(),
+				recipient.clone(),
+				Percent::from_percent(0),
+			)?;
 			Self::deposit_event(Event::PaymentCancelled { from, to: recipient });
 			Ok(().into())
 		}
@@ -471,8 +475,8 @@ pub mod pallet {
 								&from,
 								payment.incentive_amount + fee_amount,
 							);
-							// if the settlement is a release, transfer fee to marketplace
-							if recipient_share == Percent::one() {
+							// transfer fee to marketplace if operation is not cancel
+							if recipient_share != Percent::zero() {
 								T::Asset::transfer(
 									payment.asset,
 									&from,          // fee is paid by payment creator

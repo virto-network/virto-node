@@ -744,13 +744,13 @@ fn test_settle_payment_works_for_70_30() {
 	new_test_ext().execute_with(|| {
 		// the payment amount should not be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::create_payment(
 				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				PAYMENT_RECIPENT_FEE_CHARGED,
 				CURRENCY_ID,
 				10,
 				Some(vec![1u8; 10].try_into().unwrap()),
@@ -770,18 +770,19 @@ fn test_settle_payment_works_for_70_30() {
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
 				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				PAYMENT_RECIPENT_FEE_CHARGED,
 				Percent::from_percent(70),
 			)
 		})));
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 93);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 7);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 92);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 7);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
-		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
 	});
 }
 
@@ -790,13 +791,13 @@ fn test_settle_payment_works_for_50_50() {
 	new_test_ext().execute_with(|| {
 		// the payment amount should not be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::create_payment(
 				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				PAYMENT_RECIPENT_FEE_CHARGED,
 				CURRENCY_ID,
 				10,
 				Some(vec![1u8; 10].try_into().unwrap()),
@@ -816,17 +817,18 @@ fn test_settle_payment_works_for_50_50() {
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
 				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				PAYMENT_RECIPENT_FEE_CHARGED,
 				Percent::from_percent(50),
 			)
 		})));
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 95);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 5);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 94);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 5);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
 		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
-		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
 	});
 }
