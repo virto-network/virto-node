@@ -100,6 +100,8 @@ pub mod pallet {
 		PaymentRefundDisputed { from: T::AccountId, to: T::AccountId },
 		/// Payment request was created by recipient
 		PaymentRequestCreated { from: T::AccountId, to: T::AccountId },
+		/// Payment request was completed by sender
+		PaymentRequestCompleted { from: T::AccountId, to: T::AccountId },
 	}
 
 	#[pallet::error]
@@ -384,10 +386,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow payment creator to claim the refund if the payment recipent has not disputed
-		/// After the payment creator has `request_refund` can then call this extrinsic to
-		/// cancel the payment and receive the reserved amount to the account if the dispute period
-		/// has passed.
+		// Creates a new payment with the given details. This can be called by the recipient of the payment
+		// to create a payment and then completed by the sender using the `accept_and_pay` extrinsic.
+		// The payment will be in PaymentRequested State and can only be modified by the `accept_and_pay` extrinsic.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::claim_refund())]
 		pub fn request_payment(
@@ -416,6 +417,46 @@ pub mod pallet {
 					*maybe_payment = Some(new_payment);
 
 					Self::deposit_event(Event::PaymentRequestCreated { from, to });
+
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+
+		// This extrinsic allows the sender to fulfill a payment request created by a recipient.
+		// The amount will be transferred to the recipient and payment removed from storage
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::claim_refund())]
+		pub fn accept_and_pay(
+			origin: OriginFor<T>,
+			to: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			let from = ensure_signed(origin)?;
+
+			Payment::<T>::try_mutate(
+				from.clone(),
+				to.clone(),
+				|maybe_payment| -> DispatchResult {
+					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
+
+					if payment.state != PaymentState::Requested {
+						fail!(Error::<T>::InvalidAction);
+					}
+
+					// Calculate fee amount - this will be implemented based on the custom
+					// implementation of the fee provider
+					let (fee_recipient, fee_percent) =
+						T::FeeHandler::apply_fees(&from, &to, &payment);
+					let fee_amount = fee_percent.mul_floor(payment.amount);
+
+					// transfer amount to recipient
+					T::Asset::transfer(payment.asset, &from, &to, payment.amount)?;
+					// transfer fee to fee_provider
+					T::Asset::transfer(payment.asset, &from, &fee_recipient, fee_amount)?;
+
+					Self::deposit_event(Event::PaymentRequestCompleted { from, to });
 
 					Ok(())
 				},
@@ -472,7 +513,7 @@ pub mod pallet {
 					};
 
 					// Calculate fee amount - this will be implemented based on the custom
-					// implementation of the marketplace
+					// implementation of the fee provider
 					let (fee_recipient, fee_percent) =
 						T::FeeHandler::apply_fees(&from, &recipient, &new_payment);
 					let fee_amount = fee_percent.mul_floor(amount);
@@ -495,7 +536,7 @@ pub mod pallet {
 
 		/// This function allows the caller to settle the payment by specifying a recipient_share
 		/// this will unreserve the fee+incentive to sender and unreserve transferred amount to recipient
-		/// if the settlement is a release (ie recipient_share=100), the fee is transferred to marketplace
+		/// if the settlement is a release (ie recipient_share=100), the fee is transferred to fee_recipient
 		/// For cancelling a payment, recipient_share = 0
 		/// For releasing a payment, recipient_share = 100
 		/// In other cases, the custom recipient_share can be specified

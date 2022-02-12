@@ -591,6 +591,115 @@ fn test_request_payment() {
 }
 
 #[test]
+fn test_accept_and_pay() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 0_u128,
+				state: PaymentState::Requested,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: None,
+				remark: None
+			})
+		);
+
+		assert_ok!(Payment::accept_and_pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT,));
+
+		// the payment amount should be transferred
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+		// should be deleted from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRequestCompleted {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
+fn test_accept_and_pay_should_fail_for_non_payment_requested() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_noop!(
+			Payment::accept_and_pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT,),
+			crate::Error::<Test>::InvalidAction
+		);
+	});
+}
+
+#[test]
+fn test_accept_and_pay_should_charge_fee_correctly() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT_FEE_CHARGED),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 0_u128,
+				state: PaymentState::Requested,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: None,
+				remark: None
+			})
+		);
+
+		assert_ok!(Payment::accept_and_pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT_FEE_CHARGED,
+		));
+
+		// the payment amount should be transferred
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 20);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 2);
+		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+		// should be deleted from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRequestCompleted {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT_FEE_CHARGED,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_create_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {
