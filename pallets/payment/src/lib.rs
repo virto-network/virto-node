@@ -390,7 +390,7 @@ pub mod pallet {
 		// to create a payment and then completed by the sender using the `accept_and_pay` extrinsic.
 		// The payment will be in PaymentRequested State and can only be modified by the `accept_and_pay` extrinsic.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::claim_refund())]
+		#[pallet::weight(T::WeightInfo::request_payment())]
 		pub fn request_payment(
 			origin: OriginFor<T>,
 			from: T::AccountId,
@@ -428,7 +428,7 @@ pub mod pallet {
 		// This extrinsic allows the sender to fulfill a payment request created by a recipient.
 		// The amount will be transferred to the recipient and payment removed from storage
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::claim_refund())]
+		#[pallet::weight(T::WeightInfo::accept_and_pay())]
 		pub fn accept_and_pay(
 			origin: OriginFor<T>,
 			to: T::AccountId,
