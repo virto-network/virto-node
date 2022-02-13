@@ -26,7 +26,10 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
-	use sp_runtime::{traits::CheckedAdd, Percent};
+	use sp_runtime::{
+		traits::{CheckedAdd, Saturating},
+		Percent,
+	};
 	use sp_std::vec::Vec;
 
 	pub type BalanceOf<T> =
@@ -173,8 +176,13 @@ pub mod pallet {
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			<Self as PaymentHandler<T>>::release_payment(who, to)?;
+			let from = ensure_signed(origin)?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from.clone(),
+				to.clone(),
+				Percent::from_percent(100),
+			)?;
+			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(().into())
 		}
 
@@ -187,8 +195,15 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			if let Some(payment) = Payment::<T>::get(creator.clone(), who.clone()) {
 				match payment.state {
-					PaymentState::Created =>
-						<Self as PaymentHandler<T>>::cancel_payment(creator.clone(), who.clone())?,
+					// call settle payment with recipient_share=0, this refunds the sender
+					PaymentState::Created => {
+						<Self as PaymentHandler<T>>::settle_payment(
+							creator.clone(),
+							who.clone(),
+							Percent::from_percent(0),
+						)?;
+						Self::deposit_event(Event::PaymentCancelled { from: creator, to: who });
+					},
 					_ => fail!(Error::<T>::InvalidAction),
 				}
 			} else {
@@ -213,7 +228,12 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::cancel_payment(from, recipient)?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from.clone(),
+				recipient.clone(),
+				Percent::from_percent(0),
+			)?;
+			Self::deposit_event(Event::PaymentCancelled { from, to: recipient });
 			Ok(().into())
 		}
 
@@ -233,7 +253,12 @@ pub mod pallet {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::release_payment(from, recipient)?;
+			<Self as PaymentHandler<T>>::settle_payment(
+				from.clone(),
+				recipient.clone(),
+				Percent::from_percent(100),
+			)?;
+			Self::deposit_event(Event::PaymentReleased { from, to: recipient });
 			Ok(().into())
 		}
 
@@ -302,10 +327,12 @@ pub mod pallet {
 						// ensure the dispute period has passed
 						ensure!(current_block > cancel_block, Error::<T>::DisputePeriodNotPassed);
 						// cancel the payment and refund the creator
-						<Self as PaymentHandler<T>>::cancel_payment(
+						<Self as PaymentHandler<T>>::settle_payment(
 							who.clone(),
 							recipient.clone(),
+							Percent::from_percent(0),
 						)?;
+						Self::deposit_event(Event::PaymentCancelled { from: who, to: recipient });
 					},
 				}
 			} else {
@@ -388,7 +415,7 @@ pub mod pallet {
 					}
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
-					let incentive_amount = T::IncentivePercentage::get() * amount;
+					let incentive_amount = T::IncentivePercentage::get().mul_floor(amount);
 
 					let mut new_payment = PaymentDetail {
 						asset,
@@ -404,7 +431,7 @@ pub mod pallet {
 					// implementation of the marketplace
 					let (fee_recipient, fee_percent) =
 						T::FeeHandler::apply_fees(&from, &recipient, &new_payment);
-					let fee_amount = fee_percent * amount;
+					let fee_amount = fee_percent.mul_floor(amount);
 					new_payment.fee_detail = Some((fee_recipient, fee_amount));
 
 					// reserve the incentive amount from the payment creator
@@ -422,95 +449,58 @@ pub mod pallet {
 			)
 		}
 
-		/// The function will release an existing payment, a release action will remove the reserve
-		/// placed on both the incentive amount and the transfer amount and it will be "released" to the respective account.
+		/// This function allows the caller to settle the payment by specifying a recipient_share
+		/// this will unreserve the fee+incentive to sender and unreserve transferred amount to recipient
+		/// if the settlement is a release (ie recipient_share=100), the fee is transferred to marketplace
+		/// For cancelling a payment, recipient_share = 0
+		/// For releasing a payment, recipient_share = 100
+		/// In other cases, the custom recipient_share can be specified
 		#[require_transactional]
-		fn release_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
-			use PaymentState::*;
-			// add the payment detail to storage
-			Payment::<T>::try_mutate(
-				from.clone(),
-				to.clone(),
-				|maybe_payment| -> DispatchResult {
-					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
-					// ensure the payment is in created state
-					ensure!(payment.state == Created, Error::<T>::PaymentAlreadyReleased);
-
-					match &payment.fee_detail {
-						Some((fee_recipient_account, fee_amount)) => {
-							// unreserve the incentive amount + fees back to the creator
-							T::Asset::unreserve(
-								payment.asset,
-								&from,
-								payment.incentive_amount + *fee_amount,
-							);
-							// unreserve the amount to the recipent
-							T::Asset::unreserve(payment.asset, &to, payment.amount);
-							// transfer fee amount to marketplace
-							T::Asset::transfer(
-								payment.asset,
-								&from,                  // fee is paid by payment creator
-								&fee_recipient_account, // account of fee recipient
-								*fee_amount,            // amount of fee
-							)?;
-						},
-						None => {
-							// unreserve the incentive amount back to the creator
-							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
-							// unreserve the amount to the recipent
-							T::Asset::unreserve(payment.asset, &to, payment.amount);
-						},
-					}
-
-					// clear payment data from storage
-					*maybe_payment = None;
-					Ok(())
-				},
-			)?;
-			Self::deposit_event(Event::PaymentReleased { from, to });
-			Ok(())
-		}
-
-		/// This function will allows user to cancel a payment. When cancelling a payment, steps are
-		/// - Unreserve the incentive amount
-		/// - Unreserve the payment amount
-		/// - Transfer amount from recipent to sender
-		#[require_transactional]
-		fn cancel_payment(from: T::AccountId, to: T::AccountId) -> DispatchResult {
-			// add the payment detail to storage
+		fn settle_payment(
+			from: T::AccountId,
+			to: T::AccountId,
+			recipient_share: Percent,
+		) -> DispatchResult {
 			Payment::<T>::try_mutate(
 				from.clone(),
 				to.clone(),
 				|maybe_payment| -> DispatchResult {
 					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
-					// unreserve the incentive amount from the owner account
+					// unreserve the incentive amount and fees from the owner account
 					match payment.fee_detail {
-						Some((_, fee_amount)) => {
+						Some((fee_recipient, fee_amount)) => {
 							T::Asset::unreserve(
 								payment.asset,
 								&from,
 								payment.incentive_amount + fee_amount,
 							);
+							// transfer fee to marketplace if operation is not cancel
+							if recipient_share != Percent::zero() {
+								T::Asset::transfer(
+									payment.asset,
+									&from,          // fee is paid by payment creator
+									&fee_recipient, // account of fee recipient
+									fee_amount,     // amount of fee
+								)?;
+							}
 						},
 						None => {
 							T::Asset::unreserve(payment.asset, &from, payment.incentive_amount);
 						},
 					};
 
+					// Unreserve the transfer amount
 					T::Asset::unreserve(payment.asset, &to, payment.amount);
-					// transfer amount to creator
-					match T::Asset::transfer(payment.asset, &to, &from, payment.amount) {
-						Ok(_) => *maybe_payment = None, // delete canceled payment from storage
-						Err(_) =>
-							*maybe_payment =
-								Some(PaymentDetail { state: PaymentState::NeedsReview, ..payment }),
-					}
+
+					let amount_to_recipient = recipient_share.mul_floor(payment.amount);
+					let amount_to_sender = payment.amount.saturating_sub(amount_to_recipient);
+					// send share to recipient
+					T::Asset::transfer(payment.asset, &to, &from, amount_to_sender)?;
 
 					Ok(())
 				},
 			)?;
-			Self::deposit_event(Event::PaymentCancelled { from, to });
 			Ok(())
 		}
 
