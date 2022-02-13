@@ -566,8 +566,8 @@ pub mod pallet {
 								&from,
 								payment.incentive_amount + fee_amount,
 							);
-							// if the settlement is a release, transfer fee to marketplace
-							if recipient_share == Percent::one() {
+							// transfer fee to marketplace if operation is not cancel
+							if recipient_share != Percent::zero() {
 								T::Asset::transfer(
 									payment.asset,
 									&from,          // fee is paid by payment creator
