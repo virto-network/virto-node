@@ -40,7 +40,7 @@ pub enum PaymentState<BlockNumber> {
 	/// The user has requested refund and will be processed by `BlockNumber`
 	RefundRequested(BlockNumber),
 	/// The recipient of this transaction has created a request
-	Requested,
+	PaymentRequested,
 }
 
 /// trait that defines how to create/release payments for users

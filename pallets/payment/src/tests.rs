@@ -572,7 +572,7 @@ fn test_request_payment() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 0_u128,
-				state: PaymentState::Requested,
+				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: None,
 				remark: None
@@ -606,7 +606,7 @@ fn test_accept_and_pay() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 0_u128,
-				state: PaymentState::Requested,
+				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: None,
 				remark: None
@@ -667,7 +667,7 @@ fn test_accept_and_pay_should_charge_fee_correctly() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 0_u128,
-				state: PaymentState::Requested,
+				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: None,
 				remark: None

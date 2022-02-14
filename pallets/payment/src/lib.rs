@@ -327,7 +327,7 @@ pub mod pallet {
 			if let Some(payment) = Payment::<T>::get(who.clone(), recipient.clone()) {
 				match payment.state {
 					NeedsReview => fail!(Error::<T>::PaymentNeedsReview),
-					Created | Requested => fail!(Error::<T>::RefundNotRequested),
+					Created | PaymentRequested => fail!(Error::<T>::RefundNotRequested),
 					RefundRequested(cancel_block) => {
 						let current_block = frame_system::Pallet::<T>::block_number();
 						// ensure the dispute period has passed
@@ -409,7 +409,7 @@ pub mod pallet {
 						asset,
 						amount,
 						incentive_amount: 0_u32.into(),
-						state: PaymentState::Requested,
+						state: PaymentState::PaymentRequested,
 						resolver_account: T::DisputeResolver::get_origin(),
 						fee_detail: None,
 						remark: None,
@@ -441,7 +441,7 @@ pub mod pallet {
 				|maybe_payment| -> DispatchResult {
 					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
-					if payment.state != PaymentState::Requested {
+					if payment.state != PaymentState::PaymentRequested {
 						fail!(Error::<T>::InvalidAction);
 					}
 
@@ -554,7 +554,7 @@ pub mod pallet {
 
 					// cannot settle a requested payment since no funds were reserved
 					ensure!(
-						payment.state != PaymentState::Requested,
+						payment.state != PaymentState::PaymentRequested,
 						Error::<T>::RequestedPaymentCannotBeSettled
 					);
 
