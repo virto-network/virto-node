@@ -45,15 +45,27 @@ pub enum PaymentState<BlockNumber> {
 
 /// trait that defines how to create/release payments for users
 pub trait PaymentHandler<T: pallet::Config> {
-	/// Attempt to reserve an amount of the given asset from the caller
-	/// If not possible then return Error. Possible reasons for failure include:
-	/// - User does not have enough balance.
+	/// Create a PaymentDetail from the given payment details
+	/// Calculate the fee amount and store PaymentDetail in storage
+	/// Possible reasons for failure include:
+	/// - Payment already exists and cannot be overwritten
 	fn create_payment(
 		from: T::AccountId,
 		to: T::AccountId,
 		asset: AssetIdOf<T>,
 		amount: BalanceOf<T>,
 		remark: Option<BoundedDataOf<T>>,
+		payment_state: PaymentState<T::BlockNumber>,
+		charge_incentive_amount: bool,
+	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError>;
+
+	/// Attempt to reserve an amount of the given asset from the caller
+	/// If not possible then return Error. Possible reasons for failure include:
+	/// - User does not have enough balance.
+	fn reserve_payment_amount(
+		from: &T::AccountId,
+		to: &T::AccountId,
+		payment: PaymentDetail<T>,
 	) -> DispatchResult;
 
 	// Settle a payment of `from` to `to`. To release a payment, the recipient_share=100,

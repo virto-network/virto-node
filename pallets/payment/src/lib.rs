@@ -22,7 +22,7 @@ pub mod pallet {
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, fail, pallet_prelude::*, require_transactional,
-		transactional,
+		traits::tokens::BalanceStatus, transactional,
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
@@ -124,8 +124,6 @@ pub mod pallet {
 		RefundNotRequested,
 		/// Dispute period has not passed
 		DisputePeriodNotPassed,
-		/// Requested payments cannot be settled
-		RequestedPaymentCannotBeSettled,
 	}
 
 	#[pallet::hooks]
@@ -145,8 +143,20 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-
-			<Self as PaymentHandler<T>>::create_payment(who, recipient, asset, amount, None)?;
+			// create PaymentDetail and add to storage
+			let payment_detail = <Self as PaymentHandler<T>>::create_payment(
+				who.clone(),
+				recipient.clone(),
+				asset,
+				amount,
+				None,
+				PaymentState::Created,
+				true,
+			)?;
+			// reserve funds for payment
+			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
+			// emit paymentcreated event
+			Self::deposit_event(Event::PaymentCreated { from: who, asset, amount });
 			Ok(().into())
 		}
 
@@ -167,13 +177,20 @@ pub mod pallet {
 			let bounded_remark: BoundedDataOf<T> =
 				remark.try_into().map_err(|_| Error::<T>::RemarkTooLarge)?;
 
-			<Self as PaymentHandler<T>>::create_payment(
-				who,
-				recipient,
+			// create PaymentDetail and add to storage
+			let payment_detail = <Self as PaymentHandler<T>>::create_payment(
+				who.clone(),
+				recipient.clone(),
 				asset,
 				amount,
 				Some(bounded_remark),
+				PaymentState::Created,
+				true,
 			)?;
+			// reserve funds for payment
+			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
+			// emit paymentcreated event
+			Self::deposit_event(Event::PaymentCreated { from: who, asset, amount });
 			Ok(().into())
 		}
 
@@ -399,28 +416,18 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let to = ensure_signed(origin)?;
 
-			Payment::<T>::try_mutate(
+			// create PaymentDetail and add to storage
+			<Self as PaymentHandler<T>>::create_payment(
 				from.clone(),
 				to.clone(),
-				|maybe_payment| -> DispatchResult {
-					ensure!(maybe_payment.is_none(), Error::<T>::PaymentAlreadyInProcess);
-					// simply create an entry in storage, cannot reserve any payment
-					let new_payment = PaymentDetail::<T> {
-						asset,
-						amount,
-						incentive_amount: 0_u32.into(),
-						state: PaymentState::PaymentRequested,
-						resolver_account: T::DisputeResolver::get_origin(),
-						fee_detail: None,
-						remark: None,
-					};
-					*maybe_payment = Some(new_payment);
-
-					Self::deposit_event(Event::PaymentRequestCreated { from, to });
-
-					Ok(())
-				},
+				asset,
+				amount,
+				None,
+				PaymentState::PaymentRequested,
+				false,
 			)?;
+
+			Self::deposit_event(Event::PaymentRequestCreated { from, to });
 
 			Ok(().into())
 		}
@@ -435,42 +442,30 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			Payment::<T>::try_mutate(
+			let payment =
+				Payment::<T>::get(from.clone(), to.clone()).ok_or(Error::<T>::InvalidPayment)?;
+
+			ensure!(payment.state == PaymentState::PaymentRequested, Error::<T>::InvalidAction);
+
+			// reserve all the fees from the sender
+			<Self as PaymentHandler<T>>::reserve_payment_amount(&from, &to, payment)?;
+
+			// release the payment and delete the payment from storage
+			<Self as PaymentHandler<T>>::settle_payment(
 				from.clone(),
 				to.clone(),
-				|maybe_payment| -> DispatchResult {
-					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
-
-					if payment.state != PaymentState::PaymentRequested {
-						fail!(Error::<T>::InvalidAction);
-					}
-
-					// Calculate fee amount - this will be implemented based on the custom
-					// implementation of the fee provider
-					let (fee_recipient, fee_percent) =
-						T::FeeHandler::apply_fees(&from, &to, &payment);
-					let fee_amount = fee_percent.mul_floor(payment.amount);
-
-					// transfer amount to recipient
-					T::Asset::transfer(payment.asset, &from, &to, payment.amount)?;
-					// transfer fee to fee_provider
-					T::Asset::transfer(payment.asset, &from, &fee_recipient, fee_amount)?;
-
-					Self::deposit_event(Event::PaymentRequestCompleted { from, to });
-
-					Ok(())
-				},
+				Percent::from_percent(100),
 			)?;
+
+			Self::deposit_event(Event::PaymentRequestCompleted { from, to });
 
 			Ok(().into())
 		}
 	}
 
 	impl<T: Config> PaymentHandler<T> for Pallet<T> {
-		/// The function will create a new payment. When a new payment is created, an amount + incentive
-		/// is reserved from the payment creator. The incentive amount is reserved in the creators account.
-		/// The amount is transferred to the payment recipent but kept in reserved state. Only when the release action
-		/// is triggered the amount is released to the recipent and incentive released to creator.
+		/// The function will create a new payment. The fee and incentive amounts will be calculated and the
+		/// `PaymentDetail` will be added to storage.
 		#[require_transactional]
 		fn create_payment(
 			from: T::AccountId,
@@ -478,11 +473,13 @@ pub mod pallet {
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
 			remark: Option<BoundedDataOf<T>>,
-		) -> DispatchResult {
+			payment_state: PaymentState<T::BlockNumber>,
+			charge_incentive_amount: bool,
+		) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 			Payment::<T>::try_mutate(
 				from.clone(),
 				recipient.clone(),
-				|maybe_payment| -> DispatchResult {
+				|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 					// ensure a payment is not already in process
 					if maybe_payment.is_some() {
 						// do not overwrite an in-process payment!
@@ -500,13 +497,16 @@ pub mod pallet {
 					}
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
-					let incentive_amount = T::IncentivePercentage::get().mul_floor(amount);
+					let incentive_amount = match charge_incentive_amount {
+						true => T::IncentivePercentage::get().mul_floor(amount),
+						false => 0u32.into(),
+					};
 
 					let mut new_payment = PaymentDetail {
 						asset,
 						amount,
 						incentive_amount,
-						state: PaymentState::Created,
+						state: payment_state,
 						resolver_account: T::DisputeResolver::get_origin(),
 						fee_detail: None,
 						remark,
@@ -519,19 +519,39 @@ pub mod pallet {
 					let fee_amount = fee_percent.mul_floor(amount);
 					new_payment.fee_detail = Some((fee_recipient, fee_amount));
 
-					// reserve the incentive amount from the payment creator
-					T::Asset::reserve(asset, &from, incentive_amount + fee_amount)?;
-					// transfer amount to recipient
-					T::Asset::transfer(asset, &from, &recipient, amount)?;
-					// reserved the amount in the recipient account
-					T::Asset::reserve(asset, &recipient, amount)?;
+					*maybe_payment = Some(new_payment.clone());
 
-					*maybe_payment = Some(new_payment);
-
-					Self::deposit_event(Event::PaymentCreated { from, asset, amount });
-					Ok(())
+					Ok(new_payment)
 				},
 			)
+		}
+
+		/// The function will reserve the fees+transfer amount from the `from` account. After reserving
+		/// the payment.amount will be transferred to the recipient but will stay in Reserve state.
+		#[require_transactional]
+		fn reserve_payment_amount(
+			from: &T::AccountId,
+			to: &T::AccountId,
+			payment: PaymentDetail<T>,
+		) -> DispatchResult {
+			let fee_amount = match payment.fee_detail {
+				Some(fee_detail) => fee_detail.1,
+				None => 0u32.into(),
+			};
+
+			let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
+			let total_amount = total_fee_amount.saturating_add(payment.amount);
+			// reserve the total amount from payment creator
+			T::Asset::reserve(payment.asset, from, total_amount)?;
+			// transfer payment amount to recipient -- keeping reserve status
+			T::Asset::repatriate_reserved(
+				payment.asset,
+				from,
+				to,
+				payment.amount,
+				BalanceStatus::Reserved,
+			)?;
+			Ok(())
 		}
 
 		/// This function allows the caller to settle the payment by specifying a recipient_share
@@ -551,12 +571,6 @@ pub mod pallet {
 				to.clone(),
 				|maybe_payment| -> DispatchResult {
 					let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
-
-					// cannot settle a requested payment since no funds were reserved
-					ensure!(
-						payment.state != PaymentState::PaymentRequested,
-						Error::<T>::RequestedPaymentCannotBeSettled
-					);
 
 					// unreserve the incentive amount and fees from the owner account
 					match payment.fee_detail {
