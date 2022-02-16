@@ -708,9 +708,9 @@ fn test_create_payment_does_not_work_without_transaction() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			None,
 			PaymentState::Created,
-			true
+			Percent::from_percent(0),
+			None,
 		));
 	});
 }
@@ -729,9 +729,9 @@ fn test_create_payment_works() {
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				20,
-				Some(vec![1u8; 10].try_into().unwrap()),
 				PaymentState::Created,
-				true,
+				Percent::from_percent(10),
+				Some(vec![1u8; 10].try_into().unwrap()),
 			)
 		})));
 
@@ -756,9 +756,9 @@ fn test_create_payment_works() {
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					20,
-					Some(vec![1u8; 10].try_into().unwrap()),
 					PaymentState::Created,
-					true,
+					Percent::from_percent(10),
+					Some(vec![1u8; 10].try_into().unwrap()),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess
@@ -793,9 +793,9 @@ fn test_reserve_payment_amount_works() {
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				20,
-				Some(vec![1u8; 10].try_into().unwrap()),
 				PaymentState::Created,
-				true,
+				Percent::from_percent(10),
+				Some(vec![1u8; 10].try_into().unwrap()),
 			)
 		})));
 
@@ -836,9 +836,9 @@ fn test_reserve_payment_amount_works() {
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					20,
-					Some(vec![1u8; 10].try_into().unwrap()),
 					PaymentState::Created,
-					true,
+					Percent::from_percent(10),
+					Some(vec![1u8; 10].try_into().unwrap()),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess

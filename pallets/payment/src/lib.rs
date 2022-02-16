@@ -149,9 +149,9 @@ pub mod pallet {
 				recipient.clone(),
 				asset,
 				amount,
-				None,
 				PaymentState::Created,
-				true,
+				T::IncentivePercentage::get(),
+				None,
 			)?;
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
@@ -183,9 +183,9 @@ pub mod pallet {
 				recipient.clone(),
 				asset,
 				amount,
-				Some(bounded_remark),
 				PaymentState::Created,
-				true,
+				T::IncentivePercentage::get(),
+				Some(bounded_remark),
 			)?;
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
@@ -422,9 +422,9 @@ pub mod pallet {
 				to.clone(),
 				asset,
 				amount,
-				None,
 				PaymentState::PaymentRequested,
-				false,
+				Percent::from_percent(0),
+				None,
 			)?;
 
 			Self::deposit_event(Event::PaymentRequestCreated { from, to });
@@ -472,19 +472,16 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Option<BoundedDataOf<T>>,
 			payment_state: PaymentState<T::BlockNumber>,
-			charge_incentive_amount: bool,
+			incentive_percentage: Percent,
+			remark: Option<BoundedDataOf<T>>,
 		) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 			Payment::<T>::try_mutate(
 				from.clone(),
 				recipient.clone(),
 				|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
-					// ensure a payment is not already in process
 					if maybe_payment.is_some() {
-						// do not overwrite an in-process payment!
-						// ensure the payment is not in created/needsreview state, it should
-						// be in released/cancelled, in which case it can be overwritten
+						// ensure the payment is not in created/needsreview state
 						let current_state = maybe_payment.clone().unwrap().state;
 						ensure!(
 							current_state != PaymentState::Created,
@@ -497,10 +494,7 @@ pub mod pallet {
 					}
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
-					let incentive_amount = match charge_incentive_amount {
-						true => T::IncentivePercentage::get().mul_floor(amount),
-						false => 0u32.into(),
-					};
+					let incentive_amount = incentive_percentage.mul_floor(amount);
 
 					let mut new_payment = PaymentDetail {
 						asset,
@@ -534,13 +528,11 @@ pub mod pallet {
 			to: &T::AccountId,
 			payment: PaymentDetail<T>,
 		) -> DispatchResult {
-			let fee_amount = match payment.fee_detail {
-				Some(fee_detail) => fee_detail.1,
-				None => 0u32.into(),
-			};
+			let fee_amount = payment.fee_detail.map(|(_, f)| f).unwrap_or(0u32.into());
 
 			let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
 			let total_amount = total_fee_amount.saturating_add(payment.amount);
+
 			// reserve the total amount from payment creator
 			T::Asset::reserve(payment.asset, from, total_amount)?;
 			// transfer payment amount to recipient -- keeping reserve status

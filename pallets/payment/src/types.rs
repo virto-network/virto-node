@@ -54,9 +54,9 @@ pub trait PaymentHandler<T: pallet::Config> {
 		to: T::AccountId,
 		asset: AssetIdOf<T>,
 		amount: BalanceOf<T>,
-		remark: Option<BoundedDataOf<T>>,
 		payment_state: PaymentState<T::BlockNumber>,
-		charge_incentive_amount: bool,
+		incentive_percentage: Percent,
+		remark: Option<BoundedDataOf<T>>,
 	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError>;
 
 	/// Attempt to reserve an amount of the given asset from the caller
