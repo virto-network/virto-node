@@ -142,6 +142,26 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentRefundDisputed { from: caller, to: recipent}.into());
 	}
+
+	// recipient of a payment can create a payment reqest
+	request_payment {
+		let caller : T::AccountId = whitelisted_caller();
+		let sender : T::AccountId = account("recipient", 0, SEED);
+	}: _(RawOrigin::Signed(caller.clone()), sender.clone(), get_currency_id(), SOME_AMOUNT)
+	verify {
+		assert_last_event::<T>(Event::<T>::PaymentRequestCreated { from: sender, to: caller}.into());
+	}
+
+	// payment request can be completed by the sender
+	accept_and_pay {
+		let sender : T::AccountId = whitelisted_caller();
+		let receiver : T::AccountId = account("recipient", 0, SEED);
+		let _ = T::Asset::deposit(get_currency_id(), &sender, INITIAL_AMOUNT);
+		Payment::<T>::request_payment(RawOrigin::Signed(receiver.clone()).into(), sender.clone(), get_currency_id(), SOME_AMOUNT)?;
+	}: _(RawOrigin::Signed(sender.clone()), receiver.clone())
+	verify {
+		assert_last_event::<T>(Event::<T>::PaymentRequestCompleted { from: sender, to: receiver}.into());
+	}
 }
 
 impl_benchmark_test_suite!(Payment, crate::mock::new_test_ext(), crate::mock::Test,);

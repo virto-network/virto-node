@@ -18,7 +18,7 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
 	pub incentive_amount: BalanceOf<T>,
-	/// enum to track payment lifecycle [Created, NeedsReview]
+	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested, Requested]
 	pub state: PaymentState<T::BlockNumber>,
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: T::AccountId,
@@ -39,19 +39,33 @@ pub enum PaymentState<BlockNumber> {
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
 	RefundRequested(BlockNumber),
+	/// The recipient of this transaction has created a request
+	PaymentRequested,
 }
 
 /// trait that defines how to create/release payments for users
 pub trait PaymentHandler<T: pallet::Config> {
-	/// Attempt to reserve an amount of the given asset from the caller
-	/// If not possible then return Error. Possible reasons for failure include:
-	/// - User does not have enough balance.
+	/// Create a PaymentDetail from the given payment details
+	/// Calculate the fee amount and store PaymentDetail in storage
+	/// Possible reasons for failure include:
+	/// - Payment already exists and cannot be overwritten
 	fn create_payment(
 		from: T::AccountId,
 		to: T::AccountId,
 		asset: AssetIdOf<T>,
 		amount: BalanceOf<T>,
+		payment_state: PaymentState<T::BlockNumber>,
+		incentive_percentage: Percent,
 		remark: Option<BoundedDataOf<T>>,
+	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError>;
+
+	/// Attempt to reserve an amount of the given asset from the caller
+	/// If not possible then return Error. Possible reasons for failure include:
+	/// - User does not have enough balance.
+	fn reserve_payment_amount(
+		from: &T::AccountId,
+		to: &T::AccountId,
+		payment: PaymentDetail<T>,
 	) -> DispatchResult;
 
 	// Settle a payment of `from` to `to`. To release a payment, the recipient_share=100,

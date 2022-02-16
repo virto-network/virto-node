@@ -557,6 +557,149 @@ fn test_dispute_refund() {
 }
 
 #[test]
+fn test_request_payment() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 0_u128,
+				state: PaymentState::PaymentRequested,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: None
+			})
+		);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRequestCreated {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
+fn test_accept_and_pay() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 0_u128,
+				state: PaymentState::PaymentRequested,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: None
+			})
+		);
+
+		assert_ok!(Payment::accept_and_pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT,));
+
+		// the payment amount should be transferred
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+		// should be deleted from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRequestCompleted {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
+fn test_accept_and_pay_should_fail_for_non_payment_requested() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_noop!(
+			Payment::accept_and_pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT,),
+			crate::Error::<Test>::InvalidAction
+		);
+	});
+}
+
+#[test]
+fn test_accept_and_pay_should_charge_fee_correctly() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT_FEE_CHARGED),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 0_u128,
+				state: PaymentState::PaymentRequested,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 2)),
+				remark: None
+			})
+		);
+
+		assert_ok!(Payment::accept_and_pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT_FEE_CHARGED,
+		));
+
+		// the payment amount should be transferred
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 20);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 2);
+		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
+
+		// should be deleted from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
+
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentRequestCompleted {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT_FEE_CHARGED,
+			}
+			.into()
+		);
+	});
+}
+
+#[test]
 #[should_panic(expected = "Require transaction not called within with_transaction")]
 fn test_create_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {
@@ -565,6 +708,8 @@ fn test_create_payment_does_not_work_without_transaction() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			PaymentState::Created,
+			Percent::from_percent(0),
 			None,
 		));
 	});
@@ -584,19 +729,12 @@ fn test_create_payment_works() {
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				20,
+				PaymentState::Created,
+				Percent::from_percent(10),
 				Some(vec![1u8; 10].try_into().unwrap()),
 			)
 		})));
 
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCreated {
-				from: PAYMENT_CREATOR,
-				asset: CURRENCY_ID,
-				amount: 20
-			}
-			.into()
-		);
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
@@ -609,6 +747,78 @@ fn test_create_payment_works() {
 				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
+
+		// the payment should not be overwritten
+		assert_noop!(
+			with_transaction(|| TransactionOutcome::Commit({
+				<Payment as PaymentHandler<Test>>::create_payment(
+					PAYMENT_CREATOR,
+					PAYMENT_RECIPENT,
+					CURRENCY_ID,
+					20,
+					PaymentState::Created,
+					Percent::from_percent(10),
+					Some(vec![1u8; 10].try_into().unwrap()),
+				)
+			})),
+			crate::Error::<Test>::PaymentAlreadyInProcess
+		);
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: Some(vec![1u8; 10].try_into().unwrap()),
+			})
+		);
+	});
+}
+
+#[test]
+fn test_reserve_payment_amount_works() {
+	new_test_ext().execute_with(|| {
+		// the payment amount should not be reserved
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+
+		// should be able to create a payment with available balance within a transaction
+		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
+			<Payment as PaymentHandler<Test>>::create_payment(
+				PAYMENT_CREATOR,
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				20,
+				PaymentState::Created,
+				Percent::from_percent(10),
+				Some(vec![1u8; 10].try_into().unwrap()),
+			)
+		})));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::Created,
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: Some(vec![1u8; 10].try_into().unwrap()),
+			})
+		);
+
+		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
+			<Payment as PaymentHandler<Test>>::reserve_payment_amount(
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT,
+				PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			)
+		})));
 		// the payment amount should be reserved correctly
 		// the amount + incentive should be removed from the sender account
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
@@ -626,6 +836,8 @@ fn test_create_payment_works() {
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					20,
+					PaymentState::Created,
+					Percent::from_percent(10),
 					Some(vec![1u8; 10].try_into().unwrap()),
 				)
 			})),
@@ -655,25 +867,12 @@ fn test_settle_payment_works_for_cancel() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance within a transaction
-		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<Test>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
-				CURRENCY_ID,
-				20,
-				Some(vec![1u8; 10].try_into().unwrap()),
-			)
-		})));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCreated {
-				from: PAYMENT_CREATOR,
-				asset: CURRENCY_ID,
-				amount: 20
-			}
-			.into()
-		);
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
@@ -701,25 +900,12 @@ fn test_settle_payment_works_for_release() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance within a transaction
-		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<Test>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
-				CURRENCY_ID,
-				20,
-				Some(vec![1u8; 10].try_into().unwrap()),
-			)
-		})));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCreated {
-				from: PAYMENT_CREATOR,
-				asset: CURRENCY_ID,
-				amount: 20
-			}
-			.into()
-		);
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
@@ -747,25 +933,12 @@ fn test_settle_payment_works_for_70_30() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should be able to create a payment with available balance within a transaction
-		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<Test>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT_FEE_CHARGED,
-				CURRENCY_ID,
-				10,
-				Some(vec![1u8; 10].try_into().unwrap()),
-			)
-		})));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCreated {
-				from: PAYMENT_CREATOR,
-				asset: CURRENCY_ID,
-				amount: 10
-			}
-			.into()
-		);
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT_FEE_CHARGED,
+			CURRENCY_ID,
+			10,
+		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
@@ -794,25 +967,12 @@ fn test_settle_payment_works_for_50_50() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should be able to create a payment with available balance within a transaction
-		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
-			<Payment as PaymentHandler<Test>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT_FEE_CHARGED,
-				CURRENCY_ID,
-				10,
-				Some(vec![1u8; 10].try_into().unwrap()),
-			)
-		})));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCreated {
-				from: PAYMENT_CREATOR,
-				asset: CURRENCY_ID,
-				amount: 10
-			}
-			.into()
-		);
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT_FEE_CHARGED,
+			CURRENCY_ID,
+			10,
+		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
