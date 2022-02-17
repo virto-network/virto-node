@@ -601,7 +601,6 @@ fn test_requested_payment_can_be_cancelled_by_requestor() {
 			20,
 		));
 
-		// requested payment cannot be released
 		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
 
 		// the request should be removed from storage
