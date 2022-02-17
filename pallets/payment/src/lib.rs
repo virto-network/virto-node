@@ -30,7 +30,6 @@ pub mod pallet {
 		traits::{CheckedAdd, Saturating},
 		Percent,
 	};
-	use sp_std::vec::Vec;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -114,8 +113,6 @@ pub mod pallet {
 		PaymentAlreadyInProcess,
 		/// Action permitted only for whitelisted users
 		InvalidAction,
-		/// Remark size is larger than permitted
-		RemarkTooLarge,
 		/// Payment is in review state and cannot be modified
 		PaymentNeedsReview,
 		/// Unexpeted math error
@@ -170,12 +167,9 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Vec<u8>,
+			remark: BoundedDataOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// ensure remark is not too large
-			let bounded_remark: BoundedDataOf<T> =
-				remark.try_into().map_err(|_| Error::<T>::RemarkTooLarge)?;
 
 			// create PaymentDetail and add to storage
 			let payment_detail = <Self as PaymentHandler<T>>::create_payment(
@@ -185,7 +179,7 @@ pub mod pallet {
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
-				Some(bounded_remark),
+				Some(remark),
 			)?;
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;

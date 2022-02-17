@@ -324,23 +324,6 @@ fn test_charging_fee_payment_works_when_canceled() {
 }
 
 #[test]
-fn test_remark_too_large_should_be_rejected() {
-	new_test_ext().execute_with(|| {
-		// payments with larger than limit remarks should be rejected
-		assert_noop!(
-			Payment::pay_with_remark(
-				Origin::signed(PAYMENT_CREATOR),
-				PAYMENT_RECIPENT_FEE_CHARGED,
-				CURRENCY_ID,
-				40,
-				vec![1u8; 51].into()
-			),
-			crate::Error::<Test>::RemarkTooLarge
-		);
-	});
-}
-
-#[test]
 fn test_pay_with_remark_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
@@ -349,7 +332,7 @@ fn test_pay_with_remark_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			vec![1u8; 10].into()
+			vec![1u8; 10].try_into().unwrap()
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
