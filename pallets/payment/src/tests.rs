@@ -574,6 +574,42 @@ fn test_request_payment() {
 }
 
 #[test]
+fn test_requested_payment_cannot_be_released() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		// requested payment cannot be released
+		assert_noop!(
+			Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
+			crate::Error::<Test>::InvalidAction
+		);
+	});
+}
+
+#[test]
+fn test_requested_payment_can_be_cancelled_by_requestor() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::request_payment(
+			Origin::signed(PAYMENT_RECIPENT),
+			PAYMENT_CREATOR,
+			CURRENCY_ID,
+			20,
+		));
+
+		// requested payment cannot be released
+		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
+
+		// the request should be removed from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+	});
+}
+
+#[test]
 fn test_accept_and_pay() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Payment::request_payment(

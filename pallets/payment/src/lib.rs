@@ -194,11 +194,19 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
+
+			// ensure the payment is in Created state
+			if let Some(payment) = Payment::<T>::get(from.clone(), to.clone()) {
+				ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction)
+			}
+
+			// release is a settle_payment with 100% recipient_share
 			<Self as PaymentHandler<T>>::settle_payment(
 				from.clone(),
 				to.clone(),
 				Percent::from_percent(100),
 			)?;
+
 			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(().into())
 		}
@@ -221,6 +229,9 @@ pub mod pallet {
 						)?;
 						Self::deposit_event(Event::PaymentCancelled { from: creator, to: who });
 					},
+					// if the payment is in state PaymentRequested, remove from storage
+					PaymentState::PaymentRequested =>
+						Payment::<T>::remove(creator.clone(), who.clone()),
 					_ => fail!(Error::<T>::InvalidAction),
 				}
 			} else {
@@ -229,7 +240,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow admins to set state of a payment
+		/// Allow judge to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
 		/// recipient of the payment. This extrinsic allows the assigned judge to cancel the payment
 		#[transactional]
@@ -254,7 +265,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow admins to set state of a payment
+		/// Allow judge to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
 		/// recipient of the payment. This extrinsic allows the assigned judge to send the payment to recipient
 		#[transactional]
