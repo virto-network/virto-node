@@ -30,7 +30,6 @@ pub mod pallet {
 		traits::{CheckedAdd, Saturating},
 		Percent,
 	};
-	use sp_std::vec::Vec;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -114,8 +113,6 @@ pub mod pallet {
 		PaymentAlreadyInProcess,
 		/// Action permitted only for whitelisted users
 		InvalidAction,
-		/// Remark size is larger than permitted
-		RemarkTooLarge,
 		/// Payment is in review state and cannot be modified
 		PaymentNeedsReview,
 		/// Unexpeted math error
@@ -170,12 +167,9 @@ pub mod pallet {
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			remark: Vec<u8>,
+			remark: BoundedDataOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// ensure remark is not too large
-			let bounded_remark: BoundedDataOf<T> =
-				remark.try_into().map_err(|_| Error::<T>::RemarkTooLarge)?;
 
 			// create PaymentDetail and add to storage
 			let payment_detail = <Self as PaymentHandler<T>>::create_payment(
@@ -185,7 +179,7 @@ pub mod pallet {
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
-				Some(bounded_remark),
+				Some(remark),
 			)?;
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
@@ -200,11 +194,19 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
+
+			// ensure the payment is in Created state
+			if let Some(payment) = Payment::<T>::get(from.clone(), to.clone()) {
+				ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction)
+			}
+
+			// release is a settle_payment with 100% recipient_share
 			<Self as PaymentHandler<T>>::settle_payment(
 				from.clone(),
 				to.clone(),
 				Percent::from_percent(100),
 			)?;
+
 			Self::deposit_event(Event::PaymentReleased { from, to });
 			Ok(().into())
 		}
@@ -227,6 +229,9 @@ pub mod pallet {
 						)?;
 						Self::deposit_event(Event::PaymentCancelled { from: creator, to: who });
 					},
+					// if the payment is in state PaymentRequested, remove from storage
+					PaymentState::PaymentRequested =>
+						Payment::<T>::remove(creator.clone(), who.clone()),
 					_ => fail!(Error::<T>::InvalidAction),
 				}
 			} else {
@@ -235,7 +240,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow admins to set state of a payment
+		/// Allow judge to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
 		/// recipient of the payment. This extrinsic allows the assigned judge to cancel the payment
 		#[transactional]
@@ -260,7 +265,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow admins to set state of a payment
+		/// Allow judge to set state of a payment
 		/// This extrinsic is used to resolve disputes between the creator and
 		/// recipient of the payment. This extrinsic allows the assigned judge to send the payment to recipient
 		#[transactional]
