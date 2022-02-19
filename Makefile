@@ -119,4 +119,4 @@ stop-parachain:
 
 .PHONY: benchmark
 benchmark:
-	cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=$(pallet) --steps=20 --repeat=1 --heap-pages=4096 --output .
+	cargo run --release --features=runtime-benchmarks -- benchmark --chain dev  --execution=wasm --wasm-execution compiled --extrinsic="*" --pallet=$(pallet) --steps=20 --repeat=10 --raw --heap-pages=4096 --output ./pallets/payment/src/weights.rs --template ./.maintain/frame-weight-template.hbs

@@ -161,7 +161,7 @@ pub mod pallet {
 		/// can then be used to run custom logic and trigger alternate payment flows.
 		/// the specified amount.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::pay_with_remark())]
+		#[pallet::weight(T::WeightInfo::pay_with_remark(remark.len().try_into().unwrap_or(T::MaxRemarkLength::get())))]
 		pub fn pay_with_remark(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,

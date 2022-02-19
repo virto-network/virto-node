@@ -12,6 +12,7 @@ use virto_primitives::Asset;
 const SEED: u32 = 0;
 const INITIAL_AMOUNT: u128 = 100;
 const SOME_AMOUNT: u128 = 80;
+const MAX_REMARK_LENGTH: u8 = 50;
 
 fn get_currency_id() -> Asset {
 	Asset::default()
@@ -56,7 +57,9 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent = account("recipient", 0, SEED);
-	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT, vec![1u8, 50].try_into().unwrap())
+		let x in 1..MAX_REMARK_LENGTH.into();
+		let remark : BoundedDataOf<T> = vec![u8::MAX; x.try_into().unwrap()].try_into().unwrap();
+	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT, remark)
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCreated { from: caller, asset: get_currency_id(), amount: SOME_AMOUNT}.into());
 	}
