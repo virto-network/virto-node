@@ -56,6 +56,9 @@ pub mod pallet {
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
+		/// Minimum amount to be transferred in a payment
+		#[pallet::constant]
+		type MinPaymentAmount: Get<BalanceOf<Self>>;
 		//// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 	}
@@ -126,6 +129,8 @@ pub mod pallet {
 		RefundNotRequested,
 		/// Dispute period has not passed
 		DisputePeriodNotPassed,
+		/// Amount is lower than MinPaymentAmount
+		AmountLowerThanMinPayment,
 	}
 
 	#[pallet::hooks]
@@ -139,7 +144,7 @@ pub mod pallet {
 		/// can then be used to run custom logic and trigger alternate payment flows.
 		/// the specified amount.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::pay())]
+		#[pallet::weight(T::WeightInfo::pay(T::MaxRemarkLength::get()))]
 		pub fn pay(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
@@ -471,6 +476,12 @@ pub mod pallet {
 							Error::<T>::PaymentNeedsReview
 						);
 					}
+
+					ensure!(
+						amount >= T::MinPaymentAmount::get(),
+						Error::<T>::AmountLowerThanMinPayment
+					);
+
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
 					let incentive_amount = incentive_percentage.mul_floor(amount);

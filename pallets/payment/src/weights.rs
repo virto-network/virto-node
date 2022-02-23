@@ -52,7 +52,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn pay(_x: u32, ) -> Weight {
-		(54_614_000 as Weight)
+		(54_127_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -67,7 +67,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:0)
 	fn cancel() -> Weight {
-		(47_000_000 as Weight)
+		(46_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -75,14 +75,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:0)
 	fn resolve_cancel_payment() -> Weight {
-		(47_000_000 as Weight)
+		(46_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Payment Payment (r:1 w:1)
 	// Storage: Assets Accounts (r:2 w:2)
 	fn resolve_release_payment() -> Weight {
-		(36_000_000 as Weight)
+		(35_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -96,7 +96,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:0)
 	fn claim_refund() -> Weight {
-		(48_000_000 as Weight)
+		(46_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -130,7 +130,7 @@ impl WeightInfo for () {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
 	fn pay(_x: u32, ) -> Weight {
-		(54_614_000 as Weight)
+		(54_127_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
@@ -145,7 +145,7 @@ impl WeightInfo for () {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:0)
 	fn cancel() -> Weight {
-		(47_000_000 as Weight)
+		(46_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
@@ -153,14 +153,14 @@ impl WeightInfo for () {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:0)
 	fn resolve_cancel_payment() -> Weight {
-		(47_000_000 as Weight)
+		(46_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Payment Payment (r:1 w:1)
 	// Storage: Assets Accounts (r:2 w:2)
 	fn resolve_release_payment() -> Weight {
-		(36_000_000 as Weight)
+		(35_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
@@ -174,7 +174,7 @@ impl WeightInfo for () {
 	// Storage: Assets Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:0)
 	fn claim_refund() -> Weight {
-		(48_000_000 as Weight)
+		(46_000_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
