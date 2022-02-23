@@ -83,7 +83,7 @@ pub trait PaymentHandler<T: pallet::Config> {
 	/// Attempt to fetch the details of a payment from the given payment_id
 	/// Possible reasons for failure include:
 	/// - The payment does not exist
-	fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>>;
+	fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T>>;
 }
 
 /// DisputeResolver trait defines how to create/assing judges for solving payment disputes
