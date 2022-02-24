@@ -1,5 +1,6 @@
 #![allow(unused_qualifications)]
 use crate::{pallet, AssetIdOf, BalanceOf, BoundedDataOf};
+use frame_support::BoundedVec;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
@@ -38,7 +39,7 @@ pub enum PaymentState<BlockNumber> {
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested(BlockNumber),
+	RefundRequested { cancel_block: BlockNumber, task_id: u32 },
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
 }
@@ -100,4 +101,10 @@ pub trait FeeHandler<T: pallet::Config> {
 		to: &T::AccountId,
 		detail: &PaymentDetail<T>,
 	) -> (T::AccountId, Percent);
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub enum ScheduledTask<AccountId> {
+	// payment `from` to `to` has to be cancelled
+	Cancel { from: AccountId, to: AccountId },
 }

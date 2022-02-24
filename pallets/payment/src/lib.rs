@@ -17,7 +17,9 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::{
-		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState},
+		types::{
+			DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState, ScheduledTask,
+		},
 		weights::WeightInfo,
 	};
 	use frame_support::{
@@ -36,6 +38,9 @@ pub mod pallet {
 	pub type AssetIdOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 	pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
+	pub type ScheduledTaskOf<T> = ScheduledTask<<T as frame_system::Config>::AccountId>;
+	pub type ScheduledTasksListOf<T> =
+		BoundedVec<Option<ScheduledTaskOf<T>>, <T as Config>::MaxTasksPerBlock>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -53,6 +58,9 @@ pub mod pallet {
 		/// Maximum permitted size of `Remark`
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
+		/// Maximum scheduled tasks per block
+		#[pallet::constant]
+		type MaxTasksPerBlock: Get<u32>;
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
@@ -81,9 +89,9 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn cancel_queue)]
-	pub(super) type CancelQueue<T: Config> =
-		StorageMap<_, Blake2_128Concat, (T::AccountId, T::AccountId), T::BlockNumber>;
+	#[pallet::getter(fn tasks)]
+	pub(super) type ScheduledTasks<T: Config> =
+		StorageMap<_, Twox64Concat, T::BlockNumber, ScheduledTasksListOf<T>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -139,32 +147,36 @@ pub mod pallet {
 			// var to store the total weight consumed by this hook
 			let mut total_weight = 0;
 
-			while total_weight < MAX_WEIGHT_PERMITTED {
-				// pick the next item from cancel queue
-				// expected to be in the order of cancel_block
-				let next_cancel = CancelQueue::<T>::iter().next();
+			// get list of tasks to be done in block
+			let tasks_in_block = ScheduledTasks::<T>::get(now);
 
-				if next_cancel.is_none() {
-					break
+			// exit if no tasks to be done in block
+			if tasks_in_block.len() == 0 {
+				// TODO : calculate weight to read Scheduled tasks
+				return 0
+			}
+
+			for task in tasks_in_block.into_iter() {
+				let task_weight = match task {
+					Some(ScheduledTask::Cancel { .. }) => T::WeightInfo::cancel(),
+					_ => 0
+				};
+
+				total_weight += task_weight;
+
+				// ToDO : Do not execute if weghts > max weight
+
+				match task {
+					Some(ScheduledTask::Cancel { from, to }) => {
+						<Self as PaymentHandler<T>>::settle_payment(
+							from.clone(),
+							to.clone(),
+							Percent::from_percent(0),
+						);
+						Self::deposit_event(Event::PaymentCancelled { from, to });
+					},
+					_ => {}
 				}
-
-				let ((payment_creator, payment_recipient), execute_block) = next_cancel.unwrap();
-
-				if execute_block > now {
-					break
-				}
-
-				match <Self as PaymentHandler<T>>::settle_payment(
-					payment_creator.clone(),
-					payment_recipient.clone(),
-					Percent::from_percent(0),
-				) {
-					// TODO : how to deal with cancel failure
-					Err(_) => {},
-					Ok(()) => CancelQueue::<T>::remove((&payment_creator, &payment_recipient)),
-				}
-
-				total_weight += T::WeightInfo::cancel();
 			}
 
 			total_weight
@@ -243,6 +255,8 @@ pub mod pallet {
 			// ensure the payment is in Created state
 			if let Some(payment) = Payment::<T>::get(from.clone(), to.clone()) {
 				ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction)
+			} else {
+				fail!(Error::<T>::InvalidPayment);
 			}
 
 			// release is a settle_payment with 100% recipient_share
@@ -360,18 +374,26 @@ pub mod pallet {
 
 					// set the payment to requested refund
 					let current_block = frame_system::Pallet::<T>::block_number();
-					let can_cancel_block = current_block
+					let cancel_block = current_block
 						.checked_add(&T::CancelBufferBlockLength::get())
 						.ok_or(Error::<T>::MathError)?;
-					payment.state = PaymentState::RefundRequested(can_cancel_block);
 
-					// add the payment to cancel queue
-					CancelQueue::<T>::insert((who.clone(), recipient.clone()), can_cancel_block);
+					// add the payment to scheduled tasks
+					ScheduledTasks::<T>::try_append(
+						cancel_block,
+						Some(ScheduledTask::Cancel { from: who.clone(), to: recipient.clone() }),
+					).map_err(|_| Error::<T>::InvalidPayment)?;
+					
+					// calculate the task_id
+					let task_id =
+						ScheduledTasks::<T>::decode_len(cancel_block).unwrap_or(1) as u32 - 1;
+
+					payment.state = PaymentState::RefundRequested { cancel_block, task_id };
 
 					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
 						from: who,
 						to: recipient,
-						expiry: can_cancel_block,
+						expiry: cancel_block,
 					});
 
 					Ok(())
@@ -401,11 +423,17 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is in Requested Refund state
 					match payment.state {
-						RefundRequested(_) => {
+						RefundRequested { cancel_block, task_id } => {
 							payment.state = PaymentState::NeedsReview;
 
-							// remove the payment from cancel queue
-							CancelQueue::<T>::remove((creator.clone(), who.clone()));
+							// remove the payment from scheduled tasks
+							ScheduledTasks::<T>::try_mutate(cancel_block, |list| -> DispatchResult {
+								if let Some(task) = list.get_mut(task_id as usize) {
+									task.take();
+								};
+
+								Ok(())
+							})?;
 
 							Self::deposit_event(Event::PaymentRefundDisputed {
 								from: creator,
