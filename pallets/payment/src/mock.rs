@@ -123,6 +123,7 @@ parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
 	pub const CancelBufferBlockLength: u64 = 600;
+	pub const MaxTasksPerBlock: u32 = 10;
 }
 
 impl payment::Config for Test {
@@ -133,6 +134,7 @@ impl payment::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
+	type MaxTasksPerBlock = MaxTasksPerBlock;
 	type WeightInfo = ();
 }
 

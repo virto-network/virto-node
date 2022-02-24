@@ -449,48 +449,6 @@ fn test_request_refund() {
 }
 
 #[test]
-fn test_claim_refund() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay(
-			Origin::signed(PAYMENT_CREATOR),
-			PAYMENT_RECIPENT,
-			CURRENCY_ID,
-			20,
-		));
-
-		// cannot claim refund unless payment is in requested refund state
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::RefundNotRequested
-		);
-
-		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-
-		// cannot cancel before the dispute period has passed
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::DisputePeriodNotPassed
-		);
-
-		run_to_block(700);
-		assert_ok!(Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
-				.into()
-		);
-		// the payment amount should be released back to creator
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
-
-		// should be released from storage
-		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
-	});
-}
-
-#[test]
 fn test_dispute_refund() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Payment::pay(
@@ -509,11 +467,6 @@ fn test_dispute_refund() {
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
 		// recipient disputes the refund request
 		assert_ok!(Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
-		// payment cannot be claimed after disputed
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::PaymentNeedsReview
-		);
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
