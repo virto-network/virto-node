@@ -22,7 +22,7 @@ pub mod pallet {
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, fail, pallet_prelude::*, require_transactional,
-		traits::tokens::BalanceStatus, transactional,
+		traits::tokens::BalanceStatus, transactional, weights::constants::WEIGHT_PER_SECOND,
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
@@ -65,7 +65,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn rates)]
+	#[pallet::getter(fn payment)]
 	/// Payments created by a user, this method of storageDoubleMap is chosen since there is no usecase for
 	/// listing payments by provider/currency. The payment will only be referenced by the creator in
 	/// any transaction of interest.
@@ -79,6 +79,11 @@ pub mod pallet {
 		T::AccountId, // payment recipient
 		PaymentDetail<T>,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn cancel_queue)]
+	pub(super) type CancelQueue<T: Config> =
+		StorageMap<_, Blake2_128Concat, (T::AccountId, T::AccountId), T::BlockNumber>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -124,7 +129,47 @@ pub mod pallet {
 	}
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(now: T::BlockNumber) -> Weight {
+			// max weight per block has been set as weight_per_second/2
+			// do not occupy more than ~30% of the block
+			// TODO : find a better way to arrive at this value
+			const MAX_WEIGHT_PERMITTED: Weight = WEIGHT_PER_SECOND / 5;
+
+			// var to store the total weight consumed by this hook
+			let mut total_weight = 0;
+
+			while total_weight < MAX_WEIGHT_PERMITTED {
+				// pick the next item from cancel queue
+				// expected to be in the order of cancel_block
+				let next_cancel = CancelQueue::<T>::iter().next();
+
+				if next_cancel.is_none() {
+					break
+				}
+
+				let ((payment_creator, payment_recipient), execute_block) = next_cancel.unwrap();
+
+				if execute_block > now {
+					break
+				}
+
+				match <Self as PaymentHandler<T>>::settle_payment(
+					payment_creator.clone(),
+					payment_recipient.clone(),
+					Percent::from_percent(0),
+				) {
+					// TODO : how to deal with cancel failure
+					Err(_) => {},
+					Ok(()) => CancelQueue::<T>::remove((&payment_creator, &payment_recipient)),
+				}
+
+				total_weight += T::WeightInfo::cancel();
+			}
+
+			total_weight
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -320,6 +365,9 @@ pub mod pallet {
 						.ok_or(Error::<T>::MathError)?;
 					payment.state = PaymentState::RefundRequested(can_cancel_block);
 
+					// add the payment to cancel queue
+					CancelQueue::<T>::insert((who.clone(), recipient.clone()), can_cancel_block);
+
 					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
 						from: who,
 						to: recipient,
@@ -329,43 +377,6 @@ pub mod pallet {
 					Ok(())
 				},
 			)?;
-
-			Ok(().into())
-		}
-
-		/// Allow payment creator to claim the refund if the payment recipent has not disputed
-		/// After the payment creator has `request_refund` can then call this extrinsic to
-		/// cancel the payment and receive the reserved amount to the account if the dispute period
-		/// has passed.
-		#[transactional]
-		#[pallet::weight(T::WeightInfo::claim_refund())]
-		pub fn claim_refund(
-			origin: OriginFor<T>,
-			recipient: T::AccountId,
-		) -> DispatchResultWithPostInfo {
-			use PaymentState::*;
-			let who = ensure_signed(origin)?;
-
-			if let Some(payment) = Payment::<T>::get(who.clone(), recipient.clone()) {
-				match payment.state {
-					NeedsReview => fail!(Error::<T>::PaymentNeedsReview),
-					Created | PaymentRequested => fail!(Error::<T>::RefundNotRequested),
-					RefundRequested(cancel_block) => {
-						let current_block = frame_system::Pallet::<T>::block_number();
-						// ensure the dispute period has passed
-						ensure!(current_block > cancel_block, Error::<T>::DisputePeriodNotPassed);
-						// cancel the payment and refund the creator
-						<Self as PaymentHandler<T>>::settle_payment(
-							who.clone(),
-							recipient.clone(),
-							Percent::from_percent(0),
-						)?;
-						Self::deposit_event(Event::PaymentCancelled { from: who, to: recipient });
-					},
-				}
-			} else {
-				fail!(Error::<T>::InvalidPayment);
-			}
 
 			Ok(().into())
 		}
@@ -392,6 +403,9 @@ pub mod pallet {
 					match payment.state {
 						RefundRequested(_) => {
 							payment.state = PaymentState::NeedsReview;
+
+							// remove the payment from cancel queue
+							CancelQueue::<T>::remove((creator.clone(), who.clone()));
 
 							Self::deposit_event(Event::PaymentRefundDisputed {
 								from: creator,
