@@ -10,6 +10,7 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - Resolver Account: A resolver account is assigned to every payment created, this account has the privilege to cancel/release a payment that has been disputed.
 - Remark: The pallet allows to create payments by optionally providing some extra(limited) amount of bytes, this is reffered to as Remark. This can be used by a marketplace to seperate/tag payments.
 - CancelBufferBlockLength: This is the time window where the recipient can dispute a cancellation request from the payment creator.
+- MaxTasksPerBlock: The max count of tasks that can be added to a block, this number should be small so that the entire block is not consumed by the on_initialize function.
 
 ## Interface
 
@@ -32,7 +33,6 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `resolve_release_payment` - Allows assigned judge to release a payment
 - `resolve_cancel_payment` - Allows assigned judge to cancel a payment
 - `request_refund` - Allows the creator of the payment to trigger cancel with a buffer time.
-- `claim_refund` - Allows the creator to claim payment refund after buffer time
 - `dispute_refund` - Allows the recipient to dispute the payment request of sender
 - `request_payment` - Create a payment that can be completed by the sender using the `accept_and_pay` extrinsic.
 - `accept_and_pay` - Allows the sender to fulfill a payment request created by a recipient
@@ -74,7 +74,9 @@ pub enum PaymentState<BlockNumber> {
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested(BlockNumber),
+	RefundRequested { cancel_block: BlockNumber, task_id: u32 },
+	/// The recipient of this transaction has created a request
+	PaymentRequested,
 }
 ```
 

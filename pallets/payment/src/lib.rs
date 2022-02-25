@@ -90,6 +90,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn tasks)]
+	/// Store the list of tasks to be executed in the on_initialize function
 	pub(super) type ScheduledTasks<T: Config> =
 		StorageMap<_, Twox64Concat, T::BlockNumber, ScheduledTasksListOf<T>, ValueQuery>;
 

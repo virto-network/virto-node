@@ -461,6 +461,13 @@ fn test_dispute_refund() {
 		);
 		// creator requests a refund
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+		// ensure the request is added to the refund queue
+		let expected_data: ScheduledTasksListOf<Test> =
+			vec![ScheduledTask::Cancel { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }.into()]
+				.try_into()
+				.unwrap();
+		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+
 		// recipient disputes the refund request
 		assert_ok!(Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
 
@@ -485,6 +492,10 @@ fn test_dispute_refund() {
 			}
 			.into()
 		);
+
+		// the payment should be removed from the refund queue
+		let expected_data: ScheduledTasksListOf<Test> = vec![None].try_into().unwrap();
+		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
 	});
 }
 
