@@ -624,6 +624,8 @@ parameter_types! {
 	// 1hr buffer period (60*60)/6
 	pub const CancelBufferBlockLength: BlockNumber = 600;
 	pub const MaxTasksPerBlock: u32 = 10;
+	// upto 30% of the block can be taken by refunds/scheduled transactions
+	pub const MaxWeightForAutomaticRefund : Weight = MAXIMUM_BLOCK_WEIGHT/3;
 }
 
 impl virto_payment::Config for Runtime {
@@ -635,6 +637,7 @@ impl virto_payment::Config for Runtime {
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
 	type MaxTasksPerBlock = MaxTasksPerBlock;
+	type MaxWeightForAutomaticRefund = MaxWeightForAutomaticRefund;
 	type WeightInfo = virto_payment::weights::SubstrateWeight<Runtime>;
 }
 

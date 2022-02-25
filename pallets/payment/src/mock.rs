@@ -1,6 +1,7 @@
 use crate as payment;
-use crate::PaymentDetail;
+use crate::{weights::*, PaymentDetail};
 use frame_support::{
+	pallet_prelude::Weight,
 	parameter_types,
 	traits::{Contains, Everything, GenesisBuild, OnFinalize, OnInitialize},
 };
@@ -124,6 +125,8 @@ parameter_types! {
 	pub const MaxRemarkLength: u32 = 50;
 	pub const CancelBufferBlockLength: u64 = 600;
 	pub const MaxTasksPerBlock: u32 = 10;
+	// enough to cancel two payments
+	pub const MaxWeightForAutomaticRefund : Weight = 10000000;
 }
 
 impl payment::Config for Test {
@@ -135,6 +138,7 @@ impl payment::Config for Test {
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
 	type MaxTasksPerBlock = MaxTasksPerBlock;
+	type MaxWeightForAutomaticRefund = MaxWeightForAutomaticRefund;
 	type WeightInfo = ();
 }
 

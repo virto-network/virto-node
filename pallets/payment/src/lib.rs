@@ -61,6 +61,9 @@ pub mod pallet {
 		/// Maximum scheduled tasks per block
 		#[pallet::constant]
 		type MaxTasksPerBlock: Get<u32>;
+		/// Maximum weight that can be used by the automatic refund
+		#[pallet::constant]
+		type MaxWeightForAutomaticRefund: Get<Weight>;
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
