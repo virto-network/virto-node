@@ -148,7 +148,7 @@ pub mod pallet {
 			let mut total_weight = 0;
 
 			// get list of tasks to be done in block
-			let tasks_in_block = ScheduledTasks::<T>::get(now);
+			let tasks_in_block = ScheduledTasks::<T>::take(now);
 
 			// exit if no tasks to be done in block
 			if tasks_in_block.len() == 0 {
@@ -159,23 +159,27 @@ pub mod pallet {
 			for task in tasks_in_block.into_iter() {
 				let task_weight = match task {
 					Some(ScheduledTask::Cancel { .. }) => T::WeightInfo::cancel(),
-					_ => 0
+					_ => 0,
 				};
 
 				total_weight += task_weight;
 
-				// ToDO : Do not execute if weghts > max weight
+				if total_weight > MAX_WEIGHT_PERMITTED {
+					// TODO : move remaining functions to next block
+					break
+				}
 
 				match task {
 					Some(ScheduledTask::Cancel { from, to }) => {
-						<Self as PaymentHandler<T>>::settle_payment(
+						// TODO : use this result in a better way
+						let _ = <Self as PaymentHandler<T>>::settle_payment(
 							from.clone(),
 							to.clone(),
 							Percent::from_percent(0),
 						);
 						Self::deposit_event(Event::PaymentCancelled { from, to });
 					},
-					_ => {}
+					_ => {},
 				}
 			}
 
@@ -382,8 +386,9 @@ pub mod pallet {
 					ScheduledTasks::<T>::try_append(
 						cancel_block,
 						Some(ScheduledTask::Cancel { from: who.clone(), to: recipient.clone() }),
-					).map_err(|_| Error::<T>::InvalidPayment)?;
-					
+					)
+					.map_err(|_| Error::<T>::InvalidPayment)?;
+
 					// calculate the task_id
 					let task_id =
 						ScheduledTasks::<T>::decode_len(cancel_block).unwrap_or(1) as u32 - 1;
@@ -427,13 +432,16 @@ pub mod pallet {
 							payment.state = PaymentState::NeedsReview;
 
 							// remove the payment from scheduled tasks
-							ScheduledTasks::<T>::try_mutate(cancel_block, |list| -> DispatchResult {
-								if let Some(task) = list.get_mut(task_id as usize) {
-									task.take();
-								};
+							ScheduledTasks::<T>::try_mutate(
+								cancel_block,
+								|list| -> DispatchResult {
+									if let Some(task) = list.get_mut(task_id as usize) {
+										task.take();
+									};
 
-								Ok(())
-							})?;
+									Ok(())
+								},
+							)?;
 
 							Self::deposit_event(Event::PaymentRefundDisputed {
 								from: creator,
@@ -599,7 +607,6 @@ pub mod pallet {
 		/// For cancelling a payment, recipient_share = 0
 		/// For releasing a payment, recipient_share = 100
 		/// In other cases, the custom recipient_share can be specified
-		#[require_transactional]
 		fn settle_payment(
 			from: T::AccountId,
 			to: T::AccountId,

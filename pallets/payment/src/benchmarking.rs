@@ -121,19 +121,6 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentCreatorRequestedRefund { from: caller, to: recipent, expiry: 601u32.into() }.into());
 	}
 
-	// creator of payment can claim a refund
-	claim_refund {
-		let caller = whitelisted_caller();
-		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
-		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
-		Payment::<T>::request_refund(RawOrigin::Signed(caller.clone()).into(), recipent.clone())?;
-		run_to_block::<T>(700u32.into());
-	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
-	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
-	}
-
 	// recipient of a payment can dispute a refund request
 	dispute_refund {
 		let caller = whitelisted_caller();

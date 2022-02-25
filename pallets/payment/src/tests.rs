@@ -1,7 +1,7 @@
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	Payment as PaymentStore, PaymentHandler,
+	Payment as PaymentStore, PaymentHandler, ScheduledTask, ScheduledTasks, ScheduledTasksListOf,
 };
 use frame_support::{assert_noop, assert_ok, storage::with_transaction};
 use orml_traits::MultiCurrency;
@@ -429,7 +429,7 @@ fn test_request_refund() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::RefundRequested(601u64.into()),
+				state: PaymentState::RefundRequested { task_id: 0, cancel_block: 601u64.into() },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 				remark: None
@@ -961,5 +961,60 @@ fn test_settle_payment_works_for_50_50() {
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
+	});
+}
+
+#[test]
+fn test_automatic_refund_works() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+		));
+
+		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::RefundRequested { task_id: 0, cancel_block: 601u64.into() },
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				remark: None
+			})
+		);
+
+		let expected_data: ScheduledTasksListOf<Test> =
+			vec![ScheduledTask::Cancel { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }.into()]
+				.try_into()
+				.unwrap();
+
+		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+
+		// run to cancel block
+		run_to_block(601u64);
+
+		// the payment should be removed from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		// the scheduled storage should be cleared
+		let expected_data: ScheduledTasksListOf<Test> = vec![].try_into().unwrap();
+		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+
+		// test that the refund happened correctly
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
+		// the payment amount should be released back to creator
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 	});
 }

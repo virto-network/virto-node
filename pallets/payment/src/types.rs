@@ -1,6 +1,5 @@
 #![allow(unused_qualifications)]
 use crate::{pallet, AssetIdOf, BalanceOf, BoundedDataOf};
-use frame_support::BoundedVec;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
@@ -103,7 +102,7 @@ pub trait FeeHandler<T: pallet::Config> {
 	) -> (T::AccountId, Percent);
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub enum ScheduledTask<AccountId> {
 	// payment `from` to `to` has to be cancelled
 	Cancel { from: AccountId, to: AccountId },
