@@ -24,7 +24,7 @@ pub mod pallet {
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, fail, pallet_prelude::*, require_transactional,
-		traits::tokens::BalanceStatus, transactional, weights::constants::WEIGHT_PER_SECOND,
+		traits::tokens::BalanceStatus, transactional,
 	};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
@@ -58,12 +58,9 @@ pub mod pallet {
 		/// Maximum permitted size of `Remark`
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
-		/// Maximum scheduled tasks per block
+		/// Maximum scheduled tasks per block - this number should be small enough to ensure entire block is not consumed by on_init hook
 		#[pallet::constant]
 		type MaxTasksPerBlock: Get<u32>;
-		/// Maximum weight that can be used by the automatic refund
-		#[pallet::constant]
-		type MaxWeightForAutomaticRefund: Get<Weight>;
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
@@ -137,43 +134,23 @@ pub mod pallet {
 		RefundNotRequested,
 		/// Dispute period has not passed
 		DisputePeriodNotPassed,
+		/// The automatic cancelation queue cannot accept
+		RefundQueueFull,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(now: T::BlockNumber) -> Weight {
-			// max weight per block has been set as weight_per_second/2
-			// do not occupy more than ~30% of the block
-			// TODO : find a better way to arrive at this value
-			const MAX_WEIGHT_PERMITTED: Weight = WEIGHT_PER_SECOND / 5;
-
 			// var to store the total weight consumed by this hook
 			let mut total_weight = 0;
 
 			// get list of tasks to be done in block
 			let tasks_in_block = ScheduledTasks::<T>::take(now);
 
-			// exit if no tasks to be done in block
-			if tasks_in_block.len() == 0 {
-				// TODO : calculate weight to read Scheduled tasks
-				return 0
-			}
-
 			for task in tasks_in_block.into_iter() {
-				let task_weight = match task {
-					Some(ScheduledTask::Cancel { .. }) => T::WeightInfo::cancel(),
-					_ => 0,
-				};
-
-				total_weight += task_weight;
-
-				if total_weight > MAX_WEIGHT_PERMITTED {
-					// TODO : move remaining functions to next block
-					break
-				}
-
 				match task {
 					Some(ScheduledTask::Cancel { from, to }) => {
+						total_weight += T::WeightInfo::cancel();
 						// TODO : use this result in a better way
 						let _ = <Self as PaymentHandler<T>>::settle_payment(
 							from.clone(),
@@ -386,11 +363,13 @@ pub mod pallet {
 						.ok_or(Error::<T>::MathError)?;
 
 					// add the payment to scheduled tasks
+					// TODO : possible reason for failure here could be that the cancel list is full
+					// for the user, the solution is to try again in next block, maybe we can handle this better?
 					ScheduledTasks::<T>::try_append(
 						cancel_block,
 						Some(ScheduledTask::Cancel { from: who.clone(), to: recipient.clone() }),
 					)
-					.map_err(|_| Error::<T>::InvalidPayment)?;
+					.map_err(|_| Error::<T>::RefundQueueFull)?;
 
 					// calculate the task_id
 					let task_id =

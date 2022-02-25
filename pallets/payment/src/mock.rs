@@ -1,7 +1,6 @@
 use crate as payment;
-use crate::{weights::*, PaymentDetail};
+use crate::PaymentDetail;
 use frame_support::{
-	pallet_prelude::Weight,
 	parameter_types,
 	traits::{Contains, Everything, GenesisBuild, OnFinalize, OnInitialize},
 };
@@ -22,6 +21,8 @@ pub type Balance = u128;
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
+pub const PAYMENT_CREATOR_TWO: AccountId = 30;
+pub const PAYMENT_RECIPENT_TWO: AccountId = 31;
 pub const CURRENCY_ID: Asset = Asset::Network(NetworkAsset::KSM);
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
@@ -124,9 +125,7 @@ parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
 	pub const CancelBufferBlockLength: u64 = 600;
-	pub const MaxTasksPerBlock: u32 = 10;
-	// enough to cancel two payments
-	pub const MaxWeightForAutomaticRefund : Weight = 10000000;
+	pub const MaxTasksPerBlock: u32 = 2;
 }
 
 impl payment::Config for Test {
@@ -138,7 +137,6 @@ impl payment::Config for Test {
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
 	type MaxTasksPerBlock = MaxTasksPerBlock;
-	type MaxWeightForAutomaticRefund = MaxWeightForAutomaticRefund;
 	type WeightInfo = ();
 }
 
@@ -146,9 +144,14 @@ impl payment::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	orml_tokens::GenesisConfig::<Test> { balances: vec![(PAYMENT_CREATOR, CURRENCY_ID, 100)] }
-		.assimilate_storage(&mut t)
-		.unwrap();
+	orml_tokens::GenesisConfig::<Test> {
+		balances: vec![
+			(PAYMENT_CREATOR, CURRENCY_ID, 100),
+			(PAYMENT_CREATOR_TWO, CURRENCY_ID, 100),
+		],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
 	// need to set block number to 1 to test events
