@@ -120,11 +120,23 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	}
 }
 
+parameter_type_with_key! {
+	pub MinPaymentAmount: |asset_id: Asset| -> Balance {
+		use NetworkAsset::*;
+		#[allow(clippy::match_ref_pats)]
+		match asset_id {
+			// TODO : Configure these values
+			Asset::Network(KSM) => 1,
+			Asset::Network(KUSD) => 1,
+			Asset::Network(KAR) => 1,
+		}
+	};
+}
+
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
 	pub const CancelBufferBlockLength: u64 = 600;
-	pub const MinPaymentAmount: u128 = 1;
 }
 
 impl payment::Config for Test {

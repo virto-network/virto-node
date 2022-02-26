@@ -59,8 +59,6 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
 	pub fee_detail: Option<(T::AccountId, BalanceOf<T>)>,
-	/// remarks to give context to payment
-	pub remark: Option<BoundedDataOf<T>>,
 }
 ```
 

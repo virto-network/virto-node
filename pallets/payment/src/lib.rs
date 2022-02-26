@@ -25,7 +25,7 @@ pub mod pallet {
 		traits::tokens::BalanceStatus, transactional,
 	};
 	use frame_system::pallet_prelude::*;
-	use orml_traits::{MultiCurrency, MultiReservableCurrency};
+	use orml_traits::{GetByKey, MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{
 		traits::{CheckedAdd, Saturating},
 		Percent,
@@ -57,8 +57,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
 		/// Minimum amount to be transferred in a payment
-		#[pallet::constant]
-		type MinPaymentAmount: Get<BalanceOf<Self>>;
+		type MinPaymentAmount: GetByKey<AssetIdOf<Self>, BalanceOf<Self>>;
 		//// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 	}
@@ -478,7 +477,7 @@ pub mod pallet {
 					}
 
 					ensure!(
-						amount >= T::MinPaymentAmount::get(),
+						amount >= T::MinPaymentAmount::get(&asset),
 						Error::<T>::AmountLowerThanMinPayment
 					);
 
