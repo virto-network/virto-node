@@ -24,8 +24,6 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
 	pub fee_detail: Option<(T::AccountId, BalanceOf<T>)>,
-	/// remarks to give context to payment
-	pub remark: Option<BoundedDataOf<T>>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
@@ -99,5 +97,6 @@ pub trait FeeHandler<T: pallet::Config> {
 		from: &T::AccountId,
 		to: &T::AccountId,
 		detail: &PaymentDetail<T>,
+		remark: Option<BoundedDataOf<T>>,
 	) -> (T::AccountId, Percent);
 }

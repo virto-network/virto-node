@@ -493,13 +493,12 @@ pub mod pallet {
 						state: payment_state,
 						resolver_account: T::DisputeResolver::get_origin(),
 						fee_detail: None,
-						remark,
 					};
 
 					// Calculate fee amount - this will be implemented based on the custom
 					// implementation of the fee provider
 					let (fee_recipient, fee_percent) =
-						T::FeeHandler::apply_fees(&from, &recipient, &new_payment);
+						T::FeeHandler::apply_fees(&from, &recipient, &new_payment, remark);
 					let fee_amount = fee_percent.mul_floor(amount);
 					new_payment.fee_detail = Some((fee_recipient, fee_amount));
 

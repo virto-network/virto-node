@@ -51,7 +51,6 @@ fn test_pay_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -78,7 +77,6 @@ fn test_pay_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 	});
@@ -104,7 +102,6 @@ fn test_cancel_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -148,7 +145,6 @@ fn test_release_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -276,7 +272,6 @@ fn test_charging_fee_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -314,7 +309,6 @@ fn test_charging_fee_payment_works_when_canceled() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -352,7 +346,6 @@ fn test_pay_with_remark_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap())
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -410,7 +403,6 @@ fn test_do_not_overwrite_logic_works() {
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None,
 			},
 		);
 
@@ -444,7 +436,6 @@ fn test_request_refund() {
 				state: PaymentState::RefundRequested(601u64.into()),
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -538,7 +529,6 @@ fn test_dispute_refund() {
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -572,7 +562,6 @@ fn test_request_payment() {
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -641,7 +630,6 @@ fn test_accept_and_pay() {
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -703,7 +691,6 @@ fn test_accept_and_pay_should_charge_fee_correctly() {
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 2)),
-				remark: None
 			})
 		);
 
@@ -777,7 +764,6 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 
@@ -806,7 +792,6 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 	});
@@ -841,7 +826,6 @@ fn test_reserve_payment_amount_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 
@@ -886,7 +870,6 @@ fn test_reserve_payment_amount_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 	});
