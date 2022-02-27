@@ -611,7 +611,7 @@ impl virto_payment::FeeHandler<Runtime> for VirtoFeeHandler {
 		_from: &AccountId,
 		_to: &AccountId,
 		_detail: &virto_payment::PaymentDetail<Runtime>,
-		_remark: Option<virto_payment::BoundedDataOf<Runtime>>,
+		_remark: Option<&[u8]>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
 		let fee_receiver = Sudo::key().expect("Sudo key not set!");

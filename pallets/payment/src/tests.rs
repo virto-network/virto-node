@@ -751,7 +751,7 @@ fn test_create_payment_works() {
 				20,
 				PaymentState::Created,
 				Percent::from_percent(10),
-				Some(vec![1u8; 10].try_into().unwrap()),
+				Some(&vec![1u8; 10]),
 			)
 		})));
 
@@ -777,7 +777,7 @@ fn test_create_payment_works() {
 					20,
 					PaymentState::Created,
 					Percent::from_percent(10),
-					Some(vec![1u8; 10].try_into().unwrap()),
+					Some(&vec![1u8; 10]),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess
@@ -813,7 +813,7 @@ fn test_reserve_payment_amount_works() {
 				20,
 				PaymentState::Created,
 				Percent::from_percent(10),
-				Some(vec![1u8; 10].try_into().unwrap()),
+				Some(&vec![1u8; 10]),
 			)
 		})));
 
@@ -855,7 +855,7 @@ fn test_reserve_payment_amount_works() {
 					20,
 					PaymentState::Created,
 					Percent::from_percent(10),
-					Some(vec![1u8; 10].try_into().unwrap()),
+					Some(&vec![1u8; 10]),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess

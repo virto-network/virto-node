@@ -1,5 +1,5 @@
 use crate as payment;
-use crate::{BoundedDataOf, PaymentDetail};
+use crate::PaymentDetail;
 use frame_support::{
 	parameter_types,
 	traits::{Contains, Everything, GenesisBuild, OnFinalize, OnInitialize},
@@ -111,7 +111,7 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 		_from: &AccountId,
 		to: &AccountId,
 		_detail: &PaymentDetail<Test>,
-		_remark: Option<BoundedDataOf<Test>>,
+		_remark: Option<&[u8]>,
 	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),

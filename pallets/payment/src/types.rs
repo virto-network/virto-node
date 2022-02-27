@@ -1,5 +1,5 @@
 #![allow(unused_qualifications)]
-use crate::{pallet, AssetIdOf, BalanceOf, BoundedDataOf};
+use crate::{pallet, AssetIdOf, BalanceOf};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
@@ -54,7 +54,7 @@ pub trait PaymentHandler<T: pallet::Config> {
 		amount: BalanceOf<T>,
 		payment_state: PaymentState<T::BlockNumber>,
 		incentive_percentage: Percent,
-		remark: Option<BoundedDataOf<T>>,
+		remark: Option<&[u8]>,
 	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError>;
 
 	/// Attempt to reserve an amount of the given asset from the caller
@@ -97,6 +97,6 @@ pub trait FeeHandler<T: pallet::Config> {
 		from: &T::AccountId,
 		to: &T::AccountId,
 		detail: &PaymentDetail<T>,
-		remark: Option<BoundedDataOf<T>>,
+		remark: Option<&[u8]>,
 	) -> (T::AccountId, Percent);
 }

@@ -161,7 +161,7 @@ pub mod pallet {
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
-				remark.clone(),
+				remark.as_ref().map(|x| x.as_slice()),
 			)?;
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
@@ -457,7 +457,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			payment_state: PaymentState<T::BlockNumber>,
 			incentive_percentage: Percent,
-			remark: Option<BoundedDataOf<T>>,
+			remark: Option<&[u8]>,
 		) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 			Payment::<T>::try_mutate(
 				from.clone(),
