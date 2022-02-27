@@ -442,49 +442,6 @@ fn test_request_refund() {
 }
 
 #[test]
-fn test_claim_refund() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay(
-			Origin::signed(PAYMENT_CREATOR),
-			PAYMENT_RECIPENT,
-			CURRENCY_ID,
-			20,
-			None
-		));
-
-		// cannot claim refund unless payment is in requested refund state
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::RefundNotRequested
-		);
-
-		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-
-		// cannot cancel before the dispute period has passed
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::DisputePeriodNotPassed
-		);
-
-		run_to_block(700);
-		assert_ok!(Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
-				.into()
-		);
-		// the payment amount should be released back to creator
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
-
-		// should be released from storage
-		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
-	});
-}
-
-#[test]
 fn test_dispute_refund() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Payment::pay(
@@ -1011,6 +968,7 @@ fn test_automatic_refund_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
@@ -1024,7 +982,6 @@ fn test_automatic_refund_works() {
 				state: PaymentState::RefundRequested { task_id: 0, cancel_block: 601u64.into() },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -1069,6 +1026,7 @@ fn test_automatic_refund_works_for_multiple_payments() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::pay(
@@ -1076,6 +1034,7 @@ fn test_automatic_refund_works_for_multiple_payments() {
 			PAYMENT_RECIPENT_TWO,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
@@ -1112,6 +1071,7 @@ fn test_refund_request_fails_when_queue_is_full() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::pay(
@@ -1119,6 +1079,7 @@ fn test_refund_request_fails_when_queue_is_full() {
 			PAYMENT_RECIPENT_TWO,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::pay(
@@ -1126,6 +1087,7 @@ fn test_refund_request_fails_when_queue_is_full() {
 			PAYMENT_CREATOR,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));

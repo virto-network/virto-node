@@ -26,16 +26,6 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	assert_eq!(event, &system_event);
 }
 
-pub fn run_to_block<T: Config>(n: T::BlockNumber) {
-	while frame_system::Pallet::<T>::block_number() < n {
-		frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
-		frame_system::Pallet::<T>::set_block_number(
-			frame_system::Pallet::<T>::block_number() + One::one(),
-		);
-		frame_system::Pallet::<T>::on_initialize(frame_system::Pallet::<T>::block_number());
-	}
-}
-
 benchmarks! {
 	where_clause { where T::Asset: MultiCurrency<
 		<T as frame_system::Config>::AccountId,
