@@ -110,7 +110,8 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		to: &AccountId,
-		_remark: &PaymentDetail<Test>,
+		_detail: &PaymentDetail<Test>,
+		_remark: Option<&[u8]>,
 	) -> (AccountId, Percent) {
 		match to {
 			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),

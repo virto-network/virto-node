@@ -24,13 +24,15 @@ fn test_pay_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 		assert_eq!(
 			last_event(),
 			crate::Event::<Test>::PaymentCreated {
 				from: PAYMENT_CREATOR,
 				asset: CURRENCY_ID,
-				amount: 20
+				amount: 20,
+				remark: None
 			}
 			.into()
 		);
@@ -43,7 +45,6 @@ fn test_pay_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -57,7 +58,7 @@ fn test_pay_works() {
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -70,7 +71,6 @@ fn test_pay_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 	});
@@ -85,6 +85,7 @@ fn test_cancel_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -95,18 +96,11 @@ fn test_cancel_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-
-		// cancel should fail when called by user
-		assert_noop!(
-			Payment::cancel(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::InvalidPayment
-		);
 
 		// cancel should succeed when caller is the recipent
 		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
@@ -134,6 +128,7 @@ fn test_release_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -144,7 +139,6 @@ fn test_release_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -172,6 +166,7 @@ fn test_release_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			None
 		));
 		// the payment amount should be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 16);
@@ -188,6 +183,7 @@ fn test_set_state_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			None
 		));
 
 		// should fail for non whitelisted caller
@@ -225,6 +221,7 @@ fn test_set_state_payment_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			40,
+			None
 		));
 
 		// should be able to cancel a payment
@@ -258,6 +255,7 @@ fn test_charging_fee_payment_works() {
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
 			40,
+			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
@@ -268,7 +266,6 @@ fn test_charging_fee_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -295,6 +292,7 @@ fn test_charging_fee_payment_works_when_canceled() {
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
 			40,
+			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
@@ -305,7 +303,6 @@ fn test_charging_fee_payment_works_when_canceled() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
-				remark: None
 			})
 		);
 		// the payment amount should be reserved
@@ -327,12 +324,12 @@ fn test_charging_fee_payment_works_when_canceled() {
 fn test_pay_with_remark_works() {
 	new_test_ext().execute_with(|| {
 		// should be able to create a payment with available balance
-		assert_ok!(Payment::pay_with_remark(
+		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
-			vec![1u8; 10].try_into().unwrap()
+			Some(vec![1u8; 10].try_into().unwrap())
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -343,7 +340,6 @@ fn test_pay_with_remark_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap())
 			})
 		);
 		// the payment amount should be reserved correctly
@@ -357,7 +353,7 @@ fn test_pay_with_remark_works() {
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -366,7 +362,8 @@ fn test_pay_with_remark_works() {
 			crate::Event::<Test>::PaymentCreated {
 				from: PAYMENT_CREATOR,
 				asset: CURRENCY_ID,
-				amount: 20
+				amount: 20,
+				remark: Some(vec![1u8; 10].try_into().unwrap())
 			}
 			.into()
 		);
@@ -381,10 +378,11 @@ fn test_do_not_overwrite_logic_works() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -399,13 +397,12 @@ fn test_do_not_overwrite_logic_works() {
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None,
 			},
 		);
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20,),
+			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
 			crate::Error::<Test>::PaymentNeedsReview
 		);
 	});
@@ -419,6 +416,7 @@ fn test_request_refund() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
@@ -432,7 +430,6 @@ fn test_request_refund() {
 				state: PaymentState::RefundRequested(601u64.into()),
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -456,6 +453,7 @@ fn test_claim_refund() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		// cannot claim refund unless payment is in requested refund state
@@ -498,6 +496,7 @@ fn test_dispute_refund() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		// cannot dispute if refund is not requested
@@ -524,7 +523,6 @@ fn test_dispute_refund() {
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -558,7 +556,6 @@ fn test_request_payment() {
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -627,7 +624,6 @@ fn test_accept_and_pay() {
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: None
 			})
 		);
 
@@ -660,6 +656,7 @@ fn test_accept_and_pay_should_fail_for_non_payment_requested() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_noop!(
@@ -688,7 +685,6 @@ fn test_accept_and_pay_should_charge_fee_correctly() {
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 2)),
-				remark: None
 			})
 		);
 
@@ -749,7 +745,7 @@ fn test_create_payment_works() {
 				20,
 				PaymentState::Created,
 				Percent::from_percent(10),
-				Some(vec![1u8; 10].try_into().unwrap()),
+				Some(&vec![1u8; 10]),
 			)
 		})));
 
@@ -762,7 +758,6 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 
@@ -776,7 +771,7 @@ fn test_create_payment_works() {
 					20,
 					PaymentState::Created,
 					Percent::from_percent(10),
-					Some(vec![1u8; 10].try_into().unwrap()),
+					Some(&vec![1u8; 10]),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess
@@ -791,7 +786,6 @@ fn test_create_payment_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 	});
@@ -813,7 +807,7 @@ fn test_reserve_payment_amount_works() {
 				20,
 				PaymentState::Created,
 				Percent::from_percent(10),
-				Some(vec![1u8; 10].try_into().unwrap()),
+				Some(&vec![1u8; 10]),
 			)
 		})));
 
@@ -826,7 +820,6 @@ fn test_reserve_payment_amount_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 
@@ -856,7 +849,7 @@ fn test_reserve_payment_amount_works() {
 					20,
 					PaymentState::Created,
 					Percent::from_percent(10),
-					Some(vec![1u8; 10].try_into().unwrap()),
+					Some(&vec![1u8; 10]),
 				)
 			})),
 			crate::Error::<Test>::PaymentAlreadyInProcess
@@ -871,7 +864,6 @@ fn test_reserve_payment_amount_works() {
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-				remark: Some(vec![1u8; 10].try_into().unwrap()),
 			})
 		);
 	});
@@ -890,6 +882,7 @@ fn test_settle_payment_works_for_cancel() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
@@ -923,6 +916,7 @@ fn test_settle_payment_works_for_release() {
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
+			None
 		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
@@ -956,6 +950,7 @@ fn test_settle_payment_works_for_70_30() {
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
 			10,
+			None
 		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
@@ -990,6 +985,7 @@ fn test_settle_payment_works_for_50_50() {
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
 			10,
+			None
 		));
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({

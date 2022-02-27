@@ -84,7 +84,12 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new payment has been created
-		PaymentCreated { from: T::AccountId, asset: AssetIdOf<T>, amount: BalanceOf<T> },
+		PaymentCreated {
+			from: T::AccountId,
+			asset: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+			remark: Option<BoundedDataOf<T>>,
+		},
 		/// Payment amount released to the recipient
 		PaymentReleased { from: T::AccountId, to: T::AccountId },
 		/// Payment has been cancelled by the creator
@@ -130,44 +135,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// This allows any user to create a new payment, that releases only to specified recipient
 		/// The only action is to store the details of this payment in storage and reserve
+		/// the specified amount. User also has the option to add a remark, this remark
+		/// can then be used to run custom logic and trigger alternate payment flows.
 		/// the specified amount.
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::pay())]
+		#[pallet::weight(T::WeightInfo::pay(T::MaxRemarkLength::get()))]
 		pub fn pay(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			// create PaymentDetail and add to storage
-			let payment_detail = <Self as PaymentHandler<T>>::create_payment(
-				who.clone(),
-				recipient.clone(),
-				asset,
-				amount,
-				PaymentState::Created,
-				T::IncentivePercentage::get(),
-				None,
-			)?;
-			// reserve funds for payment
-			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
-			// emit paymentcreated event
-			Self::deposit_event(Event::PaymentCreated { from: who, asset, amount });
-			Ok(().into())
-		}
-
-		/// This allows any user to create a new payment with the option to add a remark, this remark
-		/// can then be used to run custom logic and trigger alternate payment flows.
-		/// the specified amount.
-		#[transactional]
-		#[pallet::weight(T::WeightInfo::pay_with_remark(remark.len().try_into().unwrap_or(T::MaxRemarkLength::get())))]
-		pub fn pay_with_remark(
-			origin: OriginFor<T>,
-			recipient: T::AccountId,
-			asset: AssetIdOf<T>,
-			amount: BalanceOf<T>,
-			remark: BoundedDataOf<T>,
+			remark: Option<BoundedDataOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
@@ -179,12 +157,12 @@ pub mod pallet {
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
-				Some(remark),
+				remark.as_ref().map(|x| x.as_slice()),
 			)?;
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
 			// emit paymentcreated event
-			Self::deposit_event(Event::PaymentCreated { from: who, asset, amount });
+			Self::deposit_event(Event::PaymentCreated { from: who, asset, amount, remark });
 			Ok(().into())
 		}
 
@@ -196,7 +174,7 @@ pub mod pallet {
 			let from = ensure_signed(origin)?;
 
 			// ensure the payment is in Created state
-			if let Some(payment) = Payment::<T>::get(from.clone(), to.clone()) {
+			if let Some(payment) = Payment::<T>::get(&from, &to) {
 				ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction)
 			}
 
@@ -218,7 +196,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::cancel())]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			if let Some(payment) = Payment::<T>::get(creator.clone(), who.clone()) {
+			if let Some(payment) = Payment::<T>::get(&creator, &who) {
 				match payment.state {
 					// call settle payment with recipient_share=0, this refunds the sender
 					PaymentState::Created => {
@@ -230,12 +208,9 @@ pub mod pallet {
 						Self::deposit_event(Event::PaymentCancelled { from: creator, to: who });
 					},
 					// if the payment is in state PaymentRequested, remove from storage
-					PaymentState::PaymentRequested =>
-						Payment::<T>::remove(creator.clone(), who.clone()),
+					PaymentState::PaymentRequested => Payment::<T>::remove(&creator, &who),
 					_ => fail!(Error::<T>::InvalidAction),
 				}
-			} else {
-				fail!(Error::<T>::InvalidPayment);
 			}
 			Ok(().into())
 		}
@@ -252,7 +227,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// ensure the caller is the assigned resolver
-			if let Some(payment) = Payment::<T>::get(from.clone(), recipient.clone()) {
+			if let Some(payment) = Payment::<T>::get(&from, &recipient) {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
@@ -277,7 +252,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// ensure the caller is the assigned resolver
-			if let Some(payment) = Payment::<T>::get(from.clone(), recipient.clone()) {
+			if let Some(payment) = Payment::<T>::get(&from, &recipient) {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
 			}
 			// try to update the payment to new state
@@ -346,7 +321,7 @@ pub mod pallet {
 			use PaymentState::*;
 			let who = ensure_signed(origin)?;
 
-			if let Some(payment) = Payment::<T>::get(who.clone(), recipient.clone()) {
+			if let Some(payment) = Payment::<T>::get(&who, &recipient) {
 				match payment.state {
 					NeedsReview => fail!(Error::<T>::PaymentNeedsReview),
 					Created | PaymentRequested => fail!(Error::<T>::RefundNotRequested),
@@ -447,8 +422,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
-			let payment =
-				Payment::<T>::get(from.clone(), to.clone()).ok_or(Error::<T>::InvalidPayment)?;
+			let payment = Payment::<T>::get(&from, &to).ok_or(Error::<T>::InvalidPayment)?;
 
 			ensure!(payment.state == PaymentState::PaymentRequested, Error::<T>::InvalidAction);
 
@@ -479,7 +453,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			payment_state: PaymentState<T::BlockNumber>,
 			incentive_percentage: Percent,
-			remark: Option<BoundedDataOf<T>>,
+			remark: Option<&[u8]>,
 		) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 			Payment::<T>::try_mutate(
 				from.clone(),
@@ -497,6 +471,7 @@ pub mod pallet {
 							Error::<T>::PaymentNeedsReview
 						);
 					}
+
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
 					let incentive_amount = incentive_percentage.mul_floor(amount);
@@ -508,13 +483,12 @@ pub mod pallet {
 						state: payment_state,
 						resolver_account: T::DisputeResolver::get_origin(),
 						fee_detail: None,
-						remark,
 					};
 
 					// Calculate fee amount - this will be implemented based on the custom
 					// implementation of the fee provider
 					let (fee_recipient, fee_percent) =
-						T::FeeHandler::apply_fees(&from, &recipient, &new_payment);
+						T::FeeHandler::apply_fees(&from, &recipient, &new_payment, remark);
 					let fee_amount = fee_percent.mul_floor(amount);
 					new_payment.fee_detail = Some((fee_recipient, fee_amount));
 
@@ -606,7 +580,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn get_payment_details(from: T::AccountId, to: T::AccountId) -> Option<PaymentDetail<T>> {
+		fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T>> {
 			Payment::<T>::get(from, to)
 		}
 	}
