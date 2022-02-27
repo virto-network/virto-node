@@ -186,7 +186,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 			remark: Option<BoundedDataOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -425,7 +425,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			from: T::AccountId,
 			asset: AssetIdOf<T>,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let to = ensure_signed(origin)?;
 
