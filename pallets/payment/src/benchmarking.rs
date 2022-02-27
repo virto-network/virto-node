@@ -42,26 +42,17 @@ benchmarks! {
 		CurrencyId = Asset, Balance = u128
 	>
 }
-	// create a new payment succesfully
-	pay {
-		let caller = whitelisted_caller();
-		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
-		let recipent = account("recipient", 0, SEED);
-	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT)
-	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCreated { from : caller, asset: get_currency_id(), amount: SOME_AMOUNT}.into());
-	}
 
 	// create a new payment with remark sucessfully
-	pay_with_remark {
+	pay {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent = account("recipient", 0, SEED);
 		let x in 1..MAX_REMARK_LENGTH.into();
 		let remark : BoundedDataOf<T> = vec![u8::MAX; x.try_into().unwrap()].try_into().unwrap();
-	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT, remark)
+	}: _(RawOrigin::Signed(caller.clone()), recipent, get_currency_id(), SOME_AMOUNT, Some(remark.clone()))
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCreated { from: caller, asset: get_currency_id(), amount: SOME_AMOUNT}.into());
+		assert_last_event::<T>(Event::<T>::PaymentCreated { from: caller, asset: get_currency_id(), amount: SOME_AMOUNT, remark: Some(remark)}.into());
 	}
 
 	// release an existing payment succesfully
@@ -69,7 +60,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentReleased { from: caller, to: recipent}.into());
@@ -80,7 +71,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
@@ -91,7 +82,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 		let resolver = PaymentStore::<T>::get(caller.clone(), recipent.clone()).unwrap().resolver_account;
 	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
 	verify {
@@ -103,7 +94,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 		let resolver = PaymentStore::<T>::get(caller.clone(), recipent.clone()).unwrap().resolver_account;
 	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
 	verify {
@@ -115,7 +106,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentCreatorRequestedRefund { from: caller, to: recipent, expiry: 601u32.into() }.into());
@@ -126,7 +117,7 @@ benchmarks! {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT)?;
+		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 		Payment::<T>::request_refund(RawOrigin::Signed(caller.clone()).into(), recipent.clone())?;
 	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
 	verify {
