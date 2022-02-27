@@ -18,12 +18,6 @@ fn test_pay_works() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
-		// payment amount lower than min amount should be rejected
-		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 0, None),
-			crate::Error::<Test>::AmountLowerThanMinPayment
-		);
-
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),

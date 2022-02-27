@@ -63,7 +63,7 @@ mod proxy_type;
 use currency_id_convert::CurrencyIdConvert;
 use orml_traits::{arithmetic::Zero, parameter_type_with_key};
 use proxy_type::ProxyType;
-use virto_primitives::{Asset, NetworkAsset};
+use virto_primitives::Asset;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -619,19 +619,6 @@ impl virto_payment::FeeHandler<Runtime> for VirtoFeeHandler {
 	}
 }
 
-parameter_type_with_key! {
-	pub MinPaymentAmount: |asset_id: Asset| -> Balance {
-		use NetworkAsset::*;
-		#[allow(clippy::match_ref_pats)]
-		match asset_id {
-			// TODO : Configure these values
-			Asset::Network(KSM) => 1,
-			Asset::Network(KUSD) => 1,
-			Asset::Network(KAR) => 1,
-		}
-	};
-}
-
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
@@ -647,7 +634,6 @@ impl virto_payment::Config for Runtime {
 	type FeeHandler = VirtoFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
-	type MinPaymentAmount = MinPaymentAmount;
 	type WeightInfo = virto_payment::weights::SubstrateWeight<Runtime>;
 }
 

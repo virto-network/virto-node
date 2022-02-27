@@ -25,7 +25,7 @@ pub mod pallet {
 		traits::tokens::BalanceStatus, transactional,
 	};
 	use frame_system::pallet_prelude::*;
-	use orml_traits::{GetByKey, MultiCurrency, MultiReservableCurrency};
+	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{
 		traits::{CheckedAdd, Saturating},
 		Percent,
@@ -56,8 +56,6 @@ pub mod pallet {
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
-		/// Minimum amount to be transferred in a payment
-		type MinPaymentAmount: GetByKey<AssetIdOf<Self>, BalanceOf<Self>>;
 		//// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 	}
@@ -128,8 +126,6 @@ pub mod pallet {
 		RefundNotRequested,
 		/// Dispute period has not passed
 		DisputePeriodNotPassed,
-		/// Amount is lower than MinPaymentAmount
-		AmountLowerThanMinPayment,
 	}
 
 	#[pallet::hooks]
@@ -475,11 +471,6 @@ pub mod pallet {
 							Error::<T>::PaymentNeedsReview
 						);
 					}
-
-					ensure!(
-						amount >= T::MinPaymentAmount::get(&asset),
-						Error::<T>::AmountLowerThanMinPayment
-					);
 
 					// Calculate incentive amount - this is to insentivise the user to release
 					// the funds once a transaction has been completed
