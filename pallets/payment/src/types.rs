@@ -15,8 +15,10 @@ pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
 	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
+	#[codec(compact)]
 	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
+	#[codec(compact)]
 	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested, Requested]
 	pub state: PaymentState<T::BlockNumber>,
