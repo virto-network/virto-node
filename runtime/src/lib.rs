@@ -11,7 +11,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, IdentifyAccount, Verify},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
@@ -25,11 +25,11 @@ pub mod xcm_config;
 use crate::xcm_config::*;
 
 use frame_support::{
-	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, Get, Nothing},
+	construct_runtime, parameter_types,
+	traits::{Contains, Everything},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
+		DispatchClass, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
 		WeightToFeePolynomial,
 	},
 	PalletId,
@@ -552,33 +552,6 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
-// pub struct AccountIdToMultiLocation;
-// impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-// 	fn convert(account: AccountId) -> MultiLocation {
-// 		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
-// 	}
-//}
-
-// parameter_types! {
-// 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
-// 	pub const BaseXcmWeight: Weight = 100_000_000; // configure later
-// 	pub const MaxAssetsForTransfer: usize = 2; // configure later
-// }
-
-// impl orml_xtokens::Config for Runtime {
-// 	type Event = Event;
-// 	type Balance = Balance;
-// 	type CurrencyId = Asset;
-// 	type CurrencyIdConvert = CurrencyIdConvert;
-// 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-// 	type SelfLocation = SelfLocation;
-// 	type XcmExecutor = XcmExecutor<XcmConfig>;
-// 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
-// 	type BaseXcmWeight = BaseXcmWeight;
-// 	type LocationInverter = LocationInverter<Ancestry>;
-// 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
-// }
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -615,7 +588,7 @@ construct_runtime!(
 		Proxy: pallet_proxy::{Call, Event<T>, Pallet, Storage} = 40,
 		Assets: orml_tokens::{Config<T>, Event<T>, Pallet, Storage} = 42,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 43,
-		//XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
+		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
 		UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
 		Payment: virto_payment::{Call, Event<T>, Pallet, Storage} = 46,
 	}
