@@ -75,6 +75,63 @@ pub enum PaymentState<BlockNumber> {
 }
 ```
 
+## Custom traits
+
+#### Dispute Resolver trait
+
+The dispute resolver trait implements the logic to decide the dispute resolver or judge account for each payment. A simple implementation of assigning a single account as a resolver for all payments is like :
+```rust
+pub struct ExampleDisputeResolver;
+impl DisputeResolver<AccountId> for ExampleDisputeResolver {
+	fn get_origin() -> AccountId {
+		// Alice is the resolver account for all payment
+		Alice.to_account_id()
+	}
+}
+```
+
+#### Fee Handler trait
+
+The fee handler trait implements the logic for the fee to be charged for each payment, depending on the usecase the runtime can get creative on the implementation, the `remark` field can be used to identify specific payments or marketplaces
+
+Simple implementation charging constant fee for all payments
+```rust
+pub struct ExampleFeeHandler;
+impl FeeHandler<Runtime> for ExampleFeeHandler {
+	fn apply_fees(
+		_from: &AccountId,
+		_to: &AccountId,
+		_detail: &virto_payment::PaymentDetail<Runtime>,
+		_remark: Option<&[u8]>,
+	) -> (AccountId, Percent) {
+		const marketplace_fee: Percent = Percent::from_percent(1);
+		let fee_receiver = Alice.to_account_id();
+		(fee_receiver, marketplace_fee)
+	}
+}
+```
+
+Implementation that favours payments to Marketplace A
+
+```rust
+pub struct ExampleFeeHandler;
+impl FeeHandler<Runtime> for ExampleFeeHandler {
+	fn apply_fees(
+		_from: &AccountId,
+		_to: &AccountId,
+		_detail: &virto_payment::PaymentDetail<Runtime>,
+		remark: Option<&[u8]>,
+	) -> (AccountId, Percent) {
+		let marketplace_fee : Percent = match remark {
+			Some(b"mkt_A".into()) =>  Percent::from_percent(5),
+			_ =>  Percent::from_percent(10);
+		};
+		let fee_receiver = Alice.to_account_id();
+		(fee_receiver, marketplace_fee)
+	}
+}
+```
+
 ## GenesisConfig
 
 The rates_provider pallet does not depend on the `GenesisConfig`
