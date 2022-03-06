@@ -1,7 +1,7 @@
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	Payment as PaymentStore, PaymentHandler, ScheduledTask, ScheduledTasks, ScheduledTasksListOf,
+	Payment as PaymentStore, PaymentHandler, ScheduledTask, ScheduledTasks, Task,
 };
 use frame_support::{assert_noop, assert_ok, storage::with_transaction};
 use orml_traits::MultiCurrency;
@@ -423,7 +423,7 @@ fn test_request_refund() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::RefundRequested { task_id: 0, cancel_block: 601u64.into() },
+				state: PaymentState::RefundRequested { cancel_block: 601u64.into() },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
@@ -460,11 +460,10 @@ fn test_dispute_refund() {
 		// creator requests a refund
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
 		// ensure the request is added to the refund queue
-		let expected_data: ScheduledTasksListOf<Test> =
-			vec![ScheduledTask::Cancel { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }.into()]
-				.try_into()
-				.unwrap();
-		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+		assert_eq!(
+			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			ScheduledTask { task: Task::Cancel, when: 601u64 }
+		);
 
 		// recipient disputes the refund request
 		assert_ok!(Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
@@ -490,9 +489,8 @@ fn test_dispute_refund() {
 			.into()
 		);
 
-		// the payment should be removed from the refund queue
-		let expected_data: ScheduledTasksListOf<Test> = vec![None].try_into().unwrap();
-		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+		// ensure the request is added to the refund queue
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 	});
 }
 
@@ -979,32 +977,32 @@ fn test_automatic_refund_works() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::RefundRequested { task_id: 0, cancel_block: 601u64.into() },
+				state: PaymentState::RefundRequested { cancel_block: 601u64.into() },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
 		);
 
-		let expected_data: ScheduledTasksListOf<Test> =
-			vec![ScheduledTask::Cancel { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }.into()]
-				.try_into()
-				.unwrap();
-
-		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+		assert_eq!(
+			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			ScheduledTask { task: Task::Cancel, when: 601u64 }
+		);
 
 		// run to one block before cancel and make sure data is same
 		run_to_block(600u64);
-		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+		assert_eq!(
+			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			ScheduledTask { task: Task::Cancel, when: 601u64 }
+		);
 
 		// run to cancel block
-		run_to_block(601u64);
+		run_to_block(602u64);
 
 		// the payment should be removed from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
 		// the scheduled storage should be cleared
-		let expected_data: ScheduledTasksListOf<Test> = vec![].try_into().unwrap();
-		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
 		// test that the refund happened correctly
 		assert_eq!(
@@ -1051,8 +1049,7 @@ fn test_automatic_refund_works_for_multiple_payments() {
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
 
 		// the scheduled storage should be cleared
-		let expected_data: ScheduledTasksListOf<Test> = vec![].try_into().unwrap();
-		assert_eq!(ScheduledTasks::<Test>::get(601u64), expected_data);
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
 		// test that the refund happened correctly
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
@@ -1060,49 +1057,5 @@ fn test_automatic_refund_works_for_multiple_payments() {
 
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR_TWO), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_TWO), 0);
-	});
-}
-
-#[test]
-fn test_refund_request_fails_when_queue_is_full() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay(
-			Origin::signed(PAYMENT_CREATOR),
-			PAYMENT_RECIPENT,
-			CURRENCY_ID,
-			20,
-			None
-		));
-
-		assert_ok!(Payment::pay(
-			Origin::signed(PAYMENT_CREATOR_TWO),
-			PAYMENT_RECIPENT_TWO,
-			CURRENCY_ID,
-			20,
-			None
-		));
-
-		assert_ok!(Payment::pay(
-			Origin::signed(PAYMENT_CREATOR_TWO),
-			PAYMENT_CREATOR,
-			CURRENCY_ID,
-			20,
-			None
-		));
-
-		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-		assert_ok!(Payment::request_refund(
-			Origin::signed(PAYMENT_CREATOR_TWO),
-			PAYMENT_RECIPENT_TWO
-		));
-		assert_noop!(
-			Payment::request_refund(Origin::signed(PAYMENT_CREATOR_TWO), PAYMENT_CREATOR),
-			Error::RefundQueueFull
-		);
-
-		// go to next block
-		run_to_block(2);
-
-		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR_TWO), PAYMENT_CREATOR));
 	});
 }

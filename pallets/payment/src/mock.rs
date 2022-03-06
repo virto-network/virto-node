@@ -1,8 +1,8 @@
 use crate as payment;
 use crate::PaymentDetail;
 use frame_support::{
-	parameter_types,
-	traits::{Contains, Everything, GenesisBuild, OnFinalize, OnInitialize},
+	parameter_types, weights::DispatchClass, pallet_prelude::*,
+	traits::{Contains, Everything, GenesisBuild, OnFinalize, Hooks},
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -162,9 +162,20 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
-		System::on_finalize(System::block_number());
+
+		// let max_weight : u64 = <Test as frame_system::Config>::BlockWeights::get().max_block;
+		// let remaining_weight : u64 = max_weight.saturating_sub(System::block_weight().total());
+
+		let used_weight = Payment::on_idle(System::block_number(), System::block_weight().total());
+
+		<frame_system::Pallet<Test>>::register_extra_weight_unchecked(
+			used_weight,
+			DispatchClass::Mandatory,
+		);
+
+		<frame_system::Pallet<Test> as OnFinalize<u64>>::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
-		Payment::on_initialize(System::block_number());
+
+
 	}
 }
