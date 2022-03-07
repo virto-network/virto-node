@@ -50,10 +50,12 @@ pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
 	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
+	#[codec(compact)]
 	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
+	#[codec(compact)]
 	pub incentive_amount: BalanceOf<T>,
-	/// enum to track payment lifecycle [Created, NeedsReview]
+	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested, Requested]
 	pub state: PaymentState<T::BlockNumber>,
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: T::AccountId,
@@ -71,7 +73,7 @@ pub enum PaymentState<BlockNumber> {
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested { cancel_block: BlockNumber, task_id: u32 },
+	RefundRequested { cancel_block: BlockNumber },
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
 }
