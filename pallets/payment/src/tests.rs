@@ -1042,7 +1042,7 @@ fn test_automatic_refund_works_for_multiple_payments() {
 		));
 
 		// run to cancel block
-		run_to_block(601u64);
+		run_to_block(602u64);
 
 		// the payment should be removed from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
