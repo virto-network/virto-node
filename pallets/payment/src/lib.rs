@@ -152,7 +152,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Hook that execute when there is leftover space in a block
-		/// This function will look for any pending scheduled tasks that can 
+		/// This function will look for any pending scheduled tasks that can
 		/// be executed and will process them.
 		fn on_idle(now: T::BlockNumber, mut remaining_weight: Weight) -> Weight {
 			while remaining_weight > T::WeightInfo::cancel() {
@@ -160,7 +160,6 @@ pub mod pallet {
 
 				match task {
 					Some((from, to, ScheduledTask { task, when })) => {
-
 						// early return if the expiry block is in future
 						if when > now {
 							return remaining_weight
