@@ -165,7 +165,7 @@ pub mod pallet {
 					Some((from, to, ScheduledTask { task, when })) => {
 						// early return if the expiry block is in future
 						// since the task list is sorted by cancel block
-						// if the first task cannot be cancelled we can return the whole set
+						// if the task cannot be cancelled we can return the whole set
 						if when > &now {
 							return remaining_weight
 						}
@@ -173,8 +173,11 @@ pub mod pallet {
 						// process the task
 						match task {
 							Task::Cancel => {
-								remaining_weight =
-									remaining_weight.saturating_sub(T::WeightInfo::cancel());
+								// the remaining weight is the weight - cancel - remove from scheduled tasks
+								remaining_weight = remaining_weight.saturating_sub(
+									T::WeightInfo::cancel()
+										.saturating_add(T::WeightInfo::remove_task()),
+								);
 								ScheduledTasks::<T>::remove(from.clone(), to.clone());
 								// process the cancel payment
 								let _ = <Self as PaymentHandler<T>>::settle_payment(
@@ -193,6 +196,7 @@ pub mod pallet {
 					_ => return remaining_weight,
 				}
 			}
+
 			remaining_weight
 		}
 	}
