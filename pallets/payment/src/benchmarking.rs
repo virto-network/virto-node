@@ -1,12 +1,10 @@
 use super::*;
 
-use crate::{Pallet as Payment, Payment as PaymentStore};
+use crate::{Pallet as Payment, Payment as PaymentStore, ScheduledTasks};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::{OnFinalize, OnInitialize};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
-use sp_runtime::traits::One;
-use sp_std::vec;
+use sp_std::{vec, vec::Vec};
 use virto_primitives::Asset;
 
 const SEED: u32 = 0;
@@ -24,16 +22,6 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	// compare to the last event record
 	let frame_system::EventRecord { event, .. } = &events[events.len() - 1];
 	assert_eq!(event, &system_event);
-}
-
-pub fn run_to_block<T: Config>(n: T::BlockNumber) {
-	while frame_system::Pallet::<T>::block_number() < n {
-		frame_system::Pallet::<T>::on_finalize(frame_system::Pallet::<T>::block_number());
-		frame_system::Pallet::<T>::set_block_number(
-			frame_system::Pallet::<T>::block_number() + One::one(),
-		);
-		frame_system::Pallet::<T>::on_initialize(frame_system::Pallet::<T>::block_number());
-	}
 }
 
 benchmarks! {
@@ -112,19 +100,6 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentCreatorRequestedRefund { from: caller, to: recipent, expiry: 601u32.into() }.into());
 	}
 
-	// creator of payment can claim a refund
-	claim_refund {
-		let caller = whitelisted_caller();
-		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
-		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
-		Payment::<T>::request_refund(RawOrigin::Signed(caller.clone()).into(), recipent.clone())?;
-		run_to_block::<T>(700u32.into());
-	}: _(RawOrigin::Signed(caller.clone()), recipent.clone())
-	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
-	}
-
 	// recipient of a payment can dispute a refund request
 	dispute_refund {
 		let caller = whitelisted_caller();
@@ -156,6 +131,30 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::<T>::PaymentRequestCompleted { from: sender, to: receiver}.into());
 	}
+
+	// the weight to read the next scheduled task
+	read_task {
+		let sender : T::AccountId = whitelisted_caller();
+		let receiver : T::AccountId = account("recipient", 0, SEED);
+		ScheduledTasks::<T>::insert(sender, receiver, ScheduledTask { task: Task::Cancel, when: 1u32.into() });
+	}: {
+		let task : Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> = ScheduledTasks::<T>::iter().collect();
+	} verify {
+		let task : Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> = ScheduledTasks::<T>::iter().collect();
+		assert_eq!(task.len(), 1);
+	}
+
+	// the weight to remove a scheduled task
+	remove_task {
+		let sender : T::AccountId = whitelisted_caller();
+		let receiver : T::AccountId = account("recipient", 0, SEED);
+		ScheduledTasks::<T>::insert(sender.clone(), receiver.clone(), ScheduledTask { task: Task::Cancel, when: 1u32.into() });
+	}: {
+		ScheduledTasks::<T>::remove(sender, receiver);
+	} verify {
+
+	}
+
 }
 
 impl_benchmark_test_suite!(Payment, crate::mock::new_test_ext(), crate::mock::Test,);

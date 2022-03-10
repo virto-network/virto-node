@@ -1,11 +1,13 @@
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	Payment as PaymentStore, PaymentHandler,
+	Payment as PaymentStore, PaymentHandler, ScheduledTask, ScheduledTasks, Task,
 };
 use frame_support::{assert_noop, assert_ok, storage::with_transaction};
 use orml_traits::MultiCurrency;
 use sp_runtime::{Percent, TransactionOutcome};
+
+type Error = crate::Error<Test>;
 
 fn last_event() -> Event {
 	System::events().pop().expect("Event expected").event
@@ -112,7 +114,6 @@ fn test_cancel_works() {
 		// the payment amount should be released back to creator
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be released from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -155,7 +156,6 @@ fn test_release_works() {
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -193,7 +193,7 @@ fn test_set_state_payment_works() {
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 			),
-			crate::Error::<Test>::InvalidAction
+			Error::InvalidAction
 		);
 
 		// should be able to release a payment
@@ -211,7 +211,6 @@ fn test_set_state_payment_works() {
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be removed from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -239,7 +238,6 @@ fn test_set_state_payment_works() {
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be released from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -279,7 +277,6 @@ fn test_charging_fee_payment_works() {
 		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 40);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 4);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 	});
 }
 
@@ -316,7 +313,6 @@ fn test_charging_fee_payment_works_when_canceled() {
 		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 0);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 	});
 }
 
@@ -427,7 +423,7 @@ fn test_request_refund() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::RefundRequested(601u64.into()),
+				state: PaymentState::RefundRequested { cancel_block: 601u64.into() },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
@@ -446,49 +442,6 @@ fn test_request_refund() {
 }
 
 #[test]
-fn test_claim_refund() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(Payment::pay(
-			Origin::signed(PAYMENT_CREATOR),
-			PAYMENT_RECIPENT,
-			CURRENCY_ID,
-			20,
-			None
-		));
-
-		// cannot claim refund unless payment is in requested refund state
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::RefundNotRequested
-		);
-
-		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-
-		// cannot cancel before the dispute period has passed
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::DisputePeriodNotPassed
-		);
-
-		run_to_block(700);
-		assert_ok!(Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
-
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
-				.into()
-		);
-		// the payment amount should be released back to creator
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
-
-		// should be released from storage
-		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
-	});
-}
-
-#[test]
 fn test_dispute_refund() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Payment::pay(
@@ -502,17 +455,18 @@ fn test_dispute_refund() {
 		// cannot dispute if refund is not requested
 		assert_noop!(
 			Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR),
-			crate::Error::<Test>::InvalidAction
+			Error::InvalidAction
 		);
 		// creator requests a refund
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+		// ensure the request is added to the refund queue
+		assert_eq!(
+			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			ScheduledTask { task: Task::Cancel, when: 601u64 }
+		);
+
 		// recipient disputes the refund request
 		assert_ok!(Payment::dispute_refund(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
-		// payment cannot be claimed after disputed
-		assert_noop!(
-			Payment::claim_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::PaymentNeedsReview
-		);
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -534,6 +488,9 @@ fn test_dispute_refund() {
 			}
 			.into()
 		);
+
+		// ensure the request is added to the refund queue
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 	});
 }
 
@@ -583,7 +540,7 @@ fn test_requested_payment_cannot_be_released() {
 		// requested payment cannot be released
 		assert_noop!(
 			Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
-			crate::Error::<Test>::InvalidAction
+			Error::InvalidAction
 		);
 	});
 }
@@ -632,7 +589,6 @@ fn test_accept_and_pay() {
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -661,7 +617,7 @@ fn test_accept_and_pay_should_fail_for_non_payment_requested() {
 
 		assert_noop!(
 			Payment::accept_and_pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT,),
-			crate::Error::<Test>::InvalidAction
+			Error::InvalidAction
 		);
 	});
 }
@@ -697,7 +653,6 @@ fn test_accept_and_pay_should_charge_fee_correctly() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 20);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 2);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
@@ -774,7 +729,7 @@ fn test_create_payment_works() {
 					Some(&vec![1u8; 10]),
 				)
 			})),
-			crate::Error::<Test>::PaymentAlreadyInProcess
+			Error::PaymentAlreadyInProcess
 		);
 
 		assert_eq!(
@@ -852,7 +807,7 @@ fn test_reserve_payment_amount_works() {
 					Some(&vec![1u8; 10]),
 				)
 			})),
-			crate::Error::<Test>::PaymentAlreadyInProcess
+			Error::PaymentAlreadyInProcess
 		);
 
 		assert_eq!(
@@ -896,7 +851,6 @@ fn test_settle_payment_works_for_cancel() {
 		// the payment amount should be released back to creator
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be released from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -930,7 +884,6 @@ fn test_settle_payment_works_for_release() {
 		// the payment amount should be transferred
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -965,7 +918,6 @@ fn test_settle_payment_works_for_70_30() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 92);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 7);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
@@ -1000,9 +952,114 @@ fn test_settle_payment_works_for_50_50() {
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 94);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 5);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
-		assert_eq!(Tokens::total_issuance(CURRENCY_ID), 100);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
+	});
+}
+
+#[test]
+fn test_automatic_refund_works() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+			None
+		));
+
+		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+
+		assert_eq!(
+			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			Some(PaymentDetail {
+				asset: CURRENCY_ID,
+				amount: 20,
+				incentive_amount: 2,
+				state: PaymentState::RefundRequested { cancel_block: 601u64.into() },
+				resolver_account: RESOLVER_ACCOUNT,
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+			})
+		);
+
+		assert_eq!(
+			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			ScheduledTask { task: Task::Cancel, when: 601u64 }
+		);
+
+		// run to one block before cancel and make sure data is same
+		run_to_block(600u64);
+		assert_eq!(
+			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
+			ScheduledTask { task: Task::Cancel, when: 601u64 }
+		);
+
+		// run to after cancel block
+		run_to_block(602u64);
+
+		// the payment should be removed from storage
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		// the scheduled storage should be cleared
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		// test that the refund happened correctly
+		assert_eq!(
+			last_event(),
+			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
+				.into()
+		);
+		// the payment amount should be released back to creator
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+	});
+}
+
+#[test]
+fn test_automatic_refund_works_for_multiple_payments() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR),
+			PAYMENT_RECIPENT,
+			CURRENCY_ID,
+			20,
+			None
+		));
+
+		assert_ok!(Payment::pay(
+			Origin::signed(PAYMENT_CREATOR_TWO),
+			PAYMENT_RECIPENT_TWO,
+			CURRENCY_ID,
+			20,
+			None
+		));
+
+		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+		assert_ok!(Payment::request_refund(
+			Origin::signed(PAYMENT_CREATOR_TWO),
+			PAYMENT_RECIPENT_TWO
+		));
+
+		// run to after cancel block
+		run_to_block(602u64);
+
+		// the payment should be removed from storage
+		// the remaining_weight is only enough to cancel one payment
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		// run to after cancel block
+		run_to_block(603u64);
+		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
+
+		// the scheduled storage should be cleared
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		// test that the refund happened correctly
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
+
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR_TWO), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_TWO), 0);
 	});
 }

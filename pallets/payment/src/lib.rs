@@ -17,7 +17,10 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::{
-		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState},
+		types::{
+			DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState,
+			ScheduledTask, Task,
+		},
 		weights::WeightInfo,
 	};
 	use frame_support::{
@@ -30,12 +33,14 @@ pub mod pallet {
 		traits::{CheckedAdd, Saturating},
 		Percent,
 	};
+	use sp_std::vec::Vec;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 	pub type AssetIdOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 	pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
+	pub type ScheduledTaskOf<T> = ScheduledTask<<T as frame_system::Config>::BlockNumber>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -65,7 +70,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn rates)]
+	#[pallet::getter(fn payment)]
 	/// Payments created by a user, this method of storageDoubleMap is chosen since there is no usecase for
 	/// listing payments by provider/currency. The payment will only be referenced by the creator in
 	/// any transaction of interest.
@@ -78,6 +83,18 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
 		PaymentDetail<T>,
+	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn tasks)]
+	/// Store the list of tasks to be executed in the on_idle function
+	pub(super) type ScheduledTasks<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId, // payment creator
+		Blake2_128Concat,
+		T::AccountId, // payment recipient
+		ScheduledTaskOf<T>,
 	>;
 
 	#[pallet::event]
@@ -126,10 +143,63 @@ pub mod pallet {
 		RefundNotRequested,
 		/// Dispute period has not passed
 		DisputePeriodNotPassed,
+		/// The automatic cancelation queue cannot accept
+		RefundQueueFull,
 	}
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Hook that execute when there is leftover space in a block
+		/// This function will look for any pending scheduled tasks that can
+		/// be executed and will process them.
+		fn on_idle(now: T::BlockNumber, mut remaining_weight: Weight) -> Weight {
+			let mut task_list: Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> =
+				ScheduledTasks::<T>::iter().collect();
+			// sort the task list by the cancel_block
+			task_list.sort_by(|(_, _, t), (_, _, x)| t.when.partial_cmp(&x.when).unwrap());
+
+			while remaining_weight > T::WeightInfo::cancel() {
+				// get the next task to execute
+				let task = task_list.iter().next();
+				match task {
+					Some((from, to, ScheduledTask { task, when })) => {
+						// early return if the expiry block is in future
+						// since the task list is sorted by cancel block
+						// if the task cannot be cancelled we can return the whole set
+						if when > &now {
+							return remaining_weight
+						}
+
+						// process the task
+						match task {
+							Task::Cancel => {
+								// the remaining weight is the weight - cancel - remove from scheduled tasks
+								remaining_weight = remaining_weight.saturating_sub(
+									T::WeightInfo::cancel()
+										.saturating_add(T::WeightInfo::remove_task()),
+								);
+								ScheduledTasks::<T>::remove(from.clone(), to.clone());
+								// process the cancel payment
+								let _ = <Self as PaymentHandler<T>>::settle_payment(
+									from.clone(),
+									to.clone(),
+									Percent::from_percent(0),
+								);
+								// emit the cancel event
+								Self::deposit_event(Event::PaymentCancelled {
+									from: from.clone(),
+									to: to.clone(),
+								});
+							},
+						}
+					},
+					_ => return remaining_weight,
+				}
+			}
+
+			remaining_weight
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -144,7 +214,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
 			asset: AssetIdOf<T>,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 			remark: Option<BoundedDataOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -176,6 +246,8 @@ pub mod pallet {
 			// ensure the payment is in Created state
 			if let Some(payment) = Payment::<T>::get(&from, &to) {
 				ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction)
+			} else {
+				fail!(Error::<T>::InvalidPayment);
 			}
 
 			// release is a settle_payment with 100% recipient_share
@@ -290,57 +362,27 @@ pub mod pallet {
 
 					// set the payment to requested refund
 					let current_block = frame_system::Pallet::<T>::block_number();
-					let can_cancel_block = current_block
+					let cancel_block = current_block
 						.checked_add(&T::CancelBufferBlockLength::get())
 						.ok_or(Error::<T>::MathError)?;
-					payment.state = PaymentState::RefundRequested(can_cancel_block);
+
+					ScheduledTasks::<T>::insert(
+						who.clone(),
+						recipient.clone(),
+						ScheduledTask { task: Task::Cancel, when: cancel_block },
+					);
+
+					payment.state = PaymentState::RefundRequested { cancel_block };
 
 					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
 						from: who,
 						to: recipient,
-						expiry: can_cancel_block,
+						expiry: cancel_block,
 					});
 
 					Ok(())
 				},
 			)?;
-
-			Ok(().into())
-		}
-
-		/// Allow payment creator to claim the refund if the payment recipent has not disputed
-		/// After the payment creator has `request_refund` can then call this extrinsic to
-		/// cancel the payment and receive the reserved amount to the account if the dispute period
-		/// has passed.
-		#[transactional]
-		#[pallet::weight(T::WeightInfo::claim_refund())]
-		pub fn claim_refund(
-			origin: OriginFor<T>,
-			recipient: T::AccountId,
-		) -> DispatchResultWithPostInfo {
-			use PaymentState::*;
-			let who = ensure_signed(origin)?;
-
-			if let Some(payment) = Payment::<T>::get(&who, &recipient) {
-				match payment.state {
-					NeedsReview => fail!(Error::<T>::PaymentNeedsReview),
-					Created | PaymentRequested => fail!(Error::<T>::RefundNotRequested),
-					RefundRequested(cancel_block) => {
-						let current_block = frame_system::Pallet::<T>::block_number();
-						// ensure the dispute period has passed
-						ensure!(current_block > cancel_block, Error::<T>::DisputePeriodNotPassed);
-						// cancel the payment and refund the creator
-						<Self as PaymentHandler<T>>::settle_payment(
-							who.clone(),
-							recipient.clone(),
-							Percent::from_percent(0),
-						)?;
-						Self::deposit_event(Event::PaymentCancelled { from: who, to: recipient });
-					},
-				}
-			} else {
-				fail!(Error::<T>::InvalidPayment);
-			}
 
 			Ok(().into())
 		}
@@ -365,8 +407,16 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
 					// ensure the payment is in Requested Refund state
 					match payment.state {
-						RefundRequested(_) => {
+						RefundRequested { cancel_block } => {
+							ensure!(
+								cancel_block > frame_system::Pallet::<T>::block_number(),
+								Error::<T>::InvalidAction
+							);
+
 							payment.state = PaymentState::NeedsReview;
+
+							// remove the payment from scheduled tasks
+							ScheduledTasks::<T>::remove(creator.clone(), who.clone());
 
 							Self::deposit_event(Event::PaymentRefundDisputed {
 								from: creator,
@@ -392,7 +442,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			from: T::AccountId,
 			asset: AssetIdOf<T>,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let to = ensure_signed(origin)?;
 
@@ -531,7 +581,6 @@ pub mod pallet {
 		/// For cancelling a payment, recipient_share = 0
 		/// For releasing a payment, recipient_share = 100
 		/// In other cases, the custom recipient_share can be specified
-		#[require_transactional]
 		fn settle_payment(
 			from: T::AccountId,
 			to: T::AccountId,

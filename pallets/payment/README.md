@@ -31,7 +31,6 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `resolve_release_payment` - Allows assigned judge to release a payment
 - `resolve_cancel_payment` - Allows assigned judge to cancel a payment
 - `request_refund` - Allows the creator of the payment to trigger cancel with a buffer time.
-- `claim_refund` - Allows the creator to claim payment refund after buffer time
 - `dispute_refund` - Allows the recipient to dispute the payment request of sender
 - `request_payment` - Create a payment that can be completed by the sender using the `accept_and_pay` extrinsic.
 - `accept_and_pay` - Allows the sender to fulfill a payment request created by a recipient
@@ -50,10 +49,12 @@ pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
 	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
+	#[codec(compact)]
 	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
+	#[codec(compact)]
 	pub incentive_amount: BalanceOf<T>,
-	/// enum to track payment lifecycle [Created, NeedsReview]
+	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested, Requested]
 	pub state: PaymentState<T::BlockNumber>,
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: T::AccountId,
@@ -71,7 +72,9 @@ pub enum PaymentState<BlockNumber> {
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested(BlockNumber),
+	RefundRequested { cancel_block: BlockNumber },
+	/// The recipient of this transaction has created a request
+	PaymentRequested,
 }
 ```
 

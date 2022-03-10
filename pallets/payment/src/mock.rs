@@ -2,7 +2,8 @@ use crate as payment;
 use crate::PaymentDetail;
 use frame_support::{
 	parameter_types,
-	traits::{Contains, Everything, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{Contains, Everything, GenesisBuild, Hooks, OnFinalize},
+	weights::DispatchClass,
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -21,6 +22,8 @@ pub type Balance = u128;
 pub type AccountId = u8;
 pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
+pub const PAYMENT_CREATOR_TWO: AccountId = 30;
+pub const PAYMENT_RECIPENT_TWO: AccountId = 31;
 pub const CURRENCY_ID: Asset = Asset::Network(NetworkAsset::KSM);
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
@@ -141,9 +144,14 @@ impl payment::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	orml_tokens::GenesisConfig::<Test> { balances: vec![(PAYMENT_CREATOR, CURRENCY_ID, 100)] }
-		.assimilate_storage(&mut t)
-		.unwrap();
+	orml_tokens::GenesisConfig::<Test> {
+		balances: vec![
+			(PAYMENT_CREATOR, CURRENCY_ID, 100),
+			(PAYMENT_CREATOR_TWO, CURRENCY_ID, 100),
+		],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
 	// need to set block number to 1 to test events
@@ -153,8 +161,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {
-		System::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
+		let block_number = System::block_number();
+
+		// ensure the on_idle is executed
+		<frame_system::Pallet<Test>>::register_extra_weight_unchecked(
+			Payment::on_idle(block_number, 100_000_000_000),
+			DispatchClass::Mandatory,
+		);
+
+		<frame_system::Pallet<Test> as OnFinalize<u64>>::on_finalize(block_number);
+
+		System::set_block_number(block_number + 1);
 	}
 }

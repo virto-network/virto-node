@@ -1,6 +1,6 @@
 #![allow(unused_qualifications)]
 use crate::{pallet, AssetIdOf, BalanceOf};
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchResult, Percent};
 
@@ -15,8 +15,10 @@ pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
 	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
+	#[codec(compact)]
 	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
+	#[codec(compact)]
 	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested, Requested]
 	pub state: PaymentState<T::BlockNumber>,
@@ -36,7 +38,7 @@ pub enum PaymentState<BlockNumber> {
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested(BlockNumber),
+	RefundRequested { cancel_block: BlockNumber },
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
 }
@@ -99,4 +101,17 @@ pub trait FeeHandler<T: pallet::Config> {
 		detail: &PaymentDetail<T>,
 		remark: Option<&[u8]>,
 	) -> (T::AccountId, Percent);
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub enum Task {
+	// payment `from` to `to` has to be cancelled
+	Cancel,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub struct ScheduledTask<Time: HasCompact> {
+	pub task: Task,
+	#[codec(compact)]
+	pub when: Time,
 }
