@@ -127,7 +127,6 @@ parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
 	pub const CancelBufferBlockLength: u64 = 600;
-	pub const MaxTasksPerBlock: u32 = 2;
 }
 
 impl payment::Config for Test {
@@ -138,7 +137,6 @@ impl payment::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
-	type MaxTasksPerBlock = MaxTasksPerBlock;
 	type WeightInfo = ();
 }
 
@@ -167,7 +165,7 @@ pub fn run_to_block(n: u64) {
 
 		// ensure the on_idle is executed
 		<frame_system::Pallet<Test>>::register_extra_weight_unchecked(
-			Payment::on_idle(block_number, 1_000_000_000),
+			Payment::on_idle(block_number, 100_000_000_000),
 			DispatchClass::Mandatory,
 		);
 

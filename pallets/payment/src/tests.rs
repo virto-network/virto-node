@@ -995,7 +995,7 @@ fn test_automatic_refund_works() {
 			ScheduledTask { task: Task::Cancel, when: 601u64 }
 		);
 
-		// run to cancel block
+		// run to after cancel block
 		run_to_block(602u64);
 
 		// the payment should be removed from storage
@@ -1041,11 +1041,15 @@ fn test_automatic_refund_works_for_multiple_payments() {
 			PAYMENT_RECIPENT_TWO
 		));
 
-		// run to cancel block
+		// run to after cancel block
 		run_to_block(602u64);
 
 		// the payment should be removed from storage
+		// the remaining_weight is only enough to cancel one payment
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+
+		// run to after cancel block
+		run_to_block(603u64);
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
 
 		// the scheduled storage should be cleared

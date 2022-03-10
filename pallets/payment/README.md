@@ -10,7 +10,6 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - Resolver Account: A resolver account is assigned to every payment created, this account has the privilege to cancel/release a payment that has been disputed.
 - Remark: The pallet allows to create payments by optionally providing some extra(limited) amount of bytes, this is reffered to as Remark. This can be used by a marketplace to seperate/tag payments.
 - CancelBufferBlockLength: This is the time window where the recipient can dispute a cancellation request from the payment creator.
-- MaxTasksPerBlock: The max count of tasks that can be added to a block, this number should be small so that the entire block is not consumed by the on_initialize function.
 
 ## Interface
 

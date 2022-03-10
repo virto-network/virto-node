@@ -33,6 +33,7 @@ pub mod pallet {
 		traits::{CheckedAdd, Saturating},
 		Percent,
 	};
+	use sp_std::vec::Vec;
 
 	pub type BalanceOf<T> =
 		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -57,9 +58,6 @@ pub mod pallet {
 		/// Maximum permitted size of `Remark`
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
-		/// Maximum scheduled tasks per block - this number should be small enough to ensure entire block is not consumed by on_init hook
-		#[pallet::constant]
-		type MaxTasksPerBlock: Get<u32>;
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
@@ -155,20 +153,28 @@ pub mod pallet {
 		/// This function will look for any pending scheduled tasks that can
 		/// be executed and will process them.
 		fn on_idle(now: T::BlockNumber, mut remaining_weight: Weight) -> Weight {
-			while remaining_weight > T::WeightInfo::cancel() {
-				let task = ScheduledTasks::<T>::iter().next();
+			let mut task_list: Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> =
+				ScheduledTasks::<T>::iter().collect();
+			// sort the task list by the cancel_block
+			task_list.sort_by(|(_, _, t), (_, _, x)| t.when.partial_cmp(&x.when).unwrap());
 
+			while remaining_weight > T::WeightInfo::cancel() {
+				// get the next task to execute
+				let task = task_list.iter().next();
 				match task {
 					Some((from, to, ScheduledTask { task, when })) => {
 						// early return if the expiry block is in future
-						if when > now {
+						// since the task list is sorted by cancel block
+						// if the first task cannot be cancelled we can return the whole set
+						if when > &now {
 							return remaining_weight
 						}
 
 						// process the task
 						match task {
 							Task::Cancel => {
-								remaining_weight -= T::WeightInfo::cancel();
+								remaining_weight =
+									remaining_weight.saturating_sub(T::WeightInfo::cancel());
 								ScheduledTasks::<T>::remove(from.clone(), to.clone());
 								// process the cancel payment
 								let _ = <Self as PaymentHandler<T>>::settle_payment(
@@ -176,7 +182,11 @@ pub mod pallet {
 									to.clone(),
 									Percent::from_percent(0),
 								);
-								Self::deposit_event(Event::PaymentCancelled { from, to });
+								// emit the cancel event
+								Self::deposit_event(Event::PaymentCancelled {
+									from: from.clone(),
+									to: to.clone(),
+								});
 							},
 						}
 					},
