@@ -4,6 +4,7 @@ use crate::{Pallet as Payment, Payment as PaymentStore, ScheduledTasks};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
+use sp_runtime::Percent;
 use sp_std::{vec, vec::Vec};
 use virto_primitives::Asset;
 
@@ -65,28 +66,16 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
 	}
 
-	// resolve an existing payment to cancellation
-	resolve_cancel_payment {
+	// resolve an existing payment to cancellation - this is the most complex path
+	resolve_payment {
 		let caller = whitelisted_caller();
 		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : T::AccountId = account("recipient", 0, SEED);
 		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 		let resolver = PaymentStore::<T>::get(caller.clone(), recipent.clone()).unwrap().resolver_account;
-	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
+	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone(), Percent::from_percent(100))
 	verify {
-		assert_last_event::<T>(Event::<T>::PaymentCancelled { from: caller, to: recipent}.into());
-	}
-
-	// resolve an existing payment to release
-	resolve_release_payment {
-		let caller = whitelisted_caller();
-		let _ = T::Asset::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
-		let recipent : T::AccountId = account("recipient", 0, SEED);
-		Payment::<T>::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
-		let resolver = PaymentStore::<T>::get(caller.clone(), recipent.clone()).unwrap().resolver_account;
-	}: _(RawOrigin::Signed(resolver), caller.clone(), recipent.clone())
-	verify {
-		assert_last_event::<T>(Event::<T>::PaymentReleased { from: caller, to: recipent}.into());
+		assert_last_event::<T>(Event::<T>::PaymentResolved { from: caller, to: recipent, recipient_share: Percent::from_percent(100)}.into());
 	}
 
 	// creator of payment creates a refund request

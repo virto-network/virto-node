@@ -18,6 +18,7 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `PaymentCreated { from: T::AccountId, asset: AssetIdOf<T>, amount: BalanceOf<T>, remark: Option<BoundedDataOf<T>> },`,
 - `PaymentReleased { from: T::AccountId, to: T::AccountId }`,
 - `PaymentCancelled { from: T::AccountId, to: T::AccountId }`,
+- `PaymentResolved { from: T::AccountId, to: T::AccountId, recipient_share: Percent }`,
 - `PaymentCreatorRequestedRefund { from: T::AccountId, to: T::AccountId, expiry: T::BlockNumber}`
 - `PaymentRefundDisputed { from: T::AccountId, to: T::AccountId }`
 - `PaymentRequestCreated { from: T::AccountId, to: T::AccountId }`
@@ -28,8 +29,7 @@ This pallet allows users to create secure reversible payments that keep funds lo
 - `pay` - Create an payment for the given currencyid/amount with an optional remark
 - `release` - Release the payment amount to recipent
 - `cancel` - Allows the recipient to cancel the payment and release the payment amount to creator
-- `resolve_release_payment` - Allows assigned judge to release a payment
-- `resolve_cancel_payment` - Allows assigned judge to cancel a payment
+- `resolve_payment` - Allows assigned judge to resolve/settle a payment
 - `request_refund` - Allows the creator of the payment to trigger cancel with a buffer time.
 - `dispute_refund` - Allows the recipient to dispute the payment request of sender
 - `request_payment` - Create a payment that can be completed by the sender using the `accept_and_pay` extrinsic.
