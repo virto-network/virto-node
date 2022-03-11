@@ -154,44 +154,39 @@ pub mod pallet {
 		/// be executed and will process them.
 		fn on_idle(now: T::BlockNumber, mut remaining_weight: Weight) -> Weight {
 			let mut task_list: Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> =
-				ScheduledTasks::<T>::iter().collect();
-			// sort the task list by the cancel_block
-			task_list.sort_by(|(_, _, t), (_, _, x)| t.when.partial_cmp(&x.when).unwrap());
+				ScheduledTasks::<T>::iter()
+					// leave out tasks in the future
+					.filter(|(_, _, ScheduledTask { when, .. })| when <= &now)
+					.collect();
 
-			while remaining_weight > T::WeightInfo::cancel() {
-				// get the next task to execute
-				let task = task_list.iter().next();
-				match task {
-					Some((from, to, ScheduledTask { task, when })) => {
-						// early return if the expiry block is in future
-						// since the task list is sorted by cancel block
-						// if the task cannot be cancelled we can return the whole set
-						if when > &now {
-							return remaining_weight
-						}
+			if task_list.is_empty() {
+				return remaining_weight
+			} else {
+				task_list.sort_by(|(_, _, t), (_, _, x)| x.when.partial_cmp(&t.when).unwrap());
+			}
 
-						// process the task
-						match task {
-							Task::Cancel => {
-								// the remaining weight is the weight - cancel - remove from scheduled tasks
-								remaining_weight = remaining_weight.saturating_sub(
-									T::WeightInfo::cancel()
-										.saturating_add(T::WeightInfo::remove_task()),
-								);
-								ScheduledTasks::<T>::remove(from.clone(), to.clone());
-								// process the cancel payment
-								let _ = <Self as PaymentHandler<T>>::settle_payment(
-									from.clone(),
-									to.clone(),
-									Percent::from_percent(0),
-								);
-								// emit the cancel event
-								Self::deposit_event(Event::PaymentCancelled {
-									from: from.clone(),
-									to: to.clone(),
-								});
-							},
+			let cancel_weight =
+				T::WeightInfo::cancel().saturating_add(T::WeightInfo::remove_task());
+
+			while remaining_weight >= cancel_weight {
+				match task_list.pop() {
+					Some((from, to, ScheduledTask { task: Task::Cancel, .. })) => {
+						remaining_weight = remaining_weight.saturating_sub(cancel_weight);
+
+						// process the cancel payment
+						if let Err(_) = <Self as PaymentHandler<T>>::settle_payment(
+							from.clone(),
+							to.clone(),
+							Percent::from_percent(0),
+						) {
+							// panic!("{:?}", e);
 						}
+						ScheduledTasks::<T>::remove(from.clone(), to.clone());
+						// emit the cancel event
+						Self::deposit_event(Event::PaymentCancelled {
+							from: from.clone(),
+							to: to.clone(),
+						});
 					},
 					_ => return remaining_weight,
 				}
