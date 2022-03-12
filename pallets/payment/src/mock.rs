@@ -103,7 +103,7 @@ impl orml_tokens::Config for Test {
 
 pub struct MockDisputeResolver;
 impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
-	fn get_origin() -> AccountId {
+	fn get_resolver_account() -> AccountId {
 		RESOLVER_ACCOUNT
 	}
 }

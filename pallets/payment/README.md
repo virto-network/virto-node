@@ -86,7 +86,7 @@ The dispute resolver trait implements the logic to decide the dispute resolver o
 ```rust
 pub struct ExampleDisputeResolver;
 impl DisputeResolver<AccountId> for ExampleDisputeResolver {
-	fn get_origin() -> AccountId {
+	fn get_resolver_account() -> AccountId {
 		// Alice is the resolver account for all payment
 		Alice.to_account_id()
 	}

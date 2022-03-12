@@ -461,7 +461,7 @@ impl orml_unknown_tokens::Config for Runtime {
 
 pub struct VirtoDisputeResolver;
 impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
-	fn get_origin() -> AccountId {
+	fn get_resolver_account() -> AccountId {
 		Sudo::key().expect("Sudo key not set!")
 	}
 }

@@ -510,7 +510,7 @@ pub mod pallet {
 						amount,
 						incentive_amount,
 						state: payment_state,
-						resolver_account: T::DisputeResolver::get_origin(),
+						resolver_account: T::DisputeResolver::get_resolver_account(),
 						fee_detail: None,
 					};
 
