@@ -188,24 +188,30 @@ fn test_set_state_payment_works() {
 
 		// should fail for non whitelisted caller
 		assert_noop!(
-			Payment::resolve_cancel_payment(
+			Payment::resolve_payment(
 				Origin::signed(PAYMENT_CREATOR),
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
+				Percent::from_percent(100)
 			),
 			Error::InvalidAction
 		);
 
 		// should be able to release a payment
-		assert_ok!(Payment::resolve_release_payment(
+		assert_ok!(Payment::resolve_payment(
 			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
+			Percent::from_percent(100)
 		));
 		assert_eq!(
 			last_event(),
-			crate::Event::<Test>::PaymentReleased { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
-				.into()
+			crate::Event::<Test>::PaymentResolved {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+				recipient_share: Percent::from_percent(100)
+			}
+			.into()
 		);
 
 		// the payment amount should be transferred
@@ -224,15 +230,20 @@ fn test_set_state_payment_works() {
 		));
 
 		// should be able to cancel a payment
-		assert_ok!(Payment::resolve_cancel_payment(
+		assert_ok!(Payment::resolve_payment(
 			Origin::signed(RESOLVER_ACCOUNT),
 			PAYMENT_CREATOR,
 			PAYMENT_RECIPENT,
+			Percent::from_percent(0)
 		));
 		assert_eq!(
 			last_event(),
-			crate::Event::<Test>::PaymentCancelled { from: PAYMENT_CREATOR, to: PAYMENT_RECIPENT }
-				.into()
+			crate::Event::<Test>::PaymentResolved {
+				from: PAYMENT_CREATOR,
+				to: PAYMENT_RECIPENT,
+				recipient_share: Percent::from_percent(0)
+			}
+			.into()
 		);
 
 		// the payment amount should be transferred
