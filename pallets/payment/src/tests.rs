@@ -972,6 +972,9 @@ fn test_settle_payment_works_for_50_50() {
 #[test]
 fn test_automatic_refund_works() {
 	new_test_ext().execute_with(|| {
+		const CANCEL_PERIOD: u64 = 600;
+		const CANCEL_BLOCK: u64 = CANCEL_PERIOD + 1;
+
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
@@ -988,7 +991,7 @@ fn test_automatic_refund_works() {
 				asset: CURRENCY_ID,
 				amount: 20,
 				incentive_amount: 2,
-				state: PaymentState::RefundRequested { cancel_block: 601u64.into() },
+				state: PaymentState::RefundRequested { cancel_block: CANCEL_BLOCK },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
@@ -996,19 +999,23 @@ fn test_automatic_refund_works() {
 
 		assert_eq!(
 			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
-			ScheduledTask { task: Task::Cancel, when: 601u64 }
+			ScheduledTask { task: Task::Cancel, when: CANCEL_BLOCK }
 		);
 
 		// run to one block before cancel and make sure data is same
-		run_to_block(600u64);
+		assert_eq!(run_n_blocks(CANCEL_PERIOD - 1), 600);
 		assert_eq!(
 			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
-			ScheduledTask { task: Task::Cancel, when: 601u64 }
+			ScheduledTask { task: Task::Cancel, when: CANCEL_BLOCK }
 		);
 
-		// run to after cancel block
-		run_to_block(602u64);
+		// run to after cancel block but odd blocks are busy
+		assert_eq!(run_n_blocks(1), 601);
+		// the payment is still not processed since the block was busy
+		assert!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).is_some());
 
+		// next block has spare weight to process the payment
+		assert_eq!(run_n_blocks(1), 602);
 		// the payment should be removed from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
@@ -1030,6 +1037,8 @@ fn test_automatic_refund_works() {
 #[test]
 fn test_automatic_refund_works_for_multiple_payments() {
 	new_test_ext().execute_with(|| {
+		const CANCEL_PERIOD: u64 = 600;
+
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
@@ -1047,24 +1056,25 @@ fn test_automatic_refund_works_for_multiple_payments() {
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+		run_n_blocks(1);
 		assert_ok!(Payment::request_refund(
 			Origin::signed(PAYMENT_CREATOR_TWO),
 			PAYMENT_RECIPENT_TWO
 		));
 
-		// run to after cancel block
-		run_to_block(602u64);
+		assert_eq!(run_n_blocks(CANCEL_PERIOD - 1), 601);
 
-		// the payment should be removed from storage
-		// the remaining_weight is only enough to cancel one payment
+		// Odd block 601 was busy so we still haven't processed the first payment
+		assert_ok!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).ok_or(()));
+
+		// Even block 602 has enough room to process both pending payments
+		assert_eq!(run_n_blocks(1), 602);
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
-
-		// run to after cancel block
-		run_to_block(603u64);
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
 
 		// the scheduled storage should be cleared
 		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
 
 		// test that the refund happened correctly
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
