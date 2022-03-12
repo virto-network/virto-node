@@ -16,8 +16,12 @@ fn last_event() -> Event {
 #[test]
 fn test_pay_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+
 		// the payment amount should not be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance
@@ -25,7 +29,7 @@ fn test_pay_works() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 		assert_eq!(
@@ -33,17 +37,18 @@ fn test_pay_works() {
 			crate::Event::<Test>::PaymentCreated {
 				from: PAYMENT_CREATOR,
 				asset: CURRENCY_ID,
-				amount: 20,
+				amount: payment_amount,
 				remark: None
 			}
 			.into()
 		);
+
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -51,16 +56,28 @@ fn test_pay_works() {
 		);
 		// the payment amount should be reserved correctly
 		// the amount + incentive should be removed from the sender account
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_incentive_amount
+		);
 		// the incentive amount should be reserved in the sender account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
+		assert_eq!(
+			Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 		// the transferred amount should be reserved in the recipent account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
+			Payment::pay(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				payment_amount,
+				None
+			),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -68,7 +85,7 @@ fn test_pay_works() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
+				amount: payment_amount,
 				incentive_amount: 2,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
@@ -81,27 +98,35 @@ fn test_pay_works() {
 #[test]
 fn test_cancel_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 40;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
+
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
 		);
 		// the payment amount should be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_incentive_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// cancel should succeed when caller is the recipent
@@ -112,7 +137,7 @@ fn test_cancel_works() {
 				.into()
 		);
 		// the payment amount should be released back to creator
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be released from storage
@@ -123,27 +148,34 @@ fn test_cancel_works() {
 #[test]
 fn test_release_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 40;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
 		);
 		// the payment amount should be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_incentive_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should succeed for valid payment
@@ -154,8 +186,11 @@ fn test_release_works() {
 				.into()
 		);
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -165,24 +200,30 @@ fn test_release_works() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
 		// the payment amount should be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 16);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - (payment_amount * 2) - expected_incentive_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 	});
 }
 
 #[test]
 fn test_set_state_payment_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 40;
+
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
 
@@ -215,8 +256,11 @@ fn test_set_state_payment_works() {
 		);
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// should be removed from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -225,7 +269,7 @@ fn test_set_state_payment_works() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
 
@@ -247,8 +291,11 @@ fn test_set_state_payment_works() {
 		);
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 60);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 40);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// should be released from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -258,69 +305,98 @@ fn test_set_state_payment_works() {
 #[test]
 fn test_charging_fee_payment_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 40;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let expected_fee_amount = payment_amount / MARKETPLACE_FEE_PERCENTAGE as u128;
+
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 		// the payment amount should be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 52);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance -
+				payment_amount - expected_fee_amount -
+				expected_incentive_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should succeed for valid payment
 		assert_ok!(Payment::release(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT_FEE_CHARGED));
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 56);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 40);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 4);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_fee_amount
+		);
+		assert_eq!(
+			Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_fee_amount
+		);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED),
+			payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), expected_fee_amount);
 	});
 }
 
 #[test]
 fn test_charging_fee_payment_works_when_canceled() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 40;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let expected_fee_amount = payment_amount / MARKETPLACE_FEE_PERCENTAGE as u128;
+
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
-			40,
+			payment_amount,
 			None
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 40,
-				incentive_amount: 4,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 4)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 		// the payment amount should be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 52);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance -
+				payment_amount - expected_fee_amount -
+				expected_incentive_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should succeed for valid payment
 		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT_FEE_CHARGED), PAYMENT_CREATOR));
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 0);
@@ -330,20 +406,24 @@ fn test_charging_fee_payment_works_when_canceled() {
 #[test]
 fn test_pay_with_remark_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 40;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+
 		// should be able to create a payment with available balance
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			Some(vec![1u8; 10].try_into().unwrap())
 		));
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -351,16 +431,28 @@ fn test_pay_with_remark_works() {
 		);
 		// the payment amount should be reserved correctly
 		// the amount + incentive should be removed from the sender account
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_incentive_amount
+		);
 		// the incentive amount should be reserved in the sender account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
+		assert_eq!(
+			Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 		// the transferred amount should be reserved in the recipent account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
+			Payment::pay(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				payment_amount,
+				None
+			),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -369,7 +461,7 @@ fn test_pay_with_remark_works() {
 			crate::Event::<Test>::PaymentCreated {
 				from: PAYMENT_CREATOR,
 				asset: CURRENCY_ID,
-				amount: 20,
+				amount: payment_amount,
 				remark: Some(vec![1u8; 10].try_into().unwrap())
 			}
 			.into()
@@ -380,16 +472,25 @@ fn test_pay_with_remark_works() {
 #[test]
 fn test_do_not_overwrite_logic_works() {
 	new_test_ext().execute_with(|| {
+		let payment_amount = 40;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
+			Payment::pay(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				payment_amount,
+				None
+			),
 			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 
@@ -399,8 +500,8 @@ fn test_do_not_overwrite_logic_works() {
 			PAYMENT_RECIPENT,
 			PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -409,7 +510,13 @@ fn test_do_not_overwrite_logic_works() {
 
 		// the payment should not be overwritten
 		assert_noop!(
-			Payment::pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT, CURRENCY_ID, 20, None),
+			Payment::pay(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				payment_amount,
+				None
+			),
 			crate::Error::<Test>::PaymentNeedsReview
 		);
 	});
@@ -418,11 +525,15 @@ fn test_do_not_overwrite_logic_works() {
 #[test]
 fn test_request_refund() {
 	new_test_ext().execute_with(|| {
+		let payment_amount = 20;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let expected_cancel_block = CANCEL_BLOCK_BUFFER + 1;
+
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 
@@ -432,9 +543,9 @@ fn test_request_refund() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
-				state: PaymentState::RefundRequested { cancel_block: 601u64.into() },
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
+				state: PaymentState::RefundRequested { cancel_block: expected_cancel_block },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
 			})
@@ -445,7 +556,7 @@ fn test_request_refund() {
 			crate::Event::<Test>::PaymentCreatorRequestedRefund {
 				from: PAYMENT_CREATOR,
 				to: PAYMENT_RECIPENT,
-				expiry: 601u64.into()
+				expiry: expected_cancel_block
 			}
 			.into()
 		);
@@ -455,11 +566,15 @@ fn test_request_refund() {
 #[test]
 fn test_dispute_refund() {
 	new_test_ext().execute_with(|| {
+		let payment_amount = 20;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let expected_cancel_block = CANCEL_BLOCK_BUFFER + 1;
+
 		assert_ok!(Payment::pay(
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 
@@ -473,7 +588,7 @@ fn test_dispute_refund() {
 		// ensure the request is added to the refund queue
 		assert_eq!(
 			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
-			ScheduledTask { task: Task::Cancel, when: 601u64 }
+			ScheduledTask { task: Task::Cancel, when: expected_cancel_block }
 		);
 
 		// recipient disputes the refund request
@@ -483,8 +598,8 @@ fn test_dispute_refund() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::NeedsReview,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -508,19 +623,22 @@ fn test_dispute_refund() {
 #[test]
 fn test_request_payment() {
 	new_test_ext().execute_with(|| {
+		let payment_amount = 20;
+		let expected_incentive_amount = 0;
+
 		assert_ok!(Payment::request_payment(
 			Origin::signed(PAYMENT_RECIPENT),
 			PAYMENT_CREATOR,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 		));
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 0_u128,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -541,11 +659,13 @@ fn test_request_payment() {
 #[test]
 fn test_requested_payment_cannot_be_released() {
 	new_test_ext().execute_with(|| {
+		let payment_amount = 20;
+
 		assert_ok!(Payment::request_payment(
 			Origin::signed(PAYMENT_RECIPENT),
 			PAYMENT_CREATOR,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 		));
 
 		// requested payment cannot be released
@@ -559,11 +679,13 @@ fn test_requested_payment_cannot_be_released() {
 #[test]
 fn test_requested_payment_can_be_cancelled_by_requestor() {
 	new_test_ext().execute_with(|| {
+		let payment_amount = 20;
+
 		assert_ok!(Payment::request_payment(
 			Origin::signed(PAYMENT_RECIPENT),
 			PAYMENT_CREATOR,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 		));
 
 		assert_ok!(Payment::cancel(Origin::signed(PAYMENT_RECIPENT), PAYMENT_CREATOR));
@@ -576,19 +698,23 @@ fn test_requested_payment_can_be_cancelled_by_requestor() {
 #[test]
 fn test_accept_and_pay() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+		let expected_incentive_amount = 0;
+
 		assert_ok!(Payment::request_payment(
 			Origin::signed(PAYMENT_RECIPENT),
 			PAYMENT_CREATOR,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 		));
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 0_u128,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -598,8 +724,11 @@ fn test_accept_and_pay() {
 		assert_ok!(Payment::accept_and_pay(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT,));
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -636,22 +765,27 @@ fn test_accept_and_pay_should_fail_for_non_payment_requested() {
 #[test]
 fn test_accept_and_pay_should_charge_fee_correctly() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+		let expected_incentive_amount = 0;
+		let expected_fee_amount = payment_amount / MARKETPLACE_FEE_PERCENTAGE as u128;
+
 		assert_ok!(Payment::request_payment(
 			Origin::signed(PAYMENT_RECIPENT_FEE_CHARGED),
 			PAYMENT_CREATOR,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 		));
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 0_u128,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::PaymentRequested,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 2)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 
@@ -661,9 +795,15 @@ fn test_accept_and_pay_should_charge_fee_correctly() {
 		));
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 20);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 2);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_fee_amount
+		);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED),
+			payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), expected_fee_amount);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
@@ -698,8 +838,13 @@ fn test_create_payment_does_not_work_without_transaction() {
 #[test]
 fn test_create_payment_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let expected_fee_amount = 0;
+
 		// the payment amount should not be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance within a transaction
@@ -708,9 +853,9 @@ fn test_create_payment_works() {
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
-				20,
+				payment_amount,
 				PaymentState::Created,
-				Percent::from_percent(10),
+				Percent::from_percent(INCENTIVE_PERCENTAGE),
 				Some(&vec![1u8; 10]),
 			)
 		})));
@@ -719,11 +864,11 @@ fn test_create_payment_works() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 
@@ -734,9 +879,9 @@ fn test_create_payment_works() {
 					PAYMENT_CREATOR,
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
-					20,
+					payment_amount,
 					PaymentState::Created,
-					Percent::from_percent(10),
+					Percent::from_percent(INCENTIVE_PERCENTAGE),
 					Some(&vec![1u8; 10]),
 				)
 			})),
@@ -747,11 +892,11 @@ fn test_create_payment_works() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 	});
@@ -760,6 +905,11 @@ fn test_create_payment_works() {
 #[test]
 fn test_reserve_payment_amount_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let expected_fee_amount = 0;
+
 		// the payment amount should not be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
@@ -770,9 +920,9 @@ fn test_reserve_payment_amount_works() {
 				PAYMENT_CREATOR,
 				PAYMENT_RECIPENT,
 				CURRENCY_ID,
-				20,
+				payment_amount,
 				PaymentState::Created,
-				Percent::from_percent(10),
+				Percent::from_percent(INCENTIVE_PERCENTAGE),
 				Some(&vec![1u8; 10]),
 			)
 		})));
@@ -781,11 +931,11 @@ fn test_reserve_payment_amount_works() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 
@@ -798,12 +948,18 @@ fn test_reserve_payment_amount_works() {
 		})));
 		// the payment amount should be reserved correctly
 		// the amount + incentive should be removed from the sender account
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 78);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount - expected_incentive_amount
+		);
 		// the incentive amount should be reserved in the sender account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
+		assert_eq!(
+			Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 		// the transferred amount should be reserved in the recipent account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// the payment should not be overwritten
 		assert_noop!(
@@ -812,9 +968,9 @@ fn test_reserve_payment_amount_works() {
 					PAYMENT_CREATOR,
 					PAYMENT_RECIPENT,
 					CURRENCY_ID,
-					20,
+					payment_amount,
 					PaymentState::Created,
-					Percent::from_percent(10),
+					Percent::from_percent(INCENTIVE_PERCENTAGE),
 					Some(&vec![1u8; 10]),
 				)
 			})),
@@ -825,11 +981,11 @@ fn test_reserve_payment_amount_works() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, expected_fee_amount)),
 			})
 		);
 	});
@@ -838,8 +994,11 @@ fn test_reserve_payment_amount_works() {
 #[test]
 fn test_settle_payment_works_for_cancel() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+
 		// the payment amount should not be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance within a transaction
@@ -847,7 +1006,7 @@ fn test_settle_payment_works_for_cancel() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 
@@ -860,7 +1019,7 @@ fn test_settle_payment_works_for_cancel() {
 		})));
 
 		// the payment amount should be released back to creator
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be released from storage
@@ -871,8 +1030,11 @@ fn test_settle_payment_works_for_cancel() {
 #[test]
 fn test_settle_payment_works_for_release() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+
 		// the payment amount should not be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 
 		// should be able to create a payment with available balance within a transaction
@@ -880,7 +1042,7 @@ fn test_settle_payment_works_for_release() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 
@@ -893,8 +1055,11 @@ fn test_settle_payment_works_for_release() {
 		})));
 
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 80);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 20);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			creator_initial_balance - payment_amount
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
@@ -904,8 +1069,12 @@ fn test_settle_payment_works_for_release() {
 #[test]
 fn test_settle_payment_works_for_70_30() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 10;
+		let expected_fee_amount = payment_amount / MARKETPLACE_FEE_PERCENTAGE as u128;
+
 		// the payment amount should not be reserved
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
 
 		// should be able to create a payment with available balance within a transaction
@@ -913,7 +1082,7 @@ fn test_settle_payment_works_for_70_30() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
-			10,
+			payment_amount,
 			None
 		));
 
@@ -925,10 +1094,21 @@ fn test_settle_payment_works_for_70_30() {
 			)
 		})));
 
+		let expected_amount_for_creator =
+			creator_initial_balance - payment_amount - expected_fee_amount +
+				(Percent::from_percent(30) * payment_amount);
+		let expected_amount_for_recipient = Percent::from_percent(70) * payment_amount;
+
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 92);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 7);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			expected_amount_for_creator
+		);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED),
+			expected_amount_for_recipient
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), expected_fee_amount);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
@@ -938,6 +1118,10 @@ fn test_settle_payment_works_for_70_30() {
 #[test]
 fn test_settle_payment_works_for_50_50() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 10;
+		let expected_fee_amount = payment_amount / MARKETPLACE_FEE_PERCENTAGE as u128;
+
 		// the payment amount should not be reserved
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 0);
@@ -947,7 +1131,7 @@ fn test_settle_payment_works_for_50_50() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT_FEE_CHARGED,
 			CURRENCY_ID,
-			10,
+			payment_amount,
 			None
 		));
 
@@ -959,10 +1143,21 @@ fn test_settle_payment_works_for_50_50() {
 			)
 		})));
 
+		let expected_amount_for_creator =
+			creator_initial_balance - payment_amount - expected_fee_amount +
+				(Percent::from_percent(50) * payment_amount);
+		let expected_amount_for_recipient = Percent::from_percent(50) * payment_amount;
+
 		// the payment amount should be transferred
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 94);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED), 5);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), 1);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
+			expected_amount_for_creator
+		);
+		assert_eq!(
+			Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT_FEE_CHARGED),
+			expected_amount_for_recipient
+		);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &FEE_RECIPIENT_ACCOUNT), expected_fee_amount);
 
 		// should be deleted from storage
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT_FEE_CHARGED), None);
@@ -972,6 +1167,9 @@ fn test_settle_payment_works_for_50_50() {
 #[test]
 fn test_automatic_refund_works() {
 	new_test_ext().execute_with(|| {
+		let creator_initial_balance = 100;
+		let payment_amount = 20;
+		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
 		const CANCEL_PERIOD: u64 = 600;
 		const CANCEL_BLOCK: u64 = CANCEL_PERIOD + 1;
 
@@ -979,7 +1177,7 @@ fn test_automatic_refund_works() {
 			Origin::signed(PAYMENT_CREATOR),
 			PAYMENT_RECIPENT,
 			CURRENCY_ID,
-			20,
+			payment_amount,
 			None
 		));
 
@@ -989,8 +1187,8 @@ fn test_automatic_refund_works() {
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
 			Some(PaymentDetail {
 				asset: CURRENCY_ID,
-				amount: 20,
-				incentive_amount: 2,
+				amount: payment_amount,
+				incentive_amount: expected_incentive_amount,
 				state: PaymentState::RefundRequested { cancel_block: CANCEL_BLOCK },
 				resolver_account: RESOLVER_ACCOUNT,
 				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
@@ -1029,7 +1227,7 @@ fn test_automatic_refund_works() {
 				.into()
 		);
 		// the payment amount should be released back to creator
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
+		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
 	});
 }

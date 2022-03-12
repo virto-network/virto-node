@@ -28,6 +28,9 @@ pub const CURRENCY_ID: Asset = Asset::Network(NetworkAsset::KSM);
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
+pub const INCENTIVE_PERCENTAGE: u8 = 10;
+pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
+pub const CANCEL_BLOCK_BUFFER: u64 = 600;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -117,16 +120,17 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 		_remark: Option<&[u8]>,
 	) -> (AccountId, Percent) {
 		match to {
-			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
+			&PAYMENT_RECIPENT_FEE_CHARGED =>
+				(FEE_RECIPIENT_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
 			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
 		}
 	}
 }
 
 parameter_types! {
-	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
 	pub const MaxRemarkLength: u32 = 50;
-	pub const CancelBufferBlockLength: u64 = 600;
+	pub const CancelBufferBlockLength: u64 = CANCEL_BLOCK_BUFFER;
 }
 
 impl payment::Config for Test {
