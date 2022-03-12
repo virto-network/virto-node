@@ -159,18 +159,24 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-pub fn run_to_block(n: u64) {
-	while System::block_number() < n {
-		let block_number = System::block_number();
+pub fn run_n_blocks(n: u64) -> u64 {
+	const IDLE_WEIGHT: u64 = 10_000_000_000;
+	const BUSY_WEIGHT: u64 = IDLE_WEIGHT / 1000;
 
+	let start_block = System::block_number();
+
+	for block_number in (0..=n).map(|n| n + start_block) {
+		System::set_block_number(block_number);
+
+		// Odd blocks gets busy
+		let idle_weight = if block_number % 2 == 0 { IDLE_WEIGHT } else { BUSY_WEIGHT };
 		// ensure the on_idle is executed
 		<frame_system::Pallet<Test>>::register_extra_weight_unchecked(
-			Payment::on_idle(block_number, 100_000_000_000),
+			Payment::on_idle(block_number, idle_weight),
 			DispatchClass::Mandatory,
 		);
 
 		<frame_system::Pallet<Test> as OnFinalize<u64>>::on_finalize(block_number);
-
-		System::set_block_number(block_number + 1);
 	}
+	System::block_number()
 }
