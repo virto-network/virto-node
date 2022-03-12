@@ -86,10 +86,10 @@ pub trait PaymentHandler<T: pallet::Config> {
 	fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T>>;
 }
 
-/// DisputeResolver trait defines how to create/assing judges for solving payment disputes
+/// DisputeResolver trait defines how to create/assign judges for solving payment disputes
 pub trait DisputeResolver<Account> {
-	/// Get a DisputeResolver (Judge) account
-	fn get_origin() -> Account;
+	/// Returns an `Account`
+	fn get_resolver_account() -> Account;
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every payment/swap
@@ -103,15 +103,19 @@ pub trait FeeHandler<T: pallet::Config> {
 	) -> (T::AccountId, Percent);
 }
 
+/// Types of Tasks that can be scheduled in the pallet
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub enum Task {
 	// payment `from` to `to` has to be cancelled
 	Cancel,
 }
 
+/// The details of a scheduled task
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub struct ScheduledTask<Time: HasCompact> {
+	/// the type of scheduled task
 	pub task: Task,
+	/// the 'time' at which the task should be executed
 	#[codec(compact)]
 	pub when: Time,
 }
