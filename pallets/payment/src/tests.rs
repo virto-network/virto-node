@@ -586,9 +586,10 @@ fn test_dispute_refund() {
 		// creator requests a refund
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
 		// ensure the request is added to the refund queue
+		let scheduled_tasks_list = ScheduledTasks::<Test>::get();
 		assert_eq!(
-			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
-			ScheduledTask { task: Task::Cancel, when: expected_cancel_block }
+			scheduled_tasks_list.get(&(PAYMENT_CREATOR, PAYMENT_RECIPENT)).unwrap(),
+			&ScheduledTask { task: Task::Cancel, when: expected_cancel_block }
 		);
 
 		// recipient disputes the refund request
@@ -615,8 +616,9 @@ fn test_dispute_refund() {
 			.into()
 		);
 
-		// ensure the request is added to the refund queue
-		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+		// ensure the request is removed from the refund queue
+		let scheduled_tasks_list = ScheduledTasks::<Test>::get();
+		assert_eq!(scheduled_tasks_list.get(&(PAYMENT_CREATOR, PAYMENT_RECIPENT)), None);
 	});
 }
 
@@ -1195,16 +1197,18 @@ fn test_automatic_refund_works() {
 			})
 		);
 
+		let scheduled_tasks_list = ScheduledTasks::<Test>::get();
 		assert_eq!(
-			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
-			ScheduledTask { task: Task::Cancel, when: CANCEL_BLOCK }
+			scheduled_tasks_list.get(&(PAYMENT_CREATOR, PAYMENT_RECIPENT)).unwrap(),
+			&ScheduledTask { task: Task::Cancel, when: CANCEL_BLOCK }
 		);
 
 		// run to one block before cancel and make sure data is same
 		assert_eq!(run_n_blocks(CANCEL_PERIOD - 1), 600);
+		let scheduled_tasks_list = ScheduledTasks::<Test>::get();
 		assert_eq!(
-			ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT).unwrap(),
-			ScheduledTask { task: Task::Cancel, when: CANCEL_BLOCK }
+			scheduled_tasks_list.get(&(PAYMENT_CREATOR, PAYMENT_RECIPENT)).unwrap(),
+			&ScheduledTask { task: Task::Cancel, when: CANCEL_BLOCK }
 		);
 
 		// run to after cancel block but odd blocks are busy
@@ -1218,7 +1222,8 @@ fn test_automatic_refund_works() {
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
 
 		// the scheduled storage should be cleared
-		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
+		let scheduled_tasks_list = ScheduledTasks::<Test>::get();
+		assert_eq!(scheduled_tasks_list.get(&(PAYMENT_CREATOR, PAYMENT_RECIPENT)), None);
 
 		// test that the refund happened correctly
 		assert_eq!(
@@ -1271,8 +1276,9 @@ fn test_automatic_refund_works_for_multiple_payments() {
 		assert_eq!(PaymentStore::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
 
 		// the scheduled storage should be cleared
-		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT), None);
-		assert_eq!(ScheduledTasks::<Test>::get(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO), None);
+		let scheduled_tasks_list = ScheduledTasks::<Test>::get();
+		assert_eq!(scheduled_tasks_list.get(&(PAYMENT_CREATOR, PAYMENT_RECIPENT)), None);
+		assert_eq!(scheduled_tasks_list.get(&(PAYMENT_CREATOR_TWO, PAYMENT_RECIPENT_TWO)), None);
 
 		// test that the refund happened correctly
 		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR), 100);
