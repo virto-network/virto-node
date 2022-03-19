@@ -162,10 +162,9 @@ pub mod pallet {
 			remaining_weight = remaining_weight.saturating_sub(T::WeightInfo::remove_task());
 
 			ScheduledTasks::<T>::mutate(|tasks| {
-				let tmp_tasks = tasks.clone();
-				#[allow(clippy::type_complexity)]
-				let mut task_list: Vec<(&(T::AccountId, T::AccountId), &ScheduledTaskOf<T>)> = tmp_tasks
-					.iter()
+				let mut task_list: Vec<_> = tasks
+					.clone()
+					.into_iter()
 					// leave out tasks in the future
 					.filter(|(_, ScheduledTask { when, .. })| when <= &now)
 					.collect();
