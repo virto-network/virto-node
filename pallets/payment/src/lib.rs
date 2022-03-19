@@ -155,25 +155,27 @@ pub mod pallet {
 		/// This function will look for any pending scheduled tasks that can
 		/// be executed and will process them.
 		fn on_idle(now: T::BlockNumber, mut remaining_weight: Weight) -> Weight {
+			// reduce the weight used to read the task list
+			remaining_weight = remaining_weight.saturating_sub(T::WeightInfo::remove_task());
+
 			ScheduledTasks::<T>::mutate(|tasks| {
-				let tasks2 = tasks.clone();
+				let tmp_tasks = tasks.clone();
 				let mut task_list: Vec<(&(T::AccountId, T::AccountId), &ScheduledTaskOf<T>)> =
-					tasks2
+					tmp_tasks
 						.iter()
 						// leave out tasks in the future
 						.filter(|(_, ScheduledTask { when, .. })| when <= &now)
 						.collect();
 
+				// order by oldest task to process
 				task_list.sort_by(|(_, t), (_, x)| x.when.partial_cmp(&t.when).unwrap());
 
-				let cancel_weight =
-					T::WeightInfo::cancel().saturating_add(T::WeightInfo::remove_task());
+				let cancel_weight = T::WeightInfo::cancel();
 
 				while !task_list.is_empty() && remaining_weight >= cancel_weight {
-					match task_list.pop() {
-						Some(((from, to), ScheduledTask { task: Task::Cancel, .. })) => {
+					if let Some(((from, to), ScheduledTask { task: Task::Cancel, .. })) =  task_list.pop() {
 							remaining_weight = remaining_weight.saturating_sub(cancel_weight);
-
+							// remove the task form the tasks
 							tasks.remove(&(from.clone(), to.clone()));
 
 							// process the cancel payment
@@ -190,8 +192,7 @@ pub mod pallet {
 								from: from.clone(),
 								to: to.clone(),
 							});
-						},
-						_ => {},
+						
 					}
 				}
 			});

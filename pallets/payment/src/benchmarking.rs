@@ -121,6 +121,21 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentRequestCompleted { from: sender, to: receiver}.into());
 	}
 
+	// the weight to remove a scheduled task
+	remove_task {
+		let sender : T::AccountId = whitelisted_caller();
+		let receiver : T::AccountId = account("recipient", 0, SEED);
+		let mut task_list : ScheduledTaskList<T> = Default::default();
+		task_list.try_insert((sender.clone(), receiver.clone()), ScheduledTask { task: Task::Cancel, when: 1u32.into() }).unwrap();
+		ScheduledTasks::<T>::set(task_list);
+	}: {
+		ScheduledTasks::<T>::mutate(|task_list| {
+			task_list.remove(&(sender.clone(), receiver.clone()))
+		});
+	} verify {
+		assert!(ScheduledTasks::<T>::get().is_empty());
+	}
+
 }
 
 impl_benchmark_test_suite!(Payment, crate::mock::new_test_ext(), crate::mock::Test,);
