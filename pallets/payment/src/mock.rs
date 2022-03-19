@@ -131,6 +131,7 @@ parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
 	pub const MaxRemarkLength: u32 = 50;
 	pub const CancelBufferBlockLength: u64 = CANCEL_BLOCK_BUFFER;
+	pub const MaxScheduledTaskListLength : u32 = 5;
 }
 
 impl payment::Config for Test {
@@ -141,6 +142,7 @@ impl payment::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
+	type MaxScheduledTaskListLength = MaxScheduledTaskListLength;
 	type WeightInfo = ();
 }
 

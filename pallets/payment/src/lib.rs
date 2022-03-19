@@ -68,6 +68,9 @@ pub mod pallet {
 		/// Buffer period - number of blocks to wait before user can claim canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
+		/// Buffer period - number of blocks to wait before user can claim canceled payment
+		#[pallet::constant]
+		type MaxScheduledTaskListLength: Get<u32>;
 		//// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 	}
@@ -160,12 +163,12 @@ pub mod pallet {
 
 			ScheduledTasks::<T>::mutate(|tasks| {
 				let tmp_tasks = tasks.clone();
-				let mut task_list: Vec<(&(T::AccountId, T::AccountId), &ScheduledTaskOf<T>)> =
-					tmp_tasks
-						.iter()
-						// leave out tasks in the future
-						.filter(|(_, ScheduledTask { when, .. })| when <= &now)
-						.collect();
+				#[allow(clippy::type_complexity)]
+				let mut task_list: Vec<(&(T::AccountId, T::AccountId), &ScheduledTaskOf<T>)> = tmp_tasks
+					.iter()
+					// leave out tasks in the future
+					.filter(|(_, ScheduledTask { when, .. })| when <= &now)
+					.collect();
 
 				// order by oldest task to process
 				task_list.sort_by(|(_, t), (_, x)| x.when.partial_cmp(&t.when).unwrap());
@@ -188,14 +191,18 @@ pub mod pallet {
 						)
 						.is_err()
 						{
-							// panic!("{:?}", e);
+							// log the payment refund failure
+							log::warn!(
+								target: "runtime::payments",
+								"Warning: Unable to process payment refund!"
+							);
+						} else {
+							// emit the cancel event if the refund was successful
+							Self::deposit_event(Event::PaymentCancelled {
+								from: from.clone(),
+								to: to.clone(),
+							});
 						}
-
-						// emit the cancel event
-						Self::deposit_event(Event::PaymentCancelled {
-							from: from.clone(),
-							to: to.clone(),
-						});
 					}
 				}
 			});
@@ -351,7 +358,7 @@ pub mod pallet {
 								(who.clone(), recipient.clone()),
 								ScheduledTask { task: Task::Cancel, when: cancel_block },
 							)
-							.map_err(|_| Error::<T>::InvalidAction)?;
+							.map_err(|_| Error::<T>::RefundQueueFull)?;
 						Ok(())
 					})?;
 

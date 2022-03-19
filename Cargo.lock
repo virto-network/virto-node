@@ -10565,6 +10565,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec",
