@@ -1,11 +1,11 @@
 use super::*;
 
-use crate::{Pallet as Payment, Payment as PaymentStore, ScheduledTasks};
+use crate::{Pallet as Payment, Payment as PaymentStore};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
 use sp_runtime::Percent;
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
 use virto_primitives::Asset;
 
 const SEED: u32 = 0;
@@ -121,27 +121,19 @@ benchmarks! {
 		assert_last_event::<T>(Event::<T>::PaymentRequestCompleted { from: sender, to: receiver}.into());
 	}
 
-	// the weight to read the next scheduled task
-	read_task {
-		let sender : T::AccountId = whitelisted_caller();
-		let receiver : T::AccountId = account("recipient", 0, SEED);
-		ScheduledTasks::<T>::insert(sender, receiver, ScheduledTask { task: Task::Cancel, when: 1u32.into() });
-	}: {
-		let task : Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> = ScheduledTasks::<T>::iter().collect();
-	} verify {
-		let task : Vec<(T::AccountId, T::AccountId, ScheduledTaskOf<T>)> = ScheduledTasks::<T>::iter().collect();
-		assert_eq!(task.len(), 1);
-	}
-
 	// the weight to remove a scheduled task
 	remove_task {
 		let sender : T::AccountId = whitelisted_caller();
 		let receiver : T::AccountId = account("recipient", 0, SEED);
-		ScheduledTasks::<T>::insert(sender.clone(), receiver.clone(), ScheduledTask { task: Task::Cancel, when: 1u32.into() });
+		let mut task_list : ScheduledTaskList<T> = Default::default();
+		task_list.try_insert((sender.clone(), receiver.clone()), ScheduledTask { task: Task::Cancel, when: 1u32.into() }).unwrap();
+		ScheduledTasks::<T>::set(task_list);
 	}: {
-		ScheduledTasks::<T>::remove(sender, receiver);
+		ScheduledTasks::<T>::mutate(|task_list| {
+			task_list.remove(&(sender.clone(), receiver.clone()))
+		});
 	} verify {
-
+		assert!(ScheduledTasks::<T>::get().is_empty());
 	}
 
 }

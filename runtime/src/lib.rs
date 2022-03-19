@@ -485,6 +485,7 @@ parameter_types! {
 	pub const MaxRemarkLength: u32 = 50;
 	// 1hr buffer period (60*60)/6
 	pub const CancelBufferBlockLength: BlockNumber = 600;
+	pub const MaxScheduledTaskListLength : u32 = 20;
 }
 
 impl virto_payment::Config for Runtime {
@@ -495,6 +496,7 @@ impl virto_payment::Config for Runtime {
 	type FeeHandler = VirtoFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
+	type MaxScheduledTaskListLength = MaxScheduledTaskListLength;
 	type WeightInfo = virto_payment::weights::SubstrateWeight<Runtime>;
 }
 
