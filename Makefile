@@ -73,7 +73,7 @@ $(TEST):
 	cargo test -p $(BIN)-$(@:test_%=%)
 
 $(CLIPPY):
-	cargo clippy -p $(BIN)-parachain
+	cargo clippy --features runtime-benchmarks --all-targets --workspace -- --deny warnings
 
 #
 # Testing parachain locally

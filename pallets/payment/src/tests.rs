@@ -856,7 +856,7 @@ fn test_create_payment_works() {
 				payment_amount,
 				PaymentState::Created,
 				Percent::from_percent(INCENTIVE_PERCENTAGE),
-				Some(&vec![1u8; 10]),
+				Some(&[1u8; 10]),
 			)
 		})));
 
@@ -882,7 +882,7 @@ fn test_create_payment_works() {
 					payment_amount,
 					PaymentState::Created,
 					Percent::from_percent(INCENTIVE_PERCENTAGE),
-					Some(&vec![1u8; 10]),
+					Some(&[1u8; 10]),
 				)
 			})),
 			Error::PaymentAlreadyInProcess
@@ -923,7 +923,7 @@ fn test_reserve_payment_amount_works() {
 				payment_amount,
 				PaymentState::Created,
 				Percent::from_percent(INCENTIVE_PERCENTAGE),
-				Some(&vec![1u8; 10]),
+				Some(&[1u8; 10]),
 			)
 		})));
 
@@ -971,7 +971,7 @@ fn test_reserve_payment_amount_works() {
 					payment_amount,
 					PaymentState::Created,
 					Percent::from_percent(INCENTIVE_PERCENTAGE),
-					Some(&vec![1u8; 10]),
+					Some(&[1u8; 10]),
 				)
 			})),
 			Error::PaymentAlreadyInProcess
