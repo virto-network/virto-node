@@ -176,11 +176,13 @@ pub mod pallet {
 						remaining_weight = remaining_weight.saturating_sub(cancel_weight);
 
 						// process the cancel payment
-						if let Err(_) = <Self as PaymentHandler<T>>::settle_payment(
+						if <Self as PaymentHandler<T>>::settle_payment(
 							from.clone(),
 							to.clone(),
 							Percent::from_percent(0),
-						) {
+						)
+						.is_err()
+						{
 							// panic!("{:?}", e);
 						}
 						ScheduledTasks::<T>::remove(from.clone(), to.clone());
@@ -531,7 +533,7 @@ pub mod pallet {
 			to: &T::AccountId,
 			payment: PaymentDetail<T>,
 		) -> DispatchResult {
-			let fee_amount = payment.fee_detail.map(|(_, f)| f).unwrap_or(0u32.into());
+			let fee_amount = payment.fee_detail.map(|(_, f)| f).unwrap_or_else(|| 0u32.into());
 
 			let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
 			let total_amount = total_fee_amount.saturating_add(payment.amount);
