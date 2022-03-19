@@ -173,26 +173,27 @@ pub mod pallet {
 				let cancel_weight = T::WeightInfo::cancel();
 
 				while !task_list.is_empty() && remaining_weight >= cancel_weight {
-					if let Some(((from, to), ScheduledTask { task: Task::Cancel, .. })) =  task_list.pop() {
-							remaining_weight = remaining_weight.saturating_sub(cancel_weight);
-							// remove the task form the tasks
-							tasks.remove(&(from.clone(), to.clone()));
+					if let Some(((from, to), ScheduledTask { task: Task::Cancel, .. })) =
+						task_list.pop()
+					{
+						remaining_weight = remaining_weight.saturating_sub(cancel_weight);
+						// remove the task form the tasks
+						tasks.remove(&(from.clone(), to.clone()));
 
-							// process the cancel payment
-							if let Err(_) = <Self as PaymentHandler<T>>::settle_payment(
-								from.clone(),
-								to.clone(),
-								Percent::from_percent(0),
-							) {
-								// nothing can be done here
-							}
+						// process the cancel payment
+						if let Err(_) = <Self as PaymentHandler<T>>::settle_payment(
+							from.clone(),
+							to.clone(),
+							Percent::from_percent(0),
+						) {
+							// nothing can be done here
+						}
 
-							// emit the cancel event
-							Self::deposit_event(Event::PaymentCancelled {
-								from: from.clone(),
-								to: to.clone(),
-							});
-						
+						// emit the cancel event
+						Self::deposit_event(Event::PaymentCancelled {
+							from: from.clone(),
+							to: to.clone(),
+						});
 					}
 				}
 			});
