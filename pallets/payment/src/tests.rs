@@ -213,7 +213,7 @@ fn test_release_works() {
 }
 
 #[test]
-fn test_set_state_payment_works() {
+fn test_resolve_payment_works() {
 	new_test_ext().execute_with(|| {
 		let creator_initial_balance = 100;
 		let payment_amount = 40;
@@ -517,7 +517,7 @@ fn test_do_not_overwrite_logic_works() {
 				payment_amount,
 				None
 			),
-			crate::Error::<Test>::PaymentNeedsReview
+			crate::Error::<Test>::PaymentAlreadyInProcess
 		);
 	});
 }
@@ -538,6 +538,18 @@ fn test_request_refund() {
 		));
 
 		assert_ok!(Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT));
+
+		// do not overwrite payment
+		assert_noop!(
+			Payment::pay(
+				Origin::signed(PAYMENT_CREATOR),
+				PAYMENT_RECIPENT,
+				CURRENCY_ID,
+				payment_amount,
+				None
+			),
+			crate::Error::<Test>::PaymentAlreadyInProcess
+		);
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
@@ -634,6 +646,11 @@ fn test_request_payment() {
 			CURRENCY_ID,
 			payment_amount,
 		));
+
+		assert_noop!(
+			Payment::request_refund(Origin::signed(PAYMENT_CREATOR), PAYMENT_RECIPENT),
+			crate::Error::<Test>::InvalidAction
+		);
 
 		assert_eq!(
 			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
