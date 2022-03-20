@@ -291,10 +291,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow judge to set state of a payment
-		/// This extrinsic is used to resolve disputes between the creator and
-		/// recipient of the payment. This extrinsic allows the assigned judge to cancel/release/partial_release
-		/// the payment.
+		/// This extrinsic is used to resolve disputes between the creator and recipient of the
+		/// payment.
+		/// This extrinsic allows the assigned judge to cancel/release/partial_release the payment.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::resolve_payment())]
 		pub fn resolve_payment(
@@ -304,19 +303,33 @@ pub mod pallet {
 			recipient_share: Percent,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			let account_pair = (from, recipient);
 			// ensure the caller is the assigned resolver
-			if let Some(payment) = Payment::<T>::get(&from, &recipient) {
-				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction)
+			if let Some(payment) = Payment::<T>::get(&account_pair.0, &account_pair.1) {
+				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction);
+				ensure!(payment.state != PaymentState::PaymentRequested, Error::<T>::InvalidAction);
+				if matches!(payment.state, PaymentState::RefundRequested { .. }) {
+					ScheduledTasks::<T>::mutate(|tasks| {
+						tasks.remove(&account_pair);
+					})
+				}
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::settle_payment(&from, &recipient, recipient_share)?;
-			Self::deposit_event(Event::PaymentResolved { from, to: recipient, recipient_share });
+			<Self as PaymentHandler<T>>::settle_payment(
+				&account_pair.0,
+				&account_pair.1,
+				recipient_share,
+			)?;
+			Self::deposit_event(Event::PaymentResolved {
+				from: account_pair.0,
+				to: account_pair.1,
+				recipient_share,
+			});
 			Ok(().into())
 		}
 
-		/// Allow payment creator to set payment to NeedsReview
-		/// This extrinsic is used to mark the payment as disputed so the assigned judge can tigger a resolution
-		/// and that the funds are no longer locked.
+		/// Allow the creator of a payment to initiate a refund that will return the funds after a
+		/// configured amount of time that the reveiver has to react and opose the request
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::request_refund())]
 		pub fn request_refund(
@@ -331,11 +344,8 @@ pub mod pallet {
 				|maybe_payment| -> DispatchResult {
 					// ensure the payment exists
 					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
-					// ensure the payment is not in needsreview state
-					ensure!(
-						payment.state != PaymentState::NeedsReview,
-						Error::<T>::PaymentNeedsReview
-					);
+					// refunds only possible for payments in created state
+					ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
 					// set the payment to requested refund
 					let current_block = frame_system::Pallet::<T>::block_number();
@@ -419,9 +429,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// Creates a new payment with the given details. This can be called by the recipient of the payment
-		// to create a payment and then completed by the sender using the `accept_and_pay` extrinsic.
-		// The payment will be in PaymentRequested State and can only be modified by the `accept_and_pay` extrinsic.
+		// Creates a new payment with the given details. This can be called by the recipient of the
+		// payment to create a payment and then completed by the sender using the `accept_and_pay`
+		// extrinsic.  The payment will be in PaymentRequested State and can only be modified by
+		// the `accept_and_pay` extrinsic.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::request_payment())]
 		pub fn request_payment(
@@ -483,7 +494,7 @@ pub mod pallet {
 			recipient: &T::AccountId,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			payment_state: PaymentState<T::BlockNumber>,
+			payment_state: PaymentState<T>,
 			incentive_percentage: Percent,
 			remark: Option<&[u8]>,
 		) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
@@ -491,16 +502,11 @@ pub mod pallet {
 				from,
 				recipient,
 				|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
+					// only payment requests can be overwritten
 					if let Some(payment) = maybe_payment {
-						// ensure the payment is not in created/needsreview state
-						let current_state = &payment.state;
 						ensure!(
-							current_state != &PaymentState::Created,
+							payment.state == PaymentState::PaymentRequested,
 							Error::<T>::PaymentAlreadyInProcess
-						);
-						ensure!(
-							current_state != &PaymentState::NeedsReview,
-							Error::<T>::PaymentNeedsReview
 						);
 					}
 
