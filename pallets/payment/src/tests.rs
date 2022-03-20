@@ -826,8 +826,8 @@ fn test_accept_and_pay_should_charge_fee_correctly() {
 fn test_create_payment_does_not_work_without_transaction() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(<Payment as PaymentHandler<Test>>::create_payment(
-			PAYMENT_CREATOR,
-			PAYMENT_RECIPENT,
+			&PAYMENT_CREATOR,
+			&PAYMENT_RECIPENT,
 			CURRENCY_ID,
 			20,
 			PaymentState::Created,
@@ -852,8 +852,8 @@ fn test_create_payment_works() {
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				payment_amount,
 				PaymentState::Created,
@@ -878,8 +878,8 @@ fn test_create_payment_works() {
 		assert_noop!(
 			with_transaction(|| TransactionOutcome::Commit({
 				<Payment as PaymentHandler<Test>>::create_payment(
-					PAYMENT_CREATOR,
-					PAYMENT_RECIPENT,
+					&PAYMENT_CREATOR,
+					&PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					payment_amount,
 					PaymentState::Created,
@@ -919,8 +919,8 @@ fn test_reserve_payment_amount_works() {
 		// should be able to create a payment with available balance within a transaction
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::create_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT,
 				CURRENCY_ID,
 				payment_amount,
 				PaymentState::Created,
@@ -967,8 +967,8 @@ fn test_reserve_payment_amount_works() {
 		assert_noop!(
 			with_transaction(|| TransactionOutcome::Commit({
 				<Payment as PaymentHandler<Test>>::create_payment(
-					PAYMENT_CREATOR,
-					PAYMENT_RECIPENT,
+					&PAYMENT_CREATOR,
+					&PAYMENT_RECIPENT,
 					CURRENCY_ID,
 					payment_amount,
 					PaymentState::Created,
@@ -1014,8 +1014,8 @@ fn test_settle_payment_works_for_cancel() {
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT,
 				Percent::from_percent(0),
 			)
 		})));
@@ -1050,8 +1050,8 @@ fn test_settle_payment_works_for_release() {
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT,
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT,
 				Percent::from_percent(100),
 			)
 		})));
@@ -1090,8 +1090,8 @@ fn test_settle_payment_works_for_70_30() {
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT_FEE_CHARGED,
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT_FEE_CHARGED,
 				Percent::from_percent(70),
 			)
 		})));
@@ -1139,8 +1139,8 @@ fn test_settle_payment_works_for_50_50() {
 
 		assert_ok!(with_transaction(|| TransactionOutcome::Commit({
 			<Payment as PaymentHandler<Test>>::settle_payment(
-				PAYMENT_CREATOR,
-				PAYMENT_RECIPENT_FEE_CHARGED,
+				&PAYMENT_CREATOR,
+				&PAYMENT_RECIPENT_FEE_CHARGED,
 				Percent::from_percent(50),
 			)
 		})));

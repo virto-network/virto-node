@@ -50,8 +50,8 @@ pub trait PaymentHandler<T: pallet::Config> {
 	/// Possible reasons for failure include:
 	/// - Payment already exists and cannot be overwritten
 	fn create_payment(
-		from: T::AccountId,
-		to: T::AccountId,
+		from: &T::AccountId,
+		to: &T::AccountId,
 		asset: AssetIdOf<T>,
 		amount: BalanceOf<T>,
 		payment_state: PaymentState<T::BlockNumber>,
@@ -75,8 +75,8 @@ pub trait PaymentHandler<T: pallet::Config> {
 	/// - The unreserve operation fails
 	/// - The transfer operation fails
 	fn settle_payment(
-		from: T::AccountId,
-		to: T::AccountId,
+		from: &T::AccountId,
+		to: &T::AccountId,
 		recipient_share: Percent,
 	) -> DispatchResult;
 
