@@ -17,10 +17,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::{
-		types::{
-			DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState,
-			ScheduledTask, Task,
-		},
+		types::{DisputeResolver, FeeHandler, PaymentDetail, PaymentHandler, PaymentState, ScheduledTask, Task},
 		weights::WeightInfo,
 	};
 	use frame_support::{
@@ -35,23 +32,25 @@ pub mod pallet {
 	};
 	use sp_std::vec::Vec;
 
-	pub type BalanceOf<T> =
-		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
-	pub type AssetIdOf<T> =
-		<<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
+	pub type BalanceOf<T> = <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::Balance;
+	pub type AssetIdOf<T> = <<T as Config>::Asset as MultiCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 	pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 	/// type of ScheduledTask used by the pallet
 	pub type ScheduledTaskOf<T> = ScheduledTask<<T as frame_system::Config>::BlockNumber>;
 	/// list of ScheduledTasks, stored as a BoundedBTreeMap
 	pub type ScheduledTaskList<T> = BoundedBTreeMap<
-		(<T as frame_system::Config>::AccountId, <T as frame_system::Config>::AccountId),
+		(
+			<T as frame_system::Config>::AccountId,
+			<T as frame_system::Config>::AccountId,
+		),
 		ScheduledTaskOf<T>,
 		<T as Config>::MaxRemarkLength,
 	>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Because this pallet emits events, it depends on the runtime's definition of an event.
+		/// Because this pallet emits events, it depends on the runtime's
+		/// definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// the type of assets this pallet can hold in payment
 		type Asset: MultiReservableCurrency<Self::AccountId>;
@@ -65,10 +64,12 @@ pub mod pallet {
 		/// Maximum permitted size of `Remark`
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
-		/// Buffer period - number of blocks to wait before user can claim canceled payment
+		/// Buffer period - number of blocks to wait before user can claim
+		/// canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<Self::BlockNumber>;
-		/// Buffer period - number of blocks to wait before user can claim canceled payment
+		/// Buffer period - number of blocks to wait before user can claim
+		/// canceled payment
 		#[pallet::constant]
 		type MaxScheduledTaskListLength: Get<u32>;
 		//// Type representing the weight of this pallet
@@ -81,11 +82,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn payment)]
-	/// Payments created by a user, this method of storageDoubleMap is chosen since there is no usecase for
-	/// listing payments by provider/currency. The payment will only be referenced by the creator in
-	/// any transaction of interest.
-	/// The storage map keys are the creator and the recipient, this also ensures
-	/// that for any (sender,recipient) combo, only a single payment is active. The history of payment is not stored.
+	/// Payments created by a user, this method of storageDoubleMap is chosen
+	/// since there is no usecase for listing payments by provider/currency. The
+	/// payment will only be referenced by the creator in any transaction of
+	/// interest. The storage map keys are the creator and the recipient, this
+	/// also ensures that for any (sender,recipient) combo, only a single
+	/// payment is active. The history of payment is not stored.
 	pub(super) type Payment<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -115,7 +117,11 @@ pub mod pallet {
 		/// Payment has been cancelled by the creator
 		PaymentCancelled { from: T::AccountId, to: T::AccountId },
 		/// A payment that NeedsReview has been resolved by Judge
-		PaymentResolved { from: T::AccountId, to: T::AccountId, recipient_share: Percent },
+		PaymentResolved {
+			from: T::AccountId,
+			to: T::AccountId,
+			recipient_share: Percent,
+		},
 		/// the payment creator has created a refund request
 		PaymentCreatorRequestedRefund {
 			from: T::AccountId,
@@ -166,9 +172,7 @@ pub mod pallet {
 					.clone()
 					.into_iter()
 					// leave out tasks in the future
-					.filter(|(_, ScheduledTask { when, task })| {
-						when <= &now && matches!(task, Task::Cancel)
-					})
+					.filter(|(_, ScheduledTask { when, task })| when <= &now && matches!(task, Task::Cancel))
 					.collect();
 
 				// order by oldest task to process
@@ -211,11 +215,12 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// This allows any user to create a new payment, that releases only to specified recipient
-		/// The only action is to store the details of this payment in storage and reserve
-		/// the specified amount. User also has the option to add a remark, this remark
-		/// can then be used to run custom logic and trigger alternate payment flows.
-		/// the specified amount.
+		/// This allows any user to create a new payment, that releases only to
+		/// specified recipient The only action is to store the details of this
+		/// payment in storage and reserve the specified amount. User also has
+		/// the option to add a remark, this remark can then be used to run
+		/// custom logic and trigger alternate payment flows. the specified
+		/// amount.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::pay(T::MaxRemarkLength::get()))]
 		pub fn pay(
@@ -240,12 +245,17 @@ pub mod pallet {
 			// reserve funds for payment
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
 			// emit paymentcreated event
-			Self::deposit_event(Event::PaymentCreated { from: who, asset, amount, remark });
+			Self::deposit_event(Event::PaymentCreated {
+				from: who,
+				asset,
+				amount,
+				remark,
+			});
 			Ok(().into())
 		}
 
-		/// Release any created payment, this will transfer the reserved amount from the
-		/// creator of the payment to the assigned recipient
+		/// Release any created payment, this will transfer the reserved amount
+		/// from the creator of the payment to the assigned recipient
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
@@ -265,9 +275,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Cancel a payment in created state, this will release the reserved back to
-		/// creator of the payment. This extrinsic can only be called by the recipient
-		/// of the payment
+		/// Cancel a payment in created state, this will release the reserved
+		/// back to creator of the payment. This extrinsic can only be called by
+		/// the recipient of the payment
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::cancel())]
 		pub fn cancel(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
@@ -276,13 +286,9 @@ pub mod pallet {
 				match payment.state {
 					// call settle payment with recipient_share=0, this refunds the sender
 					PaymentState::Created => {
-						<Self as PaymentHandler<T>>::settle_payment(
-							&creator,
-							&who,
-							Percent::from_percent(0),
-						)?;
+						<Self as PaymentHandler<T>>::settle_payment(&creator, &who, Percent::from_percent(0))?;
 						Self::deposit_event(Event::PaymentCancelled { from: creator, to: who });
-					},
+					}
 					// if the payment is in state PaymentRequested, remove from storage
 					PaymentState::PaymentRequested => Payment::<T>::remove(&creator, &who),
 					_ => fail!(Error::<T>::InvalidAction),
@@ -291,9 +297,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// This extrinsic is used to resolve disputes between the creator and recipient of the
-		/// payment.
-		/// This extrinsic allows the assigned judge to cancel/release/partial_release the payment.
+		/// This extrinsic is used to resolve disputes between the creator and
+		/// recipient of the payment.
+		/// This extrinsic allows the assigned judge to
+		/// cancel/release/partial_release the payment.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::resolve_payment())]
 		pub fn resolve_payment(
@@ -307,7 +314,10 @@ pub mod pallet {
 			// ensure the caller is the assigned resolver
 			if let Some(payment) = Payment::<T>::get(&account_pair.0, &account_pair.1) {
 				ensure!(who == payment.resolver_account, Error::<T>::InvalidAction);
-				ensure!(payment.state != PaymentState::PaymentRequested, Error::<T>::InvalidAction);
+				ensure!(
+					payment.state != PaymentState::PaymentRequested,
+					Error::<T>::InvalidAction
+				);
 				if matches!(payment.state, PaymentState::RefundRequested { .. }) {
 					ScheduledTasks::<T>::mutate(|tasks| {
 						tasks.remove(&account_pair);
@@ -315,11 +325,7 @@ pub mod pallet {
 				}
 			}
 			// try to update the payment to new state
-			<Self as PaymentHandler<T>>::settle_payment(
-				&account_pair.0,
-				&account_pair.1,
-				recipient_share,
-			)?;
+			<Self as PaymentHandler<T>>::settle_payment(&account_pair.0, &account_pair.1, recipient_share)?;
 			Self::deposit_event(Event::PaymentResolved {
 				from: account_pair.0,
 				to: account_pair.1,
@@ -328,65 +334,60 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow the creator of a payment to initiate a refund that will return the funds after a
-		/// configured amount of time that the reveiver has to react and opose the request
+		/// Allow the creator of a payment to initiate a refund that will return
+		/// the funds after a configured amount of time that the reveiver has to
+		/// react and opose the request
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::request_refund())]
-		pub fn request_refund(
-			origin: OriginFor<T>,
-			recipient: T::AccountId,
-		) -> DispatchResultWithPostInfo {
+		pub fn request_refund(origin: OriginFor<T>, recipient: T::AccountId) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			Payment::<T>::try_mutate(
-				who.clone(),
-				recipient.clone(),
-				|maybe_payment| -> DispatchResult {
-					// ensure the payment exists
-					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
-					// refunds only possible for payments in created state
-					ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
+			Payment::<T>::try_mutate(who.clone(), recipient.clone(), |maybe_payment| -> DispatchResult {
+				// ensure the payment exists
+				let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
+				// refunds only possible for payments in created state
+				ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
-					// set the payment to requested refund
-					let current_block = frame_system::Pallet::<T>::block_number();
-					let cancel_block = current_block
-						.checked_add(&T::CancelBufferBlockLength::get())
-						.ok_or(Error::<T>::MathError)?;
+				// set the payment to requested refund
+				let current_block = frame_system::Pallet::<T>::block_number();
+				let cancel_block = current_block
+					.checked_add(&T::CancelBufferBlockLength::get())
+					.ok_or(Error::<T>::MathError)?;
 
-					ScheduledTasks::<T>::try_mutate(|task_list| -> DispatchResult {
-						task_list
-							.try_insert(
-								(who.clone(), recipient.clone()),
-								ScheduledTask { task: Task::Cancel, when: cancel_block },
-							)
-							.map_err(|_| Error::<T>::RefundQueueFull)?;
-						Ok(())
-					})?;
-
-					payment.state = PaymentState::RefundRequested { cancel_block };
-
-					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
-						from: who,
-						to: recipient,
-						expiry: cancel_block,
-					});
-
+				ScheduledTasks::<T>::try_mutate(|task_list| -> DispatchResult {
+					task_list
+						.try_insert(
+							(who.clone(), recipient.clone()),
+							ScheduledTask {
+								task: Task::Cancel,
+								when: cancel_block,
+							},
+						)
+						.map_err(|_| Error::<T>::RefundQueueFull)?;
 					Ok(())
-				},
-			)?;
+				})?;
+
+				payment.state = PaymentState::RefundRequested { cancel_block };
+
+				Self::deposit_event(Event::PaymentCreatorRequestedRefund {
+					from: who,
+					to: recipient,
+					expiry: cancel_block,
+				});
+
+				Ok(())
+			})?;
 
 			Ok(().into())
 		}
 
-		/// Allow payment recipient to dispute the refund request from the payment creator
-		/// This does not cancel the request, instead sends the payment to a NeedsReview state
-		/// The assigned resolver account can then change the state of the payment after review.
+		/// Allow payment recipient to dispute the refund request from the
+		/// payment creator This does not cancel the request, instead sends the
+		/// payment to a NeedsReview state The assigned resolver account can
+		/// then change the state of the payment after review.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::dispute_refund())]
-		pub fn dispute_refund(
-			origin: OriginFor<T>,
-			creator: T::AccountId,
-		) -> DispatchResultWithPostInfo {
+		pub fn dispute_refund(origin: OriginFor<T>, creator: T::AccountId) -> DispatchResultWithPostInfo {
 			use PaymentState::*;
 			let who = ensure_signed(origin)?;
 
@@ -414,11 +415,8 @@ pub mod pallet {
 								Ok(())
 							})?;
 
-							Self::deposit_event(Event::PaymentRefundDisputed {
-								from: creator,
-								to: who,
-							});
-						},
+							Self::deposit_event(Event::PaymentRefundDisputed { from: creator, to: who });
+						}
 						_ => fail!(Error::<T>::InvalidAction),
 					}
 
@@ -429,10 +427,11 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// Creates a new payment with the given details. This can be called by the recipient of the
-		// payment to create a payment and then completed by the sender using the `accept_and_pay`
-		// extrinsic.  The payment will be in PaymentRequested State and can only be modified by
-		// the `accept_and_pay` extrinsic.
+		// Creates a new payment with the given details. This can be called by the
+		// recipient of the payment to create a payment and then completed by the sender
+		// using the `accept_and_pay` extrinsic.  The payment will be in
+		// PaymentRequested State and can only be modified by the `accept_and_pay`
+		// extrinsic.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::request_payment())]
 		pub fn request_payment(
@@ -459,19 +458,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// This extrinsic allows the sender to fulfill a payment request created by a recipient.
-		// The amount will be transferred to the recipient and payment removed from storage
+		// This extrinsic allows the sender to fulfill a payment request created by a
+		// recipient. The amount will be transferred to the recipient and payment
+		// removed from storage
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::accept_and_pay())]
-		pub fn accept_and_pay(
-			origin: OriginFor<T>,
-			to: T::AccountId,
-		) -> DispatchResultWithPostInfo {
+		pub fn accept_and_pay(origin: OriginFor<T>, to: T::AccountId) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
 
 			let payment = Payment::<T>::get(&from, &to).ok_or(Error::<T>::InvalidPayment)?;
 
-			ensure!(payment.state == PaymentState::PaymentRequested, Error::<T>::InvalidAction);
+			ensure!(
+				payment.state == PaymentState::PaymentRequested,
+				Error::<T>::InvalidAction
+			);
 
 			// reserve all the fees from the sender
 			<Self as PaymentHandler<T>>::reserve_payment_amount(&from, &to, payment)?;
@@ -486,8 +486,9 @@ pub mod pallet {
 	}
 
 	impl<T: Config> PaymentHandler<T> for Pallet<T> {
-		/// The function will create a new payment. The fee and incentive amounts will be calculated and the
-		/// `PaymentDetail` will be added to storage.
+		/// The function will create a new payment. The fee and incentive
+		/// amounts will be calculated and the `PaymentDetail` will be added to
+		/// storage.
 		#[require_transactional]
 		fn create_payment(
 			from: &T::AccountId,
@@ -525,8 +526,7 @@ pub mod pallet {
 
 					// Calculate fee amount - this will be implemented based on the custom
 					// implementation of the fee provider
-					let (fee_recipient, fee_percent) =
-						T::FeeHandler::apply_fees(from, recipient, &new_payment, remark);
+					let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(from, recipient, &new_payment, remark);
 					let fee_amount = fee_percent.mul_floor(amount);
 					new_payment.fee_detail = Some((fee_recipient, fee_amount));
 
@@ -537,14 +537,11 @@ pub mod pallet {
 			)
 		}
 
-		/// The function will reserve the fees+transfer amount from the `from` account. After reserving
-		/// the payment.amount will be transferred to the recipient but will stay in Reserve state.
+		/// The function will reserve the fees+transfer amount from the `from`
+		/// account. After reserving the payment.amount will be transferred to
+		/// the recipient but will stay in Reserve state.
 		#[require_transactional]
-		fn reserve_payment_amount(
-			from: &T::AccountId,
-			to: &T::AccountId,
-			payment: PaymentDetail<T>,
-		) -> DispatchResult {
+		fn reserve_payment_amount(from: &T::AccountId, to: &T::AccountId, payment: PaymentDetail<T>) -> DispatchResult {
 			let fee_amount = payment.fee_detail.map(|(_, f)| f).unwrap_or_else(|| 0u32.into());
 
 			let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
@@ -553,38 +550,25 @@ pub mod pallet {
 			// reserve the total amount from payment creator
 			T::Asset::reserve(payment.asset, from, total_amount)?;
 			// transfer payment amount to recipient -- keeping reserve status
-			T::Asset::repatriate_reserved(
-				payment.asset,
-				from,
-				to,
-				payment.amount,
-				BalanceStatus::Reserved,
-			)?;
+			T::Asset::repatriate_reserved(payment.asset, from, to, payment.amount, BalanceStatus::Reserved)?;
 			Ok(())
 		}
 
-		/// This function allows the caller to settle the payment by specifying a recipient_share
-		/// this will unreserve the fee+incentive to sender and unreserve transferred amount to recipient
-		/// if the settlement is a release (ie recipient_share=100), the fee is transferred to fee_recipient
-		/// For cancelling a payment, recipient_share = 0
+		/// This function allows the caller to settle the payment by specifying
+		/// a recipient_share this will unreserve the fee+incentive to sender
+		/// and unreserve transferred amount to recipient if the settlement is a
+		/// release (ie recipient_share=100), the fee is transferred to
+		/// fee_recipient For cancelling a payment, recipient_share = 0
 		/// For releasing a payment, recipient_share = 100
 		/// In other cases, the custom recipient_share can be specified
-		fn settle_payment(
-			from: &T::AccountId,
-			to: &T::AccountId,
-			recipient_share: Percent,
-		) -> DispatchResult {
+		fn settle_payment(from: &T::AccountId, to: &T::AccountId, recipient_share: Percent) -> DispatchResult {
 			Payment::<T>::try_mutate(from, to, |maybe_payment| -> DispatchResult {
 				let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
 				// unreserve the incentive amount and fees from the owner account
 				match payment.fee_detail {
 					Some((fee_recipient, fee_amount)) => {
-						T::Asset::unreserve(
-							payment.asset,
-							from,
-							payment.incentive_amount + fee_amount,
-						);
+						T::Asset::unreserve(payment.asset, from, payment.incentive_amount + fee_amount);
 						// transfer fee to marketplace if operation is not cancel
 						if recipient_share != Percent::zero() {
 							T::Asset::transfer(
@@ -594,10 +578,10 @@ pub mod pallet {
 								fee_amount,     // amount of fee
 							)?;
 						}
-					},
+					}
 					None => {
 						T::Asset::unreserve(payment.asset, from, payment.incentive_amount);
-					},
+					}
 				};
 
 				// Unreserve the transfer amount

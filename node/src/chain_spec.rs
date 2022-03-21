@@ -37,7 +37,8 @@ type AccountPublic = <Signature as Verify>::Signer;
 
 /// Generate collator keys from seed.
 ///
-/// This function's return type must always match the session keys of the chain in tuple format.
+/// This function's return type must always match the session keys of the chain
+/// in tuple format.
 pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
 	get_public_from_seed::<AuraId>(seed)
 }
@@ -52,7 +53,8 @@ where
 
 /// Generate the session keys from individual elements.
 ///
-/// The input must be a tuple of individual keys (a single arg for now since we have just one key).
+/// The input must be a tuple of individual keys (a single arg for now since we
+/// have just one key).
 pub fn virto_session_keys(keys: AuraId) -> virto_runtime::SessionKeys {
 	virto_runtime::SessionKeys { aura: keys }
 }

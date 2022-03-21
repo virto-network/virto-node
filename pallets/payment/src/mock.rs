@@ -120,8 +120,7 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 		_remark: Option<&[u8]>,
 	) -> (AccountId, Percent) {
 		match to {
-			&PAYMENT_RECIPENT_FEE_CHARGED =>
-				(FEE_RECIPIENT_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
+			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
 			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
 		}
 	}
@@ -175,7 +174,11 @@ pub fn run_n_blocks(n: u64) -> u64 {
 		System::set_block_number(block_number);
 
 		// Odd blocks gets busy
-		let idle_weight = if block_number % 2 == 0 { IDLE_WEIGHT } else { BUSY_WEIGHT };
+		let idle_weight = if block_number % 2 == 0 {
+			IDLE_WEIGHT
+		} else {
+			BUSY_WEIGHT
+		};
 		// ensure the on_idle is executed
 		<frame_system::Pallet<Test>>::register_extra_weight_unchecked(
 			Payment::on_idle(block_number, idle_weight),

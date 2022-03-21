@@ -11,8 +11,9 @@ impl Convert<Asset, Option<MultiLocation>> for CurrencyIdConvert {
 	fn convert(id: Asset) -> Option<MultiLocation> {
 		match id {
 			Asset::Network(NetworkAsset::KSM) => Some(MultiLocation::parent()),
-			Asset::Network(NetworkAsset::KAR) | Asset::Network(NetworkAsset::KUSD) =>
-				Some(native_currency_location(id)),
+			Asset::Network(NetworkAsset::KAR) | Asset::Network(NetworkAsset::KUSD) => {
+				Some(native_currency_location(id))
+			}
 		}
 	}
 }
@@ -31,7 +32,10 @@ impl Convert<MultiLocation, Option<Asset>> for CurrencyIdConvert {
 
 impl Convert<MultiAsset, Option<Asset>> for CurrencyIdConvert {
 	fn convert(asset: MultiAsset) -> Option<Asset> {
-		if let MultiAsset { id: Concrete(location), .. } = asset {
+		if let MultiAsset {
+			id: Concrete(location), ..
+		} = asset
+		{
 			Self::convert(location)
 		} else {
 			None

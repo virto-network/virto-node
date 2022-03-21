@@ -6,9 +6,7 @@ use sp_std::{convert::TryFrom, prelude::*};
 
 /// A resource or valuable thing.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[derive(
-	Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, MaxEncodedLen, TypeInfo,
-)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, MaxEncodedLen, TypeInfo)]
 pub enum Asset {
 	Network(NetworkAsset),
 }
@@ -37,9 +35,7 @@ impl fmt::Display for Asset {
 	}
 }
 
-#[derive(
-	Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, MaxEncodedLen, TypeInfo,
-)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Decode, Encode, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum NetworkAsset {
 	KSM = 0,
