@@ -7,6 +7,7 @@ use frame_support::{
 	traits::{Everything, Get, Nothing},
 	weights::{IdentityFee, Weight},
 };
+use orml_traits::location::AbsoluteReserveProvider;
 use orml_traits::parameter_type_with_key;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
@@ -171,6 +172,14 @@ parameter_types! {
 	pub const MaxAssetsForTransfer: usize = 2; // TODO: configure later
 }
 
+match_type! {
+	pub type ParentOrParachains: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 0, interior: X1(Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X1(Junction::AccountId32 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain(1), Junction::AccountId32 { .. }) }
+	};
+}
+
 parameter_type_with_key! {
 	// TODO: configure later
 	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
@@ -190,5 +199,7 @@ impl orml_xtokens::Config for Runtime {
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
+	type MultiLocationsFilter = ParentOrParachains;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type ReserveProvider = AbsoluteReserveProvider;
 }

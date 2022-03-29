@@ -11,12 +11,12 @@ repository = 'https://github.com/virto-network/virto-node'
 version = '0.3.0'
 
 [dependencies]
-parity-scale-codec = { default-features = false, features = ['derive'], version = "2.0.0" }
+parity-scale-codec = { default-features = false, features = ['max-encoded-len'], version = "3.0.0" }
 serde = { default-features = false, features = ['derive'], optional = true, version = "1.0.123" }
-sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
-sp-runtime= { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+sp-runtime= { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
 [features]
 default = []
