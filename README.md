@@ -110,7 +110,7 @@ make benchmark pallet=<pallet_name>
 
 To benchmark the payment pallet, run the command
 ```sh
-make benchmark pallet=virto-payment
+make benchmark pallet=orml-payment
 ```
 
 ### Runtime

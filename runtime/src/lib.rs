@@ -24,6 +24,7 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+pub mod weights;
 pub mod xcm_config;
 use crate::xcm_config::*;
 
@@ -506,7 +507,7 @@ impl orml_payments::Config for Runtime {
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
 	type MaxScheduledTaskListLength = MaxScheduledTaskListLength;
-	type WeightInfo = orml_payments::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::payments::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
