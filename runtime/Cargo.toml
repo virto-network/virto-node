@@ -78,16 +78,17 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
 
 # Virto dependencies
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.18" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.18" }
-orml-xcm-support = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false, branch = "polkadot-v0.9.18" }
-orml-unknown-tokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false, branch = "polkadot-v0.9.18" }
-orml-xtokens = { git = 'https://github.com/open-web3-stack/open-runtime-module-library', default-features = false, branch = "polkadot-v0.9.18" }
+orml-tokens = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false, branch = "payments-pallet-v2" }
+orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false, branch = "payments-pallet-v2" }
+orml-xcm-support = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false, branch = "payments-pallet-v2" }
+orml-unknown-tokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false, branch = "payments-pallet-v2" }
+orml-xtokens = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false, branch = "payments-pallet-v2" }
+orml-payments = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false, branch = "payments-pallet-v2" }
+orml-benchmarking = { git = 'https://github.com/virto-network/open-runtime-module-library', default-features = false, branch = "payments-pallet-v2" }
 pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.18', default-features = false }
 
 # Local dependencies
 virto-primitives = { default-features = false, path = '../primitives' }
-virto-payment = { default-features = false, path = '../pallets/payment' }
 
 [features]
 default = [
@@ -141,9 +142,10 @@ std = [
 	"orml-unknown-tokens/std",
 	"orml-xtokens/std",
 	"virto-primitives/std",
-	"virto-payment/std",
+	"orml-payments/std",
 	"pallet-collective/std",
-	"pallet-society/std"
+	"pallet-society/std",
+	"orml-benchmarking/std",
 ]
 
 runtime-benchmarks = [
@@ -154,7 +156,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"virto-payment/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
