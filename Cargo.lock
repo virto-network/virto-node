@@ -3788,9 +3788,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
+checksum = "ec647867e2bf0772e28c8bcde4f0d19a9216916e890543b5a03ed8ef27b8f259"
 
 [[package]]
 name = "libloading"
@@ -5016,7 +5016,7 @@ dependencies = [
 [[package]]
 name = "orml-benchmarking"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -5036,13 +5036,13 @@ dependencies = [
 [[package]]
 name = "orml-payments"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-support",
  "frame-system",
  "log",
- "orml-tokens 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
+ "orml-tokens",
+ "orml-traits",
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
@@ -5052,26 +5052,11 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-tokens"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18#e0d31d4130b66b438c1b7980b9106e08b1354387"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18)",
+ "orml-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -5082,30 +5067,12 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18#e0d31d4130b66b438c1b7980b9106e08b1354387"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18)",
+ "orml-utilities",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -5118,7 +5085,7 @@ dependencies = [
 [[package]]
 name = "orml-unknown-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5133,21 +5100,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
-dependencies = [
- "frame-support",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18#e0d31d4130b66b438c1b7980b9106e08b1354387"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5161,10 +5114,10 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "frame-support",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
+ "orml-traits",
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
@@ -5175,12 +5128,12 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#fb40c4ed205c54978278e4f21433d45c82073965"
+source = "git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2#69428a3dc289130cca53ac5a1d5f49a11a1c01b3"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
+ "orml-traits",
  "orml-xcm-support",
  "parity-scale-codec",
  "scale-info",
@@ -10880,7 +10833,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "digest 0.10.3",
  "rand 0.8.5",
  "static_assertions",
@@ -11108,26 +11061,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "virto-payment"
-version = "0.3.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.18)",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "virto-primitives",
-]
-
-[[package]]
 name = "virto-primitives"
 version = "0.3.0"
 dependencies = [
@@ -11162,8 +11095,8 @@ dependencies = [
  "log",
  "orml-benchmarking",
  "orml-payments",
- "orml-tokens 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
- "orml-traits 0.4.1-dev (git+https://github.com/virto-network/open-runtime-module-library?branch=payments-pallet-v2)",
+ "orml-tokens",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
