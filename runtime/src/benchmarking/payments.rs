@@ -27,7 +27,7 @@ runtime_benchmarks! {
 		let recipent : AccountId = account("recipient", 0, SEED);
 		let x in 1..MAX_REMARK_LENGTH.into();
 		let remark : BoundedDataOf<Runtime> = vec![u8::MAX; x.try_into().unwrap()].try_into().unwrap();
-	}: _(RawOrigin::Signed(caller.clone()), recipent.clone(), get_currency_id(), SOME_AMOUNT, Some(remark.clone()))
+	}: _(RawOrigin::Signed(caller.clone()), recipent.clone(), get_currency_id(), SOME_AMOUNT, Some(remark))
 	verify {
 		assert_eq!(Assets::total_balance(get_currency_id(), &recipent), SOME_AMOUNT);
 	}
@@ -49,7 +49,7 @@ runtime_benchmarks! {
 		let _ = Assets::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : AccountId = account("recipient", 0, SEED);
 		Payment::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
-	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
+	}: _(RawOrigin::Signed(recipent.clone()), caller)
 	verify {
 		assert_eq!(Assets::free_balance(get_currency_id(), &recipent), 0);
 	}
@@ -60,7 +60,7 @@ runtime_benchmarks! {
 		let _ = Assets::deposit(get_currency_id(), &caller, INITIAL_AMOUNT);
 		let recipent : AccountId = account("recipient", 0, SEED);
 		Payment::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
-	}: _(RawOrigin::Signed(Sudo::key().expect("Sudo key not set!")), caller.clone(), recipent.clone(), Percent::from_percent(100))
+	}: _(RawOrigin::Signed(Sudo::key().expect("Sudo key not set!")), caller, recipent.clone(), Percent::from_percent(100))
 	verify {
 		assert_eq!(Assets::free_balance(get_currency_id(), &recipent), 80);
 	}
@@ -83,7 +83,7 @@ runtime_benchmarks! {
 		let recipent : AccountId = account("recipient", 0, SEED);
 		Payment::pay(RawOrigin::Signed(caller.clone()).into(), recipent.clone(), get_currency_id(), SOME_AMOUNT, None)?;
 		Payment::request_refund(RawOrigin::Signed(caller.clone()).into(), recipent.clone())?;
-	}: _(RawOrigin::Signed(recipent.clone()), caller.clone())
+	}: _(RawOrigin::Signed(recipent.clone()), caller)
 	verify {
 		assert_eq!(Assets::free_balance(get_currency_id(), &recipent), 0);
 	}
@@ -92,7 +92,7 @@ runtime_benchmarks! {
 	request_payment {
 		let caller : AccountId = whitelisted_caller();
 		let sender : AccountId = account("recipient", 0, SEED);
-	}: _(RawOrigin::Signed(caller.clone()), sender.clone(), get_currency_id(), SOME_AMOUNT)
+	}: _(RawOrigin::Signed(caller.clone()), sender, get_currency_id(), SOME_AMOUNT)
 	verify {
 	}
 
