@@ -16,11 +16,15 @@ use sp_runtime::{
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
 
+#[cfg(feature = "runtime-benchmarks")]
+pub mod benchmarking;
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
+pub mod weights;
 pub mod xcm_config;
 use crate::xcm_config::*;
 
@@ -466,18 +470,18 @@ impl orml_unknown_tokens::Config for Runtime {
 }
 
 pub struct VirtoDisputeResolver;
-impl virto_payment::DisputeResolver<AccountId> for VirtoDisputeResolver {
+impl orml_payments::DisputeResolver<AccountId> for VirtoDisputeResolver {
 	fn get_resolver_account() -> AccountId {
 		Sudo::key().expect("Sudo key not set!")
 	}
 }
 
 pub struct VirtoFeeHandler;
-impl virto_payment::FeeHandler<Runtime> for VirtoFeeHandler {
+impl orml_payments::FeeHandler<Runtime> for VirtoFeeHandler {
 	fn apply_fees(
 		_from: &AccountId,
 		_to: &AccountId,
-		_detail: &virto_payment::PaymentDetail<Runtime>,
+		_detail: &orml_payments::PaymentDetail<Runtime>,
 		_remark: Option<&[u8]>,
 	) -> (AccountId, Percent) {
 		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
@@ -494,7 +498,7 @@ parameter_types! {
 	pub const MaxScheduledTaskListLength : u32 = 20;
 }
 
-impl virto_payment::Config for Runtime {
+impl orml_payments::Config for Runtime {
 	type Event = Event;
 	type Asset = Assets;
 	type DisputeResolver = VirtoDisputeResolver;
@@ -503,7 +507,7 @@ impl virto_payment::Config for Runtime {
 	type MaxRemarkLength = MaxRemarkLength;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
 	type MaxScheduledTaskListLength = MaxScheduledTaskListLength;
-	type WeightInfo = virto_payment::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::payments::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -599,7 +603,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 43,
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
 		UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
-		Payment: virto_payment::{Call, Event<T>, Pallet, Storage} = 46,
+		Payment: orml_payments::{Call, Event<T>, Pallet, Storage} = 46,
 	}
 );
 
@@ -719,6 +723,7 @@ impl_runtime_apis! {
 		) {
 			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
+			use orml_benchmarking::list_benchmark as list_orml_benchmark;
 			use frame_system_benchmarking::Pallet as SystemBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
@@ -727,7 +732,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, virto_payment, Payment);
+			list_orml_benchmark!(list, extra, orml_payments, benchmarking::payments);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -738,6 +743,7 @@ impl_runtime_apis! {
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark, TrackedStorageKey};
+			use orml_benchmarking::{add_benchmark as add_orml_benchmark};
 
 			use frame_system_benchmarking::Pallet as SystemBench;
 			impl frame_system_benchmarking::Config for Runtime {}
@@ -766,7 +772,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_session, SessionBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, virto_payment, Payment);
+			add_orml_benchmark!(params, batches, orml_payments, benchmarking::payments);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
