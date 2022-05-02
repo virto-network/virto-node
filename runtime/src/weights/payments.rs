@@ -94,4 +94,10 @@ impl<T: frame_system::Config> orml_payments::WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+		// Storage: Payment ScheduledTasks (r:1 w:1)
+		fn remove_task() -> Weight {
+			(4_000_000 as Weight)
+				.saturating_add(T::DbWeight::get().reads(1 as Weight))
+				.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		}
 }
