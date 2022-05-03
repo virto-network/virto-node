@@ -69,7 +69,7 @@ impl SubstrateCli for Cli {
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Parachain Collator Template".into()
+		"Virto Parachain Collator".into()
 	}
 
 	fn impl_version() -> String {
