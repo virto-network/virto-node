@@ -77,7 +77,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn description() -> String {
-		"Parachain Collator Template\n\nThe command-line arguments provided first will be \
+		"Virto Parachain Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		parachain-collator <parachain-args> -- <relay-chain-args>"
