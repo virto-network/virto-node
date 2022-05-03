@@ -1,10 +1,10 @@
 [package]
 authors = ['Daniel Olano <daniel@olanod.com>']
 edition = '2021'
-homepage = 'https://github.com/open-web3-stack/virto-node'
+homepage = 'https://github.com/virto-network/virto-node'
 license = 'Unlicense'
 name = 'virto-runtime'
-repository = 'https://github.com/open-web3-stack/virto-node'
+repository = 'https://github.com/virto-network/virto-node'
 version = '0.3.0'
 
 [package.metadata.docs.rs]
