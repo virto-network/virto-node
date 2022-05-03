@@ -3,7 +3,7 @@ use super::{
 };
 use crate::CurrencyIdConvert;
 use frame_support::{
-	match_type, parameter_types,
+	match_types, parameter_types,
 	traits::{Everything, Get, Nothing},
 	weights::{IdentityFee, Weight},
 };
@@ -84,7 +84,7 @@ parameter_types! {
 	pub const MaxInstructions: u32 = 100;
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
@@ -172,7 +172,7 @@ parameter_types! {
 	pub const MaxAssetsForTransfer: usize = 2; // TODO: configure later
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParachains: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 0, interior: X1(Junction::AccountId32 { .. }) } |
 		MultiLocation { parents: 1, interior: X1(Junction::AccountId32 { .. }) } |
