@@ -18,6 +18,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 orml-traits = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false, branch = "staging" }
+orml-payments = { git = "https://github.com/virto-network/open-runtime-module-library", default-features = false, branch = "staging" }
 
 [dev-dependencies]
 serde = { version = "1.0.136" }
