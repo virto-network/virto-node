@@ -12,7 +12,7 @@ mod tests;
 mod benchmarking;
 
 mod impls;
-use impls::*;
+pub use impls::CommunityFeeHandler;
 mod types;
 use types::*;
 

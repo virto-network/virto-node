@@ -486,16 +486,16 @@ impl orml_payments::FeeHandler<Runtime> for VirtoFeeHandler {
 		_to: &AccountId,
 		_detail: &orml_payments::PaymentDetail<Runtime>,
 		_remark: Option<&[u8]>,
-	) -> (AccountId, Percent) {
-		const VIRTO_MARKETPLACE_FEE_PERCENT: Percent = Percent::from_percent(0);
-		let fee_receiver = Sudo::key().expect("Sudo key not set!");
-		(fee_receiver, VIRTO_MARKETPLACE_FEE_PERCENT)
+	) -> orml_payments::FeeRecipientShareList<Runtime> {
+		// we do not charge any fees
+		Default::default()
 	}
 }
 
 parameter_types! {
 	pub const IncentivePercentage: Percent = Percent::from_percent(10);
 	pub const MaxRemarkLength: u32 = 50;
+	pub const FeeRecipientLimit : u32 = 5;
 	// 1hr buffer period (60*60)/6
 	pub const CancelBufferBlockLength: BlockNumber = 600;
 	pub const MaxScheduledTaskListLength : u32 = 20;
@@ -508,6 +508,7 @@ impl orml_payments::Config for Runtime {
 	type IncentivePercentage = IncentivePercentage;
 	type FeeHandler = VirtoFeeHandler;
 	type MaxRemarkLength = MaxRemarkLength;
+	type FeeRecipientLimit = FeeRecipientLimit;
 	type CancelBufferBlockLength = CancelBufferBlockLength;
 	type MaxScheduledTaskListLength = MaxScheduledTaskListLength;
 	type WeightInfo = weights::payments::SubstrateWeight<Runtime>;

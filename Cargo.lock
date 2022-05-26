@@ -11102,15 +11102,14 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 name = "virto-communities"
 version = "0.0.1"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log",
  "orml-payments",
  "orml-tokens",
  "orml-traits",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
