@@ -98,7 +98,6 @@ impl orml_tokens::Config for Test {
 impl communties::Config for Test {
 	type Event = Event;
 	type Asset = Tokens;
-	type MaxPopulation = ConstU32<10>;
 	type MaxDomainNameSize = ConstU32<10>;
 }
 

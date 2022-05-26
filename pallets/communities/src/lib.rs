@@ -8,37 +8,13 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 
-use frame_support::RuntimeDebug;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
-use scale_info::TypeInfo;
-
-#[derive(Encode, Decode, Clone, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound(T: pallet::Config))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Community<T: pallet::Config> {
-	// TODO : Maybe every community can configure an asset?
-	pub controller: T::AccountId,
-	pub population: PopulationOf<T>,
-	pub domain_name: DomainNameOf<T>,
-}
-
-// TODO : Use better representative names
-pub type H3CellIndex = u32;
-pub type H3CellRes = u32;
-pub type H3CellValue = u32;
-
-#[derive(Encode, Decode, Clone, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-// TODO : Use better representative names
-pub struct CommunityId {
-	index: H3CellIndex,
-	res: H3CellRes,
-	value: H3CellValue,
-}
+mod impls;
+use impls::*;
+mod types;
+use types::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -47,19 +23,15 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{arithmetic::Zero, LockIdentifier, MultiCurrency, NamedMultiReservableCurrency};
 
-	pub type PopulationOf<T> = BoundedVec<<T as frame_system::Config>::AccountId, <T as Config>::MaxPopulation>;
-
 	pub type DomainNameOf<T> = BoundedVec<u8, <T as Config>::MaxDomainNameSize>;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + orml_payments::Config {
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The type of assets this pallet can hold in payment
 		type Asset: NamedMultiReservableCurrency<Self::AccountId, ReserveIdentifier = LockIdentifier>;
-		/// Max population allowed in a cell
-		type MaxPopulation: Get<u32>;
 		/// Max length of domain name for community
 		type MaxDomainNameSize: Get<u32>;
 	}
@@ -73,9 +45,9 @@ pub mod pallet {
 	pub type Communities<T: Config> = StorageNMap<
 		_,
 		(
-			NMapKey<Blake2_128Concat, H3CellIndex>,
-			NMapKey<Blake2_128Concat, H3CellRes>,
-			NMapKey<Blake2_128Concat, H3CellValue>,
+			NMapKey<Blake2_128Concat, BaseIndex>,
+			NMapKey<Blake2_128Concat, CategoryIndex>,
+			NMapKey<Blake2_128Concat, InstanceIndex>,
 		),
 		Community<T>,
 	>;
@@ -90,8 +62,8 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Cell is already occupied
-		CellAlreadyOccupied,
+		/// Invalid format for community Id
+		InvalidCommunityId,
 	}
 
 	#[pallet::hooks]
@@ -104,8 +76,8 @@ pub mod pallet {
 		pub fn register(origin: OriginFor<T>, id: CommunityId, domain: DomainNameOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			Communities::<T>::try_mutate((id.index, id.res, id.value), |community| -> DispatchResult {
-				ensure!(community.is_none(), Error::<T>::CellAlreadyOccupied);
+			Communities::<T>::try_mutate((id.base, id.category, id.instance), |community| -> DispatchResult {
+				ensure!(community.is_none() && id.is_valid(), Error::<T>::InvalidCommunityId);
 
 				let new_community = Community {
 					controller: who,

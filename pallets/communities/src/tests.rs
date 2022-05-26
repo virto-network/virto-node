@@ -14,9 +14,9 @@ fn test_register_works() {
 	new_test_ext().execute_with(|| {
 		let controller = 1;
 		let community_id = CommunityId {
-			index: 100,
-			res: 100,
-			value: 100,
+			base: 100,
+			category: 100,
+			instance: 100,
 		};
 
 		// should be able to register a new community
@@ -33,7 +33,7 @@ fn test_register_works() {
 
 		// should be stored correctly
 		assert_eq!(
-			CommunitiesStorage::<Test>::get((community_id.index, community_id.res, community_id.value)),
+			CommunitiesStorage::<Test>::get((community_id.base, community_id.category, community_id.instance)),
 			Some(Community {
 				controller,
 				population: Default::default(),
