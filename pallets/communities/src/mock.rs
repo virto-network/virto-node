@@ -1,9 +1,7 @@
-use crate as communties;
-use crate::*;
+use crate as communities;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Contains, Everything, GenesisBuild, Hooks, OnFinalize},
-	weights::DispatchClass,
+	traits::{ConstU32, Contains, Everything},
 };
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -28,7 +26,8 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Communities: communties::{Pallet, Call, Storage, Event<T>},
+		Payments: orml_payments::{Pallet, Call, Storage, Event<T>},
+		Communities: communities::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -95,7 +94,36 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = ReserveIdentifier;
 }
 
-impl communties::Config for Test {
+pub struct VirtoDisputeResolver;
+impl orml_payments::DisputeResolver<AccountId> for VirtoDisputeResolver {
+	fn get_resolver_account() -> AccountId {
+		1
+	}
+}
+
+parameter_types! {
+	pub const IncentivePercentage: Percent = Percent::from_percent(10);
+	pub const MaxRemarkLength: u32 = 50;
+	pub const FeeRecipientLimit : u32 = 5;
+	// 1hr buffer period (60*60)/6
+	pub const CancelBufferBlockLength: u64 = 600;
+	pub const MaxScheduledTaskListLength : u32 = 20;
+}
+
+impl orml_payments::Config for Test {
+	type Event = Event;
+	type Asset = Tokens;
+	type DisputeResolver = VirtoDisputeResolver;
+	type IncentivePercentage = IncentivePercentage;
+	type FeeHandler = communities::CommunityFeeHandler;
+	type MaxRemarkLength = MaxRemarkLength;
+	type FeeRecipientLimit = FeeRecipientLimit;
+	type CancelBufferBlockLength = CancelBufferBlockLength;
+	type MaxScheduledTaskListLength = MaxScheduledTaskListLength;
+	type WeightInfo = ();
+}
+
+impl communities::Config for Test {
 	type Event = Event;
 	type Asset = Tokens;
 	type MaxDomainNameSize = ConstU32<10>;
@@ -103,7 +131,7 @@ impl communties::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
 	// need to set block number to 1 to test events

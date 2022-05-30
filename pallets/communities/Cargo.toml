@@ -34,10 +34,12 @@ std = [
 	'sp-runtime/std',
 	'sp-std/std',
 	'scale-info/std',
-	'orml-tokens/std'
+	'orml-tokens/std',
 ]
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "orml-tokens/runtime-benchmarks",
 ]

@@ -19,9 +19,9 @@ use types::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::Currency};
+	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
-	use orml_traits::{arithmetic::Zero, LockIdentifier, MultiCurrency, NamedMultiReservableCurrency};
+	use orml_traits::{LockIdentifier, NamedMultiReservableCurrency};
 
 	pub type DomainNameOf<T> = BoundedVec<u8, <T as Config>::MaxDomainNameSize>;
 

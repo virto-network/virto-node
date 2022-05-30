@@ -1,7 +1,5 @@
 use crate::{mock::*, Communities as CommunitiesStorage, Community, CommunityId};
-use frame_support::{assert_noop, assert_ok, storage::with_transaction};
-use orml_traits::{MultiCurrency, MultiReservableCurrency, NamedMultiReservableCurrency};
-use sp_runtime::{Percent, TransactionOutcome};
+use frame_support::{assert_noop, assert_ok};
 
 type Error = crate::Error<Test>;
 
@@ -39,6 +37,16 @@ fn test_register_works() {
 				population: Default::default(),
 				domain_name: vec![1u8; 10].try_into().unwrap()
 			})
+		);
+
+		// should not allow duplicate community ids
+		assert_noop!(
+			Communities::register(
+				Origin::signed(controller),
+				community_id.clone(),
+				vec![1u8; 10].try_into().unwrap()
+			),
+			Error::InvalidCommunityId
 		);
 	});
 }
