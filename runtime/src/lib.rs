@@ -515,6 +515,17 @@ impl orml_payments::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MaxDomainNameSize : u32 = 50;
+}
+
+impl virto_communities::Config for Runtime {
+	type Event = Event;
+	type Asset = Assets;
+	type MaxDomainNameSize = MaxDomainNameSize;
+	type WeightInfo = virto_communities::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
 	pub const MaxAuthorities: u32 = 100_000;
@@ -608,6 +619,7 @@ construct_runtime!(
 		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
 		UnknownAssets: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
 		Payment: orml_payments::{Call, Event<T>, Pallet, Storage} = 46,
+		Communities: virto_communities::{Call, Event<T>, Pallet, Storage} = 47,
 	}
 );
 
@@ -737,6 +749,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
 			list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 			list_orml_benchmark!(list, extra, orml_payments, benchmarking::payments);
+			list_benchmark!(list, extra, pallet_virto_communities, Communities);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
@@ -777,6 +790,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
 			add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
 			add_orml_benchmark!(params, batches, orml_payments, benchmarking::payments);
+			add_benchmark!(params, batches, pallet_virto_communities, Communities);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

@@ -11253,6 +11253,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "virto-communities",
  "virto-primitives",
  "xcm",
  "xcm-builder",

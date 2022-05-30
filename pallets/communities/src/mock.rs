@@ -127,6 +127,7 @@ impl communities::Config for Test {
 	type Event = Event;
 	type Asset = Tokens;
 	type MaxDomainNameSize = ConstU32<10>;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

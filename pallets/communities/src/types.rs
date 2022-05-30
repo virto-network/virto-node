@@ -3,7 +3,7 @@ use frame_support::RuntimeDebug;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
-use sp_std::{fmt, num::ParseIntError, str::FromStr};
+use sp_std::{fmt, num::ParseIntError, str::FromStr, vec::Vec};
 
 #[derive(Encode, Decode, Clone, PartialEq, Eq, MaxEncodedLen, RuntimeDebug, TypeInfo)]
 #[scale_info(skip_type_params(T))]

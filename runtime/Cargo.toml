@@ -89,6 +89,7 @@ pallet-proxy = { git = 'https://github.com/paritytech/substrate', branch = 'polk
 
 # Local dependencies
 virto-primitives = { default-features = false, path = '../primitives' }
+virto-communities = { default-features = false, path = '../pallets/communities' }
 
 [features]
 default = [
@@ -145,6 +146,7 @@ std = [
 	"pallet-collective/std",
 	"pallet-society/std",
 	"orml-benchmarking/std",
+	"virto-communities/std"
 ]
 
 runtime-benchmarks = [
@@ -162,5 +164,6 @@ runtime-benchmarks = [
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
+	"virto-communities/runtime-benchmarks"
 ]
 

@@ -15,6 +15,7 @@ mod impls;
 pub use impls::CommunityFeeHandler;
 mod types;
 use types::*;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -22,6 +23,7 @@ pub mod pallet {
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 	use frame_system::pallet_prelude::*;
 	use orml_traits::{LockIdentifier, NamedMultiReservableCurrency};
+	use weights::WeightInfo;
 
 	pub type DomainNameOf<T> = BoundedVec<u8, <T as Config>::MaxDomainNameSize>;
 
@@ -34,6 +36,8 @@ pub mod pallet {
 		type Asset: NamedMultiReservableCurrency<Self::AccountId, ReserveIdentifier = LockIdentifier>;
 		/// Max length of domain name for community
 		type MaxDomainNameSize: Get<u32>;
+		/// Weight Config for the pallet
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -72,7 +76,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Register a new community that occupies the cell id and has `domain`
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::register())]
 		pub fn register(origin: OriginFor<T>, id: CommunityId, domain: DomainNameOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
