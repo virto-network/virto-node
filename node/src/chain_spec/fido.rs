@@ -6,8 +6,6 @@ use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use virto_runtime::{AccountId, AuraId, Signature, EXISTENTIAL_DEPOSIT};
 
-mod fido;
-
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<virto_runtime::GenesisConfig, Extensions>;
 

@@ -34,7 +34,7 @@ hex-literal = "0.3.4"
 jsonrpc-core = "18.0.0"
 
 # Local Dependencies
-virto-runtime = { path = "../runtime" }
+fido-runtime = { path = "../runtime/fido" }
 
 # Substrate Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
