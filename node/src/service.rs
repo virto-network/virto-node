@@ -1,3 +1,4 @@
+#![allow(clippy::all, unused_qualifications)]
 //! Service and ServiceFactory implementation. Specialized wrapper over
 //! substrate service.
 
