@@ -44,5 +44,11 @@ impl Convert<MultiAsset, Option<Asset>> for CurrencyIdConvert {
 }
 
 fn native_currency_location(id: Asset) -> MultiLocation {
-	MultiLocation::new(1, X2(Parachain(ParachainInfo::get().into()), GeneralKey(id.encode())))
+	MultiLocation::new(
+		1,
+		X2(
+			Parachain(ParachainInfo::get().into()),
+			GeneralKey(id.encode().try_into().unwrap()),
+		),
+	)
 }

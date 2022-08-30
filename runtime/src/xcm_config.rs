@@ -182,8 +182,8 @@ match_types! {
 
 parameter_type_with_key! {
 	// TODO: configure later
-	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
-		0
+	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+		None
 	};
 }
 
