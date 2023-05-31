@@ -44,7 +44,7 @@ pub mod pallet {
 		fn default() -> Self {
 			// TODO change to ACTIVATED
 			Self {
-				initial_status: DEACTIVATED,
+				initial_status: ACTIVATED,
 			}
 		}
 	}

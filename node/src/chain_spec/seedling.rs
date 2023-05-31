@@ -295,14 +295,7 @@ fn seedling_live_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.chain(std::iter::once(root_key.clone()))
-				.map(|k| {
-					if k == root_key {
-						(k, 1_000_000_000_000_000_000)
-					} else {
-						(k, 1_500_000_000_000_000_000)
-					}
-				})
+				.map(|k| (k, 2_000_000_000_000_000))
 				.collect(),
 		},
 		parachain_info: seedling_runtime::ParachainInfoConfig { parachain_id: id },

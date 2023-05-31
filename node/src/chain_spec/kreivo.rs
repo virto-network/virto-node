@@ -259,7 +259,7 @@ fn kreivo_live_genesis(
 				.chain(std::iter::once(root_key.clone()))
 				.map(|k| {
 					if k == root_key {
-						(k, 1_000_000_000_000_000_000)
+						(k, 1_500_000_000_000_000_000)
 					} else {
 						(k, 1_500_000_000_000_000_000)
 					}
