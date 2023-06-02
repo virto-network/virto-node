@@ -29,6 +29,22 @@ build and containerize the node with your latest changes. (⚠️ at the moment 
 
 > To test xcm asset transfer check [vln-toolbox](https://github.com/virto-network/vln-toolbox)
 
+### Running local setup with zombienet.
+Create a `bin` directory into the root of this repository and place the following binaries inside of it:
+- `polkadot` (which you can download from [the releases](https://github.com/paritytech/polkadot/releases))
+- `polkadot-parachain` (which you will build from [cumulus](https://github.com/paritytech/cumulus))
+
+Download the [latest release of zombienet](https://github.com/paritytech/zombienet/releases/) into the root of this repository and make it executable:
+```bash
+$ chmod +x zombienet-linux # OR
+$ chmod +x zombienet-macos
+```
+
+Then, start the preferred local network with:
+```bash
+./zombienet-linux -p native spawn ./zombienet/kreivo-rococo-local.toml
+```
+
 ## Project Structure
 
 A Substrate project such as this consists of a number of components that are spread across a few
