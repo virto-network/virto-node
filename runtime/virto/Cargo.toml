@@ -2,7 +2,7 @@
 name = "virto-runtime"
 description = "Virto Runtime"
 version = "0.1.0"
-authors = ['Daniel Olano <daniel@olanod.com>']
+authors = ['Virto Team <contact@virto.team>']
 license = "GPL-3.0-only"
 homepage = 'https://github.com/virto-network/virto-node'
 repository = 'https://github.com/virto-network/virto-node'
