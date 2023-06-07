@@ -17,10 +17,12 @@
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for parachains.
 
 use super::*;
+use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler};
 use frame_support::{
-	traits::{Contains, Currency},
+	traits::{Contains, Currency, InstanceFilter},
 	weights::Weight,
+	RuntimeDebug,
 };
 
 use pallet_lockdown_mode::impls::PauseXcmExecution;
@@ -97,13 +99,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => !matches!(
-				c,
-				RuntimeCall::Balances { .. }
-					| RuntimeCall::Assets { .. }
-					| RuntimeCall::Nfts { .. }
-					| RuntimeCall::Uniques { .. }
-			),
+			ProxyType::NonTransfer => !matches!(c, RuntimeCall::Balances { .. } | RuntimeCall::Assets { .. }),
 			ProxyType::CancelProxy => matches!(
 				c,
 				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. })
@@ -113,11 +109,7 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			ProxyType::Assets => {
 				matches!(
 					c,
-					RuntimeCall::Assets { .. }
-						| RuntimeCall::Utility { .. }
-						| RuntimeCall::Multisig { .. }
-						| RuntimeCall::Nfts { .. }
-						| RuntimeCall::Uniques { .. }
+					RuntimeCall::Assets { .. } | RuntimeCall::Utility { .. } | RuntimeCall::Multisig { .. }
 				)
 			}
 			ProxyType::AssetOwner => matches!(
@@ -131,24 +123,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					| RuntimeCall::Assets(TrustBackedAssetsCall::set_team { .. })
 					| RuntimeCall::Assets(TrustBackedAssetsCall::set_metadata { .. })
 					| RuntimeCall::Assets(TrustBackedAssetsCall::clear_metadata { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::create { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::destroy { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::redeposit { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::transfer_ownership { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::set_team { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::set_collection_max_supply { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::lock_collection { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::create { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::destroy { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::transfer_ownership { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::set_team { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::set_metadata { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::set_attribute { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::set_collection_metadata { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::clear_metadata { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::clear_attribute { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::clear_collection_metadata { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::set_collection_max_supply { .. })
 					| RuntimeCall::Utility { .. }
 					| RuntimeCall::Multisig { .. }
 			),
@@ -160,23 +134,6 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 					| RuntimeCall::Assets(TrustBackedAssetsCall::thaw { .. })
 					| RuntimeCall::Assets(TrustBackedAssetsCall::freeze_asset { .. })
 					| RuntimeCall::Assets(TrustBackedAssetsCall::thaw_asset { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::force_mint { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::update_mint_settings { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::mint_pre_signed { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::set_attributes_pre_signed { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::lock_item_transfer { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::unlock_item_transfer { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::lock_item_properties { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::set_metadata { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::clear_metadata { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::set_collection_metadata { .. })
-					| RuntimeCall::Nfts(pallet_nfts::Call::clear_collection_metadata { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::mint { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::burn { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::freeze { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::thaw { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::freeze_collection { .. })
-					| RuntimeCall::Uniques(pallet_uniques::Call::thaw_collection { .. })
 					| RuntimeCall::Utility { .. }
 					| RuntimeCall::Multisig { .. }
 			),

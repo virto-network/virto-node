@@ -456,7 +456,7 @@ parameter_types! {
 
 /// We allow root to execute privileged asset operations.
 pub type AssetsForceOrigin = EnsureRoot<AccountId>;
-
+type TrustBackedAssetsCall = pallet_assets::Call<Runtime>;
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
