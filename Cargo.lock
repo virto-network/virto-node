@@ -4085,6 +4085,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-lockdown-mode",
  "pallet-multisig",
+ "pallet-proxy",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",

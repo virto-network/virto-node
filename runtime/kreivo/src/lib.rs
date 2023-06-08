@@ -54,7 +54,7 @@ use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 use xcm::latest::prelude::BodyId;
 use xcm_executor::XcmExecutor;
 
-pub use impls::{LockdownDmpHandler, RuntimeBlackListedCalls, XcmExecutionManager};
+pub use impls::{LockdownDmpHandler, ProxyType, RuntimeBlackListedCalls, XcmExecutionManager};
 pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Index, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -456,7 +456,7 @@ parameter_types! {
 
 /// We allow root to execute privileged asset operations.
 pub type AssetsForceOrigin = EnsureRoot<AccountId>;
-
+type TrustBackedAssetsCall = pallet_assets::Call<Runtime>;
 impl pallet_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -479,6 +479,33 @@ impl pallet_assets::Config for Runtime {
 	type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
+}
+
+parameter_types! {
+	// One storage item; key size 32, value size 8; .
+	pub const ProxyDepositBase: Balance = deposit(1, 40);
+	// Additional storage item size of 33 bytes.
+	pub const ProxyDepositFactor: Balance = deposit(0, 33);
+	pub const MaxProxies: u16 = 32;
+	// One storage item; key size 32, value size 16
+	pub const AnnouncementDepositBase: Balance = deposit(1, 48);
+	pub const AnnouncementDepositFactor: Balance = deposit(0, 66);
+	pub const MaxPending: u16 = 32;
+}
+
+impl pallet_proxy::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type Currency = Balances;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = AnnouncementDepositBase;
+	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously
@@ -519,6 +546,7 @@ construct_runtime!(
 		LockdownMode: pallet_lockdown_mode = 41,
 		Multisig: pallet_multisig = 42,
 		Utility: pallet_utility = 43,
+		Proxy: pallet_proxy = 44,
 
 		// Governance
 		Treasury: pallet_treasury = 50,
@@ -540,6 +568,7 @@ mod benches {
 		[pallet_multisig, Multisig]
 		[pallet_utility, Utility]
 		[pallet_assets, Assets]
+		[pallet_proxy, Proxy]
 	);
 }
 
