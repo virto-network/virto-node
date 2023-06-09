@@ -3525,6 +3525,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "kusama-runtime-constants",
  "log",
+ "pallet-asset-registry",
  "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
@@ -5053,6 +5054,23 @@ checksum = "a1914cd452d8fccd6f9db48147b29fd4ae05bea9dc5d9ad578509f72415de282"
 dependencies = [
  "cfg-if",
  "libm 0.1.4",
+]
+
+[[package]]
+name = "pallet-asset-registry"
+version = "0.0.1"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-assets",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+ "virto-common",
+ "xcm",
 ]
 
 [[package]]
@@ -11559,6 +11577,7 @@ dependencies = [
  "frame-system",
  "kreivo-runtime",
  "kusama-runtime",
+ "pallet-asset-registry",
  "pallet-assets",
  "pallet-balances",
  "pallet-sudo",

@@ -98,3 +98,27 @@ pub fn output_events<Runtime: frame_system::Config>() {
 		log::trace!(target: TARGET, "{:?}", event)
 	}
 }
+
+pub fn register_reserve_asset_on_kreivo(
+	origin: kreivo_runtime::AccountId,
+	kreivo_asset_id: kreivo_runtime::AssetIdForTrustBackedAssets,
+	asset_reserve_asset_id: AssetId,
+) -> DispatchResultWithPostInfo {
+	kreivo_runtime::Sudo::sudo(
+		kreivo_runtime::RuntimeOrigin::signed(origin),
+		Box::new(kreivo_runtime::RuntimeCall::AssetRegistry(
+			pallet_asset_registry::Call::<kreivo_runtime::Runtime>::register_reserve_asset {
+				asset_id: kreivo_asset_id,
+				asset_multi_location: (
+					Parent,
+					X3(
+						Parachain(asset_reserve::ASSET_RESERVE_PARA_ID),
+						PalletInstance(statemine_runtime::Assets::index() as u8),
+						GeneralIndex(asset_reserve_asset_id as u128),
+					),
+				)
+					.into(),
+			},
+		)),
+	)
+}

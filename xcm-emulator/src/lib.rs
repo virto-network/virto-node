@@ -1,14 +1,19 @@
+use codec::Compact;
 use frame_support::{pallet_prelude::Weight, traits::GenesisBuild};
 mod runtimes;
 use runtimes::*;
-use sp_runtime::AccountId32;
-
+use std::sync::Once;
+use thousands::Separable;
+use xcm::prelude::*;
 use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
 const ASSET_RESERVE_PARA_ID: u32 = runtimes::asset_reserve::ASSET_RESERVE_PARA_ID;
 const KREIVO_PARA_ID: u32 = runtimes::kreivo::KREIVO_PARA_ID;
 
-const XCM_VERSION: u32 = 3;
+#[allow(non_upper_case_globals)]
+const xUSD: u32 = 1984;
+#[allow(non_upper_case_globals)]
+const txUSD: u32 = 10;
 
 decl_test_relay_chain! {
 	pub struct KusamaNet {
@@ -19,7 +24,7 @@ decl_test_relay_chain! {
 }
 
 decl_test_parachain! {
-	pub struct AssetsReserveRuntime {
+	pub struct AssetReserveParachain {
 		Runtime = statemine_runtime::Runtime,
 		RuntimeOrigin = statemine_runtime::RuntimeOrigin,
 		XcmpMessageHandler = statemine_runtime::XcmpQueue,
@@ -29,7 +34,7 @@ decl_test_parachain! {
 }
 
 decl_test_parachain! {
-	pub struct KreivoRuntime {
+	pub struct KreivoParachain {
 		Runtime = kreivo_runtime::Runtime,
 		RuntimeOrigin = kreivo_runtime::RuntimeOrigin,
 		XcmpMessageHandler = kreivo_runtime::XcmpQueue,
@@ -42,8 +47,8 @@ decl_test_network! {
 	pub struct Network {
 		relay_chain = KusamaNet,
 		parachains = vec![
-			(1_000, AssetsReserveRuntime),
-			(2_000, KreivoRuntime),
+			(1_000, AssetReserveParachain),
+			(2_000, KreivoParachain),
 		],
 	}
 }
@@ -55,7 +60,7 @@ mod tests {
 
 	use cumulus_primitives_core::ParaId;
 	use frame_support::{assert_ok, dispatch::GetDispatchInfo, traits::Currency};
-	use sp_runtime::traits::AccountIdConversion;
+	use sp_runtime::{traits::AccountIdConversion, MultiAddress};
 	use xcm::{v3::prelude::*, VersionedMultiLocation, VersionedXcm};
 	use xcm_emulator::TestExt;
 
@@ -73,9 +78,6 @@ mod tests {
 			interior: X1(Parachain(KREIVO_PARA_ID)),
 		};
 
-		// 1) Forces XCM default version on KusamaNet
-		// 2) Sends Transact as Superuser to Asset Reserve Parachain to force XCM
-		// default version on Asset Reserve Parachain
 		KusamaNet::execute_with(|| {
 			assert_ok!(kusama_runtime::XcmPallet::force_default_xcm_version(
 				kusama_runtime::RuntimeOrigin::root(),
@@ -93,15 +95,13 @@ mod tests {
 				Here,
 				Parachain(ASSET_RESERVE_PARA_ID),
 				Xcm(vec![Transact {
-					origin_type: OriginKind::Superuser,
-					require_weight_at_most: 1_000_000_000,
+					origin_kind: OriginKind::Superuser,
+					require_weight_at_most: 1_000_000_000.into(),
 					call: force_default_xcm_version_call.encode().into(),
 				}]),
 			));
 		});
 
-		// 3) Create asset xUSD
-		// 4) Mint asset xUSD
 		AssetReserveParachain::execute_with(|| {
 			// Create fungible asset on Reserve Parachain
 			assert_ok!(create_asset_on_asset_reserve(xUSD, ALICE, 1_000_000_000));
@@ -117,11 +117,10 @@ mod tests {
 			);
 		});
 
-		// 5) Sends Transact as Superuser to Asset Reserve Parachain to set the asset as
-		// sufficient
 		KusamaNet::execute_with(|| {
 			let set_asset_sufficient_call = statemine_runtime::RuntimeCall::Assets(pallet_assets::Call::<
 				statemine_runtime::Runtime,
+				_,
 			>::force_asset_status {
 				id: Compact(xUSD),
 				owner: ALICE.into(),
@@ -137,8 +136,8 @@ mod tests {
 				Here,
 				Parachain(ASSET_RESERVE_PARA_ID),
 				Xcm(vec![Transact {
-					origin_type: OriginKind::Superuser,
-					require_weight_at_most: 1_000_000_000,
+					origin_kind: OriginKind::Superuser,
+					require_weight_at_most: 1_000_000_000.into(),
 					call: set_asset_sufficient_call.encode().into(),
 				}]),
 			));
@@ -158,8 +157,8 @@ mod tests {
 		let mut beneficiary_balance = 0;
 		// 7) Create derivative asset on Trappist Parachain
 		// 8) Sets the asset as sufficient on Trappist	Parachain
-		TrappistParachain::execute_with(|| {
-			/* 			let statemine_sovereign_account = parachains::sovereign_account(ASSET_RESERVE_PARA_ID);
+		KreivoParachain::execute_with(|| {
+			/* 			let statemine_sovereign_account = runtimes::sovereign_account(ASSET_RESERVE_PARA_ID);
 
 			assert_ok!(kreivo_runtime::Balances::transfer(
 				kreivo_runtime::RuntimeOrigin::signed(BOB),
@@ -168,7 +167,7 @@ mod tests {
 			)); */
 
 			// Create derivative asset on Trappist Parachain
-			assert_ok!(create_derivative_asset_on_trappist(
+			assert_ok!(create_derivative_asset_on_kreivo(
 				txUSD,
 				ALICE.into(),
 				ASSET_MIN_BALANCE
@@ -194,7 +193,7 @@ mod tests {
 
 			// Map derivative asset (txUSD) to multi-location (xUSD within Assets pallet on
 			// Reserve Parachain) via Asset Registry
-			assert_ok!(register_reserve_asset_on_trappist(ALICE, txUSD, xUSD));
+			assert_ok!(register_reserve_asset_on_kreivo(ALICE, txUSD, xUSD));
 			kreivo_runtime::System::assert_has_event(
 				pallet_asset_registry::Event::ReserveAssetRegistered {
 					asset_id: txUSD,
@@ -221,7 +220,7 @@ mod tests {
 		// 9) Sends XCM to Trappist Parachain to reserve-transfer an asset to Trappist
 		// Parachain
 		AssetReserveParachain::execute_with(|| {
-			let kreivo_sovereign_account = parachains::sovereign_account(KREIVO_PARA_ID);
+			let kreivo_sovereign_account = runtimes::sovereign_account(KREIVO_PARA_ID);
 
 			assert_ok!(statemine_runtime::Balances::transfer(
 				statemine_runtime::RuntimeOrigin::signed(ALICE),
@@ -236,10 +235,9 @@ mod tests {
 				Box::new(kreivo_remote.clone().into()),
 				Box::new(
 					X1(AccountId32 {
-						network: Any,
+						network: Some(NetworkId::Kusama),
 						id: ALICE.into()
 					})
-					.into()
 					.into()
 				),
 				Box::new((X2(PalletInstance(50.into()), GeneralIndex(xUSD as u128)), AMOUNT).into()),
@@ -255,7 +253,7 @@ mod tests {
 
 		// 10) Checks on Trappist Parachain that the asset was received
 		const EST_FEES: u128 = 1_600_000_000 * 10;
-		TrappistParachain::execute_with(|| {
+		KreivoParachain::execute_with(|| {
 			// Ensure beneficiary account balance increased
 			let current_balance = kreivo_runtime::Assets::balance(txUSD, &ALICE);
 			println!(
@@ -266,7 +264,7 @@ mod tests {
 				EST_FEES.separate_with_commas(),
 				(beneficiary_balance + AMOUNT - current_balance).separate_with_commas()
 			);
-			parachains::assert_balance(current_balance, beneficiary_balance + AMOUNT, EST_FEES);
+			runtimes::assert_balance(current_balance, beneficiary_balance + AMOUNT, EST_FEES);
 		});
 	}
 }
