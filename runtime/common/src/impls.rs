@@ -18,7 +18,9 @@
 
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
-use sp_std::marker::PhantomData;
+use sp_std::{borrow::Borrow, marker::PhantomData};
+use xcm::latest::{AssetId::Concrete, Fungibility::Fungible, MultiAsset, MultiLocation};
+use xcm_executor::traits::{Convert, Error as MatchError, MatchesFungibles};
 
 // TODO - Create and import XCM common types
 //use xcm::latest::{AssetId, Fungibility::Fungible, MultiAsset, MultiLocation};
@@ -48,5 +50,47 @@ where
 			// 100% of the fees + tips (if any) go to the treasury
 			<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(fees);
 		}
+	}
+}
+
+pub struct AsAssetMultiLocation<AssetId, AssetIdInfoGetter>(PhantomData<(AssetId, AssetIdInfoGetter)>);
+impl<AssetId, AssetIdInfoGetter> xcm_executor::traits::Convert<MultiLocation, AssetId>
+	for AsAssetMultiLocation<AssetId, AssetIdInfoGetter>
+where
+	AssetId: Clone,
+	AssetIdInfoGetter: AssetMultiLocationGetter<AssetId>,
+{
+	fn convert_ref(asset_multi_location: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
+		AssetIdInfoGetter::get_asset_id(asset_multi_location.borrow()).ok_or(())
+	}
+
+	fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
+		AssetIdInfoGetter::get_asset_multi_location(asset_id.borrow().clone()).ok_or(())
+	}
+}
+
+pub trait AssetMultiLocationGetter<AssetId> {
+	fn get_asset_multi_location(asset_id: AssetId) -> Option<MultiLocation>;
+	fn get_asset_id(asset_multi_location: &MultiLocation) -> Option<AssetId>;
+}
+
+pub struct ConvertedRegisteredAssetId<AssetId, Balance, ConvertAssetId, ConvertBalance>(
+	PhantomData<(AssetId, Balance, ConvertAssetId, ConvertBalance)>,
+);
+impl<
+		AssetId: Clone,
+		Balance: Clone,
+		ConvertAssetId: Convert<MultiLocation, AssetId>,
+		ConvertBalance: Convert<u128, Balance>,
+	> MatchesFungibles<AssetId, Balance> for ConvertedRegisteredAssetId<AssetId, Balance, ConvertAssetId, ConvertBalance>
+{
+	fn matches_fungibles(a: &MultiAsset) -> Result<(AssetId, Balance), MatchError> {
+		let (amount, id) = match (&a.fun, &a.id) {
+			(Fungible(ref amount), Concrete(ref id)) => (amount, id),
+			_ => return Err(MatchError::AssetNotHandled),
+		};
+		let what = ConvertAssetId::convert_ref(id).map_err(|_| MatchError::AssetNotHandled)?;
+		let amount = ConvertBalance::convert_ref(amount).map_err(|_| MatchError::AmountToBalanceConversionFailed)?;
+		Ok((what, amount))
 	}
 }

@@ -1,6 +1,7 @@
 use super::{
-	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
-	RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee, XcmpQueue,
+	AccountId, AllPalletsWithSystem, AssetIdForTrustBackedAssets, AssetRegistry, Assets, Balance, Balances,
+	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee,
+	XcmpQueue,
 };
 use frame_support::{
 	match_types, parameter_types,
@@ -12,7 +13,7 @@ use pallet_xcm::XcmPassthrough;
 use parachains_common::xcm_config::{DenyReserveTransferToRelayChain, DenyThenTry};
 use polkadot_parachain::primitives::Sibling;
 use sp_std::marker::PhantomData;
-use virto_common::impls::DealWithFees;
+use virto_common::impls::{AsAssetMultiLocation, ConvertedRegisteredAssetId, DealWithFees};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
@@ -21,6 +22,7 @@ use xcm_builder::{
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 	WithComputedOrigin,
 };
+use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
 
 parameter_types! {
@@ -59,8 +61,14 @@ pub type TrustBackedAssetsConvertedConcreteId =
 pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
 	Assets,
-	// Use this currency when it is a fungible asset matching the given location or name:
-	TrustBackedAssetsConvertedConcreteId,
+	// Use this currency when it is a registered fungible asset matching the given location or name
+	// Assets not found in AssetRegistry will not be used
+	ConvertedRegisteredAssetId<
+		AssetIdForTrustBackedAssets,
+		Balance,
+		AsAssetMultiLocation<AssetIdForTrustBackedAssets, AssetRegistry>,
+		JustTry,
+	>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):

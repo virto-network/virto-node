@@ -22,6 +22,7 @@ scale-info = { version = "2.3.1", default-features = false, features = ["derive"
 smallvec = "1.10.0"
 
 # Local
+pallet-asset-registry = { version = "0.0.1", default-features = false, path = "../../pallets/asset-registry" }
 pallet-lockdown-mode = { version = "0.1.0", default-features = false, path = "../../pallets/lockdown-mode" }
 pallet-burner = { version = "0.1.0", default-features = false, path = "../../pallets/burner" }
 virto-common = { path = "../common", default-features = false }
@@ -107,6 +108,7 @@ std = [
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
 	"pallet-assets/std",
+	"pallet-asset-registry/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
@@ -150,6 +152,7 @@ runtime-benchmarks = [
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
+	"pallet-asset-registry/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
@@ -177,6 +180,7 @@ try-runtime = [
 	"frame-system/try-runtime",
 	"frame-try-runtime/try-runtime",
 	"pallet-assets/try-runtime",
+	"pallet-asset-registry/try-runtime",
 	"pallet-aura/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
