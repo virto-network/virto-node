@@ -81,13 +81,17 @@ mod register_reserve_assest {
 			parents: 1,
 			interior: X3(Parachain(1000), PalletInstance(1), GeneralIndex(2)),
 		};
+		let relay_native_currency = MultiLocation {
+			parents: 1,
+			interior: Junctions::Here,
+		};
 		let erc20_frame_sm_asset = MultiLocation {
 			parents: 1,
 			interior: X3(
 				Parachain(1000),
 				PalletInstance(2),
 				AccountId32 {
-					network: Any,
+					network: None,
 					id: [0; 32],
 				},
 			),
@@ -97,7 +101,7 @@ mod register_reserve_assest {
 			interior: X2(
 				Parachain(2000),
 				AccountKey20 {
-					network: Any,
+					network: None,
 					key: [0; 20],
 				},
 			),
@@ -121,6 +125,13 @@ mod register_reserve_assest {
 			assert_ok!(AssetRegistry::register_reserve_asset(
 				RuntimeOrigin::root(),
 				LOCAL_ASSET_ID,
+				relay_native_currency,
+			));
+		});
+		new_test_ext().execute_with(|| {
+			assert_ok!(AssetRegistry::register_reserve_asset(
+				RuntimeOrigin::root(),
+				LOCAL_ASSET_ID,
 				erc20_frame_sm_asset,
 			));
 		});
@@ -135,10 +146,6 @@ mod register_reserve_assest {
 
 	#[test]
 	fn invalid_locations_fail() {
-		let trappist_location = MultiLocation {
-			parents: 0,
-			interior: Here,
-		};
 		let governance_location = MultiLocation {
 			parents: 1,
 			interior: X2(
@@ -155,11 +162,6 @@ mod register_reserve_assest {
 		};
 
 		new_test_ext().execute_with(|| {
-			assert_noop!(
-				AssetRegistry::register_reserve_asset(RuntimeOrigin::root(), LOCAL_ASSET_ID, trappist_location,),
-				Error::<Test>::WrongMultiLocation
-			);
-
 			assert_noop!(
 				AssetRegistry::register_reserve_asset(RuntimeOrigin::root(), LOCAL_ASSET_ID, governance_location,),
 				Error::<Test>::WrongMultiLocation
