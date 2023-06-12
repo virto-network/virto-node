@@ -141,26 +141,19 @@ pub mod pallet {
 		fn valid_asset_location(location: &MultiLocation) -> bool {
 			let (split_multilocation, last_junction) = location.clone().split_last_interior();
 
-			if let Some(junction) = last_junction {
-				match junction {
-					AccountId32 { .. } | AccountKey20 { .. } => true,
-					GeneralIndex(_) => {
+			let check = matches!(
+				last_junction,
+				Some(AccountId32 { .. }) | Some(AccountKey20 { .. }) | Some(PalletInstance(_)) | None
+			);
+
+			check
+				| match last_junction {
+					Some(GeneralIndex(_)) => {
 						let penultimate = split_multilocation.last();
-						if let Some(junction) = penultimate {
-							match junction {
-								PalletInstance(_) => true,
-								_ => false,
-							}
-						} else {
-							false
-						}
+						matches!(penultimate, Some(PalletInstance(_)))
 					}
-					PalletInstance(_) => true,
 					_ => false,
 				}
-			} else {
-				false
-			}
 		}
 	}
 
