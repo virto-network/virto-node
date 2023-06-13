@@ -16,9 +16,9 @@ const xUSD: u32 = 1984;
 const txUSD: u32 = 10;
 
 decl_test_relay_chain! {
-	pub struct KusamaNet {
-		Runtime = kusama_runtime::Runtime,
-		XcmConfig = kusama_runtime::xcm_config::XcmConfig,
+	pub struct RococoNet {
+		Runtime = rococo_runtime::Runtime,
+		XcmConfig = rococo_runtime::xcm_config::XcmConfig,
 		new_ext = runtimes::relay_chain::new_ext(),
 	}
 }
@@ -45,7 +45,7 @@ decl_test_parachain! {
 
 decl_test_network! {
 	pub struct Network {
-		relay_chain = KusamaNet,
+		relay_chain = RococoNet,
 		parachains = vec![
 			(1_000, AssetReserveParachain),
 			(2_000, KreivoParachain),
@@ -78,93 +78,91 @@ mod tests {
 			interior: X1(Parachain(KREIVO_PARA_ID)),
 		};
 
-		KusamaNet::execute_with(|| {
-			assert_ok!(kusama_runtime::XcmPallet::force_default_xcm_version(
-				kusama_runtime::RuntimeOrigin::root(),
-				Some(XCM_VERSION)
-			));
-
-			let force_default_xcm_version_call = statemine_runtime::RuntimeCall::PolkadotXcm(pallet_xcm::Call::<
-				statemine_runtime::Runtime,
-			>::force_xcm_version {
-				location: Box::new(kreivo_remote.clone()),
-				xcm_version: XCM_VERSION,
-			});
-
-			assert_ok!(kusama_runtime::XcmPallet::send_xcm(
-				Here,
-				Parachain(ASSET_RESERVE_PARA_ID),
-				Xcm(vec![Transact {
-					origin_kind: OriginKind::Superuser,
-					require_weight_at_most: 1_000_000_000.into(),
-					call: force_default_xcm_version_call.encode().into(),
-				}]),
-			));
-		});
+		let parent: MultiLocation = MultiLocation {
+			parents: 1,
+			interior: Here,
+		};
 
 		AssetReserveParachain::execute_with(|| {
-			// Create fungible asset on Reserve Parachain
+			println!("     ");
+			println!(
+				">>>>>>>>> AssetReserveParachain: set XCM versions and set sufficient assets <<<<<<<<<<<<<<<<<<<<<<"
+			);
+			println!("     ");
+			assert_ok!(statemine_runtime::PolkadotXcm::force_xcm_version(
+				statemine_runtime::RuntimeOrigin::root(),
+				Box::new(parent.clone().into()),
+				XCM_VERSION
+			));
+
+			assert_ok!(statemine_runtime::PolkadotXcm::force_xcm_version(
+				statemine_runtime::RuntimeOrigin::root(),
+				Box::new(kreivo_remote.clone()),
+				XCM_VERSION
+			));
+
 			assert_ok!(create_asset_on_asset_reserve(xUSD, ALICE, 1_000_000_000));
 
 			// Mint fungible asset
 			assert_ok!(mint_asset_on_asset_reserve(xUSD, ALICE, MINT_AMOUNT));
 			assert_eq!(statemine_runtime::Assets::balance(xUSD, &ALICE), MINT_AMOUNT);
-			statemine_runtime::System::events()
-				.iter()
-				.for_each(|r| println!(">>> {:?}", r.event));
-			statemine_runtime::System::assert_has_event(
-				pallet_xcm::Event::SupportedVersionChanged(kreivo_remote.clone(), 2).into(),
-			);
-		});
 
-		KusamaNet::execute_with(|| {
-			let set_asset_sufficient_call = statemine_runtime::RuntimeCall::Assets(pallet_assets::Call::<
-				statemine_runtime::Runtime,
-				_,
-			>::force_asset_status {
-				id: Compact(xUSD),
-				owner: ALICE.into(),
-				issuer: ALICE.into(),
-				admin: ALICE.into(),
-				freezer: ALICE.into(),
-				min_balance: ASSET_MIN_BALANCE,
-				is_sufficient: true,
-				is_frozen: false,
-			});
-
-			assert_ok!(kusama_runtime::XcmPallet::send_xcm(
-				Here,
-				Parachain(ASSET_RESERVE_PARA_ID),
-				Xcm(vec![Transact {
-					origin_kind: OriginKind::Superuser,
-					require_weight_at_most: 1_000_000_000.into(),
-					call: set_asset_sufficient_call.encode().into(),
-				}]),
+			assert_ok!(statemine_runtime::Assets::force_asset_status(
+				statemine_runtime::RuntimeOrigin::root(),
+				Compact(xUSD),
+				ALICE.into(),
+				ALICE.into(),
+				ALICE.into(),
+				ALICE.into(),
+				ASSET_MIN_BALANCE,
+				true,
+				false,
 			));
-		});
 
-		// 6) Check the events on Asset Reserve Parachain and validated the XCM
-		// supported version is 2
-		AssetReserveParachain::execute_with(|| {
 			statemine_runtime::System::events()
 				.iter()
 				.for_each(|r| println!(">>> {:?}", r.event));
+
 			statemine_runtime::System::assert_has_event(
-				pallet_xcm::Event::SupportedVersionChanged(kreivo_remote.clone(), 2).into(),
+				pallet_xcm::Event::SupportedVersionChanged(
+					MultiLocation {
+						parents: 1,
+						interior: Here,
+					},
+					3,
+				)
+				.into(),
 			);
+
+			statemine_runtime::System::assert_has_event(
+				pallet_xcm::Event::SupportedVersionChanged(kreivo_remote.clone(), 3).into(),
+			);
+		});
+
+		RococoNet::execute_with(|| {
+			println!("     ");
+			println!(">>>>>>>>> RococoNet: force xcm v3 version <<<<<<<<<<<<<<<<<<<<<<");
+			println!("     ");
+			assert_ok!(rococo_runtime::XcmPallet::force_default_xcm_version(
+				rococo_runtime::RuntimeOrigin::root(),
+				Some(XCM_VERSION)
+			));
 		});
 
 		let mut beneficiary_balance = 0;
 		// 7) Create derivative asset on Trappist Parachain
 		// 8) Sets the asset as sufficient on Trappist	Parachain
 		KreivoParachain::execute_with(|| {
-			/* 			let statemine_sovereign_account = runtimes::sovereign_account(ASSET_RESERVE_PARA_ID);
+			println!("     ");
+			println!(">>>>>>>>> KreivoParachain: create derivative asset and fund statemine sov account <<<<<<<<<<<<<<<<<<<<<<");
+			println!("     ");
+			let statemine_sovereign_account = runtimes::sovereign_account(ASSET_RESERVE_PARA_ID);
 
 			assert_ok!(kreivo_runtime::Balances::transfer(
-				kreivo_runtime::RuntimeOrigin::signed(BOB),
+				kreivo_runtime::RuntimeOrigin::signed(ALICE),
 				MultiAddress::Id(statemine_sovereign_account.clone()),
 				1_000_000_000_000
-			)); */
+			));
 
 			// Create derivative asset on Trappist Parachain
 			assert_ok!(create_derivative_asset_on_kreivo(
@@ -211,8 +209,6 @@ mod tests {
 			kreivo_runtime::System::events()
 				.iter()
 				.for_each(|r| println!(">>> {:?}", r.event));
-			// Check beneficiary balance
-			beneficiary_balance = kreivo_runtime::Assets::balance(txUSD, &ALICE);
 		});
 
 		const AMOUNT: u128 = 20_000_000_000;
@@ -220,6 +216,10 @@ mod tests {
 		// 9) Sends XCM to Trappist Parachain to reserve-transfer an asset to Trappist
 		// Parachain
 		AssetReserveParachain::execute_with(|| {
+			println!("     ");
+			println!(">>>>>>>>> AssetReserveParachain: reserve based transfer<<<<<<<<<<<<<<<<<<<<<<");
+			println!("     ");
+
 			let kreivo_sovereign_account = runtimes::sovereign_account(KREIVO_PARA_ID);
 
 			assert_ok!(statemine_runtime::Balances::transfer(
@@ -235,7 +235,7 @@ mod tests {
 				Box::new(kreivo_remote.clone().into()),
 				Box::new(
 					X1(AccountId32 {
-						network: Some(NetworkId::Kusama),
+						network: Some(NetworkId::Rococo),
 						id: ALICE.into()
 					})
 					.into()
@@ -244,6 +244,10 @@ mod tests {
 				0,
 				WeightLimit::Unlimited,
 			));
+
+			statemine_runtime::System::events()
+				.iter()
+				.for_each(|r| println!(">>> {:?}", r.event));
 
 			assert_eq!(
 				statemine_runtime::Assets::balance(xUSD, &kreivo_sovereign_account),
@@ -254,8 +258,15 @@ mod tests {
 		// 10) Checks on Trappist Parachain that the asset was received
 		const EST_FEES: u128 = 1_600_000_000 * 10;
 		KreivoParachain::execute_with(|| {
+			println!("     ");
+			println!(">>>>>>>>> KreivoParachain <<<<<<<<<<<<<<<<<<<<<<");
+			println!("     ");
 			// Ensure beneficiary account balance increased
 			let current_balance = kreivo_runtime::Assets::balance(txUSD, &ALICE);
+			kreivo_runtime::System::events()
+				.iter()
+				.for_each(|r| println!(">>> {:?}", r.event));
+
 			println!(
 				"Reserve-transfer: initial balance {} transfer amount {} current balance {} estimated fees {} actual fees {}",
 				beneficiary_balance.separate_with_commas(),

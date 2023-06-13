@@ -3,7 +3,7 @@ use frame_support::{pallet_prelude::Weight, traits::GenesisBuild};
 use sp_runtime::AccountId32;
 
 pub fn new_ext() -> sp_io::TestExternalities {
-	use kusama_runtime::{Runtime, System};
+	use rococo_runtime::{Runtime, System};
 
 	let mut t = frame_system::GenesisConfig::default()
 		.build_storage::<Runtime>()
