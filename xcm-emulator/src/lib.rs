@@ -1,5 +1,6 @@
 use codec::Compact;
 use frame_support::{pallet_prelude::Weight, traits::GenesisBuild};
+use polkadot_primitives::runtime_api::runtime_decl_for_parachain_host::ParachainHostV4;
 mod runtimes;
 use runtimes::*;
 use std::sync::Once;
@@ -171,22 +172,16 @@ mod tests {
 				ASSET_MIN_BALANCE
 			));
 
-			let set_asset_sufficient_call = kreivo_runtime::RuntimeCall::Assets(pallet_assets::Call::<
-				kreivo_runtime::Runtime,
-			>::force_asset_status {
-				id: Compact(txUSD),
-				owner: ALICE.into(),
-				issuer: ALICE.into(),
-				admin: ALICE.into(),
-				freezer: ALICE.into(),
-				min_balance: ASSET_MIN_BALANCE,
-				is_sufficient: true,
-				is_frozen: false,
-			});
-
-			assert_ok!(kreivo_runtime::Sudo::sudo(
-				kreivo_runtime::RuntimeOrigin::signed(ALICE),
-				Box::new(set_asset_sufficient_call),
+			assert_ok!(kreivo_runtime::Assets::force_asset_status(
+				kreivo_runtime::RuntimeOrigin::root(),
+				Compact(txUSD),
+				ALICE.into(),
+				ALICE.into(),
+				ALICE.into(),
+				ALICE.into(),
+				ASSET_MIN_BALANCE,
+				true,
+				false,
 			));
 
 			// Map derivative asset (txUSD) to multi-location (xUSD within Assets pallet on
