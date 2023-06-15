@@ -12,9 +12,9 @@ const ASSET_RESERVE_PARA_ID: u32 = runtimes::asset_reserve::ASSET_RESERVE_PARA_I
 const KREIVO_PARA_ID: u32 = runtimes::kreivo::KREIVO_PARA_ID;
 
 #[allow(non_upper_case_globals)]
-const xUSD: u32 = 1984;
+const USDT: u32 = 1984;
 #[allow(non_upper_case_globals)]
-const txUSD: u32 = 10;
+const kUSDT: u32 = 1984;
 
 decl_test_relay_chain! {
 	pub struct RococoNet {
@@ -102,15 +102,15 @@ mod tests {
 				XCM_VERSION
 			));
 
-			assert_ok!(create_asset_on_asset_reserve(xUSD, ALICE, 1_000_000_000));
+			assert_ok!(create_asset_on_asset_reserve(USDT, ALICE, 1_000_000_000));
 
 			// Mint fungible asset
-			assert_ok!(mint_asset_on_asset_reserve(xUSD, ALICE, MINT_AMOUNT));
-			assert_eq!(statemine_runtime::Assets::balance(xUSD, &ALICE), MINT_AMOUNT);
+			assert_ok!(mint_asset_on_asset_reserve(USDT, ALICE, MINT_AMOUNT));
+			assert_eq!(statemine_runtime::Assets::balance(USDT, &ALICE), MINT_AMOUNT);
 
 			assert_ok!(statemine_runtime::Assets::force_asset_status(
 				statemine_runtime::RuntimeOrigin::root(),
-				Compact(xUSD),
+				Compact(USDT),
 				ALICE.into(),
 				ALICE.into(),
 				ALICE.into(),
@@ -159,6 +159,8 @@ mod tests {
 			println!("     ");
 			let statemine_sovereign_account = runtimes::sovereign_account(ASSET_RESERVE_PARA_ID);
 
+			println!("statemine_sovereign_account: {:?}", statemine_sovereign_account);
+
 			assert_ok!(kreivo_runtime::Balances::transfer(
 				kreivo_runtime::RuntimeOrigin::signed(ALICE),
 				MultiAddress::Id(statemine_sovereign_account.clone()),
@@ -167,14 +169,14 @@ mod tests {
 
 			// Create derivative asset on Trappist Parachain
 			assert_ok!(create_derivative_asset_on_kreivo(
-				txUSD,
+				kUSDT,
 				ALICE.into(),
 				ASSET_MIN_BALANCE
 			));
 
 			assert_ok!(kreivo_runtime::Assets::force_asset_status(
 				kreivo_runtime::RuntimeOrigin::root(),
-				Compact(txUSD),
+				Compact(kUSDT),
 				ALICE.into(),
 				ALICE.into(),
 				ALICE.into(),
@@ -184,18 +186,18 @@ mod tests {
 				false,
 			));
 
-			// Map derivative asset (txUSD) to multi-location (xUSD within Assets pallet on
+			// Map derivative asset (kUSDT) to multi-location (USDT within Assets pallet on
 			// Reserve Parachain) via Asset Registry
-			assert_ok!(register_reserve_asset_on_kreivo(ALICE, txUSD, xUSD));
+			assert_ok!(register_reserve_asset_on_kreivo(ALICE, kUSDT, USDT));
 			kreivo_runtime::System::assert_has_event(
 				pallet_asset_registry::Event::ReserveAssetRegistered {
-					asset_id: txUSD,
+					asset_id: kUSDT,
 					asset_multi_location: MultiLocation {
 						parents: 1,
 						interior: Junctions::X3(
 							Parachain(ASSET_RESERVE_PARA_ID),
 							PalletInstance(50),
-							GeneralIndex(xUSD.into()),
+							GeneralIndex(USDT.into()),
 						),
 					},
 				}
@@ -217,6 +219,8 @@ mod tests {
 
 			let kreivo_sovereign_account = runtimes::sovereign_account(KREIVO_PARA_ID);
 
+			println!("kreivo_sovereign_account: {:?}", kreivo_sovereign_account);
+
 			assert_ok!(statemine_runtime::Balances::transfer(
 				statemine_runtime::RuntimeOrigin::signed(ALICE),
 				MultiAddress::Id(kreivo_sovereign_account.clone()),
@@ -230,12 +234,12 @@ mod tests {
 				Box::new(kreivo_remote.clone().into()),
 				Box::new(
 					X1(AccountId32 {
-						network: Some(NetworkId::Rococo),
+						network: None,
 						id: ALICE.into()
 					})
 					.into()
 				),
-				Box::new((X2(PalletInstance(50.into()), GeneralIndex(xUSD as u128)), AMOUNT).into()),
+				Box::new((X2(PalletInstance(50.into()), GeneralIndex(USDT as u128)), AMOUNT).into()),
 				0,
 				WeightLimit::Unlimited,
 			));
@@ -245,7 +249,7 @@ mod tests {
 				.for_each(|r| println!(">>> {:?}", r.event));
 
 			assert_eq!(
-				statemine_runtime::Assets::balance(xUSD, &kreivo_sovereign_account),
+				statemine_runtime::Assets::balance(USDT, &kreivo_sovereign_account),
 				AMOUNT
 			);
 		});
@@ -256,8 +260,14 @@ mod tests {
 			println!("     ");
 			println!(">>>>>>>>> KreivoParachain <<<<<<<<<<<<<<<<<<<<<<");
 			println!("     ");
+
+			println!(
+				"ALICE Balance on Kreivo: {:?}",
+				kreivo_runtime::Balances::free_balance(&ALICE)
+			);
+
 			// Ensure beneficiary account balance increased
-			let current_balance = kreivo_runtime::Assets::balance(txUSD, &ALICE);
+			let current_balance = kreivo_runtime::Assets::balance(kUSDT, &ALICE);
 			kreivo_runtime::System::events()
 				.iter()
 				.for_each(|r| println!(">>> {:?}", r.event));
