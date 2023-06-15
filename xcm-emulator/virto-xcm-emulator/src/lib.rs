@@ -66,6 +66,63 @@ mod tests {
 	use xcm_emulator::TestExt;
 
 	#[test]
+	fn reserve_transfer_asset_from_relay_chain_parachain_to_kreivo_parachain() {
+		init_tracing();
+
+		Network::reset();
+
+		let kreivo_location: MultiLocation = MultiLocation {
+			parents: 0,
+			interior: X1(Parachain(KREIVO_PARA_ID)),
+		};
+
+		const AMOUNT: u128 = 5_000_000_000_000;
+
+		RococoNet::execute_with(|| {
+			println!("     ");
+			println!(">>>>>>>>> RococoNet: force xcm v3 version <<<<<<<<<<<<<<<<<<<<<<");
+			println!("     ");
+			assert_ok!(rococo_runtime::XcmPallet::force_default_xcm_version(
+				rococo_runtime::RuntimeOrigin::root(),
+				Some(XCM_VERSION)
+			));
+
+			assert_ok!(rococo_runtime::XcmPallet::limited_reserve_transfer_assets(
+				rococo_runtime::RuntimeOrigin::signed(ALICE),
+				Box::new(kreivo_location.clone().into()),
+				Box::new(
+					X1(AccountId32 {
+						network: None,
+						id: ALICE.into()
+					})
+					.into()
+				),
+				Box::new((Here, AMOUNT).into()),
+				0,
+				WeightLimit::Unlimited,
+			));
+		});
+
+		KreivoParachain::execute_with(|| {
+			println!("     ");
+			println!(">>>>>>>>> KreivoParachain <<<<<<<<<<<<<<<<<<<<<<");
+			println!("     ");
+
+			println!(
+				"ALICE Balance on Kreivo: {:?}",
+				kreivo_runtime::Balances::free_balance(&ALICE)
+			);
+
+			// Ensure beneficiary account balance increased
+			kreivo_runtime::System::events()
+				.iter()
+				.for_each(|r| println!(">>> {:?}", r.event));
+
+			// TODO: check that the balance is increased
+		});
+	}
+
+	#[test]
 	fn reserve_transfer_asset_from_asset_reserve_parachain_to_kreivo_parachain() {
 		init_tracing();
 
