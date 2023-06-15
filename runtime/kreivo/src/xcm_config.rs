@@ -11,8 +11,6 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
-/* use parachains_common::xcm_config::{DenyReserveTransferToRelayChain,
- * DenyThenTry}; */
 use polkadot_parachain::primitives::Sibling;
 use sp_std::marker::PhantomData;
 use virto_common::impls::{AsAssetMultiLocation, ConvertedRegisteredAssetId, DealWithFees};
