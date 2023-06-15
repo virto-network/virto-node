@@ -13,30 +13,28 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build parachain node & artifacts
-        run: make build
+        run: just build-container ${GITHUB_REF#refs/tags/}
       
-  release:
-    name: Create GH Release
-    needs: build
-    runs-on: self-hosted
-    steps:
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            build/testnet_genesis_state
-            build/testnet_genesis_wasm
-            build/testnet_chainspec
+  # release:
+  #   name: Create GH Release
+  #   needs: build
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Release
+  #       uses: softprops/action-gh-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         files: |
+  #           build/testnet_genesis_state
+  #           build/testnet_genesis_wasm
+  #           build/testnet_chainspec
 
   container:
     name: Containerize & Publish
     needs: build
     runs-on: self-hosted
     steps:
-      - run: make container tag=${GITHUB_REF#refs/tags/}
-
       - name: Login to registry
         uses: redhat-actions/podman-login@v1
         with:

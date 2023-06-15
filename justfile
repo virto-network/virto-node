@@ -17,8 +17,8 @@ test:
 build-local:
 	cargo build --release
 
-build-container:
-	{{docker}} build . -t virto-network/virto:latest
+build-container tag=ver:
+	{{docker}} build . -t virto-network/virto:{{ tag }}
 
 _zufix := os() + if os() == "linux" { "-x64" } else { "" }
 zombienet network="":

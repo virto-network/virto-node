@@ -9,7 +9,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - run: make check
+      - run: just check
 
   tests:
     name: Check project
@@ -17,7 +17,7 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v2
-      - run: cargo test
+      - run: just test
 
   benchmarks:
     name: Benchmarks
