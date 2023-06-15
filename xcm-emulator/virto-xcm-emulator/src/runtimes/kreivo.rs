@@ -1,6 +1,6 @@
 use super::*;
 
-pub const KREIVO_PARA_ID: u32 = 1_000;
+pub const KREIVO_PARA_ID: u32 = 2_000;
 
 pub(crate) fn new_ext(para_id: u32) -> sp_io::TestExternalities {
 	use kreivo_runtime::{Runtime, System};
