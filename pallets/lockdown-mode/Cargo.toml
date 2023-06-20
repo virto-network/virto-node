@@ -10,8 +10,8 @@ repository = "https://github.com/paritytech/trappist"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive",] }
-scale-info = { version = "2.3.1", default-features = false, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.5.0", default-features = false, features = ["derive",] }
+scale-info = { version = "2.7.0", default-features = false, features = ["derive"] }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
 sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
 frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.43" }
@@ -20,7 +20,7 @@ frame-system = { version = "4.0.0-dev", default-features = false, git = "https:/
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.43", default-features = false }
 pallet-assets = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.43" }
 pallet-balances = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.43" }
-log = "0.4.17"
+log = "0.4.19"
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.43" }
 
 [dev-dependencies]
