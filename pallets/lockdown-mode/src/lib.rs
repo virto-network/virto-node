@@ -52,7 +52,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			LockdownModeStatus::<T>::put(&self.initial_status);
+			LockdownModeStatus::<T>::put(self.initial_status);
 		}
 	}
 
@@ -143,7 +143,7 @@ pub mod pallet {
 			if LockdownModeStatus::<T>::get() {
 				T::BlackListedCalls::contains(call)
 			} else {
-				return true;
+				true
 			}
 		}
 	}

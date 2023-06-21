@@ -82,10 +82,7 @@ impl pallet_balances::Config for Test {
 pub struct RuntimeBlackListedCalls;
 impl Contains<RuntimeCall> for RuntimeBlackListedCalls {
 	fn contains(call: &RuntimeCall) -> bool {
-		match call {
-			RuntimeCall::Balance(_) => false,
-			_ => true,
-		}
+		matches!(call, RuntimeCall::Balance(_))
 	}
 }
 

@@ -29,26 +29,31 @@ use std::{
 };
 use tokio::time::{sleep, Duration};
 
+#[derive(Debug)]
+pub struct TimeoutError;
+
 /// Wait for the given `child` the given number of `secs`.
 ///
 /// Returns the `Some(exit status)` or `None` if the process did not finish in
 /// the given time.
-pub fn wait_for(child: &mut Child, secs: u64) -> Result<ExitStatus, ()> {
-	let result = wait_timeout::ChildExt::wait_timeout(child, Duration::from_secs(5.min(secs))).map_err(|_| ())?;
+pub fn wait_for(child: &mut Child, secs: u64) -> Result<ExitStatus, TimeoutError> {
+	let result =
+		wait_timeout::ChildExt::wait_timeout(child, Duration::from_secs(5.min(secs))).map_err(|_| TimeoutError)?;
 	if let Some(exit_status) = result {
 		Ok(exit_status)
 	} else {
 		if secs > 5 {
 			eprintln!("Child process taking over 5 seconds to exit gracefully");
-			let result = wait_timeout::ChildExt::wait_timeout(child, Duration::from_secs(secs - 5)).map_err(|_| ())?;
+			let result =
+				wait_timeout::ChildExt::wait_timeout(child, Duration::from_secs(secs - 5)).map_err(|_| TimeoutError)?;
 			if let Some(exit_status) = result {
 				return Ok(exit_status);
 			}
 		}
-		eprintln!("Took too long to exit (> {} seconds). Killing...", secs);
+		eprintln!("Took too long to exit (> {secs} seconds). Killing...");
 		let _ = child.kill();
 		child.wait().unwrap();
-		Err(())
+		Err(TimeoutError)
 	}
 }
 
@@ -118,19 +123,19 @@ pub fn find_ws_url_from_output(read: impl Read + Send) -> (String, String) {
 			let line = line.expect("failed to obtain next line from stdout for WS address discovery");
 
 			data.push_str(&line);
-			data.push_str("\n");
+			data.push('\n');
 
 			// does the line contain our port (we expect this specific output from
 			// substrate).
 			let sock_addr = match line.split_once("Running JSON-RPC WS server: addr=") {
 				None => return None,
-				Some((_, after)) => after.split_once(",").unwrap().0,
+				Some((_, after)) => after.split_once(',').unwrap().0,
 			};
 
-			Some(format!("ws://{}", sock_addr))
+			Some(format!("ws://{sock_addr}"))
 		})
 		.unwrap_or_else(|| {
-			eprintln!("Output:\n{}", data);
+			eprintln!("Output:\n{data}");
 			panic!("We should get a WebSocket address")
 		});
 

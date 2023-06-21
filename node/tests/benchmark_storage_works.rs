@@ -8,7 +8,7 @@ use std::{
 use tempfile::tempdir;
 
 /// The runtimes that this command supports.
-static RUNTIMES: [&'static str; 3] = ["westmint", "statemine", "statemint"];
+static RUNTIMES: [&str; 3] = ["westmint", "statemine", "statemint"];
 
 /// The `benchmark storage` command works for the dev runtimes.
 #[test]
@@ -17,7 +17,7 @@ fn benchmark_storage_works() {
 	for runtime in RUNTIMES {
 		let tmp_dir = tempdir().expect("could not create a temp dir");
 		let base_path = tmp_dir.path();
-		let runtime = format!("{}-dev", runtime);
+		let runtime = format!("{runtime}-dev");
 
 		// Benchmarking the storage works and creates the weight file.
 		assert!(benchmark_storage("rocksdb", &runtime, base_path).success());
@@ -32,7 +32,7 @@ fn benchmark_storage_works() {
 /// runtime.
 fn benchmark_storage(db: &str, runtime: &str, base_path: &Path) -> ExitStatus {
 	Command::new(cargo_bin("polkadot-parachain"))
-		.args(&["benchmark", "storage", "--chain", runtime])
+		.args(["benchmark", "storage", "--chain", runtime])
 		.arg("--db")
 		.arg(db)
 		.arg("--weight-path")

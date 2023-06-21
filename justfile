@@ -1,13 +1,17 @@
-docker := `which podman 2>/dev/null || which docker`
-ver := `git describe --tags`
+set shell := ["nu", "-c"]
+docker := `(which podman) ++ (which docker) | (first).path`
+ver := `open node/Cargo.toml | get package.version`
 
 @list-tasks:
-	just --choose
+	just --list
 
-@version:
-	echo {{ ver }}
+@about:
+	open node/Cargo.toml | get package | table -c
 
-check:
+@_check_deps:
+	rustup component add clippy
+
+check: _check_deps
 	cargo clippy --features runtime-benchmarks --all-targets --workspace -- --deny warnings
 	cargo fmt --all -- --check
 

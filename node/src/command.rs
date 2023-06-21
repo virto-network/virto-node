@@ -24,7 +24,7 @@ use codec::Encode;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use log;
+
 use log::{info, warn};
 use parachains_common::AuraId;
 use sc_cli::{
@@ -78,7 +78,7 @@ impl RuntimeResolver for PathBuf {
 }
 
 fn runtime(id: &str) -> Runtime {
-	let id = id.replace("_", "-");
+	let id = id.replace('_', "-");
 	if id.starts_with("seedling") {
 		Runtime::Seedling
 	} else if id.starts_with("kreivo") {
@@ -316,7 +316,7 @@ pub fn run() -> Result<()> {
 
 				let polkadot_config =
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, config.tokio_handle.clone())
-						.map_err(|err| format!("Relay chain argument error: {}", err))?;
+						.map_err(|err| format!("Relay chain argument error: {err}"))?;
 
 				cmd.run(config, polkadot_config)
 			})
@@ -361,14 +361,11 @@ pub fn run() -> Result<()> {
 					runner.sync_run(|config| construct_benchmark_partials!(config, |partials| cmd.run(partials.client)))
 				}
 				#[cfg(not(feature = "runtime-benchmarks"))]
-				BenchmarkCmd::Storage(_) => {
-					return Err(sc_cli::Error::Input(
-						"Compile with --features=runtime-benchmarks \
+				BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
+					"Compile with --features=runtime-benchmarks \
 						to enable storage benchmarks."
-							.into(),
-					)
-					.into())
-				}
+						.into(),
+				)),
 				#[cfg(feature = "runtime-benchmarks")]
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					construct_benchmark_partials!(config, |partials| {
@@ -440,14 +437,14 @@ pub fn run() -> Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				let hwbench = (!cli.no_hardware_benchmarks).then_some(
 					config.database.path().map(|database_path| {
-						let _ = std::fs::create_dir_all(&database_path);
+						let _ = std::fs::create_dir_all(database_path);
 						sc_sysinfo::gather_hwbench(Some(database_path))
 					})).flatten();
 
 
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
-					.ok_or_else(|| "Could not find parachain extension in chain-spec.")?;
+					.ok_or("Could not find parachain extension in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -463,20 +460,20 @@ pub fn run() -> Result<()> {
 
 				let block: crate::service::Block =
 					generate_genesis_block(&*config.chain_spec, state_version)
-						.map_err(|e| format!("{:?}", e))?;
+						.map_err(|e| format!("{e:?}"))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config =
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
-						.map_err(|err| format!("Relay chain argument error: {}", err))?;
+						.map_err(|err| format!("Relay chain argument error: {err}"))?;
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				if !collator_options.relay_chain_rpc_urls.is_empty() && cli.relaychain_args.len() > 0 {
+				if !collator_options.relay_chain_rpc_urls.is_empty() && !cli.relaychain_args.is_empty() {
 					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
 				}
 

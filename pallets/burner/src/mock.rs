@@ -1,4 +1,3 @@
-use super::*;
 use crate as pallet_burner;
 use frame_support::{
 	parameter_types,
@@ -81,6 +80,7 @@ impl pallet_balances::Config for Test {
 impl pallet_sudo::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = ();
 }
 
 parameter_types! {
