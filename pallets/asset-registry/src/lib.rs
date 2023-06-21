@@ -41,7 +41,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type ReserveAssetModifierOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		type Assets: Inspect<Self::AccountId> + Copy;
+		type Assets: Inspect<Self::AccountId>;
 		type WeightInfo: WeightInfo;
 		/// Helper trait for benchmarks.
 		#[cfg(feature = "runtime-benchmarks")]
@@ -90,11 +90,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ReserveAssetModifierOrigin::ensure_origin(origin)?;
 
-			ensure!(T::Assets::asset_exists(asset_id), Error::<T>::AssetDoesNotExist);
+			ensure!(T::Assets::asset_exists(asset_id.clone()), Error::<T>::AssetDoesNotExist);
 
 			// verify asset is not yet registered
 			ensure!(
-				!AssetIdMultiLocation::<T>::contains_key(asset_id),
+				!AssetIdMultiLocation::<T>::contains_key(asset_id.clone()),
 				Error::<T>::AssetAlreadyRegistered
 			);
 
@@ -105,9 +105,9 @@ pub mod pallet {
 			);
 
 			// register asset_id => asset_multi_location
-			AssetIdMultiLocation::<T>::insert(asset_id, &asset_multi_location);
+			AssetIdMultiLocation::<T>::insert(asset_id.clone(), &asset_multi_location);
 			// register asset_multi_location => asset_id
-			AssetMultiLocationId::<T>::insert(&asset_multi_location, asset_id);
+			AssetMultiLocationId::<T>::insert(&asset_multi_location, asset_id.clone());
 
 			Self::deposit_event(Event::ReserveAssetRegistered {
 				asset_id,
@@ -122,7 +122,7 @@ pub mod pallet {
 			T::ReserveAssetModifierOrigin::ensure_origin(origin)?;
 
 			// remove asset_id => asset_multi_location, while getting the value
-			let asset_multi_location = AssetIdMultiLocation::<T>::mutate_exists(asset_id, Option::take)
+			let asset_multi_location = AssetIdMultiLocation::<T>::mutate_exists(asset_id.clone(), Option::take)
 				.ok_or(Error::<T>::AssetIsNotRegistered)?;
 			// remove asset_multi_location => asset_id
 			AssetMultiLocationId::<T>::remove(&asset_multi_location);
