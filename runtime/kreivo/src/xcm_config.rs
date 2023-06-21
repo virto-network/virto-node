@@ -4,6 +4,7 @@ use super::{
 	XcmpQueue,
 };
 use crate::constants::fee::default_fee_per_second;
+use crate::constants::locations::{STATEMINE_ASSET_PALLET_ID, STATEMINE_PARA_ID, USDT_ASSET_ID};
 use frame_support::{
 	match_types, parameter_types,
 	traits::{ConstU32, ContainsPair, Everything, Get, Nothing, PalletInfoAccess},
@@ -147,15 +148,15 @@ pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
 
 parameter_types! {
 	pub UsdtPerSecond: (xcm::v3::AssetId, u128, u128) = (
-		MultiLocation::new(1, X3(Parachain(1000), PalletInstance(50), GeneralIndex(1984))).into(),
+		MultiLocation::new(1, X3(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID), GeneralIndex(USDT_ASSET_ID))).into(),
 		default_fee_per_second() * 10,
 		0
 	);
-	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(1000)));
+	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
 	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
 	// Statemine's Assets pallet index
 	pub StatemineAssetsPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(1000), PalletInstance(50)));
+		MultiLocation::new(1, X2(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID)));
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
