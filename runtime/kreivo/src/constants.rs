@@ -87,3 +87,9 @@ pub mod fee {
 		base_tx_per_second * base_tx_fee()
 	}
 }
+
+pub mod locations {
+	pub const STATEMINE_PARA_ID: u32 = 1000;
+	pub const STATEMINE_ASSET_PALLET_ID: u8 = 50;
+	pub const USDT_ASSET_ID: u128 = 1984;
+}
