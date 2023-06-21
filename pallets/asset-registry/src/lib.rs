@@ -41,7 +41,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type ReserveAssetModifierOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		type Assets: Inspect<Self::AccountId>;
+		type Assets: Inspect<Self::AccountId> + Copy;
 		type WeightInfo: WeightInfo;
 		/// Helper trait for benchmarks.
 		#[cfg(feature = "runtime-benchmarks")]
