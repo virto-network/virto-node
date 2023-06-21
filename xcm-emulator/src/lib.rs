@@ -283,7 +283,7 @@ thread_local! {
 	#[allow(clippy::type_complexity)]
 	pub static DOWNWARD_MESSAGES: RefCell<VecDeque<(u32, Vec<(RelayBlockNumber, Vec<u8>)>)>>
 		= RefCell::new(VecDeque::new());
-		#[allow(clippy::type_complexity)]
+	#[allow(clippy::type_complexity)]
 	/// Downward messages that already processed by parachains, each message is: `(to_para_id, relay_block_number, Vec<u8>)`
 	pub static DMP_DONE: RefCell<VecDeque<(u32, RelayBlockNumber, Vec<u8>)>>
 		= RefCell::new(VecDeque::new());

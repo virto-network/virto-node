@@ -37,10 +37,7 @@ pub type AccountIdOf<R> = <R as frame_system::Config>::AccountId;
 pub struct RuntimeBlackListedCalls;
 impl Contains<RuntimeCall> for RuntimeBlackListedCalls {
 	fn contains(call: &RuntimeCall) -> bool {
-		match call {
-			RuntimeCall::Balances(_) => false,
-			_ => true,
-		}
+		matches!(call, RuntimeCall::Balances(_))
 	}
 }
 

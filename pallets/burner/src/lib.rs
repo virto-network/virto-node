@@ -11,7 +11,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use log;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 

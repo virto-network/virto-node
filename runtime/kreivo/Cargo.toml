@@ -1,7 +1,7 @@
 [package]
 name = "kreivo-runtime"
 description = "Kreivo Runtime"
-version = "0.1.0"
+version = "0.4.0"
 authors = ['Virto Team <contact@virto.team>']
 license = "GPL-3.0-only"
 homepage = 'https://github.com/virto-network/virto-node'

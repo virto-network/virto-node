@@ -131,6 +131,19 @@ impl sc_executor::NativeExecutionDispatch for VirtoRuntimeExecutor {
 	}
 }
 
+type Partial<Api> = PartialComponents<
+	ParachainClient<Api>,
+	ParachainBackend,
+	(),
+	sc_consensus::DefaultImportQueue<Block, ParachainClient<Api>>,
+	sc_transaction_pool::FullPool<Block, ParachainClient<Api>>,
+	(
+		ParachainBlockImport<Api>,
+		Option<Telemetry>,
+		Option<TelemetryWorkerHandle>,
+	),
+>;
+
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the
@@ -138,21 +151,7 @@ impl sc_executor::NativeExecutionDispatch for VirtoRuntimeExecutor {
 pub fn new_partial<RuntimeApi, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
-) -> Result<
-	PartialComponents<
-		ParachainClient<RuntimeApi>,
-		ParachainBackend,
-		(),
-		sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
-		sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>,
-		(
-			ParachainBlockImport<RuntimeApi>,
-			Option<Telemetry>,
-			Option<TelemetryWorkerHandle>,
-		),
-	>,
-	sc_service::Error,
->
+) -> Result<Partial<RuntimeApi>, sc_service::Error>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
@@ -247,6 +246,7 @@ where
 /// This is the actual implementation that is abstract over the executor and the
 /// runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
+#[allow(clippy::too_many_arguments)]
 async fn start_node_impl<RuntimeApi, RB, BIQ, BIC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -595,7 +595,7 @@ where
 	let relay_chain_verifier = Box::new(RelayChainVerifier::new(client.clone(), |_, _| async { Ok(()) })) as Box<_>;
 
 	let verifier = Verifier {
-		client: client.clone(),
+		client,
 		relay_chain_verifier,
 		aura_verifier: BuildOnAccess::Uninitialized(Some(Box::new(aura_verifier))),
 		_phantom: PhantomData,
