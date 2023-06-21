@@ -9,5 +9,5 @@ members = [
     'runtime/kreivo'
 ]
 exclude = [
-    'xcm-emulator'
+    'virto-xcm-emulator'
 ]

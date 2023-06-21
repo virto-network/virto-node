@@ -6,7 +6,7 @@ use runtimes::*;
 use std::sync::Once;
 use thousands::Separable;
 use xcm::prelude::*;
-use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
+use xcm_emulator::{decl_test_networks, decl_test_parachains, decl_test_relay_chains};
 
 const ASSET_RESERVE_PARA_ID: u32 = runtimes::asset_reserve::ASSET_RESERVE_PARA_ID;
 const KREIVO_PARA_ID: u32 = runtimes::kreivo::KREIVO_PARA_ID;
@@ -16,7 +16,7 @@ const USDT: u32 = 1984;
 #[allow(non_upper_case_globals)]
 const kUSDT: u32 = 1984;
 
-decl_test_relay_chain! {
+decl_test_relay_chains! {
 	pub struct RococoNet {
 		Runtime = rococo_runtime::Runtime,
 		XcmConfig = rococo_runtime::xcm_config::XcmConfig,
@@ -24,7 +24,7 @@ decl_test_relay_chain! {
 	}
 }
 
-decl_test_parachain! {
+decl_test_parachains! {
 	pub struct AssetReserveParachain {
 		Runtime = statemine_runtime::Runtime,
 		RuntimeOrigin = statemine_runtime::RuntimeOrigin,
@@ -34,7 +34,7 @@ decl_test_parachain! {
 	}
 }
 
-decl_test_parachain! {
+decl_test_parachains! {
 	pub struct KreivoParachain {
 		Runtime = kreivo_runtime::Runtime,
 		RuntimeOrigin = kreivo_runtime::RuntimeOrigin,
@@ -44,12 +44,12 @@ decl_test_parachain! {
 	}
 }
 
-decl_test_network! {
+decl_test_networks! {
 	pub struct Network {
 		relay_chain = RococoNet,
 		parachains = vec![
-			(1_000, AssetReserveParachain),
-			(2_000, KreivoParachain),
+			(1_000.into(), AssetReserveParachain),
+			(2_000.into(), KreivoParachain),
 		],
 	}
 }
