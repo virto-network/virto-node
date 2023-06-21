@@ -3,6 +3,8 @@ use super::{
 	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee,
 	XcmpQueue,
 };
+use crate::constants::fee::default_fee_per_second;
+use crate::constants::locations::{STATEMINE_ASSET_PALLET_ID, STATEMINE_PARA_ID, USDT_ASSET_ID};
 use frame_support::{
 	match_types, parameter_types,
 	traits::{ConstU32, ContainsPair, Everything, Get, Nothing, PalletInfoAccess},
@@ -10,15 +12,14 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
-use parachains_common::xcm_config::{DenyReserveTransferToRelayChain, DenyThenTry};
 use polkadot_parachain::primitives::Sibling;
 use sp_std::marker::PhantomData;
 use virto_common::impls::{AsAssetMultiLocation, ConvertedRegisteredAssetId, DealWithFees};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
-	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds, FungiblesAdapter, IsConcrete, LocalMint, MintLocation,
+	NativeAsset, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 	WithComputedOrigin,
 };
@@ -32,7 +33,7 @@ parameter_types! {
 	pub CheckAccount: (AccountId, MintLocation) = (PolkadotXcm::check_account(), MintLocation::Local);
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
 	pub TrustBackedAssetsPalletLocation: MultiLocation =
-	PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
+		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
 	pub UniversalLocation: InteriorMultiLocation = (
 		//TODO: to change the NetworkId to Kusama once we finish testing on Rococo.
 		GlobalConsensus(NetworkId::Rococo),
@@ -130,30 +131,32 @@ match_types! {
 	};
 }
 
-pub type Barrier = DenyThenTry<
-	DenyReserveTransferToRelayChain,
-	(
-		TakeWeightCredit,
-		WithComputedOrigin<
-			(
-				AllowTopLevelPaidExecutionFrom<Everything>,
-				AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
-				// ^^^ Parent and its exec plurality get free execution
-			),
-			UniversalLocation,
-			ConstU32<8>,
-		>,
-	),
->;
+pub type Barrier = (
+	TakeWeightCredit,
+	WithComputedOrigin<
+		(
+			AllowTopLevelPaidExecutionFrom<Everything>,
+			AllowExplicitUnpaidExecutionFrom<ParentOrParentsExecutivePlurality>,
+			// ^^^ Parent and its exec plurality get free execution
+		),
+		UniversalLocation,
+		ConstU32<8>,
+	>,
+);
 
 pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(1000)));
+	pub UsdtPerSecond: (xcm::v3::AssetId, u128, u128) = (
+		MultiLocation::new(1, X3(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID), GeneralIndex(USDT_ASSET_ID))).into(),
+		default_fee_per_second() * 10,
+		0
+	);
+	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
 	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
 	// Statemine's Assets pallet index
 	pub StatemineAssetsPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(1000), PalletInstance(50)));
+		MultiLocation::new(1, X2(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID)));
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
@@ -182,6 +185,13 @@ impl<T: Get<MultiLocation>> ContainsPair<MultiAsset, MultiLocation> for ReserveA
 	}
 }
 
+pub type Traders = (
+	// USDT
+	FixedRateOfFungible<UsdtPerSecond, ()>,
+	// Everything else
+	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFees<Runtime>>,
+);
+
 pub type Reserves = (NativeAsset, ReserveAssetsFrom<StatemineLocation>);
 
 pub struct XcmConfig;
@@ -196,7 +206,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	type Trader = UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFees<Runtime>>;
+	type Trader = Traders;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
@@ -236,10 +246,9 @@ impl pallet_xcm::Config for Runtime {
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
 	// ^ Disable dispatchable execute on the XCM pallet.
-	// Needs to be `Everything` for local testing.
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type XcmTeleportFilter = Everything;
-	type XcmReserveTransferFilter = Nothing;
+	type XcmTeleportFilter = Nothing;
+	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 	type UniversalLocation = UniversalLocation;
 	type RuntimeOrigin = RuntimeOrigin;

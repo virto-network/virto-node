@@ -8,3 +8,6 @@ members = [
     'runtime/seedling',
     'runtime/kreivo'
 ]
+exclude = [
+    'xcm-emulator'
+]
