@@ -29,7 +29,7 @@ zombienet network="":
 	#!/usr/bin/env nu
 	mut net = "{{ network }}"
 	# interactive selection with fuzzy find
-	if "{{ network }}" == "" { 
+	if "{{ network }}" == "" {
 		$net = (ls zombienet | get name | path basename | str replace .toml '' | to text | fzf)
 	}
 	bin/zombienet-{{ _zufix }} -p native spawn $"zombienet/($net).toml"
@@ -39,11 +39,9 @@ get-zombienet-dependencies: (_get-latest "zombienet" "zombienet-"+_zufix) (_get-
 _get-latest repo bin:
 	#!/usr/bin/env nu
 	^mkdir -p bin
-	(
-		http get https://api.github.com/repos/paritytech/{{ repo }}/releases
-		# cumulus has two kinds of releases, we exclude runtimes
-		| where "tag_name" !~ "parachains" | first | get assets_url | http get $in
-		| where name =~ {{ bin }} | first | get browser_download_url
-		| http get $in --raw | save bin/{{ bin }} --progress --force
-	)
+	http get https://api.github.com/repos/paritytech/{{ repo }}/releases
+	# cumulus has two kinds of releases, we exclude runtimes
+	| where "tag_name" !~ "parachains" | first | get assets_url | http get $in
+	| where name =~ {{ bin }} | first | get browser_download_url
+	| http get $in --raw | save bin/{{ bin }} --progress --force
 	chmod u+x bin/{{ bin }}

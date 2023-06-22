@@ -12,7 +12,7 @@ fn genesis_config_default() {
 
 #[test]
 fn genesis_config_initialized() {
-	[true, false].into_iter().for_each(|expected| {
+	[ACTIVATED, DEACTIVATED].into_iter().for_each(|expected| {
 		new_test_ext(expected).execute_with(|| {
 			let lockdown_mode = LockdownModeStatus::<Test>::get();
 			assert_eq!(lockdown_mode, expected);
@@ -22,7 +22,7 @@ fn genesis_config_initialized() {
 
 #[test]
 fn activate_lockdown_mode_works() {
-	new_test_ext(false).execute_with(|| {
+	new_test_ext(DEACTIVATED).execute_with(|| {
 		assert_ok!(LockdownMode::activate_lockdown_mode(RuntimeOrigin::root()));
 
 		let lockdown_mode = LockdownModeStatus::<Test>::get();
@@ -37,7 +37,7 @@ fn activate_lockdown_mode_works() {
 
 #[test]
 fn deactivate_lockdown_mode_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext(ACTIVATED).execute_with(|| {
 		assert_ok!(LockdownMode::deactivate_lockdown_mode(RuntimeOrigin::root()));
 
 		let lockdown_mode = LockdownModeStatus::<Test>::get();
@@ -51,29 +51,28 @@ fn deactivate_lockdown_mode_works() {
 }
 
 #[test]
-fn call_not_filtered_in_lockdown_mode() {
-	new_test_ext(false).execute_with(|| {
+fn call_filtered_in_lockdown_mode() {
+	new_test_ext(DEACTIVATED).execute_with(|| {
 		assert_ok!(LockdownMode::activate_lockdown_mode(RuntimeOrigin::root()));
 		let remark_call = RuntimeCall::Remark(RemarkCall::store { remark: vec![1, 2, 3] });
-		let result: bool = LockdownMode::contains(&remark_call);
-		assert!(result);
+		let allowed = LockdownMode::contains(&remark_call);
+		assert!(!allowed);
 	});
 }
 
 #[test]
-fn call_filtered_in_lockdown_mode() {
-	new_test_ext(false).execute_with(|| {
+fn call_not_filtered_in_lockdown_mode() {
+	new_test_ext(DEACTIVATED).execute_with(|| {
 		assert_ok!(LockdownMode::activate_lockdown_mode(RuntimeOrigin::root()));
 		let balance_call = RuntimeCall::Balance(BalancesCall::transfer { dest: 1, value: 2 });
-
-		let result: bool = LockdownMode::contains(&balance_call);
-		assert!(!result);
+		let allowed: bool = LockdownMode::contains(&balance_call);
+		assert!(allowed);
 	});
 }
 
 #[test]
 fn call_not_filtered_in_normal_mode() {
-	new_test_ext(false).execute_with(|| {
+	new_test_ext(DEACTIVATED).execute_with(|| {
 		let lockdown_mode = LockdownModeStatus::<Test>::get();
 		assert_eq!(lockdown_mode, DEACTIVATED);
 		let balance_call = RuntimeCall::Balance(BalancesCall::transfer { dest: 1, value: 2 });
