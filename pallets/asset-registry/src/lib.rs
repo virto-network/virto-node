@@ -106,9 +106,15 @@ pub mod pallet {
 			);
 
 			// register asset_id => asset_multi_location
+<<<<<<< HEAD
 			AssetIdMultiLocation::<T>::insert(asset_id.clone(), asset_multi_location);
 			// register asset_multi_location => asset_id
 			AssetMultiLocationId::<T>::insert(asset_multi_location, asset_id.clone());
+=======
+			AssetIdMultiLocation::<T>::insert(asset_id.clone(), &asset_multi_location);
+			// register asset_multi_location => asset_id
+			AssetMultiLocationId::<T>::insert(&asset_multi_location, asset_id.clone());
+>>>>>>> nicof-add-new-weight-to-fee
 
 			Self::deposit_event(Event::ReserveAssetRegistered {
 				asset_id,
