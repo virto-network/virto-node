@@ -18,6 +18,9 @@ _task-selector:
 @about:
 	open node/Cargo.toml | get package | table -c
 
+@version:
+	echo {{ ver }}
+
 @_check_deps:
 	rustup component add clippy
 
@@ -31,8 +34,8 @@ test:
 build-local:
 	cargo build --release
 
-build-container tag=ver:
-	{{docker}} build . -t virto-network/virto:{{ tag }}
+build-container registry="localhost":
+	{{ docker }} build . -t {{ registry }}/virto-network/virto:{{ ver }}
 
 _chain_artifacts chain:
 	@^mkdir -p release
