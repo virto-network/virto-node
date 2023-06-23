@@ -12,7 +12,7 @@ use sp_core::{crypto::UncheckedInto, sr25519};
 pub type ChainSpec = sc_service::GenericChainSpec<seedling_runtime::GenesisConfig, Extensions>;
 
 const DEFAULT_PROTOCOL_ID: &str = "seedling";
-const SEEDLING_PARA_ID: u32 = 2000;
+const SEEDLING_PARA_ID: u32 = 4265;
 
 /// Generate the session keys from individual elements.
 ///
@@ -209,10 +209,10 @@ pub fn seedling_rococo_chain_spec() -> ChainSpec {
 						hex!("14d17e6196c53317e4b6440334dfb4c7db2c68caa4c27d1ce800dc32fba61d5f").unchecked_into(),
 					),
 				],
-				hex!("0227891801be4ff762f9494a8bf1a633e6e789d28817b400e3fcf8f96bf1ac25").into(),
+				hex!("aada5995f2188a1f619d4d3629692cabebd220d6fe5f1249f768f8a4f01e7f21").into(),
 				vec![
 					// This account will have root origin
-					hex!("0227891801be4ff762f9494a8bf1a633e6e789d28817b400e3fcf8f96bf1ac25").into(),
+					hex!("aada5995f2188a1f619d4d3629692cabebd220d6fe5f1249f768f8a4f01e7f21").into(),
 				],
 				SEEDLING_PARA_ID.into(),
 			)
@@ -223,7 +223,7 @@ pub fn seedling_rococo_chain_spec() -> ChainSpec {
 		None,
 		Some(properties),
 		Extensions {
-			relay_chain: "kusama".into(),
+			relay_chain: "rococo".into(),
 			para_id: SEEDLING_PARA_ID,
 		},
 	)

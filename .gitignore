@@ -24,6 +24,7 @@ node_modules/
 
 # Binaries
 **/bin/
+release/
 
 # zombienet binaries
 zombienet-macos
