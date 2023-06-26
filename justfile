@@ -1,5 +1,5 @@
 set shell := ["nu", "-c"]
-docker := `(which podman) ++ (which docker) | (first).path`
+podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
 ver := `open node/Cargo.toml | get package.version`
 node := "target/release/virto-node"
 
@@ -35,7 +35,26 @@ build-local:
 	cargo build --release
 
 build-container registry="localhost":
-	{{ docker }} build . -t {{ registry }}/virto-network/virto:{{ ver }}
+	#!/usr/bin/env nu
+	'FROM docker.io/paritytech/ci-linux:production as builder
+	WORKDIR /virto
+	COPY . /virto
+	RUN cargo build --release
+
+	FROM debian:bullseye-slim
+	COPY --from=builder /virto/{{ node }} /usr/bin
+	ENTRYPOINT ["/usr/bin/virto-node"]
+	CMD ["--dev"]'
+	| {{ podman }} build . -t {{ registry }}/virto-network/virto:{{ ver }} --ignorefile .build-container-ignore -f -
+
+# Used to speed things up when the build environment is the same as the container(debian)
+build-container-local registry="localhost": build-local
+	#!/usr/bin/env nu
+	'FROM debian:bullseye-slim
+	COPY {{ node }} /usr/bin
+	ENTRYPOINT ["/usr/bin/virto-node"]
+	CMD ["--dev"]'
+	| {{ podman }} build . -t {{ registry }}/virto-network/virto:{{ ver }} -f -
 
 _chain_artifacts chain:
 	@^mkdir -p release
