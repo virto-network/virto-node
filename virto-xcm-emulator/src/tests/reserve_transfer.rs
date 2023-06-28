@@ -1,9 +1,12 @@
-use crate::Kusama;
+use crate::{Kusama, init_tracing};
 use crate::*;
 use xcm_emulator::{Parachain as Para, RelayChain as Relay};
 
 #[test]
 fn reserve_transfer_native_asset_from_relay_to_assets() {
+
+    init_tracing();
+
     // Init tests variables
     let amount = KUSAMA_ED * 1000;
     let relay_sender_balance_before = Kusama::account_data_of(KusamaSender::get()).free;
@@ -70,4 +73,59 @@ fn reserve_transfer_native_asset_from_relay_to_assets() {
         relay_sender_balance_after
     );
     assert_eq!(para_sender_balance_after, para_receiver_balance_before);
+}
+
+#[test]
+fn reserve_transfer_asset_from_relay_chain_parachain_to_kreivo_parachain() {
+    init_tracing();
+
+    let kreivo_location: MultiLocation = MultiLocation {
+        parents: 0,
+        interior: X1(Parachain(KREIVO_PARA_ID)),
+    };
+
+    const AMOUNT: u128 = 5_000_000_000_000;
+
+    Kusama::execute_with(|| {
+        println!("     ");
+        println!(">>>>>>>>> Kusama: force xcm v3 version <<<<<<<<<<<<<<<<<<<<<<");
+        println!("     ");
+        assert_ok!(kusama_runtime::XcmPallet::force_default_xcm_version(
+            kusama_runtime::RuntimeOrigin::root(),
+            Some(XCM_VERSION)
+        ));
+
+        assert_ok!(kusama_runtime::XcmPallet::limited_reserve_transfer_assets(
+            kusama_runtime::RuntimeOrigin::signed(ALICE),
+            Box::new(kreivo_location.clone().into()),
+            Box::new(
+                X1(AccountId32 {
+                    network: None,
+                    id: ALICE.into()
+                })
+                .into()
+            ),
+            Box::new((Here, AMOUNT).into()),
+            0,
+            WeightLimit::Unlimited,
+        ));
+    });
+
+    Kreivo::execute_with(|| {
+        println!("     ");
+        println!(">>>>>>>>> KreivoParachain <<<<<<<<<<<<<<<<<<<<<<");
+        println!("     ");
+
+        println!(
+            "ALICE Balance on Kreivo: {:?}",
+            kreivo_runtime::Balances::free_balance(&ALICE)
+        );
+
+        // Ensure beneficiary account balance increased
+        kreivo_runtime::System::events()
+            .iter()
+            .for_each(|r| println!(">>> {:?}", r.event));
+
+        // TODO: check that the balance is increased
+    });
 }

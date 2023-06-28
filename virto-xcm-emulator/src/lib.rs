@@ -16,6 +16,9 @@ pub use integration_tests_common::{
 pub use parachains_common::{AuraId, Balance, BlockNumber, StatemintAuraId};
 pub use polkadot_core_primitives::InboundDownwardMessage;
 pub use sp_core::{sr25519, storage::Storage, Get};
+use std::sync::Once;
+
+use crate::kreivo::kreivo::{genesis as kreivo_genesis, PARA_ID as KREIVO_PARA_ID};
 pub use xcm::{
 	prelude::*,
 	v3::{Error, NetworkId::Kusama as KusamaId},
@@ -25,7 +28,19 @@ use xcm_emulator::{
 	decl_test_relay_chains, helpers::weight_within_threshold, NetworkComponent, Parachain, RelayChain, TestExt,
 };
 use xcm_executor::traits::Convert;
-use crate::kreivo::kreivo::{genesis as kreivo_genesis, PARA_ID as KREIVO_PARA_ID};
+
+static INIT: Once = Once::new();
+pub fn init_tracing() {
+	INIT.call_once(|| {
+		// Add test tracing (from sp_tracing::init_for_tests()) but filtering for xcm
+		// logs only
+		let _ = tracing_subscriber::fmt()
+			.with_max_level(tracing::Level::TRACE)
+			.with_env_filter("xcm=trace,system::events=trace,assets=trace") // Comment out this line to see all traces
+			.with_test_writer()
+			.init();
+	});
+}
 
 decl_test_relay_chains! {
 	pub struct Kusama {
