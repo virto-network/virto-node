@@ -456,9 +456,12 @@ parameter_types! {
 }
 
 /// We allow root to execute privileged asset operations.
+
 pub type AssetsForceOrigin = EnsureRoot<AccountId>;
-type TrustBackedAssetsCall = pallet_assets::Call<Runtime>;
-impl pallet_assets::Config for Runtime {
+pub type KreivoAssetsInstance = pallet_assets::Instance1;
+type KreivoAssetsCall = pallet_assets::Call<Runtime, KreivoAssetsInstance>;
+
+impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = AssetIdForTrustBackedAssets;
@@ -553,7 +556,7 @@ construct_runtime!(
 		Balances: pallet_balances = 10,
 		TransactionPayment: pallet_transaction_payment = 11,
 		Burner: pallet_burner = 12,
-		Assets: pallet_assets = 13,
+		Assets: pallet_assets::<Instance1> = 13,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship = 20,
