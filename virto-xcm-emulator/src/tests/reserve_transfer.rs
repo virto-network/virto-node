@@ -85,7 +85,7 @@ fn reserve_transfer_native_token_from_relay_chain_parachain_to_kreivo_parachain(
         ( amount + para_receiver_balance_before - para_sender_balance_after).separate_with_commas()
     );
 
-    assert_balance(para_sender_balance_after, beneficiary_balance + amount, EST_FEES);
+    assert_balance(para_sender_balance_after, para_receiver_balance_before + amount, EST_FEES);
 }
 
 #[test]
@@ -176,7 +176,12 @@ fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
 			fee_asset_item,
 			weight_limit,
 		));
-
     });
+
+    Kreivo::execute_with(|| {
+		type RuntimeEvent = <Kreivo as Para>::RuntimeEvent;
+
+        let balance = <Kreivo as KreivoPallet>::Assets::balance(ASSET_ID.into(), KreivoReceiver::get());
+	});
 }
 
