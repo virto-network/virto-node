@@ -62,7 +62,7 @@ pub use parachains_common::{
 
 pub use virto_common::impls::DealWithFees;
 
-use constants::{currency::*, fee::WeightToFee};
+pub use constants::{currency::*, fee::WeightToFee};
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;

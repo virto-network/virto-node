@@ -36,7 +36,7 @@ parameter_types! {
 		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
 	pub UniversalLocation: InteriorMultiLocation = (
 		//TODO: to change the NetworkId to Kusama once we finish testing on Rococo.
-		GlobalConsensus(NetworkId::Rococo),
+		GlobalConsensus(NetworkId::Kusama),
 		Parachain(ParachainInfo::parachain_id().into()),
 	).into();
 

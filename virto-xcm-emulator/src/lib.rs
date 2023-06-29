@@ -1,7 +1,8 @@
 pub use codec::Encode;
 pub mod kreivo;
 pub use frame_support::{
-	assert_ok, instances::Instance1, pallet_prelude::Weight, sp_io, sp_tracing, traits::fungibles::Inspect,
+	assert_ok, instances::Instance1, pallet_prelude::Weight, parameter_types, sp_io, sp_tracing,
+	traits::fungibles::Inspect,
 };
 pub use integration_tests_common::{
 	constants::{
@@ -29,19 +30,6 @@ use xcm_emulator::{
 };
 use xcm_executor::traits::Convert;
 
-static INIT: Once = Once::new();
-pub fn init_tracing() {
-	INIT.call_once(|| {
-		// Add test tracing (from sp_tracing::init_for_tests()) but filtering for xcm
-		// logs only
-		let _ = tracing_subscriber::fmt()
-			.with_max_level(tracing::Level::TRACE)
-			.with_env_filter("xcm=trace,system::events=trace,assets=trace") // Comment out this line to see all traces
-			.with_test_writer()
-			.init();
-	});
-}
-
 decl_test_relay_chains! {
 	pub struct Kusama {
 		genesis = kusama::genesis(),
@@ -65,49 +53,6 @@ decl_test_relay_chains! {
 
 decl_test_parachains! {
 	// Kusama
-	pub struct Statemine {
-		genesis = statemine::genesis(),
-		on_init = (),
-		runtime = {
-			Runtime: statemine_runtime::Runtime,
-			RuntimeOrigin: statemine_runtime::RuntimeOrigin,
-			RuntimeCall: statemine_runtime::RuntimeCall,
-			RuntimeEvent: statemine_runtime::RuntimeEvent,
-			XcmpMessageHandler: statemine_runtime::XcmpQueue,
-			DmpMessageHandler: statemine_runtime::DmpQueue,
-			LocationToAccountId: statemine_runtime::xcm_config::LocationToAccountId,
-			System: statemine_runtime::System,
-			Balances: statemine_runtime::Balances,
-			ParachainSystem: statemine_runtime::ParachainSystem,
-			ParachainInfo: statemine_runtime::ParachainInfo,
-		},
-		pallets_extra = {
-			PolkadotXcm: statemine_runtime::PolkadotXcm,
-			Assets: statemine_runtime::Assets,
-			ForeignAssets: statemine_runtime::Assets,
-		}
-	},
-	pub struct PenpalKusama {
-		genesis = penpal::genesis(penpal::PARA_ID),
-		on_init = (),
-		runtime = {
-			Runtime: penpal_runtime::Runtime,
-			RuntimeOrigin: penpal_runtime::RuntimeOrigin,
-			RuntimeCall: penpal_runtime::RuntimeCall,
-			RuntimeEvent: penpal_runtime::RuntimeEvent,
-			XcmpMessageHandler: penpal_runtime::XcmpQueue,
-			DmpMessageHandler: penpal_runtime::DmpQueue,
-			LocationToAccountId: penpal_runtime::xcm_config::LocationToAccountId,
-			System: penpal_runtime::System,
-			Balances: penpal_runtime::Balances,
-			ParachainSystem: penpal_runtime::ParachainSystem,
-			ParachainInfo: penpal_runtime::ParachainInfo,
-		},
-		pallets_extra = {
-			PolkadotXcm: penpal_runtime::PolkadotXcm,
-			Assets: penpal_runtime::Assets,
-		}
-	},
 	pub struct Kreivo {
 		genesis = kreivo_genesis(KREIVO_PARA_ID),
 		on_init = (),
@@ -130,6 +75,28 @@ decl_test_parachains! {
 			AssetRegistry: kreivo_runtime::AssetRegistry,
 			LockdownMode: kreivo_runtime::LockdownMode,
 		}
+	},
+	pub struct Statemine {
+		genesis = statemine::genesis(),
+		on_init = (),
+		runtime = {
+			Runtime: statemine_runtime::Runtime,
+			RuntimeOrigin: statemine_runtime::RuntimeOrigin,
+			RuntimeCall: statemine_runtime::RuntimeCall,
+			RuntimeEvent: statemine_runtime::RuntimeEvent,
+			XcmpMessageHandler: statemine_runtime::XcmpQueue,
+			DmpMessageHandler: statemine_runtime::DmpQueue,
+			LocationToAccountId: statemine_runtime::xcm_config::LocationToAccountId,
+			System: statemine_runtime::System,
+			Balances: statemine_runtime::Balances,
+			ParachainSystem: statemine_runtime::ParachainSystem,
+			ParachainInfo: statemine_runtime::ParachainInfo,
+		},
+		pallets_extra = {
+			PolkadotXcm: statemine_runtime::PolkadotXcm,
+			Assets: statemine_runtime::Assets,
+			ForeignAssets: statemine_runtime::Assets,
+		}
 	}
 }
 
@@ -137,11 +104,23 @@ decl_test_networks! {
 	pub struct KusamaMockNet {
 		relay_chain = Kusama,
 		parachains = vec![
-			Statemine,
-			PenpalKusama,
 			Kreivo,
+			Statemine,
 		],
 	}
+}
+
+parameter_types! {
+	// Kreivo
+	pub KreivoSender: AccountId = Kreivo::account_id_of(ALICE);
+	pub KreivoReceiver: AccountId = Kreivo::account_id_of(BOB);
+}
+
+pub fn assert_balance(actual: u128, expected: u128, fees: u128) {
+	assert!(
+		actual >= (expected - fees) && actual <= expected,
+		"expected: {expected}, actual: {actual} fees: {fees}"
+	)
 }
 
 #[cfg(test)]

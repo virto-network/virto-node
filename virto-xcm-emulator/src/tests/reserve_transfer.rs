@@ -1,131 +1,182 @@
-use crate::{Kusama, init_tracing};
+use crate::Kusama;
 use crate::*;
+use integration_tests_common::constants::XCM_V3;
 use xcm_emulator::{Parachain as Para, RelayChain as Relay};
+use frame_support::traits::PalletInfoAccess;
+use thousands::Separable;
 
 #[test]
-fn reserve_transfer_native_asset_from_relay_to_assets() {
+fn reserve_transfer_native_token_from_relay_chain_parachain_to_kreivo_parachain() {
+	// Init tests variables
+	let amount = 1000000000000;
+	let relay_sender_balance_before = Kusama::account_data_of(KusamaSender::get()).free;
+	let para_receiver_balance_before = Kreivo::account_data_of(KreivoReceiver::get()).free;
 
-    init_tracing();
+	let origin = <Kusama as Relay>::RuntimeOrigin::signed(KusamaSender::get());
+	let root_kusama = <Kusama as Relay>::RuntimeOrigin::root();
+	let kreivo_para_destination: VersionedMultiLocation = Kusama::child_location_of(Kreivo::para_id()).into();
+	let kreivo_remote: MultiLocation = Kusama::child_location_of(Kreivo::para_id());
+	let beneficiary: VersionedMultiLocation = AccountId32 {
+		network: None,
+		id: KreivoReceiver::get().into(),
+	}
+	.into();
+	let native_assets: VersionedMultiAssets = (Here, amount).into();
+	let fee_asset_item = 0;
+	let weight_limit = WeightLimit::Unlimited;
 
-    // Init tests variables
-    let amount = KUSAMA_ED * 1000;
-    let relay_sender_balance_before = Kusama::account_data_of(KusamaSender::get()).free;
-    let para_receiver_balance_before = Statemine::account_data_of(StatemineReceiver::get()).free;
+	// Send XCM message from Relay Chain
+	Kusama::execute_with(|| {
+		assert_ok!(<Kusama as KusamaPallet>::XcmPallet::force_xcm_version(
+			root_kusama,
+			bx!(kreivo_remote),
+			XCM_V3
+		));
+		assert_ok!(<Kusama as KusamaPallet>::XcmPallet::limited_reserve_transfer_assets(
+			origin,
+			bx!(kreivo_para_destination),
+			bx!(beneficiary),
+			bx!(native_assets),
+			fee_asset_item,
+			weight_limit,
+		));
 
-    let origin = <Kusama as Relay>::RuntimeOrigin::signed(KusamaSender::get());
-    let assets_para_destination: VersionedMultiLocation =
-        Kusama::child_location_of(Statemine::para_id()).into();
-    let beneficiary: VersionedMultiLocation = AccountId32 {
-        network: None,
-        id: StatemineReceiver::get().into(),
-    }
-    .into();
-    let native_assets: VersionedMultiAssets = (Here, amount).into();
-    let fee_asset_item = 0;
-    let weight_limit = WeightLimit::Unlimited;
+		type RuntimeEvent = <Kusama as Relay>::RuntimeEvent;
 
-    // Send XCM message from Relay Chain
-    Kusama::execute_with(|| {
-        assert_ok!(
-            <Kusama as KusamaPallet>::XcmPallet::limited_reserve_transfer_assets(
-                origin,
-                bx!(assets_para_destination),
-                bx!(beneficiary),
-                bx!(native_assets),
-                fee_asset_item,
-                weight_limit,
-            )
-        );
+		assert_expected_events!(
+			Kusama,
+			vec![
+				RuntimeEvent::XcmPallet(pallet_xcm::Event::Attempted(Outcome::Complete(weight))) => {
+					weight: weight_within_threshold((REF_TIME_THRESHOLD, PROOF_SIZE_THRESHOLD), Weight::from_parts(754_244_000, 0), *weight),
+				},
+			]
+		);
+	});
 
-        type RuntimeEvent = <Kusama as Relay>::RuntimeEvent;
+    let mut beneficiary_balance = 0;
+	// Receive XCM message in Assets Parachain
+	Kreivo::execute_with(|| {
+		type RuntimeEvent = <Kreivo as Para>::RuntimeEvent;
 
-        assert_expected_events!(
-            Kusama,
-            vec![
-                RuntimeEvent::XcmPallet(pallet_xcm::Event::Attempted(Outcome::Complete(weight))) => {
-                    weight: weight_within_threshold((REF_TIME_THRESHOLD, PROOF_SIZE_THRESHOLD), Weight::from_parts(754_244_000, 0), *weight),
-                },
-            ]
-        );
-    });
+        println!("kreivo events ${:?}", Kreivo::events());
 
-    // Receive XCM message in Assets Parachain
-    Statemine::execute_with(|| {
-        type RuntimeEvent = <Statemine as Para>::RuntimeEvent;
+		 		assert_expected_events!(
+			Kreivo,
+			vec![
+				RuntimeEvent::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward {
+					outcome: Outcome::Complete(_),
+					..
+				}) => {},
+			]
+		);
+	});
+    const EST_FEES: u128 = 1_600_000_000 * 10;
 
-        assert_expected_events!(
-            Statemine,
-            vec![
-                RuntimeEvent::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward {
-                    outcome: Outcome::Incomplete(_, Error::UntrustedReserveLocation),
-                    ..
-                }) => {},
-            ]
-        );
-    });
+	let relay_sender_balance_after = Kusama::account_data_of(KusamaSender::get()).free;
+	let para_sender_balance_after = Kreivo::account_data_of(KreivoReceiver::get()).free;
 
-    // Check if balances are updated accordingly in Relay Chain and Assets Parachain
-    let relay_sender_balance_after = Kusama::account_data_of(KusamaSender::get()).free;
-    let para_sender_balance_after = Statemine::account_data_of(StatemineReceiver::get()).free;
 
-    assert_eq!(
-        relay_sender_balance_before - amount,
-        relay_sender_balance_after
+    println!(
+        "Reserve-transfer: initial balance {} transfer amount {} current balance {} estimated fees {} actual fees {}",
+        para_receiver_balance_before.separate_with_commas(),
+        amount.separate_with_commas(),
+        para_sender_balance_after.separate_with_commas(),
+        EST_FEES.separate_with_commas(),
+        ( amount + para_receiver_balance_before - para_sender_balance_after).separate_with_commas()
     );
-    assert_eq!(para_sender_balance_after, para_receiver_balance_before);
+
+    assert_balance(para_sender_balance_after, beneficiary_balance + amount, EST_FEES);
 }
 
 #[test]
-fn reserve_transfer_asset_from_relay_chain_parachain_to_kreivo_parachain() {
-    init_tracing();
+fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
+	// Init tests variables
+    const ASSET_ID: u32 = 1984;
+    const AMOUNT: u128 = 20_000_000_000;
+    const MINT_AMOUNT: u128 = 100_000_000_000_000;
+    let root_statemine = <Statemine as Para>::RuntimeOrigin::root();
+    let kreivo_root = <Kreivo as Para>::RuntimeOrigin::root();
 
-    let kreivo_location: MultiLocation = MultiLocation {
-        parents: 0,
-        interior: X1(Parachain(KREIVO_PARA_ID)),
+    let statemine_remote: MultiLocation = MultiLocation {
+        parents: 1,
+        interior: X1(Parachain(Statemine::para_id().into())),
     };
-
-    const AMOUNT: u128 = 5_000_000_000_000;
-
-    Kusama::execute_with(|| {
-        println!("     ");
-        println!(">>>>>>>>> Kusama: force xcm v3 version <<<<<<<<<<<<<<<<<<<<<<");
-        println!("     ");
-        assert_ok!(kusama_runtime::XcmPallet::force_default_xcm_version(
-            kusama_runtime::RuntimeOrigin::root(),
-            Some(XCM_VERSION)
-        ));
-
-        assert_ok!(kusama_runtime::XcmPallet::limited_reserve_transfer_assets(
-            kusama_runtime::RuntimeOrigin::signed(ALICE),
-            Box::new(kreivo_location.clone().into()),
-            Box::new(
-                X1(AccountId32 {
-                    network: None,
-                    id: ALICE.into()
-                })
-                .into()
-            ),
-            Box::new((Here, AMOUNT).into()),
-            0,
-            WeightLimit::Unlimited,
-        ));
-    });
+    let kreivo_remote: MultiLocation = MultiLocation {
+        parents: 1,
+        interior: X1(Parachain(Kreivo::para_id().into())),
+    };
+	let statemine_origin = <Statemine  as Para>::RuntimeOrigin::signed(StatemineSender::get());
+    let beneficiary: VersionedMultiLocation = AccountId32 {
+		network: None,
+		id: KreivoReceiver::get().into(),
+	}.into();
+    let asset_to_transfer: VersionedMultiAssets = (X2(PalletInstance(50.into()), GeneralIndex(ASSET_ID as u128)), AMOUNT).into();
+	let fee_asset_item = 0;
+	let weight_limit = WeightLimit::Unlimited;
 
     Kreivo::execute_with(|| {
-        println!("     ");
-        println!(">>>>>>>>> KreivoParachain <<<<<<<<<<<<<<<<<<<<<<");
-        println!("     ");
+		type RuntimeEvent = <Kreivo as Para>::RuntimeEvent;
 
-        println!(
-            "ALICE Balance on Kreivo: {:?}",
-            kreivo_runtime::Balances::free_balance(&ALICE)
-        );
+        assert_ok!(<Kreivo as KreivoPallet>::PolkadotXcm::force_xcm_version(
+            kreivo_root.clone(),
+			bx!(statemine_remote),
+			XCM_V3
+		));
 
-        // Ensure beneficiary account balance increased
-        kreivo_runtime::System::events()
-            .iter()
-            .for_each(|r| println!(">>> {:?}", r.event));
+        assert_ok!(<Kreivo as KreivoPallet>::Assets::force_create(
+            kreivo_root.clone(),
+            ASSET_ID.into(),
+            KreivoSender::get().into(),
+            true,
+            10000u128.into(),
+		));
 
-        // TODO: check that the balance is increased
+        assert_ok!(<Kreivo as KreivoPallet>::AssetRegistry::register_reserve_asset(
+            kreivo_root.clone(),
+            ASSET_ID.into(),
+            (
+                Parent,
+                X3(
+                    Parachain(Statemine::para_id().into()),
+                    PalletInstance(<Statemine as StateminePallet>::Assets::index() as u8),
+                    GeneralIndex(ASSET_ID.into()),
+                ),
+            )
+                .into(),
+		));
+	});
+
+    Statemine::execute_with(|| {
+        assert_ok!(<Statemine as StateminePallet>::Assets::force_create(
+            root_statemine.clone(),
+            ASSET_ID.into(),
+            StatemineSender::get().into(),
+            true,
+            10000u128.into(),
+		));
+
+        assert_ok!(<Statemine as StateminePallet>::Assets::mint(
+            <Statemine as Para>::RuntimeOrigin::signed(StatemineSender::get()),
+            ASSET_ID.into(),
+            StatemineSender::get().into(),
+            MINT_AMOUNT.into(),
+		));
+
+        assert_ok!(<Statemine as StateminePallet>::PolkadotXcm::force_xcm_version(
+            root_statemine,
+			bx!(kreivo_remote),
+			XCM_V3
+		));
+
+        assert_ok!(<Statemine as StateminePallet>::PolkadotXcm::limited_reserve_transfer_assets(
+            <Statemine as Para>::RuntimeOrigin::signed(StatemineSender::get()),
+			bx!(kreivo_remote.into()),
+			bx!(beneficiary),
+			bx!(asset_to_transfer),
+			fee_asset_item,
+			weight_limit,
+		));
+
     });
 }
+
