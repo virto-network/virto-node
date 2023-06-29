@@ -150,16 +150,7 @@ pub type Barrier = (
 pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub UsdtPerSecond: (xcm::v3::AssetId, u128, u128) = (
-		MultiLocation::new(1, X3(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID), GeneralIndex(USDT_ASSET_ID))).into(),
-		default_fee_per_second() * 10,
-		0
-	);
 	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
-	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
-	// Statemine's Assets pallet index
-	pub StatemineAssetsPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID)));
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936

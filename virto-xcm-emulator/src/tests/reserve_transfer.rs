@@ -1,9 +1,11 @@
 use crate::Kusama;
 use crate::*;
-use integration_tests_common::constants::XCM_V3;
+//use integration_tests_common::constants::XCM_V3;
 use xcm_emulator::{Parachain as Para, RelayChain as Relay};
 use frame_support::traits::PalletInfoAccess;
 use thousands::Separable;
+
+const XCM_V3:u32 = 3;
 
 #[test]
 fn reserve_transfer_native_token_from_relay_chain_parachain_to_kreivo_parachain() {
@@ -95,6 +97,8 @@ fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
     const AMOUNT: u128 = 20_000_000_000;
     const MINT_AMOUNT: u128 = 100_000_000_000_000;
     let root_statemine = <Statemine as Para>::RuntimeOrigin::root();
+    let root_kusama = <Kusama as Relay>::RuntimeOrigin::root();
+
     let kreivo_root = <Kreivo as Para>::RuntimeOrigin::root();
 
     let statemine_remote: MultiLocation = MultiLocation {
@@ -113,6 +117,14 @@ fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
     let asset_to_transfer: VersionedMultiAssets = (X2(PalletInstance(50.into()), GeneralIndex(ASSET_ID as u128)), AMOUNT).into();
 	let fee_asset_item = 0;
 	let weight_limit = WeightLimit::Unlimited;
+
+    Kusama::execute_with(|| {
+		assert_ok!(<Kusama as KusamaPallet>::XcmPallet::force_xcm_version(
+			root_kusama,
+			bx!(kreivo_remote),
+			XCM_V3
+		));
+    });
 
     Kreivo::execute_with(|| {
 		type RuntimeEvent = <Kreivo as Para>::RuntimeEvent;
@@ -144,6 +156,7 @@ fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
             )
                 .into(),
 		));
+
 	});
 
     Statemine::execute_with(|| {
@@ -176,12 +189,20 @@ fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
 			fee_asset_item,
 			weight_limit,
 		));
+
+        for event in Statemine::events() {
+			println!("Statemine event: {:?}", event);
+		}
     });
 
     Kreivo::execute_with(|| {
 		type RuntimeEvent = <Kreivo as Para>::RuntimeEvent;
 
         let balance = <Kreivo as KreivoPallet>::Assets::balance(ASSET_ID.into(), KreivoReceiver::get());
+
+        for event in Kreivo::events() {
+			println!("Kreivo event: {:?}", event);
+		}
 	});
 }
 
