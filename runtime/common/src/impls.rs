@@ -16,8 +16,11 @@
 //! Auxiliary struct/enums for parachain runtimes.
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for parachains.
 
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
-
+use frame_support::traits::{
+	fungibles::{Balanced, Credit},
+	Currency, Imbalance, OnUnbalanced,
+};
+use pallet_asset_tx_payment::HandleCredit;
 use sp_std::{borrow::Borrow, marker::PhantomData};
 use xcm::latest::{AssetId::Concrete, Fungibility::Fungible, MultiAsset, MultiLocation};
 use xcm_executor::traits::{Convert, Error as MatchError, MatchesFungibles};
@@ -49,6 +52,24 @@ where
 			}
 			// 100% of the fees + tips (if any) go to the treasury
 			<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(fees);
+		}
+	}
+}
+
+/// A `HandleCredit` implementation that naively transfers the fees to the block
+/// author. Will drop and burn the assets in case the transfer fails.
+pub struct AssetsToBlockAuthor<R, I>(PhantomData<(R, I)>);
+impl<R, I> HandleCredit<AccountIdOf<R>, pallet_assets::Pallet<R, I>> for AssetsToBlockAuthor<R, I>
+where
+	I: 'static,
+	R: pallet_authorship::Config + pallet_assets::Config<I>,
+	AccountIdOf<R>: From<polkadot_core_primitives::v2::AccountId> + Into<polkadot_core_primitives::v2::AccountId>,
+{
+	fn handle_credit(credit: Credit<AccountIdOf<R>, pallet_assets::Pallet<R, I>>) {
+		if let Some(author) = pallet_authorship::Pallet::<R>::author() {
+			// In case of error: Will drop the result triggering the `OnDrop` of the
+			// imbalance.
+			let _ = pallet_assets::Pallet::<R, I>::resolve(&author, credit);
 		}
 	}
 }

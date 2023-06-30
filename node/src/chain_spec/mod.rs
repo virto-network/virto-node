@@ -21,7 +21,6 @@ use sp_core::{Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 pub mod kreivo;
-pub mod seedling;
 pub mod virto;
 
 /// The default XCM version to set in genesis config.

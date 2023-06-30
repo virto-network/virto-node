@@ -14,14 +14,15 @@
 // limitations under the License.
 
 pub mod currency {
+	use kusama_runtime_constants as constants;
 	use polkadot_core_primitives::Balance;
-	use polkadot_runtime_constants as constants;
 
 	/// The existential deposit. Set to 1/10 of its parent Relay Chain.
 	pub const EXISTENTIAL_DEPOSIT: Balance = constants::currency::EXISTENTIAL_DEPOSIT / 10;
 
 	pub const UNITS: Balance = constants::currency::UNITS;
 	pub const CENTS: Balance = constants::currency::CENTS;
+	pub const GRAND: Balance = constants::currency::GRAND;
 	pub const MILLICENTS: Balance = constants::currency::MILLICENTS;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
@@ -35,7 +36,7 @@ pub mod fee {
 	use super::currency::CENTS;
 	use frame_support::weights::{
 		constants::{ExtrinsicBaseWeight, WEIGHT_REF_TIME_PER_SECOND},
-		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+		FeePolynomial, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
 	};
 	use polkadot_core_primitives::Balance;
 	use smallvec::smallvec;
@@ -43,10 +44,6 @@ pub mod fee {
 
 	/// The block saturation level. Fees will be updates based on this value.
 	pub const TARGET_BLOCK_FULLNESS: Perbill = Perbill::from_percent(25);
-
-	//TODO: Update WeightToFee functionality to match cummulus implementation
-	// (Should be done in a separated issue)
-
 	/// Handles converting a weight scalar to a fee value, based on the scale
 	/// and granularity of the node's balance type.
 	///
@@ -60,13 +57,48 @@ pub mod fee {
 	///   - Setting it to `1` will cause the literal `#[weight = x]` values to
 	///     be charged.
 	pub struct WeightToFee;
-	impl WeightToFeePolynomial for WeightToFee {
+	impl frame_support::weights::WeightToFee for WeightToFee {
+		type Balance = Balance;
+
+		fn weight_to_fee(weight: &Weight) -> Self::Balance {
+			let time_poly: FeePolynomial<Balance> = RefTimeToFee::polynomial().into();
+			let proof_poly: FeePolynomial<Balance> = ProofSizeToFee::polynomial().into();
+
+			// Take the maximum instead of the sum to charge by the more scarce resource.
+			time_poly
+				.eval(weight.ref_time())
+				.max(proof_poly.eval(weight.proof_size()))
+		}
+	}
+
+	/// Maps the reference time component of `Weight` to a fee.
+	pub struct RefTimeToFee;
+	impl WeightToFeePolynomial for RefTimeToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
 			// in Kusama, extrinsic base weight (smallest non-zero weight) is mapped to 1/10
-			// CENT: As Statemine, we map to 1/10 of that, or 1/100 CENT
+			// CENT: in Statemine, we map to 1/10 of that, or 1/100 CENT
 			let p = super::currency::CENTS;
 			let q = 100 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
+
+			smallvec![WeightToFeeCoefficient {
+				degree: 1,
+				negative: false,
+				coeff_frac: Perbill::from_rational(p % q, q),
+				coeff_integer: p / q,
+			}]
+		}
+	}
+
+	/// Maps the proof size component of `Weight` to a fee.
+	pub struct ProofSizeToFee;
+	impl WeightToFeePolynomial for ProofSizeToFee {
+		type Balance = Balance;
+		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
+			// Map 10kb proof to 1 CENT.
+			let p = super::currency::CENTS;
+			let q = 10_000;
+
 			smallvec![WeightToFeeCoefficient {
 				degree: 1,
 				negative: false,
@@ -85,4 +117,10 @@ pub mod fee {
 		let base_tx_per_second = (WEIGHT_REF_TIME_PER_SECOND as u128) / base_weight;
 		base_tx_per_second * base_tx_fee()
 	}
+}
+
+pub mod locations {
+	pub const STATEMINE_PARA_ID: u32 = 1000;
+	pub const STATEMINE_ASSET_PALLET_ID: u8 = 50;
+	pub const USDT_ASSET_ID: u128 = 1984;
 }

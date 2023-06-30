@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::service::{new_partial, Block, KreivoRuntimeExecutor, VirtoRuntimeExecutor};
+use crate::service::{new_partial, Block};
 use crate::{
+	benchmarking::{inherent_benchmark_data, RemarkBuilder},
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 };
@@ -36,17 +37,73 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{net::SocketAddr, path::PathBuf};
 
+/// Dispatches the code to the currently selected runtime.
+macro_rules! dispatch_runtime {
+	($runtime:expr, |$alias: ident| $code:expr) => {
+		match $runtime {
+			Runtime::Kreivo => {
+				#[allow(unused_imports)]
+				use kreivo_runtime as $alias;
+
+				$code
+			}
+			Runtime::Virto => {
+				#[allow(unused_imports)]
+				use virto_runtime as $alias;
+
+				$code
+			}
+		}
+	};
+}
+
+/// Generates boilerplate code for constructing partial node for the runtimes
+/// that are supported by the benchmarks.
+macro_rules! construct_partial {
+	($config:expr, |$partial:ident| $code:expr) => {
+		dispatch_runtime!($config.chain_spec.runtime(), |rt| {
+			let $partial =
+				new_partial::<rt::RuntimeApi, _>(&$config, crate::service::aura_build_import_queue::<_, AuraId>)?;
+
+			$code
+		})
+	};
+}
+
+/// Generates boilerplate code for async run on partial node.
+macro_rules! construct_async_run {
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		let runner = $cli.create_runner($cmd)?;
+		construct_partial!(runner.config(), |$components| {
+			runner.async_run(|$config| {
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		})
+	}};
+}
+
 /// Helper enum that is used for better distinction of different
 /// parachain/runtime configuration (it is based/calculated on ChainSpec's ID
 /// attribute)
 #[derive(Debug, PartialEq, Default)]
 enum Runtime {
-	/// This is the default runtime (actually based on rococo)
 	#[default]
-	Default,
 	Kreivo,
 	Virto,
-	Seedling,
+}
+
+impl From<&str> for Runtime {
+	fn from(value: &str) -> Self {
+		if value.starts_with("kreivo") {
+			Runtime::Kreivo
+		} else if value.starts_with("virto") {
+			Runtime::Virto
+		} else {
+			log::warn!("No specific runtime was recognized for ChainSpec's id: '{value}', so `Kreivo` will be used as default.");
+			Runtime::default()
+		}
+	}
 }
 
 trait RuntimeResolver {
@@ -55,7 +112,7 @@ trait RuntimeResolver {
 
 impl RuntimeResolver for dyn ChainSpec {
 	fn runtime(&self) -> Runtime {
-		runtime(self.id())
+		self.id().into()
 	}
 }
 
@@ -73,24 +130,7 @@ impl RuntimeResolver for PathBuf {
 		let chain_spec: EmptyChainSpecWithId =
 			serde_json::from_reader(reader).expect("Failed to read 'json' file with ChainSpec configuration");
 
-		runtime(&chain_spec.id)
-	}
-}
-
-fn runtime(id: &str) -> Runtime {
-	let id = id.replace('_', "-");
-	if id.starts_with("seedling") {
-		Runtime::Seedling
-	} else if id.starts_with("kreivo") {
-		Runtime::Kreivo
-	} else if id.starts_with("virto") {
-		Runtime::Virto
-	} else {
-		log::warn!(
-			"No specific runtime was recognized for ChainSpec's id: '{}', so Runtime::default() will be used",
-			id
-		);
-		Runtime::default()
+		chain_spec.id.as_str().into()
 	}
 }
 
@@ -102,10 +142,6 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 		"kreivo-rococo-local" => Box::new(chain_spec::kreivo::kreivo_rococo_chain_spec_local()),
 		"virto" => Box::new(chain_spec::virto::virto_polkadot_chain_spec()),
 		"virto-local" => Box::new(chain_spec::virto::virto_polkadot_chain_spec_local()),
-		"seedling-rococo" => Box::new(chain_spec::seedling::seedling_rococo_chain_spec()),
-		"seedling-rococo-local" => Box::new(chain_spec::seedling::seedling_rococo_chain_spec_local()),
-		"seedling-kusama" => Box::new(chain_spec::seedling::seedling_kusama_chain_spec()),
-		"seedling-kusama-local" => Box::new(chain_spec::seedling::seedling_kusama_chain_spec_local()),
 		// -- Fallback (generic chainspec)
 		"" => {
 			log::warn!("No ChainSpec.id specified, so using default one, based on rococo-parachain runtime");
@@ -116,8 +152,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 			let path: PathBuf = path.into();
 			match path.runtime() {
 				Runtime::Kreivo => Box::new(chain_spec::kreivo::ChainSpec::from_json_file(path)?),
-				Runtime::Default | Runtime::Virto => Box::new(chain_spec::virto::ChainSpec::from_json_file(path)?),
-				Runtime::Seedling => Box::new(chain_spec::seedling::ChainSpec::from_json_file(path)?),
+				Runtime::Virto => Box::new(chain_spec::virto::ChainSpec::from_json_file(path)?),
 			}
 		}
 	})
@@ -159,11 +194,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		match chain_spec.runtime() {
-			Runtime::Kreivo => &kreivo_runtime::VERSION,
-			Runtime::Default | Runtime::Virto => &virto_runtime::VERSION,
-			Runtime::Seedling => &seedling_runtime::VERSION,
-		}
+		dispatch_runtime!(chain_spec.runtime(), |runtime| &runtime::VERSION)
 	}
 }
 
@@ -207,74 +238,6 @@ impl SubstrateCli for RelayChainCli {
 	}
 }
 
-/// Creates partial components for the runtimes that are supported by the
-/// benchmarks.
-macro_rules! construct_benchmark_partials {
-	($config:expr, |$partials:ident| $code:expr) => {
-		match $config.chain_spec.runtime() {
-			Runtime::Seedling => {
-				let $partials = new_partial::<seedling_runtime::RuntimeApi, _>(
-					&$config,
-					crate::service::aura_build_import_queue::<_, AuraId>,
-				)?;
-				$code
-			}
-			Runtime::Kreivo => {
-				let $partials = new_partial::<kreivo_runtime::RuntimeApi, _>(
-					&$config,
-					crate::service::aura_build_import_queue::<_, AuraId>,
-				)?;
-				$code
-			}
-			Runtime::Default | Runtime::Virto => {
-				let $partials = new_partial::<virto_runtime::RuntimeApi, _>(
-					&$config,
-					crate::service::aura_build_import_queue::<_, AuraId>,
-				)?;
-				$code
-			}
-		}
-	};
-}
-
-macro_rules! construct_async_run {
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-		let runner = $cli.create_runner($cmd)?;
-		match runner.config().chain_spec.runtime() {
-			Runtime::Seedling => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<seedling_runtime::RuntimeApi, _>(
-						&$config,
-						crate::service::aura_build_import_queue::<_, AuraId>,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			},
-			Runtime::Kreivo => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<kreivo_runtime::RuntimeApi, _>(
-						&$config,
-						crate::service::aura_build_import_queue::<_, AuraId>,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			},
-			Runtime::Default | Runtime::Virto => {
-				runner.async_run(|$config| {
-					let $components = new_partial::<virto_runtime::RuntimeApi, _>(
-						&$config,
-						crate::service::aura_build_import_queue::<_, AuraId>,
-					)?;
-					let task_manager = $components.task_manager;
-					{ $( $code )* }.map(|v| (v, task_manager))
-				})
-			}
-		}
-	}}
-}
-
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -285,7 +248,7 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
+			construct_async_run!(|components, cli, cmd, _config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
 		}
@@ -296,9 +259,11 @@ pub fn run() -> Result<()> {
 			construct_async_run!(|components, cli, cmd, config| Ok(cmd.run(components.client, config.chain_spec)))
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| Ok(cmd.run(components.client, components.import_queue)))
+			construct_async_run!(
+				|components, cli, cmd, _config| Ok(cmd.run(components.client, components.import_queue))
+			)
 		}
-		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| Ok(cmd.run(
+		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, _config| Ok(cmd.run(
 			components.client,
 			components.backend,
 			None
@@ -338,52 +303,61 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| {
+				// Switch on the concrete benchmark sub-command
+				match cmd {
+					BenchmarkCmd::Pallet(cmd) => {
+						if !cfg!(feature = "runtime-benchmarks") {
+							return Err("Benchmarking wasn't enabled when building the node. \
+							You can enable it with `--features runtime-benchmarks`."
+								.into());
+						}
 
-			// Switch on the concrete benchmark sub-command-
-			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
-					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| match config.chain_spec.runtime() {
-							Runtime::Kreivo => cmd.run::<Block, KreivoRuntimeExecutor>(config),
-							Runtime::Virto => cmd.run::<Block, VirtoRuntimeExecutor>(config),
-							_ => Err(
-								format!("Chain '{:?}' doesn't support benchmarking", config.chain_spec.runtime())
-									.into(),
-							),
-						})
-					} else {
-						Err("Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`."
-							.into())
+						match config.chain_spec.runtime() {
+							Runtime::Kreivo => cmd.run::<Block, crate::service::KreivoRuntimeExecutor>(config),
+							Runtime::Virto => cmd.run::<Block, crate::service::VirtoRuntimeExecutor>(config),
+						}
 					}
-				}
-				BenchmarkCmd::Block(cmd) => {
-					runner.sync_run(|config| construct_benchmark_partials!(config, |partials| cmd.run(partials.client)))
-				}
-				#[cfg(not(feature = "runtime-benchmarks"))]
-				BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
-					"Compile with --features=runtime-benchmarks \
+					BenchmarkCmd::Block(cmd) => {
+						construct_partial!(config, |partial| cmd.run(partial.client))
+					}
+					#[cfg(not(feature = "runtime-benchmarks"))]
+					BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
+						"Compile with --features=runtime-benchmarks \
 						to enable storage benchmarks."
-						.into(),
-				)),
-				#[cfg(feature = "runtime-benchmarks")]
-				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					construct_benchmark_partials!(config, |partials| {
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
+							.into(),
+					)),
+					#[cfg(feature = "runtime-benchmarks")]
+					BenchmarkCmd::Storage(cmd) => {
+						construct_partial!(config, |partial| {
+							let db = partial.backend.expose_db();
+							let storage = partial.backend.expose_storage();
 
-						cmd.run(config, partials.client.clone(), db, storage)
-					})
-				}),
-				BenchmarkCmd::Machine(cmd) => {
-					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
+							cmd.run(config, partial.client, db, storage)
+						})
+					}
+					BenchmarkCmd::Machine(cmd) => cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),
+					BenchmarkCmd::Overhead(cmd) => {
+						construct_partial!(config, |partial| {
+							let ext_builder = RemarkBuilder::new(partial.client.clone());
+
+							cmd.run(
+								config,
+								partial.client,
+								inherent_benchmark_data()?,
+								Vec::new(),
+								&ext_builder,
+							)
+						})
+					}
+					// NOTE: this allows the Client to leniently implement
+					// new benchmark commands without requiring a companion MR.
+					#[allow(unreachable_patterns)]
+					_ => Err("Benchmarking sub-command unsupported".into()),
 				}
-				// NOTE: this allows the Client to leniently implement
-				// new benchmark commands without requiring a companion MR.
-				#[allow(unreachable_patterns)]
-				_ => Err("Benchmarking sub-command unsupported".into()),
-			}
+			})
 		}
+
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
@@ -414,15 +388,6 @@ pub fn run() -> Result<()> {
 						task_manager,
 					))
 				}),
-				Runtime::Seedling => runner.async_run(|_| {
-					Ok((
-						cmd.run::<Block, HostFunctionsOf<crate::service::SeedlingRuntimeExecutor>, _>(Some(
-							info_provider,
-						)),
-						task_manager,
-					))
-				}),
-				_ => Err("Chain doesn't support try-runtime".into()),
 			}
 		}
 		#[cfg(not(feature = "try-runtime"))]
@@ -477,29 +442,18 @@ pub fn run() -> Result<()> {
 					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
 				}
 
-				match config.chain_spec.runtime() {
-					Runtime::Kreivo => crate::service::start_generic_aura_node::<
-						kreivo_runtime::RuntimeApi,
-						AuraId,
-					>(config, polkadot_config, collator_options, id, hwbench)
+				dispatch_runtime!(config.chain_spec.runtime(), |runtime| {
+					crate::service::start_generic_aura_node::<runtime::RuntimeApi, AuraId>(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+						hwbench
+					)
 					.await
 					.map(|r| r.0)
-					.map_err(Into::into),
-					Runtime::Default | Runtime::Virto => crate::service::start_generic_aura_node::<
-						virto_runtime::RuntimeApi,
-						AuraId,
-					>(config, polkadot_config, collator_options, id, hwbench)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into),
-					Runtime::Seedling => crate::service::start_generic_aura_node::<
-						seedling_runtime::RuntimeApi,
-						AuraId,
-					>(config, polkadot_config, collator_options, id, hwbench)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
-				}
+					.map_err(Into::into)
+				})
 			})
 		}
 	}
