@@ -123,10 +123,13 @@ fn testnet_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		transaction_payment: Default::default(),
+		lockdown_mode: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
+		treasury: Default::default(),
+		assets: Default::default(),
 	}
 }
 
@@ -231,9 +234,12 @@ fn virto_live_genesis(
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
 		},
 		transaction_payment: Default::default(),
+		lockdown_mode: Default::default(),
 		sudo: SudoConfig {
 			// Assign network admin rights.
 			key: Some(root_key),
 		},
+		treasury: Default::default(),
+		assets: Default::default(),
 	}
 }

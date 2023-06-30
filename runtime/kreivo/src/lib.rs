@@ -14,9 +14,9 @@ pub mod xcm_config;
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
+pub use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, Percent, Permill,
 };
@@ -30,9 +30,11 @@ use frame_support::{
 	dispatch::DispatchClass,
 	parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse},
-	weights::{ConstantMultiplier, Weight},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	PalletId,
 };
+
+pub use frame_system::Call as SystemCall;
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -46,9 +48,9 @@ use xcm_config::{RelayLocation, TrustBackedAssetsConvertedConcreteId, XcmConfig,
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+pub use polkadot_runtime_common::{prod_or_fast, BlockHashCount, SlowAdjustingFeeUpdate};
 
-use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
+pub use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
 // XCM Imports
 use xcm::latest::prelude::BodyId;
@@ -60,7 +62,7 @@ pub use parachains_common::{
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
-pub use virto_common::impls::DealWithFees;
+pub use virto_common::impls::{AssetsToBlockAuthor, DealWithFees};
 
 pub use constants::{currency::*, fee::WeightToFee};
 
@@ -85,11 +87,13 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+
+pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
@@ -538,6 +542,15 @@ impl pallet_asset_registry::Config for Runtime {
 	type BenchmarkHelper = AssetRegistryBenchmarkHelper;
 }
 
+impl pallet_asset_tx_payment::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Fungibles = Assets;
+	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
+		pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto, KreivoAssetsInstance>,
+		AssetsToBlockAuthor<Runtime, KreivoAssetsInstance>,
+	>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously
 // configured.
 construct_runtime!(
@@ -557,6 +570,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment = 11,
 		Burner: pallet_burner = 12,
 		Assets: pallet_assets::<Instance1> = 13,
+		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 14,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship = 20,
@@ -834,8 +848,6 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
-
-			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}
 	}

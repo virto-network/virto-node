@@ -5,7 +5,9 @@ panic = 'unwind'
 members = [
     'node',
     'runtime/virto',
-    'runtime/seedling',
     'runtime/kreivo',
-    'virto-xcm-emulator',
+]
+
+exclude = [
+    'virto-xcm-emulator'
 ]
