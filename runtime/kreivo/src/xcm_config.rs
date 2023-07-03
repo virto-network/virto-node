@@ -3,8 +3,8 @@ use super::{
 	KreivoAssetsInstance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
 	RuntimeOrigin, Treasury, WeightToFee, XcmpQueue,
 };
-use crate::constants::fee::default_fee_per_second;
-use crate::constants::locations::{STATEMINE_ASSET_PALLET_ID, STATEMINE_PARA_ID, USDT_ASSET_ID};
+
+use crate::constants::locations::STATEMINE_PARA_ID;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{ConstU32, ContainsPair, Everything, Get, Nothing, PalletInfoAccess},
