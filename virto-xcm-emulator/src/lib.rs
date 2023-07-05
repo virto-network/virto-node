@@ -1,5 +1,6 @@
+mod kreivo;
+
 pub use codec::Encode;
-pub mod kreivo;
 pub use frame_support::{
 	assert_ok, instances::Instance1, pallet_prelude::Weight, parameter_types, sp_io, sp_tracing,
 	traits::fungibles::Inspect,
@@ -17,17 +18,13 @@ pub use integration_tests_common::{
 pub use parachains_common::{AuraId, Balance, BlockNumber, StatemintAuraId};
 pub use polkadot_core_primitives::InboundDownwardMessage;
 pub use sp_core::{sr25519, storage::Storage, Get};
-use std::sync::Once;
 
-use crate::kreivo::kreivo::{genesis as kreivo_genesis, PARA_ID as KREIVO_PARA_ID};
+use crate::kreivo::{genesis as kreivo_genesis, PARA_ID as KREIVO_PARA_ID};
 pub use xcm::{
 	prelude::*,
 	v3::{Error, NetworkId::Kusama as KusamaId},
 };
-use xcm_emulator::{
-	assert_expected_events, bx, cumulus_pallet_dmp_queue, decl_test_networks, decl_test_parachains,
-	decl_test_relay_chains, helpers::weight_within_threshold, NetworkComponent, Parachain, RelayChain, TestExt,
-};
+use xcm_emulator::{decl_test_networks, decl_test_parachains, decl_test_relay_chains, Parachain, RelayChain, TestExt};
 use xcm_executor::traits::Convert;
 
 decl_test_relay_chains! {

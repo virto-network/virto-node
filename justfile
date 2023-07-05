@@ -21,15 +21,19 @@ _task-selector:
 @version:
 	echo {{ ver }}
 
+@list-crates:
+	open Cargo.toml | get workspace.members | each { open ($in + /Cargo.toml) | get package.name } | str join "\n"
+
 @_check_deps:
 	rustup component add clippy
 
 check: _check_deps
-	cargo clippy --features runtime-benchmarks --all-targets --workspace -- --deny warnings
+	cargo clippy --all-targets -- --deny warnings
 	cargo fmt --all -- --check
 
-test:
-	cargo test
+
+@test crate="":
+	cargo test (if not ("{{crate}}" | is-empty) { "-p" } else {""}) {{crate}}
 
 build-local:
 	cargo build --release

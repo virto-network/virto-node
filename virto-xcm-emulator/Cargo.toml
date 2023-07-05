@@ -3,7 +3,7 @@ name = "virto-xcm-emulator"
 version = "1.0.0"
 authors = ["Parity Technologies <admin@parity.io>"]
 edition = "2021"
-description = "Statemine parachain runtime integration tests with xcm-emulator"
+description = "Kreivo parachain runtime integration tests with xcm-emulator"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.4.0", default-features = false }

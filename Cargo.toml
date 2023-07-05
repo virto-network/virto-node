@@ -6,8 +6,6 @@ members = [
     'node',
     'runtime/virto',
     'runtime/seedling',
-    'runtime/kreivo'
-]
-exclude = [
-    'virto-xcm-emulator'
+    'runtime/kreivo',
+    'virto-xcm-emulator',
 ]
