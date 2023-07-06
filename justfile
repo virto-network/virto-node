@@ -32,8 +32,8 @@ check: _check_deps
 	cargo fmt --all -- --check
 
 
-@test crate="":
-	cargo test (if not ("{{crate}}" | is-empty) { "-p" } else {""}) {{crate}}
+@test crate="" *rest="":
+	cargo test (if not ("{{crate}}" | is-empty) { "-p" } else {""}) {{crate}} {{ rest }}
 
 build-local:
 	cargo build --release

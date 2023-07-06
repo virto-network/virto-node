@@ -62,8 +62,6 @@ fn reserve_transfer_native_token_from_relay_chain_to_kreivo_parachain() {
 	Kreivo::execute_with(|| {
 		type RuntimeEvent = <Kreivo as Para>::RuntimeEvent;
 
-		println!("kreivo events ${:?}", Kreivo::events());
-
 		assert_expected_events!(
 			Kreivo,
 			vec![
