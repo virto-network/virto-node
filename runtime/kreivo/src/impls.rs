@@ -114,26 +114,26 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			}
 			ProxyType::AssetOwner => matches!(
 				c,
-				RuntimeCall::Assets(TrustBackedAssetsCall::create { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::start_destroy { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::destroy_accounts { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::destroy_approvals { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::finish_destroy { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::transfer_ownership { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::set_team { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::set_metadata { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::clear_metadata { .. })
+				RuntimeCall::Assets(KreivoAssetsCall::create { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::start_destroy { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::destroy_accounts { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::destroy_approvals { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::finish_destroy { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::transfer_ownership { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::set_team { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::set_metadata { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::clear_metadata { .. })
 					| RuntimeCall::Utility { .. }
 					| RuntimeCall::Multisig { .. }
 			),
 			ProxyType::AssetManager => matches!(
 				c,
-				RuntimeCall::Assets(TrustBackedAssetsCall::mint { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::burn { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::freeze { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::thaw { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::freeze_asset { .. })
-					| RuntimeCall::Assets(TrustBackedAssetsCall::thaw_asset { .. })
+				RuntimeCall::Assets(KreivoAssetsCall::mint { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::burn { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::freeze { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::thaw { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::freeze_asset { .. })
+					| RuntimeCall::Assets(KreivoAssetsCall::thaw_asset { .. })
 					| RuntimeCall::Utility { .. }
 					| RuntimeCall::Multisig { .. }
 			),

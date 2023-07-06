@@ -1,10 +1,10 @@
 use super::{
 	AccountId, AllPalletsWithSystem, AssetIdForTrustBackedAssets, AssetRegistry, Assets, Balance, Balances,
-	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, WeightToFee,
-	XcmpQueue,
+	KreivoAssetsInstance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
+	RuntimeOrigin, Treasury, WeightToFee, XcmpQueue,
 };
-use crate::constants::fee::default_fee_per_second;
-use crate::constants::locations::{STATEMINE_ASSET_PALLET_ID, STATEMINE_PARA_ID, USDT_ASSET_ID};
+
+use crate::constants::locations::STATEMINE_PARA_ID;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{ConstU32, ContainsPair, Everything, Get, Nothing, PalletInfoAccess},
@@ -12,14 +12,16 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
+use parachains_common::xcm_config::AssetFeeAsExistentialDepositMultiplier;
 use polkadot_parachain::primitives::Sibling;
+use sp_runtime::traits::ConvertInto;
 use sp_std::marker::PhantomData;
 use virto_common::impls::{AsAssetMultiLocation, ConvertedRegisteredAssetId, DealWithFees};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
-	EnsureXcmOrigin, FixedRateOfFungible, FixedWeightBounds, FungiblesAdapter, IsConcrete, LocalMint, MintLocation,
-	NativeAsset, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
+	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 	WithComputedOrigin,
 };
@@ -32,11 +34,10 @@ parameter_types! {
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub CheckAccount: (AccountId, MintLocation) = (PolkadotXcm::check_account(), MintLocation::Local);
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
-	pub TrustBackedAssetsPalletLocation: MultiLocation =
+	pub AssetsPalletLocation: MultiLocation =
 		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
 	pub UniversalLocation: InteriorMultiLocation = (
-		//TODO: to change the NetworkId to Kusama once we finish testing on Rococo.
-		GlobalConsensus(NetworkId::Rococo),
+		GlobalConsensus(NetworkId::Kusama),
 		Parachain(ParachainInfo::parachain_id().into()),
 	).into();
 
@@ -56,7 +57,7 @@ pub type LocationToAccountId = (
 );
 
 pub type TrustBackedAssetsConvertedConcreteId =
-	assets_common::TrustBackedAssetsConvertedConcreteId<TrustBackedAssetsPalletLocation, Balance>;
+	assets_common::TrustBackedAssetsConvertedConcreteId<AssetsPalletLocation, Balance>;
 
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
@@ -122,6 +123,7 @@ parameter_types! {
 	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000_000, 64 * 1024);
 	pub const MaxInstructions: u32 = 100;
 	pub const MaxAssetsIntoHolding: u32 = 64;
+	pub XcmAssetFeesReceiver: AccountId = Treasury::account_id();
 }
 
 match_types! {
@@ -147,16 +149,7 @@ pub type Barrier = (
 pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub UsdtPerSecond: (xcm::v3::AssetId, u128, u128) = (
-		MultiLocation::new(1, X3(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID), GeneralIndex(USDT_ASSET_ID))).into(),
-		default_fee_per_second() * 10,
-		0
-	);
 	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
-	// ALWAYS ensure that the index in PalletInstance stays up-to-date with
-	// Statemine's Assets pallet index
-	pub StatemineAssetsPalletLocation: MultiLocation =
-		MultiLocation::new(1, X2(Parachain(STATEMINE_PARA_ID), PalletInstance(STATEMINE_ASSET_PALLET_ID)));
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
@@ -185,9 +178,21 @@ impl<T: Get<MultiLocation>> ContainsPair<MultiAsset, MultiLocation> for ReserveA
 	}
 }
 
+pub type AssetFeeAsExistentialDepositMultiplierFeeCharger = AssetFeeAsExistentialDepositMultiplier<
+	Runtime,
+	WeightToFee,
+	pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto, KreivoAssetsInstance>,
+	KreivoAssetsInstance,
+>;
+
 pub type Traders = (
-	// USDT
-	FixedRateOfFungible<UsdtPerSecond, ()>,
+	cumulus_primitives_utility::TakeFirstAssetTrader<
+		AccountId,
+		AssetFeeAsExistentialDepositMultiplierFeeCharger,
+		TrustBackedAssetsConvertedConcreteId,
+		Assets,
+		cumulus_primitives_utility::XcmFeesTo32ByteAccount<FungiblesTransactor, AccountId, XcmAssetFeesReceiver>,
+	>,
 	// Everything else
 	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFees<Runtime>>,
 );
