@@ -29,6 +29,7 @@ use cumulus_primitives_core::{
 	ParaId,
 };
 use cumulus_relay_chain_interface::RelayChainInterface;
+
 use sp_core::Pair;
 
 use jsonrpsee::RpcModule;
@@ -72,15 +73,12 @@ type ParachainBackend = TFullBackend<Block>;
 
 type ParachainBlockImport<RuntimeApi> =
 	TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainBackend>;
-pub struct KreivoRuntimeExecutor;
-impl sc_executor::NativeExecutionDispatch for KreivoRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to
-	/// benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
+
+pub struct RuntimeExecutor<Runtime>(PhantomData<Runtime>);
+
+#[cfg(feature = "kreivo-runtime")]
+impl sc_executor::NativeExecutionDispatch for RuntimeExecutor<kreivo_runtime::Runtime> {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		kreivo_runtime::api::dispatch(method, data)
@@ -91,16 +89,9 @@ impl sc_executor::NativeExecutionDispatch for KreivoRuntimeExecutor {
 	}
 }
 
-/// Native executor instance.
-pub struct VirtoRuntimeExecutor;
-impl sc_executor::NativeExecutionDispatch for VirtoRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to
-	/// benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
+#[cfg(feature = "virto-runtime")]
+impl sc_executor::NativeExecutionDispatch for RuntimeExecutor<virto_runtime::Runtime> {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		virto_runtime::api::dispatch(method, data)

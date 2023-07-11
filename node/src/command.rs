@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::service::{new_partial, Block};
 use crate::{
 	benchmarking::{inherent_benchmark_data, RemarkBuilder},
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
+	service::{new_partial, Block, RuntimeExecutor},
 };
 
 use codec::Encode;
@@ -41,12 +41,14 @@ use std::{net::SocketAddr, path::PathBuf};
 macro_rules! dispatch_runtime {
 	($runtime:expr, |$alias: ident| $code:expr) => {
 		match $runtime {
+			#[cfg(feature = "kreivo-runtime")]
 			Runtime::Kreivo => {
 				#[allow(unused_imports)]
 				use kreivo_runtime as $alias;
 
 				$code
 			}
+			#[cfg(feature = "virto-runtime")]
 			Runtime::Virto => {
 				#[allow(unused_imports)]
 				use virto_runtime as $alias;
@@ -55,54 +57,82 @@ macro_rules! dispatch_runtime {
 			}
 		}
 	};
+	($runtime:expr, $code:expr) => {
+		dispatch_runtime!($runtime, |rt| $code)
+	};
 }
 
 /// Generates boilerplate code for constructing partial node for the runtimes
 /// that are supported by the benchmarks.
 macro_rules! construct_partial {
-	($config:expr, |$partial:ident| $code:expr) => {
-		dispatch_runtime!($config.chain_spec.runtime(), |rt| {
+	($config:expr, |$partial:ident, $runtime:ident| $code:expr) => {
+		dispatch_runtime!($config.chain_spec.runtime(), |$runtime| {
 			let $partial =
-				new_partial::<rt::RuntimeApi, _>(&$config, crate::service::aura_build_import_queue::<_, AuraId>)?;
+				new_partial::<$runtime::RuntimeApi, _>(&$config, crate::service::aura_build_import_queue::<_, AuraId>)?;
 
 			$code
 		})
+	};
+	($config:expr, |$partial:ident| $code:expr) => {
+		construct_partial!($config, |$partial, rt| $code)
 	};
 }
 
 /// Generates boilerplate code for async run on partial node.
 macro_rules! construct_async_run {
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident, $runtime:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
-		construct_partial!(runner.config(), |$components| {
+		construct_partial!(runner.config(), |$components, $runtime| {
 			runner.async_run(|$config| {
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
 		})
 	}};
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		construct_async_run!(|$components, $cli, $cmd, $config, rt| { $( $code )* })
+	}};
+}
+
+#[cfg(feature = "kreivo-runtime")]
+impl Default for Runtime {
+	fn default() -> Self {
+		Runtime::Kreivo
+	}
+}
+
+#[cfg(all(feature = "virto-runtime", not(feature = "kreivo-runtime")))]
+impl Default for Runtime {
+	fn default() -> Self {
+		Runtime::Virto
+	}
 }
 
 /// Helper enum that is used for better distinction of different
 /// parachain/runtime configuration (it is based/calculated on ChainSpec's ID
 /// attribute)
-#[derive(Debug, PartialEq, Default)]
+#[derive(Debug, PartialEq)]
 enum Runtime {
-	#[default]
+	#[cfg(feature = "kreivo-runtime")]
 	Kreivo,
+	#[cfg(feature = "virto-runtime")]
 	Virto,
 }
 
 impl From<&str> for Runtime {
 	fn from(value: &str) -> Self {
+		#[cfg(feature = "kreivo-runtime")]
 		if value.starts_with("kreivo") {
-			Runtime::Kreivo
-		} else if value.starts_with("virto") {
-			Runtime::Virto
-		} else {
-			log::warn!("No specific runtime was recognized for ChainSpec's id: '{value}', so `Kreivo` will be used as default.");
-			Runtime::default()
+			return Runtime::Kreivo;
 		}
+		#[cfg(feature = "virto-runtime")]
+		if value.starts_with("virto") {
+			return Runtime::Virto;
+		}
+
+		let fallback = Runtime::default();
+		log::warn!("No specific runtime was recognized for ChainSpec's id: '{value}', so `{fallback:?}` will be used as default.");
+		fallback
 	}
 }
 
@@ -136,22 +166,23 @@ impl RuntimeResolver for PathBuf {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 	Ok(match id {
-		// - Defaul-like
-		"kreivo" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec()),
+		#[cfg(feature = "kreivo-runtime")]
+		"" | "kreivo" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec()),
+		#[cfg(feature = "kreivo-runtime")]
 		"kreivo-local" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec_local()),
+		#[cfg(feature = "kreivo-runtime")]
 		"kreivo-rococo-local" => Box::new(chain_spec::kreivo::kreivo_rococo_chain_spec_local()),
+		#[cfg(feature = "virto-runtime")]
 		"virto" => Box::new(chain_spec::virto::virto_polkadot_chain_spec()),
+		#[cfg(feature = "virto-runtime")]
 		"virto-local" => Box::new(chain_spec::virto::virto_polkadot_chain_spec_local()),
-		// -- Fallback (generic chainspec)
-		"" => {
-			log::warn!("No ChainSpec.id specified, so using default one, based on rococo-parachain runtime");
-			Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec_local())
-		}
 		// -- Loading a specific spec from disk
 		path => {
 			let path: PathBuf = path.into();
 			match path.runtime() {
+				#[cfg(feature = "kreivo-runtime")]
 				Runtime::Kreivo => Box::new(chain_spec::kreivo::ChainSpec::from_json_file(path)?),
+				#[cfg(feature = "virto-runtime")]
 				Runtime::Virto => Box::new(chain_spec::virto::ChainSpec::from_json_file(path)?),
 			}
 		}
@@ -313,10 +344,9 @@ pub fn run() -> Result<()> {
 								.into());
 						}
 
-						match config.chain_spec.runtime() {
-							Runtime::Kreivo => cmd.run::<Block, crate::service::KreivoRuntimeExecutor>(config),
-							Runtime::Virto => cmd.run::<Block, crate::service::VirtoRuntimeExecutor>(config),
-						}
+						dispatch_runtime!(config.chain_spec.runtime(), |runtime| {
+							cmd.run::<Block, RuntimeExecutor<runtime::Runtime>>(config)
+						})
 					}
 					BenchmarkCmd::Block(cmd) => {
 						construct_partial!(config, |partial| cmd.run(partial.client))
@@ -361,34 +391,15 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
-			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 
-			// grab the task manager.
-			let runner = cli.create_runner(cmd)?;
-			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-			let task_manager = sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-				.map_err(|e| format!("Error: {:?}", e))?;
 			type HostFunctionsOf<E> = ExtendedHostFunctions<
 				sp_io::SubstrateHostFunctions,
 				<E as NativeExecutionDispatch>::ExtendHostFunctions,
 			>;
 
-			let info_provider = timestamp_with_aura_info(6000);
-
-			match runner.config().chain_spec.runtime() {
-				Runtime::Kreivo => runner.async_run(|_| {
-					Ok((
-						cmd.run::<Block, HostFunctionsOf<KreivoRuntimeExecutor>, _>(Some(info_provider)),
-						task_manager,
-					))
-				}),
-				Runtime::Virto => runner.async_run(|_| {
-					Ok((
-						cmd.run::<Block, HostFunctionsOf<VirtoRuntimeExecutor>, _>(Some(info_provider)),
-						task_manager,
-					))
-				}),
-			}
+			construct_async_run!(|components, cli, cmd, _config, runtime| {
+				Ok(cmd.run::<Block, HostFunctionsOf<RuntimeExecutor<runtime::Runtime>>>())
+			})
 		}
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err("Try-runtime was not enabled when building the node. \
