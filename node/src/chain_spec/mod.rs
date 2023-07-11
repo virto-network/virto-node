@@ -20,7 +20,10 @@ use serde::{Deserialize, Serialize};
 use sp_core::{Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
+#[cfg(feature = "kreivo-runtime")]
 pub mod kreivo;
+
+#[cfg(feature = "virto-runtime")]
 pub mod virto;
 
 /// The default XCM version to set in genesis config.

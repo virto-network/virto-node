@@ -24,6 +24,7 @@ impl<RuntimeApi> RemarkBuilder<RuntimeApi> {
 	}
 }
 
+#[cfg(feature = "kreivo-runtime")]
 impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder<kreivo_runtime::RuntimeApi> {
 	fn pallet(&self) -> &str {
 		"system"
@@ -84,6 +85,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder<kreivo_runtime::
 	}
 }
 
+#[cfg(feature = "virto-runtime")]
 impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder<virto_runtime::RuntimeApi> {
 	fn pallet(&self) -> &str {
 		"system"
