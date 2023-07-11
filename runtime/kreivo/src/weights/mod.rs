@@ -23,6 +23,7 @@ pub mod pallet_assets;
 pub mod pallet_proxy;
 pub mod paritydb_weights;
 pub mod rocksdb_weights;
+pub mod xcm;
 
 pub use block_weights::constants::BlockExecutionWeight;
 pub use extrinsic_weights::constants::ExtrinsicBaseWeight;
