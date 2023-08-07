@@ -16,14 +16,14 @@ use parachains_common::xcm_config::AssetFeeAsExistentialDepositMultiplier;
 use polkadot_parachain::primitives::Sibling;
 use sp_runtime::traits::ConvertInto;
 use sp_std::marker::PhantomData;
-use virto_common::impls::{AsAssetMultiLocation, ConvertedRegisteredAssetId, DealWithFees};
+use virto_common::impls::{AsAssetMultiLocation, DealWithFees};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, CurrencyAdapter,
 	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
-	WithComputedOrigin,
+	WithComputedOrigin,ConvertedConcreteId
 };
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
@@ -66,7 +66,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	Assets,
 	// Use this currency when it is a registered fungible asset matching the given location or name
 	// Assets not found in AssetRegistry will not be used
-	ConvertedRegisteredAssetId<
+	ConvertedConcreteId<
 		AssetIdForTrustBackedAssets,
 		Balance,
 		AsAssetMultiLocation<AssetIdForTrustBackedAssets, AssetRegistry>,
@@ -226,6 +226,7 @@ impl xcm_executor::Config for XcmConfig {
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
+	type Aliasers = Nothing;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
