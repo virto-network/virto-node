@@ -4160,6 +4160,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-lockdown-mode",
  "pallet-multisig",
+ "pallet-payments",
  "pallet-proxy",
  "pallet-session",
  "pallet-sudo",
@@ -6400,6 +6401,27 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-payments"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-sudo",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
  "sp-std",
 ]
 

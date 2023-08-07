@@ -25,6 +25,7 @@ smallvec = "1.10.0"
 pallet-asset-registry = { version = "0.0.1", default-features = false, path = "../../pallets/asset-registry" }
 pallet-lockdown-mode = { version = "0.1.0", default-features = false, path = "../../pallets/lockdown-mode" }
 pallet-burner = { version = "0.1.0", default-features = false, path = "../../pallets/burner" }
+pallet-payments = { version = "0.1.0", default-features = false, path = "../../pallets/payments" }
 virto-common = { path = "../common", default-features = false }
 
 # Substrate
