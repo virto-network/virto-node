@@ -21,10 +21,9 @@ use frame_support::traits::{
 	Currency, Imbalance, OnUnbalanced,
 };
 use pallet_asset_tx_payment::HandleCredit;
-use sp_std::{borrow::Borrow, marker::PhantomData};
-use xcm::latest::{AssetId::Concrete, Fungibility::Fungible, MultiAsset, MultiLocation};
-use xcm_executor::traits::{Error as MatchError, MatchesFungibles};
-use sp_runtime::{traits::MaybeEquivalence};
+use sp_runtime::traits::MaybeEquivalence;
+use sp_std::marker::PhantomData;
+use xcm::latest::MultiLocation;
 
 // TODO - Create and import XCM common types
 //use xcm::latest::{AssetId, Fungibility::Fungible, MultiAsset, MultiLocation};

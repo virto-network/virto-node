@@ -148,12 +148,13 @@ fn testnet_genesis(
 			code: kreivo_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+			_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
-		parachain_info: kreivo_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_info: kreivo_runtime::ParachainInfoConfig { parachain_id: id ,_config: Default::default(), },
 		collator_selection: kreivo_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
@@ -178,6 +179,7 @@ fn testnet_genesis(
 		parachain_system: Default::default(),
 		polkadot_xcm: kreivo_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			_config: Default::default(),
 		},
 		transaction_payment: Default::default(),
 		lockdown_mode: Default::default(),
@@ -251,6 +253,7 @@ fn kreivo_live_genesis(
 			code: kreivo_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
+			_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			balances: endowed_accounts
@@ -260,7 +263,7 @@ fn kreivo_live_genesis(
 				.map(|k| (k, 1_500_000_000_000_000_000))
 				.collect(),
 		},
-		parachain_info: kreivo_runtime::ParachainInfoConfig { parachain_id: id },
+		parachain_info: kreivo_runtime::ParachainInfoConfig { parachain_id: id, _config: Default::default() },
 		collator_selection: kreivo_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
@@ -283,6 +286,7 @@ fn kreivo_live_genesis(
 		parachain_system: Default::default(),
 		polkadot_xcm: kreivo_runtime::PolkadotXcmConfig {
 			safe_xcm_version: Some(SAFE_XCM_VERSION),
+			_config: Default::default(),
 		},
 		transaction_payment: Default::default(),
 		lockdown_mode: Default::default(),
