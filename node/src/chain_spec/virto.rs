@@ -6,14 +6,14 @@ use sc_service::ChainType;
 
 use sp_core::{crypto::UncheckedInto, sr25519};
 use virto_runtime::{
-	constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId, BalancesConfig, GenesisConfig, SessionConfig,
+	constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId, BalancesConfig, RuntimeGenesisConfig, SessionConfig,
 	SessionKeys, SudoConfig, SystemConfig,
 };
 
 const DEFAULT_PROTOCOL_ID: &str = "virto";
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<virto_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<virto_runtime::RuntimeGenesisConfig, Extensions>;
 
 const VIRTO_PARA_ID: u32 = 2000;
 
@@ -85,19 +85,22 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> GenesisConfig {
-	GenesisConfig {
+) -> RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			code: virto_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-				_config: Default::default(),
+			_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
-		parachain_info: virto_runtime::ParachainInfoConfig { parachain_id: id, _config: Default::default() },
+		parachain_info: virto_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			_config: Default::default(),
+		},
 		collator_selection: virto_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
@@ -190,13 +193,13 @@ fn virto_live_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> GenesisConfig {
-	GenesisConfig {
+) -> RuntimeGenesisConfig {
+	RuntimeGenesisConfig {
 		system: SystemConfig {
 			code: virto_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
-				_config: Default::default(),
+			_config: Default::default(),
 		},
 		balances: BalancesConfig {
 			balances: endowed_accounts
@@ -212,7 +215,10 @@ fn virto_live_genesis(
 				})
 				.collect(),
 		},
-		parachain_info: virto_runtime::ParachainInfoConfig { parachain_id: id, _config: Default::default(), },
+		parachain_info: virto_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			_config: Default::default(),
+		},
 		collator_selection: virto_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
