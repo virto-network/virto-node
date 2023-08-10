@@ -17,15 +17,16 @@ pub use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	ensure,
 	traits::{
-		fungible::{
+		fungibles::{
 			self,
 			hold::{Inspect as FunHoldInspect, Mutate as FunHoldMutate},
 			Balanced as FunBalanced, Inspect as FunInspect, Mutate as FunMutate,
 		},
-		tokens::{fungibles::Inspect as FunsInspect, Fortitude::Polite, Precision::Exact},
+		tokens::{fungibles::Inspect as FunsInspect, Fortitude::Polite, Precision::Exact, Preservation::Preserve},
 	},
 	BoundedVec,
 };
+use sp_runtime::Saturating;
 
 pub mod weights;
 pub use weights::*;
@@ -53,15 +54,14 @@ pub mod pallet {
 			tokens::{Fortitude::Polite, Precision::Exact},
 			Currency, EnsureOrigin,
 			ExistenceRequirement::KeepAlive,
-			Get, Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
+			Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
 		},
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{
-		traits::{CheckedAdd, Saturating},
-		Percent,
-	};
+	use sp_core::Get;
+
+	use sp_runtime::{traits::CheckedAdd, Percent};
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -96,8 +96,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
 
-		#[pallet::constant]
-		type HoldReason: Get<<Self::Assets as FunHoldInspect<Self::AccountId>>::Reason>;
+		/// The overarching hold reason.
+		type RuntimeHoldReasons: Parameter + Member + MaxEncodedLen + Ord + Copy;
 
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
@@ -148,7 +148,7 @@ pub mod pallet {
 		PaymentCreatorRequestedRefund {
 			from: T::AccountId,
 			to: T::AccountId,
-			expiry: T::BlockNumber,
+			expiry: BlockNumberFor<T>,
 		},
 		/// the refund request from creator was disputed by recipient
 		PaymentRefundDisputed { from: T::AccountId, to: T::AccountId },
@@ -189,7 +189,7 @@ pub mod pallet {
 		/// custom logic and trigger alternate payment flows. the specified
 		/// amount.
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::pay(T::MaxRemarkLength::get()))]
+		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
 		pub fn pay(
 			origin: OriginFor<T>,
 			recipient: T::AccountId,
@@ -279,14 +279,16 @@ impl<T: Config> PaymentHandler<T> for Pallet<T> {
 
 		let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
 		let total_amount = total_fee_amount.saturating_add(payment.amount);
+		let reason = T::RuntimeHoldReasons::;
 
 		T::Assets::transfer_and_hold(
 			payment.asset_id,
-			T::HoldReason::get(),
+			&T::RuntimeHoldReasons::get(),
 			from,
 			to,
 			payment.amount,
 			Exact,
+			Preserve,
 			Polite,
 		)?;
 

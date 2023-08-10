@@ -16,24 +16,24 @@ scale-info = { version = "2.2.0", default-features = false, features = ["derive"
 log = "0.4.0"
 
 # Substrate
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.43" }
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
+frame-benchmarking = { git = "https://github.com/virto-network/substrate", default-features = false, optional = true, branch = "nicof-adding-hold-traits-asset-pallet" }
+frame-support = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+frame-system = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+sp-runtime = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+sp-std = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-pallet-assets = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+pallet-balances = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+pallet-sudo = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+pallet-assets = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+sp-keystore = { git = "https://github.com/virto-network/substrate", branch = "nicof-adding-hold-traits-asset-pallet" }
 
 # Substrate
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.43" }
+sp-core = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+sp-io = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+sp-runtime = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 
 [features]
 default = ["std"]
@@ -47,6 +47,7 @@ std = [
 	"sp-runtime/std",
 	"pallet-balances/std",
 	"pallet-sudo/std",
+	"pallet-assets/std",
 	"sp-std/std"
 ]
 try-runtime = [ "frame-support/try-runtime" ]

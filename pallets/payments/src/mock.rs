@@ -1,20 +1,20 @@
 use crate as pallet_payments;
+pub use crate::types::*;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, GenesisBuild},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64},
 	PalletId,
 };
 use scale_info::TypeInfo;
+
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Percent,
+	BuildStorage, Percent, RuntimeDebug,
 };
-
-pub use crate::types::*;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -33,12 +33,9 @@ pub const CANCEL_BLOCK_BUFFER: u64 = 600;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
@@ -56,13 +53,12 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
+	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = ConstU64<250>;
 	type DbWeight = ();
@@ -89,8 +85,17 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type MaxHolds = ();
+}
+
+#[derive(
+	Encode, Decode, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, MaxEncodedLen, scale_info::TypeInfo, RuntimeDebug,
+)]
+pub enum TestId {
+	Foo,
+	Bar,
+	Baz,
 }
 
 impl pallet_assets::Config for Test {
@@ -114,6 +119,8 @@ impl pallet_assets::Config for Test {
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 	type CallbackHandle = ();
+	type MaxHolds = ConstU32<50>;
+	type RuntimeHoldReason = TestId;
 }
 
 impl pallet_sudo::Config for Test {
@@ -138,16 +145,21 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, MaxEncodedLen, Debug, TypeInfo)]
-pub enum HoldIdentifier {
+pub enum HoldIdentifiers {
 	TransferPayment,
+}
+
+pub struct MockDisputeResolver;
+impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
+	fn get_resolver_account() -> AccountId {
+		RESOLVER_ACCOUNT
+	}
 }
 
 parameter_types! {
 	pub const MaxRemarkLength: u32 = 50;
 	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
-	pub const DisputeResolver: AccountId = RESOLVER_ACCOUNT;
 	pub const PaymentPalletId: PalletId = PalletId(*b"payments");
-	pub const HoldReason: HoldIdentifier = HoldIdentifier::TransferPayment;
 }
 
 impl pallet_payments::Config for Test {
@@ -157,14 +169,14 @@ impl pallet_payments::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
-	type DisputeResolver = DisputeResolver;
+	type DisputeResolver = MockDisputeResolver;
 	type PalletId = PaymentPalletId;
-	type HoldReason = HoldReason;
+	type RuntimeHoldReasons = HoldIdentifiers;
 }
 
 // Build genesis storage according to the mock runtime.
 pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
@@ -175,26 +187,22 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 
-	GenesisBuild::<Test>::assimilate_storage(
-		&pallet_assets::GenesisConfig::<Test> {
-			assets: vec![
-				// id, owner, is_sufficient, min_balance
-				(999, 0, true, 1),
-			],
-			metadata: vec![
-				// id, name, symbol, decimals
-				(999, "Token Name".into(), "TOKEN".into(), 10),
-			],
-			accounts: vec![
-				// id, account_id, balance
-				(999, 1, 100),
-			],
-		},
-		&mut t,
-	)
+	pallet_assets::GenesisConfig::<Test> {
+		assets: vec![
+			// id, owner, is_sufficient, min_balance
+			(999, 0, true, 1),
+		],
+		metadata: vec![
+			// id, name, symbol, decimals
+			(999, "Token Name".into(), "TOKEN".into(), 10),
+		],
+		accounts: vec![
+			// id, account_id, balance
+			(999, 1, 100),
+		],
+	}
+	.assimilate_storage(&mut t)
 	.unwrap();
-
-	GenesisBuild::<Test>::assimilate_storage(&pallet_sudo::GenesisConfig { key: Some(1) }, &mut t).unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.register_extension(KeystoreExt::new(MemoryKeystore::new()));

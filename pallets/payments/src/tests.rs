@@ -9,10 +9,7 @@ fn test_pay_works() {
 	let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
 
 	// the payment amount should not be reserved
-	assert_eq!(
-		Assets::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
-		creator_initial_balance
-	);
+	assert_eq!(Assets::balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
 }
 /*
 #[test]
