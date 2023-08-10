@@ -35,7 +35,7 @@ use sp_core::Pair;
 use jsonrpsee::RpcModule;
 
 use crate::rpc;
-pub use parachains_common::{AccountId, Balance, Block, BlockNumber, Hash, Header, Index as Nonce};
+pub use parachains_common::{AccountId, Balance, Block, BlockNumber, Hash, Header, Nonce};
 
 use cumulus_client_consensus_relay_chain::Verifier as RelayChainVerifier;
 use futures::lock::Mutex;
@@ -73,34 +73,6 @@ type ParachainBackend = TFullBackend<Block>;
 
 type ParachainBlockImport<RuntimeApi> =
 	TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainBackend>;
-
-pub struct RuntimeExecutor<Runtime>(PhantomData<Runtime>);
-
-#[cfg(feature = "kreivo-runtime")]
-impl sc_executor::NativeExecutionDispatch for RuntimeExecutor<kreivo_runtime::Runtime> {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		kreivo_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		kreivo_runtime::native_version()
-	}
-}
-
-#[cfg(feature = "virto-runtime")]
-impl sc_executor::NativeExecutionDispatch for RuntimeExecutor<virto_runtime::Runtime> {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		virto_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		virto_runtime::native_version()
-	}
-}
 
 type Partial<Api> = PartialComponents<
 	ParachainClient<Api>,
