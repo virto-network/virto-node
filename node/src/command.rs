@@ -91,13 +91,6 @@ macro_rules! construct_async_run {
 	}};
 }
 
-#[cfg(feature = "kreivo-runtime")]
-impl Default for Runtime {
-	fn default() -> Self {
-		Runtime::Kreivo
-	}
-}
-
 #[cfg(all(feature = "virto-runtime", not(feature = "kreivo-runtime")))]
 impl Default for Runtime {
 	fn default() -> Self {
@@ -108,9 +101,10 @@ impl Default for Runtime {
 /// Helper enum that is used for better distinction of different
 /// parachain/runtime configuration (it is based/calculated on ChainSpec's ID
 /// attribute)
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 enum Runtime {
 	#[cfg(feature = "kreivo-runtime")]
+	#[default]
 	Kreivo,
 	#[cfg(feature = "virto-runtime")]
 	Virto,

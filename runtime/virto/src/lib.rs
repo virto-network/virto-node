@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
+#![allow(clippy::items_after_test_module)]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -129,6 +130,50 @@ pub fn native_version() -> NativeVersion {
 		can_author_with: Default::default(),
 	}
 }
+
+// Create the runtime by composing the FRAME pallets that were previously
+// configured.
+construct_runtime!(
+	pub enum Runtime
+	{
+		// System support stuff.
+		System: frame_system = 0,
+		ParachainSystem: cumulus_pallet_parachain_system = 1,
+		Timestamp: pallet_timestamp = 2,
+		ParachainInfo: parachain_info = 3,
+
+		// Monetary stuff.
+		Balances: pallet_balances = 10,
+		TransactionPayment: pallet_transaction_payment = 11,
+		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 12,
+		Burner: pallet_burner = 13,
+		Assets: pallet_assets::<Instance1> = 14,
+
+		// Collator support. The order of these 4 are important and shall not change.
+		Authorship: pallet_authorship = 20,
+		CollatorSelection: pallet_collator_selection = 21,
+		Session: pallet_session = 22,
+		Aura: pallet_aura = 23,
+		AuraExt: cumulus_pallet_aura_ext = 24,
+
+		// XCM helpers.
+		XcmpQueue: cumulus_pallet_xcmp_queue = 30,
+		PolkadotXcm: pallet_xcm = 31,
+		CumulusXcm: cumulus_pallet_xcm = 32,
+		DmpQueue: cumulus_pallet_dmp_queue = 33,
+		AssetRegistry: pallet_asset_registry = 34,
+
+		// Utils
+		Sudo: pallet_sudo = 40,
+		LockdownMode: pallet_lockdown_mode = 41,
+		Multisig: pallet_multisig = 42,
+		Utility: pallet_utility = 43,
+		Proxy: pallet_proxy = 44,
+
+		// Governance
+		Treasury: pallet_treasury = 50,
+	}
+);
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -546,50 +591,6 @@ impl pallet_asset_tx_payment::Config for Runtime {
 		AssetsToBlockAuthor<Runtime, VirtoAssetsInstance>,
 	>;
 }
-
-// Create the runtime by composing the FRAME pallets that were previously
-// configured.
-construct_runtime!(
-	pub enum Runtime
-	{
-		// System support stuff.
-		System: frame_system = 0,
-		ParachainSystem: cumulus_pallet_parachain_system = 1,
-		Timestamp: pallet_timestamp = 2,
-		ParachainInfo: parachain_info = 3,
-
-		// Monetary stuff.
-		Balances: pallet_balances = 10,
-		TransactionPayment: pallet_transaction_payment = 11,
-		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 12,
-		Burner: pallet_burner = 13,
-		Assets: pallet_assets::<Instance1> = 14,
-
-		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship = 20,
-		CollatorSelection: pallet_collator_selection = 21,
-		Session: pallet_session = 22,
-		Aura: pallet_aura = 23,
-		AuraExt: cumulus_pallet_aura_ext = 24,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue = 30,
-		PolkadotXcm: pallet_xcm = 31,
-		CumulusXcm: cumulus_pallet_xcm = 32,
-		DmpQueue: cumulus_pallet_dmp_queue = 33,
-		AssetRegistry: pallet_asset_registry = 34,
-
-		// Utils
-		Sudo: pallet_sudo = 40,
-		LockdownMode: pallet_lockdown_mode = 41,
-		Multisig: pallet_multisig = 42,
-		Utility: pallet_utility = 43,
-		Proxy: pallet_proxy = 44,
-
-		// Governance
-		Treasury: pallet_treasury = 50,
-	}
-);
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
