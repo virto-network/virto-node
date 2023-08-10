@@ -21,9 +21,9 @@ use frame_support::traits::{
 	Currency, Imbalance, OnUnbalanced,
 };
 use pallet_asset_tx_payment::HandleCredit;
-use sp_std::{borrow::Borrow, marker::PhantomData};
-use xcm::latest::{AssetId::Concrete, Fungibility::Fungible, MultiAsset, MultiLocation};
-use xcm_executor::traits::{Convert, Error as MatchError, MatchesFungibles};
+use sp_runtime::traits::MaybeEquivalence;
+use sp_std::marker::PhantomData;
+use xcm::latest::MultiLocation;
 
 // TODO - Create and import XCM common types
 //use xcm::latest::{AssetId, Fungibility::Fungible, MultiAsset, MultiLocation};
@@ -75,43 +75,22 @@ where
 }
 
 pub struct AsAssetMultiLocation<AssetId, AssetIdInfoGetter>(PhantomData<(AssetId, AssetIdInfoGetter)>);
-impl<AssetId, AssetIdInfoGetter> xcm_executor::traits::Convert<MultiLocation, AssetId>
+impl<AssetId, AssetIdInfoGetter> MaybeEquivalence<MultiLocation, AssetId>
 	for AsAssetMultiLocation<AssetId, AssetIdInfoGetter>
 where
 	AssetId: Clone,
 	AssetIdInfoGetter: AssetMultiLocationGetter<AssetId>,
 {
-	fn convert_ref(asset_multi_location: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-		AssetIdInfoGetter::get_asset_id(asset_multi_location.borrow()).ok_or(())
+	fn convert(asset_multi_location: &MultiLocation) -> Option<AssetId> {
+		AssetIdInfoGetter::get_asset_id(asset_multi_location)
 	}
 
-	fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
-		AssetIdInfoGetter::get_asset_multi_location(asset_id.borrow().clone()).ok_or(())
+	fn convert_back(asset_id: &AssetId) -> Option<MultiLocation> {
+		AssetIdInfoGetter::get_asset_multi_location(asset_id.clone())
 	}
 }
 
 pub trait AssetMultiLocationGetter<AssetId> {
 	fn get_asset_multi_location(asset_id: AssetId) -> Option<MultiLocation>;
 	fn get_asset_id(asset_multi_location: &MultiLocation) -> Option<AssetId>;
-}
-
-pub struct ConvertedRegisteredAssetId<AssetId, Balance, ConvertAssetId, ConvertBalance>(
-	PhantomData<(AssetId, Balance, ConvertAssetId, ConvertBalance)>,
-);
-impl<
-		AssetId: Clone,
-		Balance: Clone,
-		ConvertAssetId: Convert<MultiLocation, AssetId>,
-		ConvertBalance: Convert<u128, Balance>,
-	> MatchesFungibles<AssetId, Balance> for ConvertedRegisteredAssetId<AssetId, Balance, ConvertAssetId, ConvertBalance>
-{
-	fn matches_fungibles(a: &MultiAsset) -> Result<(AssetId, Balance), MatchError> {
-		let (amount, id) = match (&a.fun, &a.id) {
-			(Fungible(ref amount), Concrete(ref id)) => (amount, id),
-			_ => return Err(MatchError::AssetNotHandled),
-		};
-		let what = ConvertAssetId::convert_ref(id).map_err(|_| MatchError::AssetNotHandled)?;
-		let amount = ConvertBalance::convert_ref(amount).map_err(|_| MatchError::AmountToBalanceConversionFailed)?;
-		Ok((what, amount))
-	}
 }
