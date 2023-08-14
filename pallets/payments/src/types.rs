@@ -16,7 +16,7 @@ use sp_runtime::{DispatchResult, Percent};
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
-	pub asset_id: AssetIdOf<T>,
+	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
 	#[codec(compact)]
 	pub amount: BalanceOf<T>,

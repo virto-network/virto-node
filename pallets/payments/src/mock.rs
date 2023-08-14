@@ -1,4 +1,4 @@
-use crate as pallet_payments;
+pub use crate as pallet_payments;
 pub use crate::types::*;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
@@ -28,7 +28,7 @@ pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
-pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
+pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 20;
 pub const CANCEL_BLOCK_BUFFER: u64 = 600;
 
 // Configure a mock runtime to test the pallet.
@@ -39,6 +39,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
+		Payments: pallet_payments::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -89,13 +90,9 @@ impl pallet_balances::Config for Test {
 	type MaxHolds = ();
 }
 
-#[derive(
-	Encode, Decode, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, MaxEncodedLen, scale_info::TypeInfo, RuntimeDebug,
-)]
-pub enum TestId {
-	Foo,
-	Bar,
-	Baz,
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, MaxEncodedLen, Debug, TypeInfo)]
+pub enum HoldIdentifiers {
+	TransferPayment,
 }
 
 impl pallet_assets::Config for Test {
@@ -120,7 +117,7 @@ impl pallet_assets::Config for Test {
 	type BenchmarkHelper = ();
 	type CallbackHandle = ();
 	type MaxHolds = ConstU32<50>;
-	type RuntimeHoldReason = TestId;
+	type RuntimeHoldReason = HoldIdentifiers;
 }
 
 impl pallet_sudo::Config for Test {
@@ -142,11 +139,6 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
 		}
 	}
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, MaxEncodedLen, Debug, TypeInfo)]
-pub enum HoldIdentifiers {
-	TransferPayment,
 }
 
 pub struct MockDisputeResolver;

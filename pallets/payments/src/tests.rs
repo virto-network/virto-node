@@ -1,15 +1,58 @@
-use crate::mock::*;
-use frame_support::assert_ok;
+use crate::{
+	mock::*,
+	types::{PaymentDetail, PaymentState},
+	weights::WeightInfo,
+	Payment as PaymentStore, PaymentHandler, ScheduledTask, Task,
+};
+use frame_support::{assert_ok, traits::fungibles};
 use frame_system::RawOrigin;
+use sp_runtime::BoundedVec;
 
 #[test]
 fn test_pay_works() {
-	let creator_initial_balance = 100;
-	let payment_amount = 20;
-	let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+	new_test_ext().execute_with(|| {
+		let asset = 0;
+		let admin = 1;
+		let source = 2; // account with own deposit
+		let dest = 21; // account with own deposit
+		let creator_initial_balance = 100;
+		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset, admin, true, 1));
+		assert_ok!(Assets::mint(
+			RuntimeOrigin::signed(admin),
+			asset,
+			source,
+			creator_initial_balance
+		));
 
-	// the payment amount should not be reserved
-	assert_eq!(Assets::balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance);
+		let payment_amount = 20;
+		let expected_incentive_amount: u64 = payment_amount / INCENTIVE_PERCENTAGE as u64;
+
+		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
+
+		Payments::pay(
+			RuntimeOrigin::signed(source),
+			dest,
+			asset,
+			payment_amount,
+			Some(remark),
+			HoldIdentifiers::TransferPayment,
+		)
+		.unwrap();
+
+		let payment = PaymentStore::<Test>::get(source, dest);
+		println!("payment: {:?}", payment);
+
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(asset, &HoldIdentifiers::TransferPayment, &dest),
+			26
+		);
+		/* 		println!(
+			"creator_initial_balance: {}",
+			Assets::balance(CURRENCY_ID, &PAYMENT_CREATOR)
+		);
+		// the payment amount should not be reserved
+		assert_eq!(Assets::balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance); */
+	});
 }
 /*
 #[test]

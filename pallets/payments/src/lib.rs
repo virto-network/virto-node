@@ -71,7 +71,7 @@ pub mod pallet {
 			+ FunMutate<Self::AccountId>
 			+ FunBalanced<Self::AccountId>
 			+ FunHoldInspect<Self::AccountId>
-			+ FunHoldMutate<Self::AccountId>
+			+ FunHoldMutate<Self::AccountId, Reason = Self::RuntimeHoldReasons>
 			+ FunsInspect<Self::AccountId>;
 
 		/// Just the `Currency::Balance` type; we have this item to allow us to
@@ -196,21 +196,22 @@ pub mod pallet {
 			asset: AssetIdOf<T>,
 			#[pallet::compact] amount: BalanceOf<T>,
 			remark: Option<BoundedDataOf<T>>,
+			reason: T::RuntimeHoldReasons,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
 			// create PaymentDetail and add to storage
-			let payment_detail = <Self as PaymentHandler<T>>::create_payment(
+			let payment_detail = Self::create_payment(
 				&who,
 				&recipient,
-				asset,
+				asset.clone(),
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
 				remark.as_ref().map(|x| x.as_slice()),
 			)?;
 			// reserve funds for payment
-			<Self as PaymentHandler<T>>::reserve_payment_amount(&who, &recipient, payment_detail)?;
+			Self::reserve_payment_amount(&who, &recipient, payment_detail, &reason)?;
 			// emit paymentcreated event
 			Self::deposit_event(Event::PaymentCreated {
 				from: who,
@@ -223,7 +224,7 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> PaymentHandler<T> for Pallet<T> {
+impl<T: Config> Pallet<T> {
 	/// The function will create a new payment. The fee and incentive
 	/// amounts will be calculated and the `PaymentDetail` will be added to
 	/// storage.
@@ -251,7 +252,7 @@ impl<T: Config> PaymentHandler<T> for Pallet<T> {
 				// Calculate incentive amount - this is to insentivise the user to release
 				// the funds once a transaction has been completed
 				let incentive_amount = incentive_percentage.mul_floor(amount);
-
+				println!("incentive_amount: {:?}", incentive_amount);
 				let mut new_payment = PaymentDetail {
 					asset,
 					amount,
@@ -264,6 +265,7 @@ impl<T: Config> PaymentHandler<T> for Pallet<T> {
 				// Calculate fee amount - this will be implemented based on the custom
 				// implementation of the fee provider
 				let (fee_recipient, fee_percent) = T::FeeHandler::apply_fees(from, recipient, &new_payment, remark);
+				println!("fee_recipient: {:?}, fee_percent: {:?}", fee_recipient, fee_percent);
 				let fee_amount = fee_percent.mul_floor(amount);
 				new_payment.fee_detail = Some((fee_recipient, fee_amount));
 
@@ -274,23 +276,18 @@ impl<T: Config> PaymentHandler<T> for Pallet<T> {
 		)
 	}
 
-	fn reserve_payment_amount(from: &T::AccountId, to: &T::AccountId, payment: PaymentDetail<T>) -> DispatchResult {
+	fn reserve_payment_amount(
+		from: &T::AccountId,
+		to: &T::AccountId,
+		payment: PaymentDetail<T>,
+		reason: &T::RuntimeHoldReasons,
+	) -> DispatchResult {
 		let fee_amount = payment.fee_detail.map(|(_, f)| f).unwrap_or_else(|| 0u32.into());
 
 		let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
 		let total_amount = total_fee_amount.saturating_add(payment.amount);
-		let reason = T::RuntimeHoldReasons::;
 
-		T::Assets::transfer_and_hold(
-			payment.asset_id,
-			&T::RuntimeHoldReasons::get(),
-			from,
-			to,
-			payment.amount,
-			Exact,
-			Preserve,
-			Polite,
-		)?;
+		T::Assets::transfer_and_hold(payment.asset, reason, from, to, total_amount, Exact, Preserve, Polite)?;
 
 		Ok(())
 	}
