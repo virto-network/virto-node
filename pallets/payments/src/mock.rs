@@ -12,8 +12,8 @@ use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
-	BuildStorage, Percent, RuntimeDebug,
+	traits::{BlakeTwo256, Get, IdentityLookup, Zero},
+	BoundedVec, BuildStorage, Percent, RuntimeDebug,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -48,6 +48,8 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
+pub type Balance = u64;
+
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -75,7 +77,7 @@ impl frame_system::Config for Test {
 }
 
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type Balance = Balance;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ConstU64<1>;
@@ -97,7 +99,7 @@ pub enum HoldIdentifiers {
 
 impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type Balance = u64;
+	type Balance = Balance;
 	type AssetId = u32;
 	type AssetIdParameter = u32;
 	type Currency = Balances;
@@ -127,16 +129,59 @@ impl pallet_sudo::Config for Test {
 }
 
 pub struct MockFeeHandler;
+
 impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	fn apply_fees(
-		_from: &AccountId,
-		to: &AccountId,
-		_detail: &PaymentDetail<Test>,
+		account: &AccountId,
+		amount: &Balance,
 		_remark: Option<&[u8]>,
-	) -> (AccountId, Percent) {
-		match to {
-			&PAYMENT_RECIPENT_FEE_CHARGED => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
-			_ => (FEE_RECIPIENT_ACCOUNT, Percent::from_percent(0)),
+		role: Role,
+	) -> Option<(AccountId, Balance)> {
+		// Balance instead of u64
+		let sender_fees = vec![
+			SubTypes::Percentage(FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
+			SubTypes::Fixed(FEE_RECIPIENT_ACCOUNT, 2_u64),
+		];
+
+		let beneficiary_fees = vec![
+			SubTypes::Percentage(FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
+			SubTypes::Fixed(FEE_RECIPIENT_ACCOUNT, 1_u64),
+		];
+
+		let sender_pays = BoundedVec::truncate_from(sender_fees);
+		let beneficiary_pays = BoundedVec::truncate_from(beneficiary_fees);
+
+		let fees = Fees {
+			sender_pays,
+			beneficiary_pays,
+			system: 10,
+		};
+
+		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> Balance {
+			fees.iter().fold(Zero::zero(), |total_fee, fee| match fee {
+				SubTypes::Fixed(_, amount_fixed) => total_fee.saturating_add(*amount_fixed),
+				SubTypes::Percentage(_, percent) => total_fee + percent.mul_floor(*amount),
+			})
+		};
+
+		match role {
+			Role::Sender => {
+				let total_fee = compute_fee(&fees.sender_pays);
+				if total_fee.is_zero() {
+					None
+				} else {
+					Some((*account, total_fee))
+				}
+			}
+			Role::Beneficiary => {
+				let total_fee = compute_fee(&fees.beneficiary_pays);
+				if total_fee.is_zero() {
+					None
+				} else {
+					Some((*account, total_fee))
+				}
+			}
+			Role::System => Some((*account, fees.system)),
 		}
 	}
 }

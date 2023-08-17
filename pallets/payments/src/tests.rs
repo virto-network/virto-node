@@ -9,7 +9,7 @@ use frame_system::RawOrigin;
 use sp_runtime::BoundedVec;
 
 #[test]
-fn test_pay_works() {
+fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
 		let asset = 0;
 		let admin = 1;
@@ -26,6 +26,7 @@ fn test_pay_works() {
 
 		let payment_amount = 20;
 		let expected_incentive_amount: u64 = payment_amount / INCENTIVE_PERCENTAGE as u64;
+		println!("expected_incentive_amount: {:?}", expected_incentive_amount);
 
 		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 
@@ -39,19 +40,28 @@ fn test_pay_works() {
 		)
 		.unwrap();
 
+		let fee = 4u64;
+
 		let payment = PaymentStore::<Test>::get(source, dest);
 		println!("payment: {:?}", payment);
 
 		assert_eq!(
 			<Assets as fungibles::InspectHold<_>>::balance_on_hold(asset, &HoldIdentifiers::TransferPayment, &dest),
-			26
+			20
 		);
-		/* 		println!(
-			"creator_initial_balance: {}",
-			Assets::balance(CURRENCY_ID, &PAYMENT_CREATOR)
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(asset, &HoldIdentifiers::TransferPayment, &source),
+			2
 		);
-		// the payment amount should not be reserved
-		assert_eq!(Assets::balance(CURRENCY_ID, &PAYMENT_CREATOR), creator_initial_balance); */
+
+		Payments::release(RuntimeOrigin::signed(source), dest, HoldIdentifiers::TransferPayment).unwrap();
+
+		assert_eq!(<Assets as fungibles::Inspect<_>>::balance(asset, &dest), 16);
+		let expected_source = creator_initial_balance - payment_amount - fee + expected_incentive_amount;
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(asset, &source),
+			expected_source
+		);
 	});
 }
 /*

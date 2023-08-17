@@ -3,7 +3,7 @@ use crate::{pallet, AssetIdOf, BalanceOf};
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_system::pallet_prelude::BlockNumberFor;
 use scale_info::TypeInfo;
-use sp_runtime::{DispatchResult, Percent};
+use sp_runtime::{BoundedVec, DispatchResult, Percent};
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to
@@ -29,7 +29,7 @@ pub struct PaymentDetail<T: pallet::Config> {
 	/// account that can settle any disputes created in the payment
 	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
-	pub fee_detail: Option<(T::AccountId, BalanceOf<T>)>,
+	pub fee_detail: Fees<T>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
@@ -98,11 +98,45 @@ pub trait DisputeResolver<Account> {
 pub trait FeeHandler<T: pallet::Config> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
+		account: &T::AccountId,
+		amount: &BalanceOf<T>,
+		remark: Option<&[u8]>,
+		role: Role,
+	) -> Option<BalanceOf<T>>;
+
+	/* 	/// Get the distribution of discounts to marketplace participants
+	fn apply_discounts(
 		from: &T::AccountId,
 		to: &T::AccountId,
 		detail: &PaymentDetail<T>,
 		remark: Option<&[u8]>,
-	) -> (T::AccountId, Percent);
+	) -> Vec<(T::AccountId, BalanceOf<T>)>; */
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub enum Role {
+	Sender,
+	Beneficiary,
+	System,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub enum SubTypes<T: pallet::Config> {
+	Fixed(T::AccountId, BalanceOf<T>),
+	Percentage(T::AccountId, Percent),
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub struct Fees<T: pallet::Config> {
+	pub sender_pays: Option<(T::AccountId, BalanceOf<T>)>,
+	pub beneficiary_pays: Option<(T::AccountId, BalanceOf<T>)>,
+	pub system: Option<(T::AccountId, BalanceOf<T>)>,
+}
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+struct Discounts<T: pallet::Config> {
+	sender_discounts: BoundedVec<SubTypes<T>, T::MaxDiscounts>,
+	beneficiary_discounts: BoundedVec<SubTypes<T>, T::MaxDiscounts>,
+	system: BalanceOf<T>,
 }
 
 /// Types of Tasks that can be scheduled in the pallet
