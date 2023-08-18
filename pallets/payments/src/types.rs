@@ -10,7 +10,7 @@ use sp_runtime::{BoundedVec, DispatchResult, Percent};
 /// guarantee proof of funds and can be released once an agreed upon condition
 /// has reached between the payment creator and recipient. The payment lifecycle
 /// is tracked using the state field.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Debug, MaxEncodedLen, TypeInfo)]
 
 pub struct PaymentDetail<AssetId, Balance, AccountId, BlockNumber, BoundedFeeDetails> {
 	/// type of asset used for payment
@@ -31,7 +31,7 @@ pub struct PaymentDetail<AssetId, Balance, AccountId, BlockNumber, BoundedFeeDet
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and
 /// hence not tracked by a state.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo, Debug)]
 pub enum PaymentState<BlockNumber> {
 	/// Amounts have been reserved and waiting for release/cancel
 	Created,
@@ -78,7 +78,7 @@ pub enum SubTypes<T: pallet::Config> {
 //pub type FeeDetails<T: pallet::Config> = BoundedVec<(Role, T::AccountId,
 // BalanceOf<T>), T::MaxFees>;
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo, Debug)]
 pub struct Fees<BoundedFeeDetails> {
 	pub sender_pays: BoundedFeeDetails,
 	pub beneficiary_pays: BoundedFeeDetails,

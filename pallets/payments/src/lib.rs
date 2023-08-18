@@ -224,6 +224,7 @@ pub mod pallet {
 				T::IncentivePercentage::get(),
 				remark.as_ref().map(|x| x.as_slice()),
 			)?;
+			println!("payment_detail: {:?}", payment_detail);
 			// reserve funds for payment
 			Self::reserve_payment_amount(&who, &recipient, payment_detail, &reason)?;
 			// emit paymentcreated event
@@ -315,12 +316,17 @@ impl<T: Config> Pallet<T> {
 		 -> Result<BalanceOf<T>, DispatchError> {
 			let mut total_fee_for_payer: BalanceOf<T> = Zero::zero();
 
-			for (role, account, amount) in fees.iter() {
+			for (role, account, _amount) in fees.iter() {
 				let account_fee = fees
 					.iter()
 					.filter(|(r, a, _)| r == role && a == account)
 					.map(|(_, _, fee)| *fee)
 					.fold(Zero::zero(), |acc: BalanceOf<T>, x| acc.saturating_add(x));
+
+				println!(
+					"account_fee: {:?}, account: {:?}, payer: {:?}",
+					account_fee, account, payer
+				);
 
 				T::Assets::transfer_and_hold(
 					payment.asset.clone(),
@@ -334,13 +340,16 @@ impl<T: Config> Pallet<T> {
 				)?;
 
 				total_fee_for_payer = total_fee_for_payer.saturating_add(account_fee);
+				println!("account: {:?}, total_fee_for_payer: {:?}", account, total_fee_for_payer);
 			}
 
 			Ok(total_fee_for_payer)
 		};
 
 		let sender_total_fee = handle_fees(sender, &payment.fees_details.sender_pays)?;
+		println!("****sender_total_fee: {:?}", sender_total_fee);
 		let beneficiary_total_fee = handle_fees(beneficiary, &payment.fees_details.beneficiary_pays)?;
+		println!("****beneficiary_total_fee: {:?}", beneficiary_total_fee);
 
 		let total_fee_amount = sender_total_fee.saturating_add(beneficiary_total_fee);
 		let total_amount = payment

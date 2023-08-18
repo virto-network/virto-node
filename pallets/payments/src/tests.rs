@@ -4,7 +4,10 @@ use crate::{
 	weights::WeightInfo,
 	Payment as PaymentStore, ScheduledTask, Task,
 };
-use frame_support::{assert_ok, traits::fungibles};
+use frame_support::{
+	assert_ok,
+	traits::{fungibles, Currency},
+};
 use frame_system::RawOrigin;
 use sp_runtime::BoundedVec;
 
@@ -16,6 +19,11 @@ fn test_pay_and_release_works() {
 		let source = 2; // account with own deposit
 		let dest = 21; // account with own deposit
 		let creator_initial_balance = 100;
+		Balances::make_free_balance_be(&FEE_SENDER_ACCOUNT, 100);
+		Balances::make_free_balance_be(&FEE_BENEFICIARY_ACCOUNT, 100);
+		Balances::make_free_balance_be(&FEE_SYSTEM_ACCOUNT, 100);
+		Balances::make_free_balance_be(&dest, 100);
+
 		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset, admin, true, 1));
 		assert_ok!(Assets::mint(
 			RuntimeOrigin::signed(admin),
