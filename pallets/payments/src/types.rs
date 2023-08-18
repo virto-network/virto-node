@@ -1,7 +1,7 @@
 #![allow(unused_qualifications)]
 use crate::{pallet, AssetIdOf, BalanceOf};
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
-use frame_system::pallet_prelude::BlockNumberFor;
+
 use scale_info::TypeInfo;
 use sp_runtime::{BoundedVec, DispatchResult, Percent};
 
@@ -10,80 +10,37 @@ use sp_runtime::{BoundedVec, DispatchResult, Percent};
 /// guarantee proof of funds and can be released once an agreed upon condition
 /// has reached between the payment creator and recipient. The payment lifecycle
 /// is tracked using the state field.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound(T: pallet::Config))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct PaymentDetail<T: pallet::Config> {
+#[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo)]
+
+pub struct PaymentDetail<AssetId, Balance, AccountId, BlockNumber, BoundedFeeDetails> {
 	/// type of asset used for payment
-	pub asset: AssetIdOf<T>,
+	pub asset: AssetId,
 	/// amount of asset used for payment
-	#[codec(compact)]
-	pub amount: BalanceOf<T>,
+	pub amount: Balance,
 	/// incentive amount that is credited to creator for resolving
-	#[codec(compact)]
-	pub incentive_amount: BalanceOf<T>,
+	pub incentive_amount: Balance,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested,
 	/// Requested]
-	pub state: PaymentState<T>,
+	pub state: PaymentState<BlockNumber>,
 	/// account that can settle any disputes created in the payment
-	pub resolver_account: T::AccountId,
+	pub resolver_account: AccountId,
 	/// fee charged and recipient account details
-	pub fee_detail: Fees<T>,
+	pub fees_details: Fees<BoundedFeeDetails>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and
 /// hence not tracked by a state.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound(T: pallet::Config))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum PaymentState<T: pallet::Config> {
+#[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo)]
+pub enum PaymentState<BlockNumber> {
 	/// Amounts have been reserved and waiting for release/cancel
 	Created,
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested { cancel_block: BlockNumberFor<T> },
+	RefundRequested { cancel_block: BlockNumber },
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
-}
-
-/// trait that defines how to create/release payments for users
-pub trait PaymentHandler<T: pallet::Config> {
-	/// Create a PaymentDetail from the given payment details
-	/// Calculate the fee amount and store PaymentDetail in storage
-	/// Possible reasons for failure include:
-	/// - Payment already exists and cannot be overwritten
-	fn create_payment(
-		from: &T::AccountId,
-		to: &T::AccountId,
-		asset: AssetIdOf<T>,
-		amount: BalanceOf<T>,
-		payment_state: PaymentState<T>,
-		incentive_percentage: Percent,
-		remark: Option<&[u8]>,
-	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError>;
-
-	/// Attempt to reserve an amount of the given asset from the caller
-	/// If not possible then return Error. Possible reasons for failure include:
-	/// - User does not have enough balance.
-	fn reserve_payment_amount(from: &T::AccountId, to: &T::AccountId, payment: PaymentDetail<T>) -> DispatchResult;
-
-	/* 	// Settle a payment of `from` to `to`. To release a payment, the
-	// recipient_share=100, to cancel a payment recipient_share=0
-	// Possible reasonse for failure include
-	///
-	/// - The payment does not exist
-	/// - The unreserve operation fails
-	/// - The transfer operation fails
-	fn settle_payment(from: &T::AccountId, to: &T::AccountId, recipient_share: Percent) -> DispatchResult;
-
-	/// Attempt to fetch the details of a payment from the given payment_id
-	/// Possible reasons for failure include:
-	/// - The payment does not exist
-	fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T>>; */
 }
 
 /// DisputeResolver trait defines how to create/assign judges for solving
@@ -95,25 +52,17 @@ pub trait DisputeResolver<Account> {
 
 /// Fee Handler trait that defines how to handle marketplace fees to every
 /// payment/swap
-pub trait FeeHandler<T: pallet::Config> {
+pub trait FeeHandler<T: pallet::Config, BoundedFeeDetails> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
-		account: &T::AccountId,
+		sender: &T::AccountId,
+		beneficiary: &T::AccountId,
 		amount: &BalanceOf<T>,
 		remark: Option<&[u8]>,
-		role: Role,
-	) -> Option<BalanceOf<T>>;
-
-	/* 	/// Get the distribution of discounts to marketplace participants
-	fn apply_discounts(
-		from: &T::AccountId,
-		to: &T::AccountId,
-		detail: &PaymentDetail<T>,
-		remark: Option<&[u8]>,
-	) -> Vec<(T::AccountId, BalanceOf<T>)>; */
+	) -> Fees<BoundedFeeDetails>;
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, Debug, TypeInfo, MaxEncodedLen, Ord, PartialOrd)]
 pub enum Role {
 	Sender,
 	Beneficiary,
@@ -122,21 +71,17 @@ pub enum Role {
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub enum SubTypes<T: pallet::Config> {
-	Fixed(T::AccountId, BalanceOf<T>),
-	Percentage(T::AccountId, Percent),
+	Fixed(T::AccountId, BalanceOf<T>, Role),
+	Percentage(T::AccountId, Percent, Role),
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
-pub struct Fees<T: pallet::Config> {
-	pub sender_pays: Option<(T::AccountId, BalanceOf<T>)>,
-	pub beneficiary_pays: Option<(T::AccountId, BalanceOf<T>)>,
-	pub system: Option<(T::AccountId, BalanceOf<T>)>,
-}
-#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
-struct Discounts<T: pallet::Config> {
-	sender_discounts: BoundedVec<SubTypes<T>, T::MaxDiscounts>,
-	beneficiary_discounts: BoundedVec<SubTypes<T>, T::MaxDiscounts>,
-	system: BalanceOf<T>,
+//pub type FeeDetails<T: pallet::Config> = BoundedVec<(Role, T::AccountId,
+// BalanceOf<T>), T::MaxFees>;
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo)]
+pub struct Fees<BoundedFeeDetails> {
+	pub sender_pays: BoundedFeeDetails,
+	pub beneficiary_pays: BoundedFeeDetails,
 }
 
 /// Types of Tasks that can be scheduled in the pallet

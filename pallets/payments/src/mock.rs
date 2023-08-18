@@ -13,7 +13,7 @@ use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, Get, IdentityLookup, Zero},
-	BoundedVec, BuildStorage, Percent, RuntimeDebug,
+	BoundedBTreeMap, BoundedVec, BuildStorage, Percent, RuntimeDebug,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -21,15 +21,18 @@ type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
 pub const PAYMENT_CREATOR: AccountId = 10;
 pub const PAYMENT_RECIPENT: AccountId = 11;
-pub const PAYMENT_CREATOR_TWO: AccountId = 30;
-pub const PAYMENT_RECIPENT_TWO: AccountId = 31;
+pub const PAYMENT_CREATOR_TWO: AccountId = 40;
+pub const PAYMENT_RECIPENT_TWO: AccountId = 41;
 pub const CURRENCY_ID: u32 = 1;
 pub const RESOLVER_ACCOUNT: AccountId = 12;
-pub const FEE_RECIPIENT_ACCOUNT: AccountId = 20;
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
-pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 20;
+pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
 pub const CANCEL_BLOCK_BUFFER: u64 = 600;
+/// Destination account for the fee payment
+pub const FEE_SENDER_ACCOUNT: AccountId = 30;
+pub const FEE_BENEFICIARY_ACCOUNT: AccountId = 31;
+pub const FEE_SYSTEM_ACCOUNT: AccountId = 32;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -128,60 +131,53 @@ impl pallet_sudo::Config for Test {
 	type WeightInfo = ();
 }
 
+pub type BoundedFeeDetails = BoundedVec<(Role, AccountId, Balance), ConstU32<50>>;
 pub struct MockFeeHandler;
 
-impl crate::types::FeeHandler<Test> for MockFeeHandler {
+impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 	fn apply_fees(
-		account: &AccountId,
+		sender: &AccountId,
+		beneficiary: &AccountId,
 		amount: &Balance,
 		_remark: Option<&[u8]>,
-		role: Role,
-	) -> Option<(AccountId, Balance)> {
-		// Balance instead of u64
+	) -> Fees<BoundedFeeDetails> {
 		let sender_fees = vec![
-			SubTypes::Percentage(FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
-			SubTypes::Fixed(FEE_RECIPIENT_ACCOUNT, 2_u64),
+			SubTypes::Fixed(FEE_SENDER_ACCOUNT, 2, Role::Sender),
+			SubTypes::Percentage(
+				FEE_SYSTEM_ACCOUNT,
+				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
+				Role::System,
+			),
 		];
 
 		let beneficiary_fees = vec![
-			SubTypes::Percentage(FEE_RECIPIENT_ACCOUNT, Percent::from_percent(10)),
-			SubTypes::Fixed(FEE_RECIPIENT_ACCOUNT, 1_u64),
+			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, 3, Role::Beneficiary),
+			SubTypes::Percentage(
+				FEE_SYSTEM_ACCOUNT,
+				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
+				Role::System,
+			),
 		];
 
-		let sender_pays = BoundedVec::truncate_from(sender_fees);
-		let beneficiary_pays = BoundedVec::truncate_from(beneficiary_fees);
-
-		let fees = Fees {
-			sender_pays,
-			beneficiary_pays,
-			system: 10,
+		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> BoundedFeeDetails {
+			let mut details = Vec::new();
+			for fee in fees {
+				let (fee_role, fee_acc, fee_amount) = match fee {
+					SubTypes::Fixed(account, amount_fixed, role) => (*role, account.clone(), *amount_fixed),
+					SubTypes::Percentage(account, percent, role) => {
+						(*role, account.clone(), percent.mul_floor(*amount))
+					}
+				};
+				details.push((fee_role, fee_acc, fee_amount));
+			}
+			// This is a test, so i'm just unwrapping
+			let bounded_details: BoundedFeeDetails = BoundedVec::try_from(details).unwrap();
+			bounded_details
 		};
 
-		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> Balance {
-			fees.iter().fold(Zero::zero(), |total_fee, fee| match fee {
-				SubTypes::Fixed(_, amount_fixed) => total_fee.saturating_add(*amount_fixed),
-				SubTypes::Percentage(_, percent) => total_fee + percent.mul_floor(*amount),
-			})
-		};
-
-		match role {
-			Role::Sender => {
-				let total_fee = compute_fee(&fees.sender_pays);
-				if total_fee.is_zero() {
-					None
-				} else {
-					Some((*account, total_fee))
-				}
-			}
-			Role::Beneficiary => {
-				let total_fee = compute_fee(&fees.beneficiary_pays);
-				if total_fee.is_zero() {
-					None
-				} else {
-					Some((*account, total_fee))
-				}
-			}
-			Role::System => Some((*account, fees.system)),
+		Fees {
+			sender_pays: compute_fee(&sender_fees),
+			beneficiary_pays: compute_fee(&beneficiary_fees),
 		}
 	}
 }
@@ -209,6 +205,8 @@ impl pallet_payments::Config for Test {
 	type DisputeResolver = MockDisputeResolver;
 	type PalletId = PaymentPalletId;
 	type RuntimeHoldReasons = HoldIdentifiers;
+	type MaxDiscounts = ConstU32<50>;
+	type MaxFees = ConstU32<50>;
 }
 
 // Build genesis storage according to the mock runtime.

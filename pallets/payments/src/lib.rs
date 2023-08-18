@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_benchmarking::Zero;
+use frame_system::pallet_prelude::BlockNumberFor;
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/v3/runtime/frame>
@@ -29,8 +30,8 @@ use frame_support::{
 	},
 	BoundedVec,
 };
-use scale_info::prelude::collections::BTreeMap;
-use sp_runtime::Saturating;
+
+use sp_runtime::{DispatchError, Saturating};
 
 pub mod weights;
 pub use weights::*;
@@ -47,21 +48,20 @@ type AssetIdOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Co
 type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
+pub type BoundedFeeDetails<T> =
+	BoundedVec<(Role, <T as frame_system::Config>::AccountId, BalanceOf<T>), <T as Config>::MaxFees>;
+pub type PaymentDetailtOf<T> = PaymentDetail<
+	AssetIdOf<T>,
+	BalanceOf<T>,
+	<T as frame_system::Config>::AccountId,
+	BlockNumberFor<T>,
+	BoundedFeeDetails<T>,
+>;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{
-		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::*,
-		traits::{
-			tokens::{Fortitude::Polite, Precision::Exact},
-			Currency, EnsureOrigin,
-			ExistenceRequirement::KeepAlive,
-			Imbalance, OnUnbalanced, ReservableCurrency, WithdrawReasons,
-		},
-		PalletId,
-	};
+	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::*;
 
 	use sp_runtime::{
@@ -92,15 +92,12 @@ pub mod pallet {
 			+ TypeInfo
 			+ MaxEncodedLen;
 
-		type FeeHandler: FeeHandler<Self>;
+		type FeeHandler: FeeHandler<Self, BoundedFeeDetails<Self>>;
 
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
-
-		#[pallet::constant]
-		type SystemAccount: Get<Self::AccountId>;
 
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
@@ -136,7 +133,7 @@ pub mod pallet {
 		T::AccountId, // payment creator
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
-		PaymentDetail<T>,
+		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, BlockNumberFor<T>, BoundedFeeDetails<T>>,
 	>;
 
 	#[pallet::event]
@@ -271,14 +268,14 @@ impl<T: Config> Pallet<T> {
 		beneficiary: &T::AccountId,
 		asset: AssetIdOf<T>,
 		amount: BalanceOf<T>,
-		payment_state: PaymentState<T>,
+		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
-	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
+	) -> Result<PaymentDetailtOf<T>, sp_runtime::DispatchError> {
 		Payment::<T>::try_mutate(
 			sender,
 			beneficiary,
-			|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
+			|maybe_payment| -> Result<PaymentDetailtOf<T>, sp_runtime::DispatchError> {
 				if let Some(payment) = maybe_payment {
 					ensure!(
 						payment.state == PaymentState::PaymentRequested,
@@ -288,35 +285,16 @@ impl<T: Config> Pallet<T> {
 
 				let incentive_amount = incentive_percentage.mul_floor(amount);
 
-				let roles_accounts = [
-					(Role::Sender, sender),
-					(Role::Beneficiary, beneficiary),
-					(Role::System, &T::SystemAccount::get()),
-				];
+				let fees_details: Fees<BoundedFeeDetails<T>> =
+					T::FeeHandler::apply_fees(&sender, &beneficiary, &amount, remark);
 
-				let mut fee_map: BTreeMap<_, _> = BTreeMap::new();
-
-				for &(role, account) in &roles_accounts {
-					if let Some(fee_amount) = T::FeeHandler::apply_fees(account, &amount, remark, role) {
-						fee_map.entry(account).or_insert(fee_amount);
-					}
-				}
-
-				let fee_detail = Fees {
-					sender_pays: fee_map.get(sender).map(|&amount| (sender.clone(), amount)),
-					beneficiary_pays: fee_map.get(beneficiary).map(|&amount| (beneficiary.clone(), amount)),
-					system: fee_map
-						.get(&T::SystemAccount::get())
-						.map(|&amount| (T::SystemAccount::get().clone(), amount)),
-				};
-
-				let new_payment = PaymentDetail {
+				let new_payment = PaymentDetailtOf::<T> {
 					asset,
 					amount,
 					incentive_amount,
 					state: payment_state,
 					resolver_account: T::DisputeResolver::get_resolver_account(),
-					fee_detail,
+					fees_details,
 				};
 
 				*maybe_payment = Some(new_payment.clone());
@@ -329,52 +307,97 @@ impl<T: Config> Pallet<T> {
 	fn reserve_payment_amount(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
-		payment: PaymentDetail<T>,
+		payment: PaymentDetailtOf<T>,
 		reason: &T::RuntimeHoldReasons,
 	) -> DispatchResult {
-		let fee_amount = payment
-			.fee_detail
-			.iter()
-			.map(|(_, f)| f)
-			.fold(Zero::zero(), |acc: BalanceOf<T>, x| acc.saturating_add(*x));
+		let handle_fees = |payer: &T::AccountId,
+		                   fees: &BoundedVec<(Role, T::AccountId, BalanceOf<T>), T::MaxFees>|
+		 -> Result<BalanceOf<T>, DispatchError> {
+			let mut total_fee_for_payer: BalanceOf<T> = Zero::zero();
 
-		if let Some(sender_pays) = payment.fee_detail.sender_pays {}
+			for (role, account, amount) in fees.iter() {
+				let account_fee = fees
+					.iter()
+					.filter(|(r, a, _)| r == role && a == account)
+					.map(|(_, _, fee)| *fee)
+					.fold(Zero::zero(), |acc: BalanceOf<T>, x| acc.saturating_add(x));
 
-		let total_fee_amount = payment.incentive_amount.saturating_add(fee_amount);
-		let total_amount = total_fee_amount.saturating_add(payment.amount);
+				T::Assets::transfer_and_hold(
+					payment.asset.clone(),
+					reason,
+					payer,
+					account,
+					account_fee,
+					Exact,
+					Preserve,
+					Polite,
+				)?;
 
-		T::Assets::hold(payment.asset.clone(), reason, from, payment.incentive_amount)?;
-		T::Assets::transfer_and_hold(payment.asset, reason, from, to, total_amount, Exact, Preserve, Polite)?;
+				total_fee_for_payer = total_fee_for_payer.saturating_add(account_fee);
+			}
+
+			Ok(total_fee_for_payer)
+		};
+
+		let sender_total_fee = handle_fees(sender, &payment.fees_details.sender_pays)?;
+		let beneficiary_total_fee = handle_fees(beneficiary, &payment.fees_details.beneficiary_pays)?;
+
+		let total_fee_amount = sender_total_fee.saturating_add(beneficiary_total_fee);
+		let total_amount = payment
+			.incentive_amount
+			.saturating_add(total_fee_amount)
+			.saturating_add(payment.amount);
+
+		T::Assets::hold(payment.asset.clone(), reason, sender, payment.incentive_amount)?;
+		T::Assets::transfer_and_hold(
+			payment.asset,
+			reason,
+			sender,
+			beneficiary,
+			total_amount,
+			Exact,
+			Preserve,
+			Polite,
+		)?;
 
 		Ok(())
 	}
 
-	fn settle_payment(from: &T::AccountId, to: &T::AccountId, reason: &T::RuntimeHoldReasons) -> DispatchResult {
-		Payment::<T>::try_mutate(from, to, |maybe_payment| -> DispatchResult {
+	fn settle_payment(
+		source: &T::AccountId,
+		beneficiary: &T::AccountId,
+		reason: &T::RuntimeHoldReasons,
+	) -> DispatchResult {
+		Payment::<T>::try_mutate(source, beneficiary, |maybe_payment| -> DispatchResult {
 			let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
 			let mut total_amount = payment.amount;
 
-			T::Assets::release(payment.asset.clone(), reason, &to, payment.amount, Exact)
+			T::Assets::release(payment.asset.clone(), reason, &beneficiary, payment.amount, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			// unreserve the incentive amount and fees from the owner account
-			if let Some((fee_recipient, fee_amount)) = payment.fee_detail {
-				// transfer fee to marketplace if operation is not cancel
-				total_amount = total_amount.saturating_sub(fee_amount);
-				println!("total_amount: {:?}", total_amount);
-				T::Assets::transfer(payment.asset.clone(), to, &fee_recipient, fee_amount, Preserve)?;
+			// Process sender fees
+			for (role, fee_recipient, fee_amount) in payment.fees_details.sender_pays.iter() {
+				total_amount = total_amount.saturating_sub(*fee_amount);
+				T::Assets::transfer(payment.asset.clone(), beneficiary, fee_recipient, *fee_amount, Preserve)?;
 			}
 
-			// release the incentive amount from the sender account
-			T::Assets::release(payment.asset, reason, &from, payment.incentive_amount, Exact)
+			// Process beneficiary fees
+			for (role, fee_recipient, fee_amount) in payment.fees_details.beneficiary_pays.iter() {
+				total_amount = total_amount.saturating_sub(*fee_amount);
+				T::Assets::transfer(payment.asset.clone(), beneficiary, fee_recipient, *fee_amount, Preserve)?;
+			}
+
+			// release the incentive amount from the source account
+			T::Assets::release(payment.asset, reason, &source, payment.incentive_amount, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
+
 			Ok(())
 		})?;
 		Ok(())
 	}
 
-	fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T>> {
+	/* 	fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T, FeeDetails<T>>> {
 		Payment::<T>::get(from, to)
-	}
+	} */
 }
