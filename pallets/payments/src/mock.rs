@@ -19,11 +19,11 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
+
 pub const PAYMENT_CREATOR: AccountId = 10;
-pub const PAYMENT_RECIPENT: AccountId = 11;
-pub const PAYMENT_CREATOR_TWO: AccountId = 40;
-pub const PAYMENT_RECIPENT_TWO: AccountId = 41;
-pub const CURRENCY_ID: u32 = 1;
+pub const PAYMENT_BENEFICIARY: AccountId = 11;
+pub const ASSET_ADMIN_ACCOUNT: AccountId = 1;
+pub const ASSET_ID: u32 = 1;
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;

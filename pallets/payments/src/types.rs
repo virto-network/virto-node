@@ -38,9 +38,12 @@ pub enum PaymentState<BlockNumber> {
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested { cancel_block: BlockNumber },
+	RefundRequested {
+		cancel_block: BlockNumber,
+	},
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
+	Finished,
 }
 
 /// DisputeResolver trait defines how to create/assign judges for solving

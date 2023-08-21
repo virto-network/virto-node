@@ -226,7 +226,7 @@ pub mod pallet {
 				T::IncentivePercentage::get(),
 				remark.as_ref().map(|x| x.as_slice()),
 			)?;
-			println!("payment_detail: {:?}", payment_detail);
+
 			// reserve funds for payment
 			Self::reserve_payment_amount(&who, &recipient, payment_detail, &reason)?;
 			// emit paymentcreated event
@@ -366,7 +366,7 @@ impl<T: Config> Pallet<T> {
 		reason: &T::RuntimeHoldReasons,
 	) -> DispatchResult {
 		Payment::<T>::try_mutate(source, beneficiary, |maybe_payment| -> DispatchResult {
-			let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
+			let mut payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
 			// Release sender fees recipients
 			let (fee_sender_recipients, _) = Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
@@ -403,6 +403,8 @@ impl<T: Config> Pallet<T> {
 				.map_err(|_| Error::<T>::TransferFailed)?;
 			}
 
+			payment.state = PaymentState::Finished;
+			*maybe_payment = Some(payment);
 			Ok(())
 		})?;
 		Ok(())
