@@ -11,12 +11,10 @@ use scale_info::TypeInfo;
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, Get, IdentityLookup, Zero},
-	BoundedBTreeMap, BoundedVec, BuildStorage, Percent, RuntimeDebug,
+	traits::{BlakeTwo256, IdentityLookup},
+	BoundedVec, BuildStorage, Percent,
 };
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
 
@@ -25,10 +23,12 @@ pub const PAYMENT_BENEFICIARY: AccountId = 11;
 pub const ASSET_ADMIN_ACCOUNT: AccountId = 1;
 pub const ASSET_ID: u32 = 1;
 pub const RESOLVER_ACCOUNT: AccountId = 12;
-pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
+/* for future uses
+pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const CANCEL_BLOCK_BUFFER: u64 = 600;
+*/
 /// Destination account for the fee payment
 pub const FEE_SENDER_ACCOUNT: AccountId = 30;
 pub const FEE_BENEFICIARY_ACCOUNT: AccountId = 31;
@@ -139,8 +139,8 @@ pub const FEE_BENEFICIARY_AMOUNT: Balance = 3;
 
 impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 	fn apply_fees(
-		sender: &AccountId,
-		beneficiary: &AccountId,
+		_sender: &AccountId,
+		_beneficiary: &AccountId,
 		amount: &Balance,
 		_remark: Option<&[u8]>,
 	) -> Fees<BoundedFeeDetails> {

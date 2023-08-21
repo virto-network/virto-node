@@ -21,12 +21,10 @@ use frame_support::{
 	ensure,
 	traits::{
 		fungibles::{
-			self,
 			hold::{Inspect as FunHoldInspect, Mutate as FunHoldMutate},
 			Balanced as FunBalanced, Inspect as FunInspect, Mutate as FunMutate,
 		},
 		tokens::{fungibles::Inspect as FunsInspect, Fortitude::Polite, Precision::Exact, Preservation::Preserve},
-		Get,
 	},
 	BoundedVec,
 };
@@ -64,10 +62,7 @@ pub mod pallet {
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::*;
 
-	use sp_runtime::{
-		traits::{CheckedAdd, Get},
-		Percent,
-	};
+	use sp_runtime::{traits::Get, Percent};
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -409,8 +404,4 @@ impl<T: Config> Pallet<T> {
 		})?;
 		Ok(())
 	}
-
-	/* 	fn get_payment_details(from: &T::AccountId, to: &T::AccountId) -> Option<PaymentDetail<T, FeeDetails<T>>> {
-		Payment::<T>::get(from, to)
-	} */
 }
