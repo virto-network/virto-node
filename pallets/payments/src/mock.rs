@@ -18,13 +18,14 @@ use sp_runtime::{
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
 
-pub const PAYMENT_CREATOR: AccountId = 10;
+pub const SENDER_ACCOUNT: AccountId = 10;
 pub const PAYMENT_BENEFICIARY: AccountId = 11;
 pub const ASSET_ADMIN_ACCOUNT: AccountId = 1;
 pub const ASSET_ID: u32 = 1;
 pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
+pub const INITIAL_BALANCE: u64 = 100;
 /* for future uses
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const CANCEL_BLOCK_BUFFER: u64 = 600;
@@ -33,6 +34,13 @@ pub const CANCEL_BLOCK_BUFFER: u64 = 600;
 pub const FEE_SENDER_ACCOUNT: AccountId = 30;
 pub const FEE_BENEFICIARY_ACCOUNT: AccountId = 31;
 pub const FEE_SYSTEM_ACCOUNT: AccountId = 32;
+
+pub const SYSTEM_FEE: u64 = 2;
+pub const EXPECTED_SYSTEM_TOTAL_FEE: u64 = 4;
+pub const FEE_SENDER_AMOUNT: Balance = 2;
+pub const FEE_BENEFICIARY_AMOUNT: Balance = 3;
+pub const PAYMENT_AMOUNT: u64 = 20;
+pub const INCENTIVE_AMOUNT: u64 = PAYMENT_AMOUNT / INCENTIVE_PERCENTAGE as u64;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -134,9 +142,6 @@ impl pallet_sudo::Config for Test {
 pub type BoundedFeeDetails = BoundedVec<(AccountId, Balance), ConstU32<50>>;
 pub struct MockFeeHandler;
 
-pub const FEE_SENDER_AMOUNT: Balance = 2;
-pub const FEE_BENEFICIARY_AMOUNT: Balance = 3;
-
 impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 	fn apply_fees(
 		_sender: &AccountId,
@@ -208,7 +213,10 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			// id, owner, is_sufficient, min_balance
-			(1, 1000000000000),
+			(FEE_SENDER_ACCOUNT, INITIAL_BALANCE),
+			(FEE_BENEFICIARY_ACCOUNT, INITIAL_BALANCE),
+			(FEE_SYSTEM_ACCOUNT, INITIAL_BALANCE),
+			(PAYMENT_BENEFICIARY, INITIAL_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)
@@ -217,15 +225,15 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 	pallet_assets::GenesisConfig::<Test> {
 		assets: vec![
 			// id, owner, is_sufficient, min_balance
-			(999, 0, true, 1),
+			(ASSET_ID, ASSET_ADMIN_ACCOUNT, true, 1),
 		],
 		metadata: vec![
 			// id, name, symbol, decimals
-			(999, "Token Name".into(), "TOKEN".into(), 10),
+			(ASSET_ID, "Token Name".into(), "TOKEN".into(), 10),
 		],
 		accounts: vec![
 			// id, account_id, balance
-			(999, 1, 100),
+			(ASSET_ID, SENDER_ACCOUNT, 100),
 		],
 	}
 	.assimilate_storage(&mut t)

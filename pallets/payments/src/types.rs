@@ -1,9 +1,9 @@
 #![allow(unused_qualifications)]
-use crate::{pallet, AssetIdOf, BalanceOf};
+use crate::{pallet, BalanceOf};
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 
 use scale_info::TypeInfo;
-use sp_runtime::{BoundedVec, DispatchResult, Percent};
+use sp_runtime::Percent;
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to

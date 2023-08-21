@@ -3,10 +3,7 @@ use crate::{
 	types::{PaymentDetail, PaymentState},
 	Payment as PaymentStore,
 };
-use frame_support::{
-	assert_ok,
-	traits::{fungibles, Currency},
-};
+use frame_support::{assert_ok, traits::fungibles};
 
 use sp_runtime::BoundedVec;
 
@@ -30,34 +27,10 @@ use sp_runtime::BoundedVec;
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
-		const INITIAL_BALANCE: u64 = 100;
-		const PAYMENT_AMOUNT: u64 = 20;
-		const INCENTIVE_AMOUNT: u64 = PAYMENT_AMOUNT / INCENTIVE_PERCENTAGE as u64;
-		const SYSTEM_FEE: u64 = 2;
-		const EXPECTED_SYSTEM_TOTAL_FEE: u64 = 4;
-		Balances::make_free_balance_be(&FEE_SENDER_ACCOUNT, 100);
-		Balances::make_free_balance_be(&FEE_BENEFICIARY_ACCOUNT, 100);
-		Balances::make_free_balance_be(&FEE_SYSTEM_ACCOUNT, 100);
-		Balances::make_free_balance_be(&PAYMENT_BENEFICIARY, 100);
-
-		assert_ok!(Assets::force_create(
-			RuntimeOrigin::root(),
-			ASSET_ID,
-			ASSET_ADMIN_ACCOUNT,
-			true,
-			1
-		));
-		assert_ok!(Assets::mint(
-			RuntimeOrigin::signed(ASSET_ADMIN_ACCOUNT),
-			ASSET_ID,
-			PAYMENT_CREATOR,
-			INITIAL_BALANCE
-		));
-
 		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 
 		assert_ok!(Payments::pay(
-			RuntimeOrigin::signed(PAYMENT_CREATOR),
+			RuntimeOrigin::signed(SENDER_ACCOUNT),
 			PAYMENT_BENEFICIARY,
 			ASSET_ID,
 			PAYMENT_AMOUNT,
@@ -67,7 +40,8 @@ fn test_pay_and_release_works() {
 
 		System::assert_has_event(
 			RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-				from: PAYMENT_CREATOR,
+				sender: SENDER_ACCOUNT,
+				beneficiary: PAYMENT_BENEFICIARY,
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				remark: Some(remark.clone()),
@@ -76,14 +50,14 @@ fn test_pay_and_release_works() {
 		);
 
 		let fees_details: Fees<BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
-			&PAYMENT_CREATOR,
+			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,
 			Some(remark.as_slice()),
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_BENEFICIARY),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY),
 			Some(PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
@@ -106,43 +80,27 @@ fn test_pay_and_release_works() {
 			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
 				ASSET_ID,
 				&HoldIdentifiers::TransferPayment,
-				&PAYMENT_CREATOR
+				&SENDER_ACCOUNT
 			),
-			INCENTIVE_AMOUNT
-		);
-		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
-				ASSET_ID,
-				&HoldIdentifiers::TransferPayment,
-				&FEE_SENDER_ACCOUNT
-			),
-			FEE_SENDER_AMOUNT
-		);
-		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
-				ASSET_ID,
-				&HoldIdentifiers::TransferPayment,
-				&FEE_SYSTEM_ACCOUNT
-			),
-			SYSTEM_FEE
+			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
 		);
 
 		assert_ok!(Payments::release(
-			RuntimeOrigin::signed(PAYMENT_CREATOR),
+			RuntimeOrigin::signed(SENDER_ACCOUNT),
 			PAYMENT_BENEFICIARY,
 			HoldIdentifiers::TransferPayment,
 		));
 
 		System::assert_has_event(
 			RuntimeEvent::Payments(pallet_payments::Event::PaymentReleased {
-				from: PAYMENT_CREATOR,
-				to: PAYMENT_BENEFICIARY,
+				sender: SENDER_ACCOUNT,
+				beneficiary: PAYMENT_BENEFICIARY,
 			})
 			.into(),
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_BENEFICIARY),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY),
 			Some(PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
@@ -172,94 +130,110 @@ fn test_pay_and_release_works() {
 		);
 
 		assert_eq!(
-			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_CREATOR),
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT),
 			INITIAL_BALANCE - PAYMENT_AMOUNT - FEE_SENDER_AMOUNT - SYSTEM_FEE
 		);
 	});
 }
-/*
+
 #[test]
-fn test_pay_works() {
+fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
-		let creator_initial_balance = 100;
-		let payment_amount = 20;
-		let expected_incentive_amount = payment_amount / INCENTIVE_PERCENTAGE as u128;
+		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 
-		// the payment amount should not be reserved
-		assert_eq!(
-			Assets::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
-			creator_initial_balance
-		);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-
-		// should be able to create a payment with available balance
-		assert_ok!(Payment::pay(
-			RuntimeOrigin::signed(PAYMENT_CREATOR),
-			PAYMENT_RECIPENT,
-			CURRENCY_ID,
-			payment_amount,
-			None
+		assert_ok!(Payments::pay(
+			RuntimeOrigin::signed(SENDER_ACCOUNT),
+			PAYMENT_BENEFICIARY,
+			ASSET_ID,
+			PAYMENT_AMOUNT,
+			Some(remark.clone()),
+			HoldIdentifiers::TransferPayment,
 		));
-		assert_eq!(
-			last_event(),
-			crate::Event::<Test>::PaymentCreated {
-				from: PAYMENT_CREATOR,
-				asset: CURRENCY_ID,
-				amount: payment_amount,
-				remark: None
-			}
-			.into()
+
+		System::assert_has_event(
+			RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
+				sender: SENDER_ACCOUNT,
+				beneficiary: PAYMENT_BENEFICIARY,
+				asset: ASSET_ID,
+				amount: PAYMENT_AMOUNT,
+				remark: Some(remark.clone()),
+			})
+			.into(),
+		);
+
+		let fees_details: Fees<BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+			&SENDER_ACCOUNT,
+			&PAYMENT_BENEFICIARY,
+			&PAYMENT_AMOUNT,
+			Some(remark.as_slice()),
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY),
 			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: payment_amount,
-				incentive_amount: expected_incentive_amount,
+				asset: ASSET_ID,
+				amount: PAYMENT_AMOUNT,
+				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
 				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
+				fees_details: fees_details.clone(),
 			})
 		);
-		// the payment amount should be reserved correctly
-		// the amount + incentive should be removed from the sender account
-		assert_eq!(
-			Tokens::free_balance(CURRENCY_ID, &PAYMENT_CREATOR),
-			creator_initial_balance - payment_amount - expected_incentive_amount
-		);
-		// the incentive amount should be reserved in the sender account
-		assert_eq!(
-			Tokens::total_balance(CURRENCY_ID, &PAYMENT_CREATOR),
-			creator_initial_balance - payment_amount
-		);
-		assert_eq!(Tokens::free_balance(CURRENCY_ID, &PAYMENT_RECIPENT), 0);
-		// the transferred amount should be reserved in the recipent account
-		assert_eq!(Tokens::total_balance(CURRENCY_ID, &PAYMENT_RECIPENT), payment_amount);
 
-		// the payment should not be overwritten
-		assert_noop!(
-			Payment::pay(
-				RuntimeOrigin::signed(PAYMENT_CREATOR),
-				PAYMENT_RECIPENT,
-				CURRENCY_ID,
-				payment_amount,
-				None
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
+				ASSET_ID,
+				&HoldIdentifiers::TransferPayment,
+				&PAYMENT_BENEFICIARY
 			),
-			crate::Error::<Test>::PaymentAlreadyInProcess
+			PAYMENT_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
+				ASSET_ID,
+				&HoldIdentifiers::TransferPayment,
+				&SENDER_ACCOUNT
+			),
+			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
+		);
+
+		assert_ok!(Payments::cancel(
+			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
+			SENDER_ACCOUNT,
+			HoldIdentifiers::TransferPayment,
+		));
+
+		System::assert_has_event(
+			RuntimeEvent::Payments(pallet_payments::Event::PaymentCancelled {
+				sender: SENDER_ACCOUNT,
+				beneficiary: PAYMENT_BENEFICIARY,
+			})
+			.into(),
+		);
+
+		assert_eq!(PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY), None);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
+			0
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(PAYMENT_CREATOR, PAYMENT_RECIPENT),
-			Some(PaymentDetail {
-				asset: CURRENCY_ID,
-				amount: payment_amount,
-				incentive_amount: 2,
-				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT,
-				fee_detail: Some((FEE_RECIPIENT_ACCOUNT, 0)),
-			})
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT),
+			0
+		);
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT),
+			0
+		);
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY),
+			0
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT),
+			100
 		);
 	});
 }
- */
