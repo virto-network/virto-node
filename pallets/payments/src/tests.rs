@@ -11,62 +11,123 @@ use frame_support::{
 use frame_system::RawOrigin;
 use sp_runtime::BoundedVec;
 
+/// What we will do:
+/// Sender(2) pays 20 tokens to the beneficiary(21)
+/// Sender pays the following fees:
+///   - 2 tokens to the FEE_SENDER_ACCOUNT(30)
+///   - 10% of the payment amount (meaning 2 tokens) to the
+///     FEE_SYSTEM_ACCOUNT(31)
+///   (total of 4 tokens)
+/// Beneficiary pays the following fees:
+///   - 3 tokens to the FEE_BENEFICIARY_ACCOUNT(32)
+///   - 10% of the payment amount (meaning 2 tokens) to the
+///     FEE_SYSTEM_ACCOUNT(31)
+///   (total of 5 tokens)
+/// The beneficiary will receive 15 tokens free of charge
+/// The sender will need have a balance at least of 26 tokens to make the
+/// purchase:
+///  - 20 tokens for the payment + 4 tokens for the fee + 2 tokens for the
+///    incentive
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
 		let asset = 0;
 		let admin = 1;
-		let source = 2; // account with own deposit
-		let dest = 21; // account with own deposit
-		let creator_initial_balance = 100;
+		let sender = 2; // account with own deposit
+		let beneficiary = 21; // account with own deposit
+		const INITIAL_BALANCE: u64 = 100;
+		const PAYMENT_AMOUNT: u64 = 20;
+		const INCENTIVE_AMOUNT: u64 = PAYMENT_AMOUNT / INCENTIVE_PERCENTAGE as u64;
+		const SYSTEM_FEE: u64 = 2;
+		const EXPECTED_SYSTEM_TOTAL_FEE: u64 = 4;
 		Balances::make_free_balance_be(&FEE_SENDER_ACCOUNT, 100);
 		Balances::make_free_balance_be(&FEE_BENEFICIARY_ACCOUNT, 100);
 		Balances::make_free_balance_be(&FEE_SYSTEM_ACCOUNT, 100);
-		Balances::make_free_balance_be(&dest, 100);
+		Balances::make_free_balance_be(&beneficiary, 100);
 
 		assert_ok!(Assets::force_create(RuntimeOrigin::root(), asset, admin, true, 1));
 		assert_ok!(Assets::mint(
 			RuntimeOrigin::signed(admin),
 			asset,
-			source,
-			creator_initial_balance
+			sender,
+			INITIAL_BALANCE
 		));
-
-		let payment_amount = 20;
-		let expected_incentive_amount: u64 = payment_amount / INCENTIVE_PERCENTAGE as u64;
 
 		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 
-		Payments::pay(
-			RuntimeOrigin::signed(source),
-			dest,
+		assert_ok!(Payments::pay(
+			RuntimeOrigin::signed(sender),
+			beneficiary,
 			asset,
-			payment_amount,
+			PAYMENT_AMOUNT,
 			Some(remark),
 			HoldIdentifiers::TransferPayment,
-		)
-		.unwrap();
-
-		let fee = 4u64;
-
-		let payment = PaymentStore::<Test>::get(source, dest);
+		));
 
 		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(asset, &HoldIdentifiers::TransferPayment, &dest),
-			20
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
+				asset,
+				&HoldIdentifiers::TransferPayment,
+				&beneficiary
+			),
+			PAYMENT_AMOUNT
 		);
 		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(asset, &HoldIdentifiers::TransferPayment, &source),
-			2
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(asset, &HoldIdentifiers::TransferPayment, &sender),
+			INCENTIVE_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
+				asset,
+				&HoldIdentifiers::TransferPayment,
+				&FEE_SENDER_ACCOUNT
+			),
+			FEE_SENDER_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
+				asset,
+				&HoldIdentifiers::TransferPayment,
+				&FEE_SYSTEM_ACCOUNT
+			),
+			SYSTEM_FEE
 		);
 
-		/* 		Payments::release(RuntimeOrigin::signed(source), dest, HoldIdentifiers::TransferPayment).unwrap();
+		assert_ok!(Payments::release(
+			RuntimeOrigin::signed(sender),
+			beneficiary,
+			HoldIdentifiers::TransferPayment,
+		));
 
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(asset, &FEE_SYSTEM_ACCOUNT),
+			EXPECTED_SYSTEM_TOTAL_FEE
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(asset, &FEE_SENDER_ACCOUNT),
+			FEE_SENDER_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(asset, &FEE_BENEFICIARY_ACCOUNT),
+			FEE_BENEFICIARY_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(asset, &beneficiary),
+			PAYMENT_AMOUNT - FEE_BENEFICIARY_AMOUNT - SYSTEM_FEE
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(asset, &sender),
+			INITIAL_BALANCE - PAYMENT_AMOUNT - FEE_SENDER_AMOUNT - SYSTEM_FEE
+		);
+
+		/*
 		assert_eq!(<Assets as fungibles::Inspect<_>>::balance(asset, &dest), 16);
-		let expected_source = creator_initial_balance - payment_amount - fee + expected_incentive_amount;
+		let expected_sender = creator_initial_balance - payment_amount - fee + expected_incentive_amount;
 		assert_eq!(
-			<Assets as fungibles::Inspect<_>>::balance(asset, &source),
-			expected_source
+			<Assets as fungibles::Inspect<_>>::balance(asset, &sender),
+			expected_sender
 		); */
 	});
 }

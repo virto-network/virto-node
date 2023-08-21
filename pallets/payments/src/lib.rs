@@ -34,9 +34,9 @@ use frame_support::{
 use sp_runtime::{DispatchError, Saturating};
 
 pub mod weights;
-pub use weights::*;
-
 use sp_runtime::{traits::StaticLookup, DispatchResult, Percent};
+use sp_std::collections::btree_map::BTreeMap;
+pub use weights::*;
 
 pub mod types;
 pub use types::*;
@@ -49,7 +49,7 @@ type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Co
 type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 pub type BoundedFeeDetails<T> =
-	BoundedVec<(Role, <T as frame_system::Config>::AccountId, BalanceOf<T>), <T as Config>::MaxFees>;
+	BoundedVec<(<T as frame_system::Config>::AccountId, BalanceOf<T>), <T as Config>::MaxFees>;
 pub type PaymentDetailtOf<T> = PaymentDetail<
 	AssetIdOf<T>,
 	BalanceOf<T>,
@@ -192,6 +192,8 @@ pub mod pallet {
 		RefundQueueFull,
 		/// Release was not possible
 		ReleaseFailed,
+		/// Transfer failed
+		TransferFailed,
 	}
 
 	#[pallet::call]
@@ -305,65 +307,51 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	fn get_fees_details_per_role(
+		fees: &BoundedFeeDetails<T>,
+	) -> Result<(Vec<(T::AccountId, BalanceOf<T>)>, BalanceOf<T>), DispatchError> {
+		// Use BTreeMap to aggregate fees per account and track total fees
+		let mut fees_per_account: BTreeMap<T::AccountId, BalanceOf<T>> = BTreeMap::new();
+		let mut total_fees: BalanceOf<T> = Zero::zero();
+
+		for (account, fee) in fees.iter() {
+			*fees_per_account.entry(account.clone()).or_insert(Zero::zero()) += *fee;
+			total_fees = total_fees.saturating_add(*fee);
+		}
+
+		Ok((fees_per_account.into_iter().collect(), total_fees))
+	}
+
 	fn reserve_payment_amount(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		payment: PaymentDetailtOf<T>,
 		reason: &T::RuntimeHoldReasons,
 	) -> DispatchResult {
-		let handle_fees = |payer: &T::AccountId,
-		                   fees: &BoundedVec<(Role, T::AccountId, BalanceOf<T>), T::MaxFees>|
-		 -> Result<BalanceOf<T>, DispatchError> {
-			let mut total_fee_for_payer: BalanceOf<T> = Zero::zero();
-
-			for (role, account, _amount) in fees.iter() {
-				let account_fee = fees
-					.iter()
-					.filter(|(r, a, _)| r == role && a == account)
-					.map(|(_, _, fee)| *fee)
-					.fold(Zero::zero(), |acc: BalanceOf<T>, x| acc.saturating_add(x));
-
-				println!(
-					"account_fee: {:?}, account: {:?}, payer: {:?}",
-					account_fee, account, payer
-				);
-
-				T::Assets::transfer_and_hold(
-					payment.asset.clone(),
-					reason,
-					payer,
-					account,
-					account_fee,
-					Exact,
-					Preserve,
-					Polite,
-				)?;
-
-				total_fee_for_payer = total_fee_for_payer.saturating_add(account_fee);
-				println!("account: {:?}, total_fee_for_payer: {:?}", account, total_fee_for_payer);
-			}
-
-			Ok(total_fee_for_payer)
-		};
-
-		let sender_total_fee = handle_fees(sender, &payment.fees_details.sender_pays)?;
-		println!("****sender_total_fee: {:?}", sender_total_fee);
-		let beneficiary_total_fee = handle_fees(beneficiary, &payment.fees_details.beneficiary_pays)?;
-		println!("****beneficiary_total_fee: {:?}", beneficiary_total_fee);
-
-		let total_fee_amount = sender_total_fee.saturating_add(beneficiary_total_fee);
-		let total_amount = payment
-			.incentive_amount
-			.saturating_add(total_fee_amount)
-			.saturating_add(payment.amount);
+		let (fee_recipients, total_fee_from_sender) =
+			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
 
 		T::Assets::hold(payment.asset.clone(), reason, sender, payment.incentive_amount)?;
+
+		for (recipient_account, fee_amount) in fee_recipients.iter() {
+			T::Assets::transfer_and_hold(
+				payment.asset.clone(),
+				reason,
+				sender,
+				recipient_account,
+				*fee_amount,
+				Exact,
+				Preserve,
+				Polite,
+			)?;
+		}
+
 		T::Assets::transfer_and_hold(
 			payment.asset,
 			reason,
 			sender,
 			beneficiary,
-			total_amount,
+			payment.amount,
 			Exact,
 			Preserve,
 			Polite,
@@ -380,26 +368,40 @@ impl<T: Config> Pallet<T> {
 		Payment::<T>::try_mutate(source, beneficiary, |maybe_payment| -> DispatchResult {
 			let payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
 
-			let mut total_amount = payment.amount;
+			// Release sender fees recipients
+			let (fee_sender_recipients, _) = Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
+			for (sender_recipient_account, fee_amount) in fee_sender_recipients.iter() {
+				T::Assets::release(
+					payment.asset.clone(),
+					reason,
+					&sender_recipient_account,
+					*fee_amount,
+					Exact,
+				)
+				.map_err(|_| Error::<T>::ReleaseFailed)?;
+			}
 
+			// Release incentive ammount from sender account
+			T::Assets::release(payment.asset.clone(), reason, &source, payment.incentive_amount, Exact)
+				.map_err(|_| Error::<T>::ReleaseFailed)?;
+
+			// Release the whole payment
 			T::Assets::release(payment.asset.clone(), reason, &beneficiary, payment.amount, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			// Process sender fees
-			for (role, fee_recipient, fee_amount) in payment.fees_details.sender_pays.iter() {
-				total_amount = total_amount.saturating_sub(*fee_amount);
-				T::Assets::transfer(payment.asset.clone(), beneficiary, fee_recipient, *fee_amount, Preserve)?;
-			}
+			let (fee_beneficiary_recipients, _) =
+				Self::get_fees_details_per_role(&payment.fees_details.beneficiary_pays)?;
 
-			// Process beneficiary fees
-			for (role, fee_recipient, fee_amount) in payment.fees_details.beneficiary_pays.iter() {
-				total_amount = total_amount.saturating_sub(*fee_amount);
-				T::Assets::transfer(payment.asset.clone(), beneficiary, fee_recipient, *fee_amount, Preserve)?;
+			for (beneficiary_recipient_account, fee_amount) in fee_beneficiary_recipients.iter() {
+				T::Assets::transfer(
+					payment.asset.clone(),
+					beneficiary,
+					&beneficiary_recipient_account,
+					*fee_amount,
+					Preserve,
+				)
+				.map_err(|_| Error::<T>::TransferFailed)?;
 			}
-
-			// release the incentive amount from the source account
-			T::Assets::release(payment.asset, reason, &source, payment.incentive_amount, Exact)
-				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
 			Ok(())
 		})?;

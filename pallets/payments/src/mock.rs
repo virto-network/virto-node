@@ -131,8 +131,11 @@ impl pallet_sudo::Config for Test {
 	type WeightInfo = ();
 }
 
-pub type BoundedFeeDetails = BoundedVec<(Role, AccountId, Balance), ConstU32<50>>;
+pub type BoundedFeeDetails = BoundedVec<(AccountId, Balance), ConstU32<50>>;
 pub struct MockFeeHandler;
+
+pub const FEE_SENDER_AMOUNT: Balance = 2;
+pub const FEE_BENEFICIARY_AMOUNT: Balance = 3;
 
 impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 	fn apply_fees(
@@ -142,34 +145,23 @@ impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 		_remark: Option<&[u8]>,
 	) -> Fees<BoundedFeeDetails> {
 		let sender_fees = vec![
-			SubTypes::Fixed(FEE_SENDER_ACCOUNT, 2, Role::Sender),
-			SubTypes::Percentage(
-				FEE_SYSTEM_ACCOUNT,
-				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
-				Role::System,
-			),
+			SubTypes::Fixed(FEE_SENDER_ACCOUNT, FEE_SENDER_AMOUNT),
+			SubTypes::Percentage(FEE_SYSTEM_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
 		];
 
 		let beneficiary_fees = vec![
-			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, 3, Role::Beneficiary),
-			SubTypes::Percentage(
-				FEE_SYSTEM_ACCOUNT,
-				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
-				Role::System,
-			),
+			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, FEE_BENEFICIARY_AMOUNT),
+			SubTypes::Percentage(FEE_SYSTEM_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
 		];
 
 		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> BoundedFeeDetails {
-			let mut details = Vec::new();
-			for fee in fees {
-				let (fee_role, fee_acc, fee_amount) = match fee {
-					SubTypes::Fixed(account, amount_fixed, role) => (*role, account.clone(), *amount_fixed),
-					SubTypes::Percentage(account, percent, role) => {
-						(*role, account.clone(), percent.mul_floor(*amount))
-					}
-				};
-				details.push((fee_role, fee_acc, fee_amount));
-			}
+			let details = fees
+				.iter()
+				.map(|fee| match fee {
+					SubTypes::Fixed(account, amount_fixed) => (account.clone(), *amount_fixed),
+					SubTypes::Percentage(account, percent) => (account.clone(), percent.mul_floor(*amount)),
+				})
+				.collect::<Vec<(AccountId, Balance)>>();
 			// This is a test, so i'm just unwrapping
 			let bounded_details: BoundedFeeDetails = BoundedVec::try_from(details).unwrap();
 			bounded_details

@@ -62,17 +62,10 @@ pub trait FeeHandler<T: pallet::Config, BoundedFeeDetails> {
 	) -> Fees<BoundedFeeDetails>;
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, Debug, TypeInfo, MaxEncodedLen, Ord, PartialOrd)]
-pub enum Role {
-	Sender,
-	Beneficiary,
-	System,
-}
-
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub enum SubTypes<T: pallet::Config> {
-	Fixed(T::AccountId, BalanceOf<T>, Role),
-	Percentage(T::AccountId, Percent, Role),
+	Fixed(T::AccountId, BalanceOf<T>),
+	Percentage(T::AccountId, Percent),
 }
 
 //pub type FeeDetails<T: pallet::Config> = BoundedVec<(Role, T::AccountId,
