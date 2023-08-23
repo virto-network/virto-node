@@ -49,7 +49,7 @@ type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 pub type BoundedFeeDetails<T> =
 	BoundedVec<(<T as frame_system::Config>::AccountId, BalanceOf<T>), <T as Config>::MaxFees>;
-pub type PaymentDetailtOf<T> = PaymentDetail<
+pub type PaymentDetailOf<T> = PaymentDetail<
 	AssetIdOf<T>,
 	BalanceOf<T>,
 	<T as frame_system::Config>::AccountId,
@@ -72,8 +72,7 @@ pub mod pallet {
 		type Assets: FunInspect<Self::AccountId, Balance = Self::AssetsBalance>
 			+ FunMutate<Self::AccountId>
 			+ FunBalanced<Self::AccountId>
-			+ FunHoldInspect<Self::AccountId>
-			+ FunHoldMutate<Self::AccountId, Reason = Self::RuntimeHoldReasons>
+			+ FunHoldMutate<Self::AccountId, Reason = Self::RuntimeHoldReason>
 			+ FunsInspect<Self::AccountId>;
 
 		/// Just the `Currency::Balance` type; we have this item to allow us to
@@ -99,7 +98,7 @@ pub mod pallet {
 		type IncentivePercentage: Get<Percent>;
 
 		/// The overarching hold reason.
-		type RuntimeHoldReasons: Parameter + Member + MaxEncodedLen + Ord + Copy;
+		type RuntimeHoldReason: From<HoldReason>;
 
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
@@ -208,6 +207,12 @@ pub mod pallet {
 		TransferFailed,
 	}
 
+	#[pallet::composite_enum]
+	pub enum HoldReason {
+		#[codec(index = 0)]
+		TransferPayment,
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// This allows any user to create a new payment, that releases only to
@@ -224,7 +229,6 @@ pub mod pallet {
 			asset: AssetIdOf<T>,
 			#[pallet::compact] amount: BalanceOf<T>,
 			remark: Option<BoundedDataOf<T>>,
-			reason: T::RuntimeHoldReasons,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
@@ -241,7 +245,7 @@ pub mod pallet {
 			)?;
 
 			// reserve funds for payment
-			Self::reserve_payment_amount(&sender, &beneficiary, payment_detail, &reason)?;
+			Self::reserve_payment_amount(&sender, &beneficiary, payment_detail)?;
 			// emit paymentcreated event
 			Self::deposit_event(Event::PaymentCreated {
 				sender,
@@ -257,11 +261,7 @@ pub mod pallet {
 		/// from the creator of the payment to the assigned recipient
 		#[pallet::call_index(1)]
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
-		pub fn release(
-			origin: OriginFor<T>,
-			beneficiary: AccountIdLookupOf<T>,
-			reason: T::RuntimeHoldReasons,
-		) -> DispatchResultWithPostInfo {
+		pub fn release(origin: OriginFor<T>, beneficiary: AccountIdLookupOf<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
@@ -269,7 +269,7 @@ pub mod pallet {
 			let payment = Payment::<T>::get(&sender, &beneficiary).ok_or(Error::<T>::InvalidPayment)?;
 			ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
-			Self::settle_payment(&sender, &beneficiary, &reason)?;
+			Self::settle_payment(&sender, &beneficiary)?;
 
 			Self::deposit_event(Event::PaymentReleased { sender, beneficiary });
 			Ok(().into())
@@ -280,17 +280,13 @@ pub mod pallet {
 		/// the recipient of the payment
 		#[pallet::call_index(2)]
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
-		pub fn cancel(
-			origin: OriginFor<T>,
-			sender: AccountIdLookupOf<T>,
-			reason: T::RuntimeHoldReasons,
-		) -> DispatchResultWithPostInfo {
+		pub fn cancel(origin: OriginFor<T>, sender: AccountIdLookupOf<T>) -> DispatchResultWithPostInfo {
 			let beneficiary = ensure_signed(origin)?;
 			let sender = T::Lookup::lookup(sender)?;
 			if let Some(payment) = Payment::<T>::get(&sender, &beneficiary) {
 				match payment.state {
 					PaymentState::Created => {
-						Self::cancel_payment(&sender, &beneficiary, payment, &reason)?;
+						Self::cancel_payment(&sender, &beneficiary, payment)?;
 						Self::deposit_event(Event::PaymentCancelled {
 							sender: sender.clone(),
 							beneficiary: beneficiary.clone(),
@@ -318,11 +314,11 @@ impl<T: Config> Pallet<T> {
 		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
-	) -> Result<PaymentDetailtOf<T>, sp_runtime::DispatchError> {
+	) -> Result<PaymentDetailOf<T>, sp_runtime::DispatchError> {
 		Payment::<T>::try_mutate(
 			sender,
 			beneficiary,
-			|maybe_payment| -> Result<PaymentDetailtOf<T>, sp_runtime::DispatchError> {
+			|maybe_payment| -> Result<PaymentDetailOf<T>, sp_runtime::DispatchError> {
 				if let Some(payment) = maybe_payment {
 					ensure!(
 						payment.state == PaymentState::PaymentRequested,
@@ -335,7 +331,7 @@ impl<T: Config> Pallet<T> {
 				let fees_details: Fees<BoundedFeeDetails<T>> =
 					T::FeeHandler::apply_fees(&sender, &beneficiary, &amount, remark);
 
-				let new_payment = PaymentDetailtOf::<T> {
+				let new_payment = PaymentDetailOf::<T> {
 					asset,
 					amount,
 					incentive_amount,
@@ -369,14 +365,13 @@ impl<T: Config> Pallet<T> {
 	fn reserve_payment_amount(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
-		payment: PaymentDetailtOf<T>,
-		reason: &T::RuntimeHoldReasons,
+		payment: PaymentDetailOf<T>,
 	) -> DispatchResult {
 		let (_fee_recipients, total_fee_from_sender) =
 			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
 
 		let total_hold_amount = total_fee_from_sender.saturating_add(payment.incentive_amount);
-
+		let reason = &HoldReason::TransferPayment.into();
 		T::Assets::hold(payment.asset.clone(), reason, sender, total_hold_amount)?;
 
 		T::Assets::transfer_and_hold(
@@ -396,13 +391,12 @@ impl<T: Config> Pallet<T> {
 	fn cancel_payment(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
-		payment: PaymentDetailtOf<T>,
-		reason: &T::RuntimeHoldReasons,
+		payment: PaymentDetailOf<T>,
 	) -> DispatchResult {
 		let (_fee_recipients, total_fee_from_sender) =
 			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
 		let total_hold_amount = total_fee_from_sender.saturating_add(payment.incentive_amount);
-
+		let reason = &HoldReason::TransferPayment.into();
 		T::Assets::release(payment.asset.clone(), reason, &sender, total_hold_amount, Exact)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
@@ -415,13 +409,10 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn settle_payment(
-		sender: &T::AccountId,
-		beneficiary: &T::AccountId,
-		reason: &T::RuntimeHoldReasons,
-	) -> DispatchResult {
+	fn settle_payment(sender: &T::AccountId, beneficiary: &T::AccountId) -> DispatchResult {
 		Payment::<T>::try_mutate(sender, beneficiary, |maybe_payment| -> DispatchResult {
 			let mut payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
+			let reason = &HoldReason::TransferPayment.into();
 
 			// Release sender fees recipients
 			let (fee_sender_recipients, total_sender_fee_amount) =

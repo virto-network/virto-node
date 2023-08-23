@@ -1,7 +1,8 @@
+use super::*;
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	Payment as PaymentStore,
+	HoldReason, Payment as PaymentStore,
 };
 use frame_support::{assert_ok, traits::fungibles};
 
@@ -28,6 +29,7 @@ use sp_runtime::BoundedVec;
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
 		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
+		let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
 
 		assert_ok!(Payments::pay(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -35,7 +37,6 @@ fn test_pay_and_release_works() {
 			ASSET_ID,
 			PAYMENT_AMOUNT,
 			Some(remark.clone()),
-			HoldIdentifiers::TransferPayment,
 		));
 
 		System::assert_has_event(
@@ -49,7 +50,7 @@ fn test_pay_and_release_works() {
 			.into(),
 		);
 
-		let fees_details: Fees<BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+		let fees_details: Fees<mock::BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,
@@ -69,26 +70,17 @@ fn test_pay_and_release_works() {
 		);
 
 		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
-				ASSET_ID,
-				&HoldIdentifiers::TransferPayment,
-				&PAYMENT_BENEFICIARY
-			),
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
 			PAYMENT_AMOUNT
 		);
 		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
-				ASSET_ID,
-				&HoldIdentifiers::TransferPayment,
-				&SENDER_ACCOUNT
-			),
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
 			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
 		);
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
-			HoldIdentifiers::TransferPayment,
+			PAYMENT_BENEFICIARY
 		));
 
 		System::assert_has_event(
@@ -140,6 +132,8 @@ fn test_pay_and_release_works() {
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
 		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
+		//let reason: <Test as pallet_payments::Config>::RuntimeHoldReason =
+		// pallet_payments::HoldReason::Transfer.into();
 
 		assert_ok!(Payments::pay(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -147,7 +141,6 @@ fn test_pay_and_cancel_works() {
 			ASSET_ID,
 			PAYMENT_AMOUNT,
 			Some(remark.clone()),
-			HoldIdentifiers::TransferPayment,
 		));
 
 		System::assert_has_event(
@@ -161,7 +154,7 @@ fn test_pay_and_cancel_works() {
 			.into(),
 		);
 
-		let fees_details: Fees<BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+		let fees_details: Fees<mock::BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,
@@ -183,7 +176,7 @@ fn test_pay_and_cancel_works() {
 		assert_eq!(
 			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
 				ASSET_ID,
-				&HoldIdentifiers::TransferPayment,
+				&pallet_payments::HoldReason::Transfer.into(),
 				&PAYMENT_BENEFICIARY
 			),
 			PAYMENT_AMOUNT
@@ -200,7 +193,6 @@ fn test_pay_and_cancel_works() {
 		assert_ok!(Payments::cancel(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
-			HoldIdentifiers::TransferPayment,
 		));
 
 		System::assert_has_event(

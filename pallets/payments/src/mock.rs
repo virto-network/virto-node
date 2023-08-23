@@ -1,12 +1,10 @@
 pub use crate as pallet_payments;
 pub use crate::types::*;
-pub use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64},
 	PalletId,
 };
-use scale_info::TypeInfo;
 
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
@@ -103,11 +101,6 @@ impl pallet_balances::Config for Test {
 	type MaxHolds = ();
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, MaxEncodedLen, Debug, TypeInfo)]
-pub enum HoldIdentifiers {
-	TransferPayment,
-}
-
 impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -130,7 +123,7 @@ impl pallet_assets::Config for Test {
 	type BenchmarkHelper = ();
 	type CallbackHandle = ();
 	type MaxHolds = ConstU32<50>;
-	type RuntimeHoldReason = HoldIdentifiers;
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 impl pallet_sudo::Config for Test {
@@ -201,7 +194,7 @@ impl pallet_payments::Config for Test {
 	type MaxRemarkLength = MaxRemarkLength;
 	type DisputeResolver = MockDisputeResolver;
 	type PalletId = PaymentPalletId;
-	type RuntimeHoldReasons = HoldIdentifiers;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type MaxDiscounts = ConstU32<50>;
 	type MaxFees = ConstU32<50>;
 }
