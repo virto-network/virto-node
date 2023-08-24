@@ -1,4 +1,3 @@
-use super::*;
 pub use crate as pallet_payments;
 pub use crate::types::*;
 use frame_support::{

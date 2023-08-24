@@ -1,9 +1,20 @@
 #![allow(unused_qualifications)]
-use crate::{pallet, AccountIdOf, AssetIdOf, BalanceOf, MaxFeesOf};
+use crate::*;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_system::pallet_prelude::BlockNumberFor;
 use scale_info::TypeInfo;
-use sp_runtime::{BoundedVec, Percent};
+use sp_runtime::{traits::Zero, BoundedVec, Percent, Saturating};
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+
+// This pallet's asset id and balance type.
+pub type AssetIdOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
+pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+pub type MaxFeesOf<T> = <T as Config>::MaxFees;
+pub type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
+pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
+pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
+pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
+pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to
@@ -72,15 +83,36 @@ pub enum SubTypes<T: pallet::Config> {
 	Percentage(T::AccountId, Percent),
 }
 
-pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
-pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
-
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo, Debug)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound(T: pallet::Config))]
 pub struct Fees<T: pallet::Config> {
 	pub sender_pays: FeeDetails<T>,
 	pub beneficiary_pays: FeeDetails<T>,
+}
+
+impl<T: pallet::Config> Fees<T> {
+	pub fn get_fees_details_for_sender(&self) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
+		Self::get_fees_details_per_role(&self.sender_pays)
+	}
+
+	pub fn get_fees_details_for_beneficiary(&self) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
+		Self::get_fees_details_per_role(&self.beneficiary_pays)
+	}
+
+	pub fn get_fees_details_per_role(fees: &FeeDetails<T>) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
+		// Use BTreeMap to aggregate fees per account and track total fees
+		let mut fees_per_account: BTreeMap<AccountIdOf<T>, BalanceOf<T>> = BTreeMap::new();
+		let mut total_fees: BalanceOf<T> = Zero::zero();
+
+		for (account, fee) in fees.iter() {
+			let current_fee = fees_per_account.entry(account.clone()).or_insert(Zero::zero());
+			*current_fee = current_fee.saturating_add(*fee);
+			total_fees = total_fees.saturating_add(*fee);
+		}
+
+		Ok((fees_per_account.into_iter().collect(), total_fees))
+	}
 }
 
 /// Types of Tasks that can be scheduled in the pallet

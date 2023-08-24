@@ -29,27 +29,14 @@ use frame_support::{
 			Preservation::{Expendable, Preserve},
 		},
 	},
-	BoundedVec,
 };
 
-use sp_runtime::{traits::Zero, DispatchError, Saturating};
 pub mod weights;
-use sp_runtime::{traits::StaticLookup, DispatchResult, Percent};
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_runtime::{traits::StaticLookup, DispatchError, DispatchResult, Percent, Saturating};
 pub use weights::*;
 
 pub mod types;
 pub use types::*;
-
-// This pallet's asset id and balance type.
-pub type AssetIdOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
-pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-pub type MaxFeesOf<T> = <T as Config>::MaxFees;
-pub type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
-type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
-pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
-pub type BoundedFeeDetails<T> =
-	BoundedVec<(<T as frame_system::Config>::AccountId, BalanceOf<T>), <T as Config>::MaxFees>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -340,28 +327,12 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	fn get_fees_details_per_role(
-		fees: &BoundedFeeDetails<T>,
-	) -> Result<(Vec<(T::AccountId, BalanceOf<T>)>, BalanceOf<T>), DispatchError> {
-		// Use BTreeMap to aggregate fees per account and track total fees
-		let mut fees_per_account: BTreeMap<T::AccountId, BalanceOf<T>> = BTreeMap::new();
-		let mut total_fees: BalanceOf<T> = Zero::zero();
-
-		for (account, fee) in fees.iter() {
-			*fees_per_account.entry(account.clone()).or_insert(Zero::zero()) += *fee;
-			total_fees = total_fees.saturating_add(*fee);
-		}
-
-		Ok((fees_per_account.into_iter().collect(), total_fees))
-	}
-
 	fn reserve_payment_amount(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		payment: PaymentDetail<T>,
 	) -> DispatchResult {
-		let (_fee_recipients, total_fee_from_sender) =
-			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
+		let (_fee_recipients, total_fee_from_sender) = &payment.fees_details.get_fees_details_for_sender()?;
 
 		let total_hold_amount = total_fee_from_sender.saturating_add(payment.incentive_amount);
 		let reason = &HoldReason::TransferPayment.into();
@@ -382,8 +353,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn cancel_payment(sender: &T::AccountId, beneficiary: &T::AccountId, payment: PaymentDetail<T>) -> DispatchResult {
-		let (_fee_recipients, total_fee_from_sender) =
-			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
+		let (_fee_recipients, total_fee_from_sender) = &payment.fees_details.get_fees_details_for_sender()?;
 		let total_hold_amount = total_fee_from_sender.saturating_add(payment.incentive_amount);
 		let reason = &HoldReason::TransferPayment.into();
 		T::Assets::release(payment.asset.clone(), reason, &sender, total_hold_amount, Exact)
@@ -405,7 +375,7 @@ impl<T: Config> Pallet<T> {
 
 			// Release sender fees recipients
 			let (fee_sender_recipients, total_sender_fee_amount) =
-				Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
+				&payment.fees_details.get_fees_details_for_sender()?;
 			let total_sender_release = total_sender_fee_amount.saturating_add(payment.incentive_amount);
 
 			T::Assets::release(payment.asset.clone(), reason, &sender, total_sender_release, Exact)
@@ -426,8 +396,7 @@ impl<T: Config> Pallet<T> {
 			T::Assets::release(payment.asset.clone(), reason, &beneficiary, payment.amount, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			let (fee_beneficiary_recipients, _) =
-				Self::get_fees_details_per_role(&payment.fees_details.beneficiary_pays)?;
+			let (fee_beneficiary_recipients, _) = &payment.fees_details.get_fees_details_for_beneficiary()?;
 
 			for (beneficiary_recipient_account, fee_amount) in fee_beneficiary_recipients.iter() {
 				T::Assets::transfer(
