@@ -195,7 +195,7 @@ fn test_pay_and_cancel_works() {
 			.into(),
 		);
 
-		/// This validates that the payment was removed from the storage.
+		// This validates that the payment was removed from the storage.
 		assert!(!PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).is_ok());
 
 		assert_eq!(
