@@ -309,7 +309,7 @@ impl<T: Config> Pallet<T> {
 
 				let incentive_amount = incentive_percentage.mul_floor(amount);
 
-				let fees_details: Fees<T> = T::FeeHandler::apply_fees(&sender, &beneficiary, &amount, remark);
+				let fees_details: Fees<T> = T::FeeHandler::apply_fees(&asset, &sender, &beneficiary, &amount, remark);
 
 				let new_payment = PaymentDetail::<T> {
 					asset,

@@ -51,6 +51,7 @@ fn test_pay_and_release_works() {
 		);
 
 		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+			&ASSET_ID,
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,
@@ -154,6 +155,7 @@ fn test_pay_and_cancel_works() {
 		);
 
 		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+			&ASSET_ID,
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,

@@ -136,6 +136,7 @@ pub struct MockFeeHandler;
 
 impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	fn apply_fees(
+		_asset: &AssetIdOf<Test>,
 		_sender: &AccountId,
 		_beneficiary: &AccountId,
 		amount: &Balance,

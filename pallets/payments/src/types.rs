@@ -70,6 +70,7 @@ pub trait DisputeResolver<Account> {
 pub trait FeeHandler<T: pallet::Config> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
+		asset: &AssetIdOf<T>,
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		amount: &BalanceOf<T>,
