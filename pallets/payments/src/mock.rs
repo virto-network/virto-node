@@ -1,3 +1,4 @@
+use super::*;
 pub use crate as pallet_payments;
 pub use crate::types::*;
 use frame_support::{
@@ -44,11 +45,11 @@ pub const INCENTIVE_AMOUNT: u64 = PAYMENT_AMOUNT / INCENTIVE_PERCENTAGE as u64;
 frame_support::construct_runtime!(
 	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Assets: pallet_assets::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
-		Payments: pallet_payments::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Assets: pallet_assets,
+		Sudo: pallet_sudo,
+		Payments: pallet_payments,
 	}
 );
 

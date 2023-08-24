@@ -20,8 +20,7 @@ use frame_support::{
 	ensure, fail,
 	traits::{
 		fungibles::{
-			hold::{Inspect as FunHoldInspect, Mutate as FunHoldMutate},
-			Balanced as FunBalanced, Inspect as FunInspect, Mutate as FunMutate,
+			hold::Mutate as FunHoldMutate, Balanced as FunBalanced, Inspect as FunInspect, Mutate as FunMutate,
 		},
 		tokens::{
 			fungibles::Inspect as FunsInspect,

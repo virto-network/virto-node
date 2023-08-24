@@ -132,8 +132,7 @@ fn test_pay_and_release_works() {
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
 		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
-		//let reason: <Test as pallet_payments::Config>::RuntimeHoldReason =
-		// pallet_payments::HoldReason::Transfer.into();
+		let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
 
 		assert_ok!(Payments::pay(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -174,19 +173,11 @@ fn test_pay_and_cancel_works() {
 		);
 
 		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
-				ASSET_ID,
-				&pallet_payments::HoldReason::Transfer.into(),
-				&PAYMENT_BENEFICIARY
-			),
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
 			PAYMENT_AMOUNT
 		);
 		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(
-				ASSET_ID,
-				&HoldIdentifiers::TransferPayment,
-				&SENDER_ACCOUNT
-			),
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
 			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
 		);
 
