@@ -1,9 +1,9 @@
 #![allow(unused_qualifications)]
-use crate::{pallet, BalanceOf};
+use crate::{pallet, AccountIdOf, AssetIdOf, BalanceOf, MaxFeesOf};
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
-
+use frame_system::pallet_prelude::BlockNumberFor;
 use scale_info::TypeInfo;
-use sp_runtime::Percent;
+use sp_runtime::{BoundedVec, Percent};
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to
@@ -11,21 +11,22 @@ use sp_runtime::Percent;
 /// has reached between the payment creator and recipient. The payment lifecycle
 /// is tracked using the state field.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Debug, MaxEncodedLen, TypeInfo)]
-
-pub struct PaymentDetail<AssetId, Balance, AccountId, BlockNumber, BoundedFeeDetails> {
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: pallet::Config))]
+pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
-	pub asset: AssetId,
+	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
-	pub amount: Balance,
+	pub amount: BalanceOf<T>,
 	/// incentive amount that is credited to creator for resolving
-	pub incentive_amount: Balance,
+	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested,
 	/// Requested]
-	pub state: PaymentState<BlockNumber>,
+	pub state: PaymentState<BlockNumberFor<T>>,
 	/// account that can settle any disputes created in the payment
-	pub resolver_account: AccountId,
+	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
-	pub fees_details: Fees<BoundedFeeDetails>,
+	pub fees_details: Fees<T>,
 }
 
 /// The `PaymentState` enum tracks the possible states that a payment can be in.
@@ -55,14 +56,14 @@ pub trait DisputeResolver<Account> {
 
 /// Fee Handler trait that defines how to handle marketplace fees to every
 /// payment/swap
-pub trait FeeHandler<T: pallet::Config, BoundedFeeDetails> {
+pub trait FeeHandler<T: pallet::Config> {
 	/// Get the distribution of fees to marketplace participants
 	fn apply_fees(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		amount: &BalanceOf<T>,
 		remark: Option<&[u8]>,
-	) -> Fees<BoundedFeeDetails>;
+	) -> Fees<T>;
 }
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
@@ -71,13 +72,15 @@ pub enum SubTypes<T: pallet::Config> {
 	Percentage(T::AccountId, Percent),
 }
 
-//pub type FeeDetails<T: pallet::Config> = BoundedVec<(Role, T::AccountId,
-// BalanceOf<T>), T::MaxFees>;
+pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
+pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo, Debug)]
-pub struct Fees<BoundedFeeDetails> {
-	pub sender_pays: BoundedFeeDetails,
-	pub beneficiary_pays: BoundedFeeDetails,
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: pallet::Config))]
+pub struct Fees<T: pallet::Config> {
+	pub sender_pays: FeeDetails<T>,
+	pub beneficiary_pays: FeeDetails<T>,
 }
 
 /// Types of Tasks that can be scheduled in the pallet

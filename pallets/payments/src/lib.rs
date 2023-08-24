@@ -42,19 +42,14 @@ pub mod types;
 pub use types::*;
 
 // This pallet's asset id and balance type.
-type AssetIdOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
-type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
+pub type AssetIdOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
+pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+pub type MaxFeesOf<T> = <T as Config>::MaxFees;
+pub type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 pub type BoundedFeeDetails<T> =
 	BoundedVec<(<T as frame_system::Config>::AccountId, BalanceOf<T>), <T as Config>::MaxFees>;
-pub type PaymentDetailOf<T> = PaymentDetail<
-	AssetIdOf<T>,
-	BalanceOf<T>,
-	<T as frame_system::Config>::AccountId,
-	BlockNumberFor<T>,
-	BoundedFeeDetails<T>,
->;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -86,7 +81,7 @@ pub mod pallet {
 			+ TypeInfo
 			+ MaxEncodedLen;
 
-		type FeeHandler: FeeHandler<Self, BoundedFeeDetails<Self>>;
+		type FeeHandler: FeeHandler<Self>;
 
 		type DisputeResolver: DisputeResolver<Self::AccountId>;
 
@@ -127,7 +122,7 @@ pub mod pallet {
 		T::AccountId, // payment creator
 		Blake2_128Concat,
 		T::AccountId, // payment recipient
-		PaymentDetail<AssetIdOf<T>, BalanceOf<T>, T::AccountId, BlockNumberFor<T>, BoundedFeeDetails<T>>,
+		PaymentDetail<T>,
 	>;
 
 	#[pallet::event]
@@ -313,11 +308,11 @@ impl<T: Config> Pallet<T> {
 		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
-	) -> Result<PaymentDetailOf<T>, sp_runtime::DispatchError> {
+	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 		Payment::<T>::try_mutate(
 			sender,
 			beneficiary,
-			|maybe_payment| -> Result<PaymentDetailOf<T>, sp_runtime::DispatchError> {
+			|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 				if let Some(payment) = maybe_payment {
 					ensure!(
 						payment.state == PaymentState::PaymentRequested,
@@ -327,10 +322,9 @@ impl<T: Config> Pallet<T> {
 
 				let incentive_amount = incentive_percentage.mul_floor(amount);
 
-				let fees_details: Fees<BoundedFeeDetails<T>> =
-					T::FeeHandler::apply_fees(&sender, &beneficiary, &amount, remark);
+				let fees_details: Fees<T> = T::FeeHandler::apply_fees(&sender, &beneficiary, &amount, remark);
 
-				let new_payment = PaymentDetailOf::<T> {
+				let new_payment = PaymentDetail::<T> {
 					asset,
 					amount,
 					incentive_amount,
@@ -364,7 +358,7 @@ impl<T: Config> Pallet<T> {
 	fn reserve_payment_amount(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
-		payment: PaymentDetailOf<T>,
+		payment: PaymentDetail<T>,
 	) -> DispatchResult {
 		let (_fee_recipients, total_fee_from_sender) =
 			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
@@ -387,11 +381,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn cancel_payment(
-		sender: &T::AccountId,
-		beneficiary: &T::AccountId,
-		payment: PaymentDetailOf<T>,
-	) -> DispatchResult {
+	fn cancel_payment(sender: &T::AccountId, beneficiary: &T::AccountId, payment: PaymentDetail<T>) -> DispatchResult {
 		let (_fee_recipients, total_fee_from_sender) =
 			Self::get_fees_details_per_role(&payment.fees_details.sender_pays)?;
 		let total_hold_amount = total_fee_from_sender.saturating_add(payment.incentive_amount);
