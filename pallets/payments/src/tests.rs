@@ -65,7 +65,6 @@ fn test_pay_and_release_works() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT,
 				fees_details: fees_details.clone(),
 			})
 		);
@@ -99,7 +98,6 @@ fn test_pay_and_release_works() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Finished,
-				resolver_account: RESOLVER_ACCOUNT,
 				fees_details,
 			})
 		);
@@ -169,7 +167,6 @@ fn test_pay_and_cancel_works() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
-				resolver_account: RESOLVER_ACCOUNT,
 				fees_details: fees_details.clone(),
 			})
 		);

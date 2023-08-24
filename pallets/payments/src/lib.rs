@@ -70,7 +70,7 @@ pub mod pallet {
 
 		type FeeHandler: FeeHandler<Self>;
 
-		type DisputeResolver: DisputeResolver<Self::AccountId>;
+		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -316,7 +316,6 @@ impl<T: Config> Pallet<T> {
 					amount,
 					incentive_amount,
 					state: payment_state,
-					resolver_account: T::DisputeResolver::get_resolver_account(),
 					fees_details,
 				};
 

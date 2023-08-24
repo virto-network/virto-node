@@ -34,8 +34,6 @@ pub struct PaymentDetail<T: pallet::Config> {
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested,
 	/// Requested]
 	pub state: PaymentState<BlockNumberFor<T>>,
-	/// account that can settle any disputes created in the payment
-	pub resolver_account: T::AccountId,
 	/// fee charged and recipient account details
 	pub fees_details: Fees<T>,
 }
@@ -56,13 +54,6 @@ pub enum PaymentState<BlockNumber> {
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
 	Finished,
-}
-
-/// DisputeResolver trait defines how to create/assign judges for solving
-/// payment disputes
-pub trait DisputeResolver<Account> {
-	/// Returns an `Account`
-	fn get_resolver_account() -> Account;
 }
 
 /// Fee Handler trait that defines how to handle marketplace fees to every

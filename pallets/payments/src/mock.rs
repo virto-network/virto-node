@@ -20,7 +20,6 @@ pub const SENDER_ACCOUNT: AccountId = 10;
 pub const PAYMENT_BENEFICIARY: AccountId = 11;
 pub const ASSET_ADMIN_ACCOUNT: AccountId = 1;
 pub const ASSET_ID: u32 = 1;
-pub const RESOLVER_ACCOUNT: AccountId = 12;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
 pub const INITIAL_BALANCE: u64 = 100;
@@ -172,13 +171,6 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	}
 }
 
-pub struct MockDisputeResolver;
-impl crate::types::DisputeResolver<AccountId> for MockDisputeResolver {
-	fn get_resolver_account() -> AccountId {
-		RESOLVER_ACCOUNT
-	}
-}
-
 parameter_types! {
 	pub const MaxRemarkLength: u32 = 50;
 	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
@@ -192,7 +184,7 @@ impl pallet_payments::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
-	type DisputeResolver = MockDisputeResolver;
+	type DisputeResolver = frame_system::EnsureRoot<u64>;
 	type PalletId = PaymentPalletId;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type MaxDiscounts = ConstU32<50>;
