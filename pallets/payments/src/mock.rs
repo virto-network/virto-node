@@ -23,6 +23,8 @@ pub const ASSET_ID: u32 = 1;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
 pub const INITIAL_BALANCE: u64 = 100;
+pub const PAYMENT_ID: u32 = 1;
+
 /* for future uses
 pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
 pub const CANCEL_BLOCK_BUFFER: u64 = 600;
@@ -181,6 +183,7 @@ impl pallet_payments::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Assets = Assets;
 	type AssetsBalance = u64;
+	type PaymentId = u32;
 	type FeeHandler = MockFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;

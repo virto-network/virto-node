@@ -32,7 +32,10 @@ use frame_support::{
 };
 
 pub mod weights;
-use sp_runtime::{traits::StaticLookup, DispatchError, DispatchResult, Percent, Saturating};
+use sp_runtime::{
+	traits::{One, StaticLookup, Zero},
+	DispatchError, DispatchResult, Percent, Saturating,
+};
 pub use weights::*;
 
 pub mod types;
@@ -72,6 +75,16 @@ pub mod pallet {
 
 		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin>;
 
+		type PaymentId: Member
+			+ Parameter
+			+ Copy
+			+ Clone
+			+ MaybeSerializeDeserialize
+			+ MaxEncodedLen
+			+ Saturating
+			+ One
+			+ Zero;
+
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
@@ -103,14 +116,20 @@ pub mod pallet {
 	/// interest. The storage map keys are the creator and the recipient, this
 	/// also ensures that for any (sender,recipient) combo, only a single
 	/// payment is active. The history of payment is not stored.
-	pub(super) type Payment<T: Config> = StorageDoubleMap<
+	pub type Payment<T: Config> = StorageNMap<
 		_,
-		Blake2_128Concat,
-		T::AccountId, // payment creator
-		Blake2_128Concat,
-		T::AccountId, // payment recipient
+		(
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::AccountId>,
+			NMapKey<Blake2_128Concat, T::PaymentId>,
+		),
 		PaymentDetail<T>,
+		ResultQuery<Error<T>::NonExistentStorageValue>,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn last_id)]
+	pub type LastId<T: Config> = StorageValue<_, T::PaymentId, OptionQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -186,6 +205,8 @@ pub mod pallet {
 		ReleaseFailed,
 		/// Transfer failed
 		TransferFailed,
+
+		NonExistentStorageValue,
 	}
 
 	#[pallet::composite_enum]
@@ -214,11 +235,16 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
+			let last_id = LastId::<T>::get().unwrap_or(Zero::zero());
+
+			let payment_id: T::PaymentId = last_id.saturating_add(One::one());
+
 			// create PaymentDetail and add to storage
 			let payment_detail = Self::create_payment(
 				&sender,
 				&beneficiary,
 				asset.clone(),
+				payment_id,
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
@@ -242,15 +268,20 @@ pub mod pallet {
 		/// from the creator of the payment to the assigned recipient
 		#[pallet::call_index(1)]
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
-		pub fn release(origin: OriginFor<T>, beneficiary: AccountIdLookupOf<T>) -> DispatchResultWithPostInfo {
+		pub fn release(
+			origin: OriginFor<T>,
+			beneficiary: AccountIdLookupOf<T>,
+			payment_id: T::PaymentId,
+		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
 			// ensure the payment is in Created state
-			let payment = Payment::<T>::get(&sender, &beneficiary).ok_or(Error::<T>::InvalidPayment)?;
+			let payment =
+				Payment::<T>::get((&sender, &beneficiary, &payment_id)).map_err(|_| Error::<T>::InvalidPayment)?;
 			ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
-			Self::settle_payment(&sender, &beneficiary)?;
+			Self::settle_payment(&sender, &beneficiary, &payment_id)?;
 
 			Self::deposit_event(Event::PaymentReleased { sender, beneficiary });
 			Ok(().into())
@@ -261,21 +292,27 @@ pub mod pallet {
 		/// the recipient of the payment
 		#[pallet::call_index(2)]
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
-		pub fn cancel(origin: OriginFor<T>, sender: AccountIdLookupOf<T>) -> DispatchResultWithPostInfo {
+		pub fn cancel(
+			origin: OriginFor<T>,
+			sender: AccountIdLookupOf<T>,
+			payment_id: T::PaymentId,
+		) -> DispatchResultWithPostInfo {
 			let beneficiary = ensure_signed(origin)?;
 			let sender = T::Lookup::lookup(sender)?;
-			if let Some(payment) = Payment::<T>::get(&sender, &beneficiary) {
-				match payment.state {
-					PaymentState::Created => {
-						Self::cancel_payment(&sender, &beneficiary, payment)?;
-						Self::deposit_event(Event::PaymentCancelled {
-							sender: sender.clone(),
-							beneficiary: beneficiary.clone(),
-						});
-						Payment::<T>::remove(&sender, &beneficiary);
-					}
-					_ => fail!(Error::<T>::InvalidAction),
+
+			let payment =
+				Payment::<T>::get((&sender, &beneficiary, &payment_id)).map_err(|_| Error::<T>::InvalidPayment)?;
+
+			match payment.state {
+				PaymentState::Created => {
+					Self::cancel_payment(&sender, &beneficiary, payment)?;
+					Self::deposit_event(Event::PaymentCancelled {
+						sender: sender.clone(),
+						beneficiary: beneficiary.clone(),
+					});
+					Payment::<T>::remove((&sender, &beneficiary, &payment_id));
 				}
+				_ => fail!(Error::<T>::InvalidAction),
 			}
 
 			Ok(().into())
@@ -291,16 +328,16 @@ impl<T: Config> Pallet<T> {
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		asset: AssetIdOf<T>,
+		payment_id: T::PaymentId,
 		amount: BalanceOf<T>,
 		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
 	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
 		Payment::<T>::try_mutate(
-			sender,
-			beneficiary,
+			(sender, beneficiary, payment_id),
 			|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
-				if let Some(payment) = maybe_payment {
+				if let Ok(payment) = maybe_payment {
 					ensure!(
 						payment.state == PaymentState::PaymentRequested,
 						Error::<T>::PaymentAlreadyInProcess
@@ -319,7 +356,7 @@ impl<T: Config> Pallet<T> {
 					fees_details,
 				};
 
-				*maybe_payment = Some(new_payment.clone());
+				*maybe_payment = Ok(new_payment.clone());
 
 				Ok(new_payment)
 			},
@@ -367,24 +404,25 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn settle_payment(sender: &T::AccountId, beneficiary: &T::AccountId) -> DispatchResult {
-		Payment::<T>::try_mutate(sender, beneficiary, |maybe_payment| -> DispatchResult {
-			let mut payment = maybe_payment.take().ok_or(Error::<T>::InvalidPayment)?;
+	fn settle_payment(sender: &T::AccountId, beneficiary: &T::AccountId, payment_id: &T::PaymentId) -> DispatchResult {
+		Payment::<T>::try_mutate((sender, beneficiary, payment_id), |maybe_payment| -> DispatchResult {
+			let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
+
 			let reason = &HoldReason::TransferPayment.into();
 
 			// Release sender fees recipients
 			let (fee_sender_recipients, total_sender_fee_amount) =
-				&payment.fees_details.get_fees_details_for_sender()?;
+				payment.fees_details.get_fees_details_for_sender()?;
 			let total_sender_release = total_sender_fee_amount.saturating_add(payment.incentive_amount);
 
-			T::Assets::release(payment.asset.clone(), reason, &sender, total_sender_release, Exact)
+			T::Assets::release(payment.asset.clone(), reason, sender, total_sender_release, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
 			for (sender_fee_recipient_account, fee_amount) in fee_sender_recipients.iter() {
 				T::Assets::transfer(
 					payment.asset.clone(),
 					sender,
-					&sender_fee_recipient_account,
+					sender_fee_recipient_account,
 					*fee_amount,
 					Preserve,
 				)
@@ -392,16 +430,16 @@ impl<T: Config> Pallet<T> {
 			}
 
 			// Release the whole payment
-			T::Assets::release(payment.asset.clone(), reason, &beneficiary, payment.amount, Exact)
+			T::Assets::release(payment.asset.clone(), reason, beneficiary, payment.amount, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			let (fee_beneficiary_recipients, _) = &payment.fees_details.get_fees_details_for_beneficiary()?;
+			let (fee_beneficiary_recipients, _) = payment.fees_details.get_fees_details_for_beneficiary()?;
 
 			for (beneficiary_recipient_account, fee_amount) in fee_beneficiary_recipients.iter() {
 				T::Assets::transfer(
 					payment.asset.clone(),
 					beneficiary,
-					&beneficiary_recipient_account,
+					beneficiary_recipient_account,
 					*fee_amount,
 					Preserve,
 				)
@@ -409,7 +447,8 @@ impl<T: Config> Pallet<T> {
 			}
 
 			payment.state = PaymentState::Finished;
-			*maybe_payment = Some(payment);
+			*maybe_payment = Ok(payment.clone());
+
 			Ok(())
 		})?;
 		Ok(())

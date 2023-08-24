@@ -59,14 +59,14 @@ fn test_pay_and_release_works() {
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY),
-			Some(PaymentDetail {
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
 				fees_details: fees_details.clone(),
-			})
+			}
 		);
 
 		assert_eq!(
@@ -80,7 +80,8 @@ fn test_pay_and_release_works() {
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY
+			PAYMENT_BENEFICIARY,
+			PAYMENT_ID
 		));
 
 		System::assert_has_event(
@@ -92,14 +93,14 @@ fn test_pay_and_release_works() {
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY),
-			Some(PaymentDetail {
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Finished,
-				fees_details,
-			})
+				fees_details: fees_details.clone(),
+			}
 		);
 
 		assert_eq!(
@@ -161,14 +162,14 @@ fn test_pay_and_cancel_works() {
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY),
-			Some(PaymentDetail {
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
 				fees_details: fees_details.clone(),
-			})
+			}
 		);
 
 		assert_eq!(
@@ -183,6 +184,7 @@ fn test_pay_and_cancel_works() {
 		assert_ok!(Payments::cancel(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
+			PAYMENT_ID
 		));
 
 		System::assert_has_event(
@@ -193,7 +195,8 @@ fn test_pay_and_cancel_works() {
 			.into(),
 		);
 
-		assert_eq!(PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_BENEFICIARY), None);
+		/// This validates that the payment was removed from the storage.
+		assert!(!PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).is_ok());
 
 		assert_eq!(
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
