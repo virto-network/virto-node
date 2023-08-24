@@ -44,6 +44,8 @@ pub use types::*;
 
 // This pallet's asset id and balance type.
 pub type AssetIdOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::AssetId;
+pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+pub type MaxFeesOf<T> = <T as Config>::MaxFees;
 pub type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;

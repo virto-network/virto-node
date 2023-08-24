@@ -49,7 +49,7 @@ fn test_pay_and_release_works() {
 			.into(),
 		);
 
-		let fees_details: Fees<BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,
@@ -161,7 +161,7 @@ fn test_pay_and_cancel_works() {
 			.into(),
 		);
 
-		let fees_details: Fees<BoundedFeeDetails> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
 			&PAYMENT_AMOUNT,

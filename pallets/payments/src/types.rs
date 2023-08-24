@@ -1,5 +1,5 @@
 #![allow(unused_qualifications)]
-use crate::{pallet, AssetIdOf, BalanceOf};
+use crate::{pallet, AccountIdOf, AssetIdOf, BalanceOf, MaxFeesOf};
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_system::pallet_prelude::BlockNumberFor;
 use scale_info::TypeInfo;
@@ -11,7 +11,8 @@ use sp_runtime::{BoundedVec, Percent};
 /// has reached between the payment creator and recipient. The payment lifecycle
 /// is tracked using the state field.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Debug, MaxEncodedLen, TypeInfo)]
-
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: pallet::Config))]
 pub struct PaymentDetail<T: pallet::Config> {
 	/// type of asset used for payment
 	pub asset: AssetIdOf<T>,
@@ -71,9 +72,12 @@ pub enum SubTypes<T: pallet::Config> {
 	Percentage(T::AccountId, Percent),
 }
 
-pub type FeeDetails<T: pallet::Config> = BoundedVec<(T::AccountId, BalanceOf<T>), T::MaxFees>;
+pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
+pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo, Debug)]
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: pallet::Config))]
 pub struct Fees<T: pallet::Config> {
 	pub sender_pays: FeeDetails<T>,
 	pub beneficiary_pays: FeeDetails<T>,

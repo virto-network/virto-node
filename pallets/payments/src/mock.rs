@@ -139,16 +139,15 @@ impl pallet_sudo::Config for Test {
 	type WeightInfo = ();
 }
 
-pub type BoundedFeeDetails = BoundedVec<(AccountId, Balance), ConstU32<50>>;
 pub struct MockFeeHandler;
 
-impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
+impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	fn apply_fees(
 		_sender: &AccountId,
 		_beneficiary: &AccountId,
 		amount: &Balance,
 		_remark: Option<&[u8]>,
-	) -> Fees<BoundedFeeDetails> {
+	) -> Fees<Test> {
 		let sender_fees = vec![
 			SubTypes::Fixed(FEE_SENDER_ACCOUNT, FEE_SENDER_AMOUNT),
 			SubTypes::Percentage(FEE_SYSTEM_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
@@ -159,7 +158,7 @@ impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 			SubTypes::Percentage(FEE_SYSTEM_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
 		];
 
-		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> BoundedFeeDetails {
+		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> FeeDetails<Test> {
 			let details = fees
 				.iter()
 				.map(|fee| match fee {
@@ -168,7 +167,7 @@ impl crate::types::FeeHandler<Test, BoundedFeeDetails> for MockFeeHandler {
 				})
 				.collect::<Vec<(AccountId, Balance)>>();
 			// This is a test, so i'm just unwrapping
-			let bounded_details: BoundedFeeDetails = BoundedVec::try_from(details).unwrap();
+			let bounded_details: FeeDetails<Test> = BoundedVec::try_from(details).unwrap();
 			bounded_details
 		};
 
