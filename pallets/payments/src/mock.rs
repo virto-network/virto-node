@@ -157,8 +157,8 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 			let details = fees
 				.iter()
 				.map(|fee| match fee {
-					SubTypes::Fixed(account, amount_fixed) => (account.clone(), *amount_fixed),
-					SubTypes::Percentage(account, percent) => (account.clone(), percent.mul_floor(*amount)),
+					SubTypes::Fixed(account, amount_fixed) => (*account, *amount_fixed),
+					SubTypes::Percentage(account, percent) => (*account, percent.mul_floor(*amount)),
 				})
 				.collect::<Vec<(AccountId, Balance)>>();
 			// This is a test, so i'm just unwrapping

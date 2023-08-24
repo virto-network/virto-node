@@ -324,6 +324,7 @@ impl<T: Config> Pallet<T> {
 	/// The function will create a new payment. The fee and incentive
 	/// amounts will be calculated and the `PaymentDetail` will be added to
 	/// storage.
+	#[allow(clippy::too_many_arguments)]
 	fn create_payment(
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
@@ -346,7 +347,7 @@ impl<T: Config> Pallet<T> {
 
 				let incentive_amount = incentive_percentage.mul_floor(amount);
 
-				let fees_details: Fees<T> = T::FeeHandler::apply_fees(&asset, &sender, &beneficiary, &amount, remark);
+				let fees_details: Fees<T> = T::FeeHandler::apply_fees(&asset, sender, beneficiary, &amount, remark);
 
 				let new_payment = PaymentDetail::<T> {
 					asset,
@@ -392,13 +393,13 @@ impl<T: Config> Pallet<T> {
 		let (_fee_recipients, total_fee_from_sender) = &payment.fees_details.get_fees_details_for_sender()?;
 		let total_hold_amount = total_fee_from_sender.saturating_add(payment.incentive_amount);
 		let reason = &HoldReason::TransferPayment.into();
-		T::Assets::release(payment.asset.clone(), reason, &sender, total_hold_amount, Exact)
+		T::Assets::release(payment.asset.clone(), reason, sender, total_hold_amount, Exact)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-		T::Assets::release(payment.asset.clone(), reason, &beneficiary, payment.amount, Exact)
+		T::Assets::release(payment.asset.clone(), reason, beneficiary, payment.amount, Exact)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-		T::Assets::transfer(payment.asset, beneficiary, &sender, payment.amount, Expendable)
+		T::Assets::transfer(payment.asset, beneficiary, sender, payment.amount, Expendable)
 			.map_err(|_| Error::<T>::TransferFailed)?;
 
 		Ok(())

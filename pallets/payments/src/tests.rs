@@ -39,16 +39,13 @@ fn test_pay_and_release_works() {
 			Some(remark.clone()),
 		));
 
-		System::assert_has_event(
-			RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-				sender: SENDER_ACCOUNT,
-				beneficiary: PAYMENT_BENEFICIARY,
-				asset: ASSET_ID,
-				amount: PAYMENT_AMOUNT,
-				remark: Some(remark.clone()),
-			})
-			.into(),
-		);
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
+			asset: ASSET_ID,
+			amount: PAYMENT_AMOUNT,
+			remark: Some(remark.clone()),
+		}));
 
 		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&ASSET_ID,
@@ -84,13 +81,10 @@ fn test_pay_and_release_works() {
 			PAYMENT_ID
 		));
 
-		System::assert_has_event(
-			RuntimeEvent::Payments(pallet_payments::Event::PaymentReleased {
-				sender: SENDER_ACCOUNT,
-				beneficiary: PAYMENT_BENEFICIARY,
-			})
-			.into(),
-		);
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentReleased {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
+		}));
 
 		assert_eq!(
 			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
@@ -99,7 +93,7 @@ fn test_pay_and_release_works() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Finished,
-				fees_details: fees_details.clone(),
+				fees_details,
 			}
 		);
 
@@ -142,16 +136,13 @@ fn test_pay_and_cancel_works() {
 			Some(remark.clone()),
 		));
 
-		System::assert_has_event(
-			RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-				sender: SENDER_ACCOUNT,
-				beneficiary: PAYMENT_BENEFICIARY,
-				asset: ASSET_ID,
-				amount: PAYMENT_AMOUNT,
-				remark: Some(remark.clone()),
-			})
-			.into(),
-		);
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
+			asset: ASSET_ID,
+			amount: PAYMENT_AMOUNT,
+			remark: Some(remark.clone()),
+		}));
 
 		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&ASSET_ID,
@@ -168,7 +159,7 @@ fn test_pay_and_cancel_works() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
-				fees_details: fees_details.clone(),
+				fees_details,
 			}
 		);
 
@@ -187,16 +178,13 @@ fn test_pay_and_cancel_works() {
 			PAYMENT_ID
 		));
 
-		System::assert_has_event(
-			RuntimeEvent::Payments(pallet_payments::Event::PaymentCancelled {
-				sender: SENDER_ACCOUNT,
-				beneficiary: PAYMENT_BENEFICIARY,
-			})
-			.into(),
-		);
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCancelled {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
+		}));
 
 		// This validates that the payment was removed from the storage.
-		assert!(!PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).is_ok());
+		assert!(PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).is_err());
 
 		assert_eq!(
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
