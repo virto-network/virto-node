@@ -12,8 +12,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 
 use frame_support::{
