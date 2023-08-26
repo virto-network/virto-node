@@ -1,6 +1,7 @@
 #![allow(unused_qualifications)]
 use crate::*;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
+use frame_support::traits::OriginTrait;
 use frame_system::pallet_prelude::BlockNumberFor;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, BoundedVec, Percent, Saturating};
@@ -15,6 +16,8 @@ pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLo
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
 pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
+pub type CallOf<T> = <T as Config>::RuntimeCall;
+pub type PalletsOriginOf<T> = <<T as frame_system::Config>::RuntimeOrigin as OriginTrait>::PalletsOrigin;
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to
@@ -112,6 +115,7 @@ impl<T: pallet::Config> Fees<T> {
 pub enum Task {
 	// payment `from` to `to` has to be cancelled
 	Cancel,
+	Dispute,
 }
 
 /// The details of a scheduled task

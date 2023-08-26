@@ -20,6 +20,7 @@ use frame_support::{
 		fungibles::{
 			hold::Mutate as FunHoldMutate, Balanced as FunBalanced, Inspect as FunInspect, Mutate as FunMutate,
 		},
+		schedule::{v3::Named as ScheduleNamed, DispatchTime},
 		tokens::{
 			fungibles::Inspect as FunsInspect,
 			Fortitude::Polite,
@@ -31,7 +32,7 @@ use frame_support::{
 
 pub mod weights;
 use sp_runtime::{
-	traits::{One, StaticLookup, Zero},
+	traits::{Dispatchable, One, StaticLookup, Zero},
 	DispatchError, DispatchResult, Percent, Saturating,
 };
 pub use weights::*;
@@ -49,6 +50,13 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		// System level stuff.
+		type RuntimeCall: Parameter
+			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin>
+			+ From<Call<Self>>
+			+ IsType<<Self as frame_system::Config>::RuntimeCall>
+			+ From<frame_system::Call<Self>>;
 
 		/// Currency type that this works on.
 		type Assets: FunInspect<Self::AccountId, Balance = Self::AssetsBalance>
@@ -83,6 +91,8 @@ pub mod pallet {
 			+ One
 			+ Zero;
 
+		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, PalletsOriginOf<Self>>;
+
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
@@ -100,7 +110,6 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxDiscounts: Get<u32>;
-		//type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -315,6 +324,60 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		/// Allow the creator of a payment to initiate a refund that will return
+		/// the funds after a configured amount of time that the reveiver has to
+		/// react and opose the request
+		#[pallet::call_index(3)]
+		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		pub fn request_refund(
+			origin: OriginFor<T>,
+			recipient: T::AccountId,
+			payment_id: T::PaymentId,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+
+			Payment::<T>::try_mutate(
+				(who.clone(), recipient.clone(), payment_id),
+				|maybe_payment| -> DispatchResult {
+					// ensure the payment exists
+					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
+					// refunds only possible for payments in created state
+					ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
+
+					// set the payment to requested refund
+					let current_block = frame_system::Pallet::<T>::block_number();
+					let cancel_block = current_block
+						.checked_add(&T::CancelBufferBlockLength::get())
+						.ok_or(Error::<T>::MathError)?;
+
+					ScheduledTasks::<T>::try_mutate(|task_list| -> DispatchResult {
+						task_list
+							.try_insert(
+								(who.clone(), recipient.clone()),
+								ScheduledTask {
+									task: Task::Cancel,
+									when: cancel_block,
+								},
+							)
+							.map_err(|_| Error::<T>::RefundQueueFull)?;
+						Ok(())
+					})?;
+
+					payment.state = PaymentState::RefundRequested { cancel_block };
+
+					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
+						from: who,
+						to: recipient,
+						expiry: cancel_block,
+					});
+
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
 	}
 }
 
@@ -451,5 +514,27 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})?;
 		Ok(())
+	}
+
+	fn schedule_enactment(
+		index: ReferendumIndex,
+		track: &TrackInfoOf<T, I>,
+		desired: DispatchTime<BlockNumberFor<T>>,
+		origin: PalletsOriginOf<T>,
+		call: BoundedCallOf<T, I>,
+	) {
+		let now = frame_system::Pallet::<T>::block_number();
+		let earliest_allowed = now.saturating_add(track.min_enactment_period);
+		let desired = desired.evaluate(now);
+		let ok = T::Scheduler::schedule_named(
+			(ASSEMBLY_ID, "enactment", index).using_encoded(sp_io::hashing::blake2_256),
+			DispatchTime::At(desired.max(earliest_allowed)),
+			None,
+			63,
+			origin,
+			call,
+		)
+		.is_ok();
+		debug_assert!(ok, "LOGIC ERROR: bake_referendum/schedule_named failed");
 	}
 }
