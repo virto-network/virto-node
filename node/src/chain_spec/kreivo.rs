@@ -12,7 +12,7 @@ const DEFAULT_PROTOCOL_ID: &str = "kreivo";
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<kreivo_runtime::RuntimeGenesisConfig, Extensions>;
 
-const KREIVO_PARA_ID: u32 = 2000;
+const KREIVO_PARA_ID: u32 = 2281;
 
 /// Generate the session keys from individual elements.
 ///

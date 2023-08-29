@@ -27,7 +27,7 @@ default_command = "./bin/polkadot"
   extra_args = [ "--force-authoring -lparachain=debug" ]
 
 [[parachains]]
-id = 2000
+id = 2281
 add_to_genesis = true
 cumulus_based = true
 chain = "kreivo-local"
@@ -36,10 +36,12 @@ chain = "kreivo-local"
   name = "kreivo1"
   command = "./target/release/virto-node"
   ws_port = 20000
-  args = ["--force-authoring --log=xcm=trace"]
+  validator = true
+  args = ["--force-authoring --log=xcm=trace,parachain=trace"]
 
   [[parachains.collators]]
   name = "kreivo2"
   command = "./target/release/virto-node"
   ws_port = 21000
-  args = ["--force-authoring --log=xcm=trace"]
+  validator = true
+  args = ["--force-authoring --log=xcm=trace,parachain=trace"]
