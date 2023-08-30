@@ -1,5 +1,11 @@
 [workspace]
-members = ["node", "runtime/kreivo", "runtime/virto"]
+members = [
+	"node",
+	"runtime/kreivo",
+	"runtime/virto"
+	"shared",
+]
+
 exclude = ["xcm-emulator"]
 resolver = "2"
 
@@ -23,7 +29,6 @@ edition = "2021"
 
 
 [workspace.dependencies]
-
 # common
 async-trait = "0.1"
 clap = { version = "4.4.2" }
