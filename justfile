@@ -1,7 +1,11 @@
 set shell := ["nu", "-c"]
 podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
 ver := `open node/Cargo.toml | get package.version`
+image := "ghcr.io/virto-network/virto"
 node := "target/release/virto-node"
+chain := "kreivo"
+rol := "collator"
+relay := "kusama"
 
 alias b := build-local
 alias c := check
@@ -35,10 +39,10 @@ check: _check_deps
 @test crate="" *rest="":
 	cargo test (if not ("{{crate}}" | is-empty) { "-p" } else {""}) {{crate}} {{ rest }}
 
-build-local:
-	cargo build --release
+build-local features="":
+	cargo build --release --features '{{features}}'
 
-build-container registry="localhost":
+build-container:
 	#!/usr/bin/env nu
 	'FROM docker.io/paritytech/ci-linux:production as builder
 	WORKDIR /virto
@@ -46,27 +50,40 @@ build-container registry="localhost":
 	RUN cargo build --release
 
 	FROM debian:bullseye-slim
+	VOLUME /data
 	COPY --from=builder /virto/{{ node }} /usr/bin
 	ENTRYPOINT ["/usr/bin/virto-node"]
 	CMD ["--dev"]'
-	| {{ podman }} build . -t {{ registry }}/virto-network/virto:{{ ver }} --ignorefile .build-container-ignore -f -
+	| {{ podman }} build . -t {{ image }}:{{ ver }} --ignorefile .build-container-ignore -f -
 
 # Used to speed things up when the build environment is the same as the container(debian)
-build-container-local registry="localhost": build-local
+build-container-local: build-local
 	#!/usr/bin/env nu
 	'FROM debian:bullseye-slim
+	LABEL io.containers.autoupdate="registry"
+	VOLUME /data
 	COPY {{ node }} /usr/bin
 	ENTRYPOINT ["/usr/bin/virto-node"]
 	CMD ["--dev"]'
-	| {{ podman }} build . -t {{ registry }}/virto-network/virto:{{ ver }} -f -
+	| {{ podman }} build . -t {{ image }}:{{ ver }} -t {{ image }}:latest -f -
 
-_chain_artifacts chain:
+container_args := "--base-path /data '${NODE_ARGS}'" + if rol == "collator" {
+	" --collator --force-authoring -- --execution wasm --chain " + relay
+} else { "" }
+
+create-container:
+	@^mkdir -p release
+	podman rm -f {{ chain }}-{{ rol }}
+	podman create --name {{ chain }}-{{ rol }} {{ image }} {{ container_args }}
+	podman generate systemd --name --new --no-header {{ chain }}-{{ rol }} | str replace -s '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
+
+_chain_artifacts:
 	@^mkdir -p release
 	{{ node }} export-genesis-state --chain {{ chain }} | save -f release/{{ chain }}_genesis
 	{{ node }} export-genesis-wasm --chain {{ chain }} | save -f release/{{ chain }}_genesis.wasm
 	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
 
-release-artifacts: build-local (_chain_artifacts "seedling-rococo")
+release-artifacts: build-local create-container _chain_artifacts
 
 release-tag:
 	git tag {{ ver }}
