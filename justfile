@@ -49,7 +49,7 @@ build-container:
 	COPY . /virto
 	RUN cargo build --release
 
-	FROM debian:bullseye-slim
+	FROM debian:bookworm-slim
 	VOLUME /data
 	COPY --from=builder /virto/{{ node }} /usr/bin
 	ENTRYPOINT ["/usr/bin/virto-node"]
@@ -59,7 +59,7 @@ build-container:
 # Used to speed things up when the build environment is the same as the container(debian)
 build-container-local: build-local
 	#!/usr/bin/env nu
-	'FROM debian:bullseye-slim
+	'FROM debian:bookworm-slim
 	LABEL io.containers.autoupdate="registry"
 	VOLUME /data
 	COPY {{ node }} /usr/bin
@@ -67,15 +67,16 @@ build-container-local: build-local
 	CMD ["--dev"]'
 	| {{ podman }} build . -t {{ image }}:{{ ver }} -t {{ image }}:latest -f -
 
-container_args := "--base-path /data '${NODE_ARGS}'" + if rol == "collator" {
-	" --collator --force-authoring -- --execution wasm --chain " + relay
+container_args := "--base-path /data '$NODE_ARGS'" + if rol == "collator" {
+	" --collator --force-authoring -- --chain " + relay
 } else { "" }
+container_name := chain + "-" + rol
 
 create-container:
 	@^mkdir -p release
-	podman rm -f {{ chain }}-{{ rol }}
-	podman create --name {{ chain }}-{{ rol }} {{ image }} {{ container_args }}
-	podman generate systemd --name --new --no-header {{ chain }}-{{ rol }} | str replace -s '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
+	podman rm -f {{ container_name }}
+	podman create --name {{ container_name }} --volume {{ container_name }}-data:/data {{ image }} {{ container_args }}
+	podman generate systemd --name --new --no-header --env 'NODE_ARGS=' {{ container_name }} | str replace -s '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
 
 _chain_artifacts:
 	@^mkdir -p release
