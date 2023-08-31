@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shared ID utils</title>
+  <style>
+    html,
+    body {
+      all: initial;
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+    }
+
+    form {
+      margin: auto;
+      width: 90%;
+      max-width: 600px;
+      display: flex;
+      gap: 5px
+    }
+
+    input,
+    output {
+      height: 2.5rem;
+      padding: 0 1rem;
+      box-sizing: border-box;
+      border-radius: 3px;
+    }
+
+    input {
+      border: 1px solid whitesmoke;
+    }
+
+    output {
+      flex: 1;
+      background: whitesmoke;
+      padding: 0 0.5rem;
+      line-height: 2.5rem;
+      color: gray;
+      font-family: monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    output[name=id]:before {
+      content: '🆔 ';
+    }
+  </style>
+</head>
+
+<body>
+  <form name="idConvert">
+    <input name="id" type="text" placeholder="ID to inspect" required>
+    <input name="num" type="number" placeholder="Number representation" min="0">
+    <output title="Id details" name="out">~</output>
+  </form>
+</body>
+
+<script type="module">
+  import init, {PaymentId} from '../target/wasm32-unknown-unknown/release/virto_shared.js'
+  init().then(() => console.info('wasm ready'))
+
+  const form = document.idConvert
+  form.id.addEventListener('input', () => {
+    const id = new PaymentId(form.id.value)
+    form.num.value = id.toNumber()
+    form.out.value = `Block: ${id.blockNumber} - Idx: ${id.extrinsicIndex}`
+  })
+  form.num.addEventListener('input', () => {
+    const id = PaymentId.fromNumber(form.num.value)
+    form.id.value = id.encode(true)
+    form.out.value = `Block: ${id.blockNumber} - Idx: ${id.extrinsicIndex}`
+  })
+</script>
+
+</html>

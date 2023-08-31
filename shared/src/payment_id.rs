@@ -1,6 +1,9 @@
 use core::{fmt, str::FromStr};
+#[cfg(feature = "js")]
+use wasm_bindgen::prelude::*;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[cfg_attr(feature = "js", wasm_bindgen)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[repr(C)]
 pub struct PaymentId {
 	prefix: [u8; 2],
@@ -8,26 +11,45 @@ pub struct PaymentId {
 	block: u32,
 }
 
+#[cfg_attr(feature = "js", wasm_bindgen)]
 impl PaymentId {
-	pub fn new(n: u64) -> Self {
+	#[cfg_attr(feature = "js", wasm_bindgen(constructor))]
+	pub fn new(id: &str) -> PaymentId {
+		id.parse().unwrap_or(Default::default())
+	}
+
+	#[cfg_attr(feature = "js", wasm_bindgen(js_name = fromNumber))]
+	pub fn from_number(n: u64) -> PaymentId {
 		n.into()
 	}
 
-	pub fn info(&self) -> (u32, u32) {
-		(self.block, self.index as u32)
+	#[cfg_attr(feature = "js", wasm_bindgen(getter = blockNumber))]
+	pub fn block_number(&self) -> u32 {
+		self.block
 	}
 
+	#[cfg_attr(feature = "js", wasm_bindgen(getter = extrinsicIndex))]
+	pub fn extrinsic_index(&self) -> u32 {
+		self.index as u32
+	}
+
+	#[cfg(feature = "alloc")]
+	pub fn encode(&self, pretty: bool) -> alloc::string::String {
+		if pretty {
+			alloc::format!("{self:#}")
+		} else {
+			alloc::format!("{self}")
+		}
+	}
+
+	#[cfg_attr(feature = "js", wasm_bindgen(js_name = toNumber))]
 	pub fn to_number(&self) -> u64 {
 		(*self).into()
 	}
 
-	pub fn to_bytes(&self) -> &[u8] {
-		self.as_ref()
-	}
-
 	#[cfg(feature = "alloc")]
-	pub fn to_string(&self) -> alloc::string::String {
-		format!("{self:#}")
+	pub fn to_bytes(&self) -> alloc::vec::Vec<u8> {
+		self.as_ref().into()
 	}
 }
 

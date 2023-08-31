@@ -1,0 +1,5 @@
+out_dir := '../target/wasm32-unknown-unknown/release'
+
+build-web:
+	cargo build --release --target wasm32-unknown-unknown --features js
+	wasm-bindgen --out-dir {{ out_dir }} --target web --no-typescript --remove-name-section {{ out_dir }}/virto_shared.wasm
