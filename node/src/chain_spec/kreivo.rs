@@ -217,12 +217,12 @@ pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").unchecked_into(),
+						hex!("203aec61cedbfa0cd23f183a972b8646794b9106e62d141c6af4fbbbe293847b").into(),
+						hex!("203aec61cedbfa0cd23f183a972b8646794b9106e62d141c6af4fbbbe293847b").unchecked_into(),
 					),
 					(
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").unchecked_into(),
+						hex!("74d538cee938b3f988567a3d0ad4b0dd84735ceab8b51cdfb850ecf58accfd7e").into(),
+						hex!("74d538cee938b3f988567a3d0ad4b0dd84735ceab8b51cdfb850ecf58accfd7e").unchecked_into(),
 					),
 				],
 				hex!("7b953019065b4342a4f1fcf62be8f3e83c8d15303b674fd7191e598f699e764f").into(),
