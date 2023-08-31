@@ -39,4 +39,6 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Publish image
-        run: podman push ghcr.io/virto-network/virto:$(just version)
+        run: |
+          podman push ghcr.io/virto-network/virto:$(just version)
+          podman push ghcr.io/virto-network/virto:latest

@@ -1,7 +1,7 @@
 [package]
 name = "virto-runtime"
 description = "Virto Runtime"
-version = "0.5.1"
+version = "0.5.2"
 authors = ['Virto Team <contact@virto.team>']
 license = "GPL-3.0-only"
 homepage = 'https://github.com/virto-network/virto-node'
