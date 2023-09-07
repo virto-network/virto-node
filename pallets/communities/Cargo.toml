@@ -28,6 +28,9 @@ sp-core = { version = "21.0.0", git = "https://github.com/paritytech/substrate.g
 sp-io = { version = "23.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 sp-runtime = { version = "24.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
 
+pallet-assets = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+pallet-balances = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+
 [features]
 default = ["std"]
 std = [
@@ -37,5 +40,8 @@ std = [
 	"frame-system/std",
 	"scale-info/std",
 ]
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+]
 try-runtime = ["frame-support/try-runtime"]
