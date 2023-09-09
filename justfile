@@ -68,7 +68,7 @@ build-container-local: build-local
 	| {{ podman }} build . -t {{ image }}:{{ ver }} -t {{ image }}:latest -f -
 
 container_args := "--base-path /data '$NODE_ARGS'" + if rol == "collator" {
-	" --collator --force-authoring -- --chain " + relay
+	" --collator -- '$RELAY_ARGS' --chain " + relay
 } else { "" }
 container_name := chain + "-" + rol
 
@@ -76,7 +76,7 @@ create-container:
 	@^mkdir -p release
 	podman rm -f {{ container_name }}
 	podman create --name {{ container_name }} --volume {{ container_name }}-data:/data {{ image }} {{ container_args }}
-	podman generate systemd --name --new --no-header --env 'NODE_ARGS=' {{ container_name }} | str replace -s '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
+	podman generate systemd --new --no-header --env 'NODE_ARGS=' --env 'RELAY_ARGS=' --name {{ container_name }} | str replace -a '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
 
 _chain_artifacts:
 	@^mkdir -p release
