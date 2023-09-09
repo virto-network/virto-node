@@ -1,5 +1,9 @@
 use crate as pallet_communities;
-use frame_support::traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64};
+use frame_support::{
+	parameter_types,
+	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64},
+	PalletId,
+};
 use frame_system::{EnsureRoot, EnsureSigned};
 use sp_core::H256;
 use sp_runtime::{
@@ -86,10 +90,18 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ConstU32<10>;
 }
 
+parameter_types! {
+	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
+}
+
 impl pallet_communities::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
-	type Fungibles = Assets;
+	type Assets = Assets;
+	type Balances = Balances;
+	type CommunityId = u128;
+	type MemberRank = u8;
+	type PalletId = CommunitiesPalletId;
 }
 
 // Build genesis storage according to the mock runtime.

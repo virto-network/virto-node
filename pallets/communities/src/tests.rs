@@ -1,27 +1,114 @@
-use crate::{mock::*, Error, Event};
+use crate::types::*;
+use crate::{mock::*, CommunityInfo, Error as PalletError};
 use frame_support::{assert_noop, assert_ok};
 
-#[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Go past genesis block so events get deposited
-		System::set_block_number(1);
-		// Dispatch a signed extrinsic.
-		assert_ok!(Communities::do_something(RuntimeOrigin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(Communities::something(), Some(42));
-		// Assert that the correct event was deposited
-		System::assert_last_event(Event::SomethingStored { something: 42, who: 1 }.into());
-	});
-}
+type Error = PalletError<Test>;
 
-#[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(
-			Communities::cause_error(RuntimeOrigin::signed(1)),
-			Error::<Test>::NoneValue
-		);
-	});
+const COMMUNITY: u128 = 1;
+const COMMUNITY_ADMIN: u64 = 42;
+
+mod apply {
+	use super::*;
+	use frame_support::traits::fungible;
+
+	mod do_register_community {
+		use super::*;
+
+		#[test]
+		fn fails_if_community_already_exists() {
+			new_test_ext().execute_with(|| {
+				// Emulate a preexisting community
+				<CommunityInfo<Test>>::insert(
+					COMMUNITY,
+					Community {
+						admin: COMMUNITY_ADMIN,
+						state: CommunityState::Awaiting,
+						sufficient_asset_id: None,
+					},
+				);
+				assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_ADMIN));
+
+				// Should fail adding the community
+				assert_noop!(
+					Communities::do_register_community(&COMMUNITY_ADMIN, &COMMUNITY),
+					Error::CommunityAlreadyExists
+				);
+
+				// Assert that the correct event was deposited
+				// System::assert_last_event(Event::SomethingStored { something:
+				// 42, who: 1 }.into());
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				assert_ok!(Communities::do_register_community(&1, &42));
+			});
+		}
+	}
+
+	mod do_create_community_account {
+		use super::*;
+
+		#[test]
+		fn fails_if_not_enough_funds_to_take_deposit() {
+			new_test_ext().execute_with(|| {
+				assert_noop!(
+					Communities::do_create_community_account(&COMMUNITY_ADMIN, &COMMUNITY),
+					sp_runtime::DispatchError::Arithmetic(sp_runtime::ArithmeticError::Underflow)
+				);
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				let minimum_balance = <<Test as crate::Config>::Balances as fungible::Inspect<
+					<Test as frame_system::Config>::AccountId,
+				>>::minimum_balance();
+
+				assert_ok!(Balances::force_set_balance(
+					RuntimeOrigin::root(),
+					COMMUNITY_ADMIN,
+					2 * minimum_balance,
+				));
+
+				assert_ok!(Communities::do_create_community_account(&COMMUNITY_ADMIN, &COMMUNITY));
+			});
+		}
+	}
+
+	mod call {
+		use crate::Event;
+
+		use super::*;
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				System::set_block_number(1);
+
+				let minimum_balance = <<Test as crate::Config>::Balances as fungible::Inspect<
+					<Test as frame_system::Config>::AccountId,
+				>>::minimum_balance();
+
+				assert_ok!(Balances::force_set_balance(
+					RuntimeOrigin::root(),
+					COMMUNITY_ADMIN,
+					2 * minimum_balance,
+				));
+
+				assert_ok!(Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY));
+
+				System::assert_last_event(
+					Event::CommunityCreated {
+						id: COMMUNITY,
+						who: COMMUNITY_ADMIN,
+					}
+					.into(),
+				);
+			});
+		}
+	}
 }
