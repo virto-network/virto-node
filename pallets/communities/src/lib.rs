@@ -100,8 +100,9 @@
 //!
 //! ### Permissionless Functions
 //!
-//! - `apply`: Registers an appliation as a new community, taking an
-//! [existential deposit][8] used to create the community account. !
+//! - [`apply`][8]: Registers an appliation as a new community, taking an
+//! [existential deposit][9] used to create the community account.
+//!
 //! ### Permissioned Functions
 //!
 //! Calling these functions requires being a member of the community.
@@ -118,7 +119,7 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - `set_metadata`: Sets some [`CommunityMetadata`][9] to describe the
+//! - `set_metadata`: Sets some [`CommunityMetadata`][10] to describe the
 //! community. ! - `remove_member`: Removes an account as a community member.
 //! While enrolling a member into the community can be an action taken by any
 //! member, the decision to remove a member should not be taken arbitrarily by
@@ -149,8 +150,9 @@
 //! [5]: https://github.com/virto-network/virto-node/tree/master/pallets/payments
 //! [6]: https://github.com/virto-network/virto-node/pull/282
 //! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
-//! [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
-//! [9]: `types::CommunityMetadata`
+//! [8]: `crate::Pallet::apply`
+//! [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
+//! [10]: `types::CommunityMetadata`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -239,18 +241,24 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides
-		/// descriptive names for event parameters. [something, who]
-		SomethingStored { something: u32, who: T::AccountId },
+		/// A [`Commmunity`][`types::Community`] has been created.
+		CommunityCreated { id: T::CommunityId, who: T::AccountId },
 	}
 
-	// Errors inform users that something went wrong.
+	// Errors inform users that something worked or went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+		/// The community doesn't exist in storage, nor they have members.
+		CommunityDoesNotExist,
+		/// A community with the same [`CommunityId`][`Config::CommunityId`]
+		/// already exists, therefore cannot be applied for.
+		CommunityAlreadyExists,
+		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
+		/// not a member of the community
+		NotAMember,
+		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
+		/// already a member of the community
+		AlreadyAMember,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -259,44 +267,98 @@ pub mod pallet {
 	// weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter,
-		/// writes the value to storage and emits an event. This function must
-		/// be dispatched by a signed extrinsic.
+		/// Registers an appliation as a new community, taking an
+		/// [existential deposit][9] used to create the community account.
+		///
+		/// [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::do_something())]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/main-docs/build/origins/
+		#[pallet::weight(T::WeightInfo::apply())]
+		pub fn apply(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
-			// Update storage.
-			<Something<T>>::put(something);
+			Self::do_register_community(&who, &community_id)?;
+			Self::do_create_community_account(&who, &community_id)?;
 
 			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
+			Self::deposit_event(Event::CommunityCreated { id: community_id, who });
+
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
+	}
 
-		/// An example dispatchable that may throw a custom error.
-		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn community_exists(community_id: &T::CommunityId) -> bool {
+			<CommunityInfo<T>>::contains_key(community_id) && <CommunityMembersCount<T>>::contains_key(community_id)
+		}
 
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => return Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				}
+		/// Stores an initial info about the community
+		/// Sets the caller as the community admin, the initial community state
+		/// as
+		pub(crate) fn do_register_community(who: &T::AccountId, community_id: &T::CommunityId) -> DispatchResult {
+			// Check that the community doesn't exist
+			if Self::community_exists(&community_id) {
+				return Err(Error::<T>::CommunityAlreadyExists.into());
 			}
+
+			<CommunityInfo<T>>::insert(
+				community_id.clone(),
+				Community {
+					admin: who.clone(),
+					state: Default::default(),
+					sufficient_asset_id: Default::default(),
+				},
+			);
+
+			Self::do_insert_member(community_id, who)?;
+
+			Ok(())
+		}
+
+		/// Takes a deposit from the caller and
+		pub(crate) fn do_create_community_account(
+			caller: &AccountIdOf<T>,
+			community_id: &CommunityIdOf<T>,
+		) -> DispatchResult {
+			let community_account_id = Self::get_community_account_id(community_id);
+			let minimum_balance = <T::Balances as fungible::Inspect<T::AccountId>>::minimum_balance();
+
+			<T::Balances as fungible::Mutate<T::AccountId>>::transfer(
+				&caller,
+				&community_account_id,
+				minimum_balance,
+				frame_support::traits::tokens::Preservation::Preserve,
+			)?;
+
+			// TODO: Check how to set_freeze
+			// <T::Balances as fungible::MutateFreeze<T::AccountId>>::set_freeze(
+			// 	&(),
+			// 	&community_account_id,
+			// 	minimum_balance,
+			// )?;
+
+			Ok(())
+		}
+
+		pub(crate) fn do_insert_member(community_id: &T::CommunityId, who: &T::AccountId) -> DispatchResult {
+			if <CommunityMembers<T>>::contains_key(community_id, who) {
+				return Err(Error::<T>::AlreadyAMember.into());
+			}
+
+			<CommunityMembers<T>>::insert::<T::CommunityId, T::AccountId, T::MemberRank>(
+				community_id.clone(),
+				who.clone(),
+				Default::default(),
+			);
+
+			let members_count = <CommunityMembersCount<T>>::try_get(community_id).unwrap_or_default();
+			<CommunityMembersCount<T>>::set(community_id, members_count.checked_add(1));
+
+			Ok(())
+		}
+
+		pub(crate) fn get_community_account_id(community_id: &T::CommunityId) -> T::AccountId {
+			T::PalletId::get().into_sub_account_truncating(community_id)
 		}
 	}
 }

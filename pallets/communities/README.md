@@ -70,7 +70,7 @@ apply         set_metadata                set_metadata            set_metadata
 
 ### Permissionless Functions
 
-- `apply`: Registers an appliation as a new community, taking an [existential deposit][8] used to create the community account.
+- [`apply`][8]: Registers an appliation as a new community, taking an [existential deposit][9] used to create the community account.
 
 ### Permissioned Functions
 
@@ -85,7 +85,7 @@ Calling these functions requires being a member of the community.
 
 These functions can be called either by the community _admin_ or dispatched through an approved proposal.
 
-- `set_metadata`: Sets some [`CommunityMetadata`][9] to describe the community.
+- `set_metadata`: Sets some [`CommunityMetadata`][10] to describe the community.
 - `remove_member`: Removes an account as a community member. While enrolling a member into the community can be an action taken by any member, the decision to remove a member should not be taken arbitrarily by any community member.
 - `promote_member`: Increases the rank of a member in the community.
 - `demote_member`: Decreases the rank of a member in the community.
@@ -114,5 +114,6 @@ Unlicense
 [5]: https://github.com/virto-network/virto-node/tree/master/pallets/payments
 [6]: https://github.com/virto-network/virto-node/pull/282
 [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
-[8]: https://docs.substrate.io/reference/glossary/#existential-deposit
-[9]: src/types.rs#L19
+[8]: src/lib.rs#L273
+[9]: https://docs.substrate.io/reference/glossary/#existential-deposit
+[10]: src/types.rs#L37
