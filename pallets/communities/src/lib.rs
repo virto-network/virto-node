@@ -174,7 +174,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		sp_runtime::traits::AccountIdConversion,
-		traits::{fungible, fungibles},
+		traits::tokens::{fungible, fungibles},
 		Parameter,
 	};
 	use frame_system::pallet_prelude::*;
@@ -202,6 +202,7 @@ pub mod pallet {
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Balances: fungible::Inspect<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
+			+ fungible::InspectFreeze<Self::AccountId>
 			+ fungible::MutateFreeze<Self::AccountId>;
 
 		/// Because this pallet emits events, it depends on the runtime's
@@ -215,6 +216,11 @@ pub mod pallet {
 		/// ID.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
+
+		/// The Communities' freeze identifier, used for identifying freezes
+		/// created by the pallet.
+		#[pallet::constant]
+		type FreezeIdentifier: Get<<Self::Balances as fungible::InspectFreeze<Self::AccountId>>::Id>;
 	}
 
 	/// Store the basic information of the community. If a value exists for a
@@ -330,12 +336,12 @@ pub mod pallet {
 				frame_support::traits::tokens::Preservation::Preserve,
 			)?;
 
-			// TODO: Check how to set_freeze
-			// <T::Balances as fungible::MutateFreeze<T::AccountId>>::set_freeze(
-			// 	&(),
-			// 	&community_account_id,
-			// 	minimum_balance,
-			// )?;
+			// Lock funds so the account can exist at all times
+			<T::Balances as fungible::MutateFreeze<T::AccountId>>::set_freeze(
+				&T::FreezeIdentifier::get(),
+				&community_account_id,
+				minimum_balance,
+			)?;
 
 			Ok(())
 		}

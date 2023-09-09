@@ -92,6 +92,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
+	pub const CommunitiesFreezeIdentifier: () = ();
 }
 
 impl pallet_communities::Config for Test {
@@ -102,6 +103,7 @@ impl pallet_communities::Config for Test {
 	type CommunityId = u128;
 	type MemberRank = u8;
 	type PalletId = CommunitiesPalletId;
+	type FreezeIdentifier = CommunitiesFreezeIdentifier;
 }
 
 // Build genesis storage according to the mock runtime.
