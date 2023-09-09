@@ -23,7 +23,7 @@ running economic activities:
 
 - **Community:** An entity comprised of _members_ —each one defined by their [`AccountId`][1]— with a given _description_ who can vote on _proposals_ and actively take decisions on behalf of it. Communities are given a _treasury account_ and can issue _governance_ and _economic_ tokens. It is required that a community contributes to the network to be active and operate within it.
 - **Community Description:** A set of metadata used to identify a community distinctively. Typically, a name, a list of locations (given as a list of one or more [`H3Index`][2]), and a list of URL links.
-- **Community Status:** A community can be either `awaiting` or `active` depending on whether the community has proven via a challenge it's actively contributing to the network with infrastructure provisioning (i.e. a [collator][3] node) or by depositing funds.
+- **Community Status:** A community can be either `awaiting`, `active`, or `frozen` depending on whether the community has proven via a challenge it's actively contributing to the network with infrastructure provisioning (i.e. a [collator][3] node) or by depositing funds.
 - **Validity Challenge:** A proof that a community is actively contributing to the network. The mechanisms for challenge verification are usually checked via an off-chain worker. Still, it's possible for a trusted origin to manually mark a community challenge as passed, effectively changing the status of the community to `active`.
 - **Admin:** An [`AccountId`][1] registered into the community that is set as such. Can call [privileged functions](#privileged-functions) within the community.
 - **Member:** An [`AccountId`][1] registered into the community as such. Can have a rank within it and vote in the community's polls.
@@ -44,9 +44,9 @@ The _"communities"_ are designed to facilitate the following use cases:
 ## Lifecycle
 
 ```ignore
-[       ] --> [Awaiting]              --> [Active]
-register      set_metadata                set_metadata
-              fulfill_challenge           add_member
+[       ] --> [Awaiting]              --> [Active]            --> [Frozen]
+apply         set_metadata                set_metadata            set_metadata
+              fulfill_challenge           add_member              thaw
               force_complete_challenge    remove_member
                                           promote_member
                                           demote_member
@@ -58,7 +58,8 @@ register      set_metadata                set_metadata
                                           balance_transfer
                                           set_admin
                                           set_voting_mechanism
-                                          force_increase_economic_token_limit
+                                          set_sufficient_asset
+                                          freeze
 ```
 
 ## Implementations
@@ -69,7 +70,7 @@ register      set_metadata                set_metadata
 
 ### Permissionless Functions
 
-- `register`: Registers a new community, taking an [existential deposit][8] used to create the community account.
+- `apply`: Registers an appliation as a new community, taking an [existential deposit][8] used to create the community account.
 
 ### Permissioned Functions
 
@@ -84,7 +85,7 @@ Calling these functions requires being a member of the community.
 
 These functions can be called either by the community _admin_ or dispatched through an approved proposal.
 
-- `set_metadata`: Sets some [`CommunityMetadata`] to describe the community.
+- `set_metadata`: Sets some [`CommunityMetadata`][9] to describe the community.
 - `remove_member`: Removes an account as a community member. While enrolling a member into the community can be an action taken by any member, the decision to remove a member should not be taken arbitrarily by any community member.
 - `promote_member`: Increases the rank of a member in the community.
 - `demote_member`: Decreases the rank of a member in the community.
@@ -92,7 +93,7 @@ These functions can be called either by the community _admin_ or dispatched thro
 - `close_proposal`: Forcefully closes a proposal, dispatching the call when approved.
 - `assets_transfer`: Transfers an amount of a given asset from the treasury account to a beneficiary.
 - `balance_transfer`: Transfers funds from the treasury account to a beneficiary.
-- `set_admin`: Sets an [AccountId][1] of the _admin_ of the community. Ensures that the specified account is a member of the community.
+- `set_admin`: Sets an [`AccountId`][1] of the _admin_ of the community. Ensures that the specified account is a member of the community.
 - `set_voting_mechanism`: Transfers funds from the treasury account to a beneficiary.
 
 ### Root Functions
@@ -114,3 +115,4 @@ Unlicense
 [6]: https://github.com/virto-network/virto-node/pull/282
 [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
 [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
+[9]: src/types.rs#L19
