@@ -169,8 +169,14 @@ pub use weights::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::{pallet_prelude::*, traits::fungibles};
+	use frame_support::{
+		pallet_prelude::*,
+		sp_runtime::traits::AccountIdConversion,
+		traits::{fungible, fungibles},
+		Parameter,
+	};
 	use frame_system::pallet_prelude::*;
+	use types::*;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -179,21 +185,54 @@ pub mod pallet {
 	/// depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Fungibles: fungibles::Inspect<Self::AccountId> + fungibles::Mutate<Self::AccountId>;
+		/// This type represents an unique ID for the community
+		type CommunityId: Parameter + MaxEncodedLen;
+
+		/// This type represents a rank for a member in a community
+		type MemberRank: Default + Parameter + MaxEncodedLen;
+
+		/// Type represents interactions between fungibles (i.e. assets)
+		type Assets: fungibles::Inspect<Self::AccountId>
+			+ fungibles::Mutate<Self::AccountId>
+			+ fungibles::Create<Self::AccountId>
+			+ fungibles::Destroy<Self::AccountId>;
+
+		/// Type represents interactions between fungibles (i.e. assets)
+		type Balances: fungible::Inspect<Self::AccountId>
+			+ fungible::Mutate<Self::AccountId>
+			+ fungible::MutateFreeze<Self::AccountId>;
+
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
+
+		/// The Communities' pallet id, used for deriving its sovereign account
+		/// ID.
+		#[pallet::constant]
+		type PalletId: Get<frame_support::PalletId>;
 	}
 
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/main-docs/build/runtime-storage/
+	/// Store the basic information of the community. If a value exists for a
+	/// specified [`ComumunityId`], this means a community exists.
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/main-docs/build/runtime-storage/#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
+	#[pallet::getter(fn community)]
+	pub type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
+
+	/// Store the list of community members. If some values exist under a
+	/// specified [`ComumunityId`] prefix, this means a community exists.
+	#[pallet::storage]
+	#[pallet::getter(fn member_rank_for)]
+	pub type CommunityMembers<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MemberRankOf<T>>;
+
+	/// Store the count of community members. This simplifies the process of
+	/// keeping track of members' count.
+	#[pallet::storage]
+	#[pallet::getter(fn members_count)]
+	pub type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
