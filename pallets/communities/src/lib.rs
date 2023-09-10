@@ -237,6 +237,14 @@ pub mod pallet {
 		/// created by the pallet.
 		#[pallet::constant]
 		type FreezeIdentifier: Get<<Self::Balances as fungible::InspectFreeze<Self::AccountId>>::Id>;
+
+		/// Max amount of URLs a community can hold on its metadata.
+		#[pallet::constant]
+		type MaxUrls: Get<u32> + Clone + PartialEq + core::fmt::Debug;
+
+		/// Max amount of locations a community can hold on its metadata.
+		#[pallet::constant]
+		type MaxLocations: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 	}
 
 	/// Store the basic information of the community. If a value exists for a

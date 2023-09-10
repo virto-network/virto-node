@@ -33,16 +33,28 @@ pub enum CommunityState {
 	Blocked,
 }
 
-#[derive(TypeInfo, Encode, Decode)]
-pub struct CommunityMetadata {
+#[derive(TypeInfo, Eq, PartialEq, Debug, Clone, Encode, Decode, MaxEncodedLen)]
+#[scale_info(skip_type_params(T))]
+pub struct CommunityMetadata<T: Config> {
 	pub name: Field<64>,
 	pub description: Field<256>,
-	pub urls: BoundedVec<Field<32>, ConstU32<10>>,
-	pub locations: BoundedVec<Cell, ConstU32<128>>,
+	pub urls: BoundedVec<Field<2000>, T::MaxUrls>,
+	pub locations: BoundedVec<Cell, T::MaxLocations>,
 }
 
 impl Default for CommunityState {
 	fn default() -> Self {
 		CommunityState::Awaiting
+	}
+}
+
+impl<T: Config> Default for CommunityMetadata<T> {
+	fn default() -> Self {
+		Self {
+			name: Default::default(),
+			description: Default::default(),
+			urls: Default::default(),
+			locations: Default::default(),
+		}
 	}
 }
