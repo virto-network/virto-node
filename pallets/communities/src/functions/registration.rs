@@ -54,4 +54,24 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
+
+	pub(crate) fn do_set_metadata(
+		community_id: &CommunityIdOf<T>,
+		value: types::CommunityMetadata<T>,
+	) -> DispatchResult {
+		<pallet::CommunityMetadata<T>>::try_mutate(community_id, |metadata| {
+			if let Some(metadata) = metadata {
+				metadata.name = value.name;
+				metadata.description = value.description;
+				metadata.urls = value.urls;
+				metadata.locations = value.locations;
+			} else {
+				*metadata = Some(value);
+			}
+
+			Ok::<(), DispatchError>(())
+		})?;
+
+		Ok(())
+	}
 }
