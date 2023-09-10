@@ -49,8 +49,6 @@ mod apply {
 	}
 
 	mod do_create_community_account {
-		use frame_support::traits::fungible::InspectFreeze;
-
 		use super::*;
 
 		#[test]
@@ -79,7 +77,10 @@ mod apply {
 				assert_ok!(Communities::do_create_community_account(&COMMUNITY_ADMIN, &COMMUNITY));
 
 				assert_eq!(
-					Balances::balance_frozen(&(), &Communities::get_community_account_id(&COMMUNITY)),
+					<Balances as fungible::InspectFreeze<<Test as frame_system::Config>::AccountId>>::balance_frozen(
+						&(),
+						&Communities::get_community_account_id(&COMMUNITY)
+					),
 					minimum_balance
 				);
 				assert_eq!(
