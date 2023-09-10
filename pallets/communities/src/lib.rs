@@ -127,7 +127,7 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - `set_metadata`: Sets some [`CommunityMetadata`][10] to describe the
+//! - [`set_metadata`][10]: Sets some [`CommunityMetadata`][11] to describe the
 //! community.
 //! - `remove_member`: Removes an account as a community member. While enrolling
 //!   a member into the community can be an action taken by any member, the
@@ -167,7 +167,8 @@
 //! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
 //! [8]: `crate::Pallet::apply`
 //! [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
-//! [10]: `types::CommunityMetadata`
+//! [10]: `crate::Pallet::set_metadata`
+//! [11]: `types::CommunityMetadata`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -253,6 +254,12 @@ pub mod pallet {
 	#[pallet::getter(fn community)]
 	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
 
+	/// Store the metadata regarding a community.
+	#[pallet::storage]
+	#[pallet::getter(fn metadata)]
+	pub(super) type CommunityMetadata<T: Config> =
+		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, types::CommunityMetadata<T>>;
+
 	/// Store the list of community members. If some values exist under a
 	/// specified [`ComumunityId`] prefix, this means a community exists.
 	#[pallet::storage]
@@ -273,6 +280,15 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// A [`Commmunity`][`types::Community`] has been created.
 		CommunityCreated { id: T::CommunityId, who: T::AccountId },
+		/// Some [`CommmuniMetadata`][`types::CommunityMetadata`] has been set
+		/// for a community.
+		MetadataSet {
+			id: T::CommunityId,
+			name: Option<Field<64>>,
+			description: Option<Field<256>>,
+			urls: Option<BoundedVec<Field<2000>, T::MaxUrls>>,
+			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -311,6 +327,49 @@ pub mod pallet {
 
 			// Emit an event.
 			Self::deposit_event(Event::CommunityCreated { id: community_id, who });
+
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+		/// Sets some [`CommunityMetadata`][11] to describe the
+		/// community.
+		///
+		/// [11]: `types::CommunityMetadata`
+		#[pallet::call_index(1)]
+		#[pallet::weight(T::WeightInfo::set_metadata())]
+		pub fn set_metadata(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			name: Option<Field<64>>,
+			description: Option<Field<256>>,
+			urls: Option<BoundedVec<Field<2000>, T::MaxUrls>>,
+			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
+		) -> DispatchResult {
+			// Ensures caller is a privileged origin
+			Self::ensure_privileged(origin, &community_id)?;
+
+			let metadata = <CommunityMetadata<T>>::get(&community_id).unwrap_or_default();
+
+			// Deposits metadata
+			Self::do_set_metadata(
+				&community_id,
+				types::CommunityMetadata {
+					name: name.clone().unwrap_or(metadata.name),
+					description: description.clone().unwrap_or(metadata.description),
+					urls: urls.clone().unwrap_or(metadata.urls),
+					locations: locations.clone().unwrap_or(metadata.locations),
+				},
+			)?;
+
+			// Emit an event.
+			Self::deposit_event(Event::MetadataSet {
+				id: community_id,
+				name,
+				description,
+				urls,
+				locations,
+			});
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())

@@ -36,10 +36,10 @@ pub enum CommunityState {
 #[derive(TypeInfo, Eq, PartialEq, Debug, Clone, Encode, Decode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct CommunityMetadata<T: Config> {
-	pub name: Field<64>,
-	pub description: Field<256>,
-	pub urls: BoundedVec<Field<2000>, T::MaxUrls>,
-	pub locations: BoundedVec<Cell, T::MaxLocations>,
+	pub(super) name: Field<64>,
+	pub(super) description: Field<256>,
+	pub(super) urls: BoundedVec<Field<2000>, T::MaxUrls>,
+	pub(super) locations: BoundedVec<Cell, T::MaxLocations>,
 }
 
 impl Default for CommunityState {

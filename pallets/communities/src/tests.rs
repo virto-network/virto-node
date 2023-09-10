@@ -1,5 +1,6 @@
 use crate::types::*;
 use crate::{mock::*, CommunityInfo, Error as PalletError};
+use frame_support::traits::fungible;
 use frame_support::{assert_noop, assert_ok};
 
 type Error = PalletError<Test>;
@@ -9,7 +10,6 @@ const COMMUNITY_ADMIN: u64 = 42;
 
 mod apply {
 	use super::*;
-	use frame_support::traits::fungible;
 
 	mod do_register_community {
 		use super::*;
@@ -121,5 +121,106 @@ mod apply {
 				);
 			});
 		}
+	}
+}
+
+mod set_metadata {
+	use super::*;
+	use sp_runtime::BoundedVec;
+
+	fn setup() {
+		System::set_block_number(1);
+
+		let minimum_balance = <<Test as crate::Config>::Balances as fungible::Inspect<
+			<Test as frame_system::Config>::AccountId,
+		>>::minimum_balance();
+
+		assert_ok!(Balances::force_set_balance(
+			RuntimeOrigin::root(),
+			COMMUNITY_ADMIN,
+			2 * minimum_balance,
+		));
+
+		assert_ok!(Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY));
+	}
+
+	#[test]
+	fn fails_if_bad_origin() {
+		new_test_ext().execute_with(|| {
+			setup();
+
+			// Fail if trying to call from unsigned origin
+			assert_noop!(
+				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None, None),
+				sp_runtime::DispatchError::BadOrigin
+			);
+			// Fail if trying to call from non-admin
+			assert_noop!(
+				Communities::set_metadata(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN + 1),
+					COMMUNITY,
+					None,
+					None,
+					None,
+					None
+				),
+				sp_runtime::DispatchError::BadOrigin
+			);
+		});
+	}
+
+	#[test]
+	fn works_inserts_default_metadata() {
+		new_test_ext().execute_with(|| {
+			setup();
+
+			// Receives metadata information from admin
+			assert_ok!(Communities::set_metadata(
+				RuntimeOrigin::signed(COMMUNITY_ADMIN),
+				COMMUNITY,
+				Some(BoundedVec::truncate_from(b"Virto Network".to_vec())),
+				None,
+				None,
+				None
+			));
+
+			assert!(<crate::CommunityMetadata<Test>>::contains_key(COMMUNITY));
+			let community_metadata = <crate::CommunityMetadata<Test>>::get(COMMUNITY)
+				.expect("We've already asserted that the key is contained; qed");
+
+			assert_eq!(
+				community_metadata,
+				crate::types::CommunityMetadata {
+					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
+					description: BoundedVec::new(),
+					urls: BoundedVec::new(),
+					locations: BoundedVec::new()
+				}
+			);
+
+			// Receives metadata information from root
+			assert_ok!(Communities::set_metadata(
+				RuntimeOrigin::root(),
+				COMMUNITY,
+				None,
+				Some(BoundedVec::truncate_from(b"A community of awesome builders".to_vec())),
+				None,
+				None
+			));
+
+			assert!(<crate::CommunityMetadata<Test>>::contains_key(COMMUNITY));
+			let community_metadata = <crate::CommunityMetadata<Test>>::get(COMMUNITY)
+				.expect("We've already asserted that the key is contained; qed");
+
+			assert_eq!(
+				community_metadata,
+				crate::types::CommunityMetadata {
+					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
+					description: BoundedVec::truncate_from(b"A community of awesome builders".to_vec()),
+					urls: BoundedVec::new(),
+					locations: BoundedVec::new()
+				}
+			);
+		});
 	}
 }
