@@ -164,6 +164,8 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod functions;
+
 pub mod types;
 pub mod weights;
 pub use weights::*;
@@ -173,7 +175,6 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{
 		pallet_prelude::*,
-		sp_runtime::traits::AccountIdConversion,
 		traits::tokens::{fungible, fungibles},
 		Parameter,
 	};
@@ -290,81 +291,6 @@ pub mod pallet {
 
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
-		}
-	}
-
-	impl<T: Config> Pallet<T> {
-		pub(crate) fn community_exists(community_id: &T::CommunityId) -> bool {
-			<CommunityInfo<T>>::contains_key(community_id) && <CommunityMembersCount<T>>::contains_key(community_id)
-		}
-
-		/// Stores an initial info about the community
-		/// Sets the caller as the community admin, the initial community state
-		/// as
-		pub(crate) fn do_register_community(who: &T::AccountId, community_id: &T::CommunityId) -> DispatchResult {
-			// Check that the community doesn't exist
-			if Self::community_exists(&community_id) {
-				return Err(Error::<T>::CommunityAlreadyExists.into());
-			}
-
-			<CommunityInfo<T>>::insert(
-				community_id.clone(),
-				Community {
-					admin: who.clone(),
-					state: Default::default(),
-					sufficient_asset_id: Default::default(),
-				},
-			);
-
-			Self::do_insert_member(community_id, who)?;
-
-			Ok(())
-		}
-
-		/// Takes a deposit from the caller and
-		pub(crate) fn do_create_community_account(
-			caller: &AccountIdOf<T>,
-			community_id: &CommunityIdOf<T>,
-		) -> DispatchResult {
-			let community_account_id = Self::get_community_account_id(community_id);
-			let minimum_balance = <T::Balances as fungible::Inspect<T::AccountId>>::minimum_balance();
-
-			<T::Balances as fungible::Mutate<T::AccountId>>::transfer(
-				&caller,
-				&community_account_id,
-				minimum_balance,
-				frame_support::traits::tokens::Preservation::Preserve,
-			)?;
-
-			// Lock funds so the account can exist at all times
-			<T::Balances as fungible::MutateFreeze<T::AccountId>>::set_freeze(
-				&T::FreezeIdentifier::get(),
-				&community_account_id,
-				minimum_balance,
-			)?;
-
-			Ok(())
-		}
-
-		pub(crate) fn do_insert_member(community_id: &T::CommunityId, who: &T::AccountId) -> DispatchResult {
-			if <CommunityMembers<T>>::contains_key(community_id, who) {
-				return Err(Error::<T>::AlreadyAMember.into());
-			}
-
-			<CommunityMembers<T>>::insert::<T::CommunityId, T::AccountId, T::MemberRank>(
-				community_id.clone(),
-				who.clone(),
-				Default::default(),
-			);
-
-			let members_count = <CommunityMembersCount<T>>::try_get(community_id).unwrap_or_default();
-			<CommunityMembersCount<T>>::set(community_id, members_count.checked_add(1));
-
-			Ok(())
-		}
-
-		pub(crate) fn get_community_account_id(community_id: &T::CommunityId) -> T::AccountId {
-			T::PalletId::get().into_sub_account_truncating(community_id)
 		}
 	}
 }
