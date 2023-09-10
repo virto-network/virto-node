@@ -227,20 +227,20 @@ pub mod pallet {
 	/// specified [`ComumunityId`], this means a community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
-	pub type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
+	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
 
 	/// Store the list of community members. If some values exist under a
 	/// specified [`ComumunityId`] prefix, this means a community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn member_rank_for)]
-	pub type CommunityMembers<T> =
+	pub(super) type CommunityMembers<T> =
 		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MemberRankOf<T>>;
 
 	/// Store the count of community members. This simplifies the process of
 	/// keeping track of members' count.
 	#[pallet::storage]
 	#[pallet::getter(fn members_count)]
-	pub type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
+	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
