@@ -9,4 +9,4 @@ codegen-units = 1
 [workspace]
 members = ['node', 'runtime/virto', 'runtime/kreivo']
 
-exclude = ['virto-xcm-emulator', 'pallets']
+exclude = ['virto-xcm-emulator']
