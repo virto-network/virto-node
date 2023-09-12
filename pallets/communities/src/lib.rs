@@ -249,7 +249,8 @@ pub mod pallet {
 	}
 
 	/// Store the basic information of the community. If a value exists for a
-	/// specified [`ComumunityId`], this means a community exists.
+	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
+	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
 	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
@@ -261,7 +262,8 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, types::CommunityMetadata<T>>;
 
 	/// Store the list of community members. If some values exist under a
-	/// specified [`ComumunityId`] prefix, this means a community exists.
+	/// specified [`ComumunityId`][`Config::CommunityId`] prefix, this means a
+	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn member_rank_for)]
 	pub(super) type CommunityMembers<T> =
