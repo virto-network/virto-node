@@ -9,7 +9,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Stores an initial info about the community
 	/// Sets the caller as the community admin, the initial community state
-	/// as
+	/// to its default value(awaiting)
 	pub(crate) fn do_register_community(who: &T::AccountId, community_id: &T::CommunityId) -> DispatchResult {
 		// Check that the community doesn't exist
 		if Self::community_exists(&community_id) {
