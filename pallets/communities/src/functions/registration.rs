@@ -21,7 +21,7 @@ impl<T: Config> Pallet<T> {
 			Community {
 				admin: who.clone(),
 				state: Default::default(),
-				sufficient_asset_id: Default::default(),
+				sufficient_asset_id: None,
 			},
 		);
 
