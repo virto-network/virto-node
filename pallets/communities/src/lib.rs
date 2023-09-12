@@ -208,7 +208,7 @@ pub mod pallet {
 		type CommunityId: Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
-		type MemberRank: Default + Parameter + MaxEncodedLen;
+		type MembershipPassport: Default + Parameter + MaxEncodedLen;
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId>
@@ -241,6 +241,10 @@ pub mod pallet {
 
 		/// Max amount of URLs a community can hold on its metadata.
 		#[pallet::constant]
+		type MetadataUrlSize: Get<u32> + Clone + PartialEq + core::fmt::Debug;
+
+		/// Max amount of URLs a community can hold on its metadata.
+		#[pallet::constant]
 		type MaxUrls: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 
 		/// Max amount of locations a community can hold on its metadata.
@@ -266,8 +270,14 @@ pub mod pallet {
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn member_rank_for)]
-	pub(super) type CommunityMembers<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MemberRankOf<T>>;
+	pub(super) type CommunityMembers<T> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		CommunityIdOf<T>,
+		Blake2_128Concat,
+		AccountIdOf<T>,
+		MembershipPassportOf<T>,
+	>;
 
 	/// Store the count of community members. This simplifies the process of
 	/// keeping track of members' count.
@@ -288,7 +298,7 @@ pub mod pallet {
 			id: T::CommunityId,
 			name: Option<Field<64>>,
 			description: Option<Field<256>>,
-			urls: Option<BoundedVec<Field<2000>, T::MaxUrls>>,
+			urls: Option<BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		},
 	}
@@ -345,7 +355,7 @@ pub mod pallet {
 			community_id: T::CommunityId,
 			name: Option<Field<64>>,
 			description: Option<Field<256>>,
-			urls: Option<BoundedVec<Field<2000>, T::MaxUrls>>,
+			urls: Option<BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		) -> DispatchResult {
 			// Ensures caller is a privileged origin

@@ -4,7 +4,7 @@ use frame_support::traits::tokens::fungible;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn community_exists(community_id: &T::CommunityId) -> bool {
-		<CommunityInfo<T>>::contains_key(community_id) && <CommunityMembersCount<T>>::contains_key(community_id)
+		<CommunityInfo<T>>::contains_key(community_id)
 	}
 
 	/// Stores an initial info about the community

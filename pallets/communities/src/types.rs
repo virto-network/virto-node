@@ -9,7 +9,7 @@ use frame_system::Config as SystemConfig;
 
 pub type AccountIdOf<T> = <T as SystemConfig>::AccountId;
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
-pub type MemberRankOf<T> = <T as Config>::MemberRank;
+pub type MembershipPassportOf<T> = <T as Config>::MembershipPassport;
 pub type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
 pub type MemberListOf<T> = Vec<AccountIdOf<T>>;
 
@@ -38,7 +38,7 @@ pub enum CommunityState {
 pub struct CommunityMetadata<T: Config> {
 	pub(super) name: Field<64>,
 	pub(super) description: Field<256>,
-	pub(super) urls: BoundedVec<Field<2000>, T::MaxUrls>,
+	pub(super) urls: BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>,
 	pub(super) locations: BoundedVec<Cell, T::MaxLocations>,
 }
 

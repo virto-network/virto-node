@@ -94,6 +94,8 @@ parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	pub const CommunitiesFreezeIdentifier: () = ();
 	#[derive(Debug, Clone, PartialEq)]
+	pub const MetadataUrlSize: u32 = 32;
+	#[derive(Debug, Clone, PartialEq)]
 	pub const MaxUrls: u32 = 5;
 	#[derive(Debug, Clone, PartialEq)]
 	pub const MaxLocations: u32 = 2;
@@ -105,9 +107,10 @@ impl pallet_communities::Config for Test {
 	type Assets = Assets;
 	type Balances = Balances;
 	type CommunityId = u128;
-	type MemberRank = u8;
+	type MembershipPassport = ();
 	type PalletId = CommunitiesPalletId;
 	type FreezeIdentifier = CommunitiesFreezeIdentifier;
+	type MetadataUrlSize = MetadataUrlSize;
 	type MaxUrls = MaxUrls;
 	type MaxLocations = MaxLocations;
 }

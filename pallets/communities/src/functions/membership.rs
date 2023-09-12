@@ -16,7 +16,7 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::AlreadyAMember.into());
 		}
 
-		<CommunityMembers<T>>::insert::<T::CommunityId, T::AccountId, T::MemberRank>(
+		<CommunityMembers<T>>::insert::<T::CommunityId, T::AccountId, T::MembershipPassport>(
 			community_id.clone(),
 			who.clone(),
 			Default::default(),
