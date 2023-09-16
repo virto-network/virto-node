@@ -44,7 +44,7 @@ impl<T: Config> Pallet<T> {
 				return Err(Error::<T>::NotAMember.into());
 			}
 
-			let Some(community_info) = <CommunityInfo<T>>::get(&community_id) else {
+			let Some(community_info) = <CommunityInfo<T>>::get(community_id) else {
 				return Err(Error::<T>::CommunityDoesNotExist.into());
 			};
 
@@ -59,7 +59,7 @@ impl<T: Config> Pallet<T> {
 			let members_count = <CommunityMembersCount<T>>::try_get(community_id).unwrap_or_default();
 			<CommunityMembersCount<T>>::set(community_id, members_count.checked_sub(1));
 
-			return Ok(());
+			Ok(())
 		})
 	}
 }

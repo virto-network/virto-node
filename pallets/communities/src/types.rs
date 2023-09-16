@@ -2,7 +2,7 @@ use codec::MaxEncodedLen;
 use frame_support::pallet_prelude::{Decode, Encode};
 use frame_support::traits::fungibles::Inspect;
 use frame_support::{sp_runtime::BoundedVec, traits::ConstU32};
-use scale_info::TypeInfo;
+use scale_info::{prelude::vec::Vec, TypeInfo};
 use sp_runtime::traits::StaticLookup;
 
 use crate::Config;
@@ -17,7 +17,8 @@ pub type MemberListOf<T> = Vec<AccountIdOf<T>>;
 
 pub type Cell = u32;
 
-pub type Field<const S: u32> = BoundedVec<u8, ConstU32<S>>;
+pub type SizedField<S> = BoundedVec<u8, S>;
+pub type ConstSizedField<const S: u32> = BoundedVec<u8, ConstU32<S>>;
 
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
@@ -27,8 +28,9 @@ pub struct Community<T: crate::Config> {
 	pub sufficient_asset_id: Option<AssetIdOf<T>>,
 }
 
-#[derive(TypeInfo, PartialEq, Encode, Decode, MaxEncodedLen)]
+#[derive(Default, TypeInfo, PartialEq, Encode, Decode, MaxEncodedLen)]
 pub enum CommunityState {
+	#[default]
 	Awaiting,
 	Active,
 	Frozen,
@@ -38,16 +40,10 @@ pub enum CommunityState {
 #[derive(TypeInfo, Eq, PartialEq, Debug, Clone, Encode, Decode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct CommunityMetadata<T: Config> {
-	pub(super) name: Field<64>,
-	pub(super) description: Field<256>,
+	pub(super) name: ConstSizedField<64>,
+	pub(super) description: ConstSizedField<256>,
 	pub(super) urls: BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>,
 	pub(super) locations: BoundedVec<Cell, T::MaxLocations>,
-}
-
-impl Default for CommunityState {
-	fn default() -> Self {
-		CommunityState::Awaiting
-	}
 }
 
 impl<T: Config> Default for CommunityMetadata<T> {

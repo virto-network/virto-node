@@ -305,9 +305,9 @@ pub mod pallet {
 		/// for a community.
 		MetadataSet {
 			id: T::CommunityId,
-			name: Option<Field<64>>,
-			description: Option<Field<256>>,
-			urls: Option<BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>>,
+			name: Option<ConstSizedField<64>>,
+			description: Option<ConstSizedField<256>>,
+			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		},
 	}
@@ -369,9 +369,9 @@ pub mod pallet {
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
-			name: Option<Field<64>>,
-			description: Option<Field<256>>,
-			urls: Option<BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>>,
+			name: Option<ConstSizedField<64>>,
+			description: Option<ConstSizedField<256>>,
+			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		) -> DispatchResult {
 			// Ensures caller is a privileged origin

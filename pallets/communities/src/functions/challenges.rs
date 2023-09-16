@@ -12,11 +12,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	#[allow(dead_code)]
 	pub(crate) fn do_force_complete_challenge(community_id: &T::CommunityId) -> DispatchResult {
 		<CommunityInfo<T>>::try_mutate_exists(community_id, |value| {
 			let Some(community_info) = value else {
-        return Err::<(), DispatchError>(Error::<T>::CommunityDoesNotExist.into());
-      };
+				return Err::<(), DispatchError>(Error::<T>::CommunityDoesNotExist.into());
+			};
 
 			community_info.state = CommunityState::Active;
 
