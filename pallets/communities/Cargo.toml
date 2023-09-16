@@ -1,13 +1,12 @@
 [package]
 name = "pallet-communities"
 version = "0.1.0"
-description = "FRAME pallet template for defining custom runtime logic."
-authors = ["Substrate DevHub <https://github.com/substrate-developer-hub>"]
-homepage = "https://substrate.io"
+description = "This pallet enables people to unite and create local communities that share a common interest or economic activity. In simpler terms, it can be considered a DAO Factory."
+authors = ["Pablo Dorado<hola@pablodorado.com>"]
 edition = "2021"
 license = "MIT-0"
 publish = false
-repository = "https://github.com/substrate-developer-hub/substrate-node-template/"
+repository = "https://github.com/virto-network/virto-node/"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
