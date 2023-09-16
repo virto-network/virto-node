@@ -25,7 +25,7 @@ pub struct Community<T: crate::Config> {
 	pub sufficient_asset_id: Option<AssetIdOf<T>>,
 }
 
-#[derive(TypeInfo, Encode, Decode, MaxEncodedLen)]
+#[derive(TypeInfo, PartialEq, Encode, Decode, MaxEncodedLen)]
 pub enum CommunityState {
 	Awaiting,
 	Active,
