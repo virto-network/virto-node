@@ -133,7 +133,9 @@
 //! - [`remove_member`][c03]: Removes an account as a community member. While
 //!   enrolling a member into the community can be an action taken by any
 //!   member, the decision to remove a member should not be taken arbitrarily by
-//!   any community member.
+//!   any community member. Also, it shouldn't be possible to arbitrarily remove
+//!   the community admin, as some privileged calls would be impossible execute
+//!   thereafter.
 //! - `promote_member`: Increases the rank of a member in the community. ! -
 //!   `demote_member`: Decreases the rank of a member in the community.
 //! - `issue_token`: Creates a token that is either governance (only one per
@@ -423,7 +425,9 @@ pub mod pallet {
 		/// Removes an account as a community member. While
 		/// enrolling a member into the community can be an action taken by any
 		/// member, the decision to remove a member should not be taken
-		/// arbitrarily by any community member.
+		/// arbitrarily by any community member. Also, it shouldn't be possible
+		/// to arbitrarily remove the community admin, as some privileged calls
+		/// would be impossible to execute thereafter.
 		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::remove_member())]
 		pub fn remove_member(

@@ -86,7 +86,7 @@ Calling these functions requires being a member of the community.
 These functions can be called either by the community _admin_ or dispatched through an approved proposal.
 
 - `set_metadata`: Sets some [`CommunityMetadata`][10] to describe the community.
-- `remove_member`: Removes an account as a community member. While enrolling a member into the community can be an action taken by any member, the decision to remove a member should not be taken arbitrarily by any community member.
+- `remove_member`: Removes an account as a community member. While enrolling a member into the community can be an action taken by any member, the decision to remove a member should not be taken arbitrarily by any community member. Also, it shouldn't be possible to arbitrarily remove the community admin, as some privileged calls would be impossible to execute thereafter.
 - `promote_member`: Increases the rank of a member in the community.
 - `demote_member`: Decreases the rank of a member in the community.
 - `issue_token`: Creates a token that is either governance (only one per community allowed) or economic. While the first economic token is _"free"_," further ones would be subject to network-wide referenda.
