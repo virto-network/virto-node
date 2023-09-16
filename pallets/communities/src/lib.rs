@@ -116,8 +116,8 @@
 //!
 //! - `fulfill_challenge`: Submit the challenge proof to validate the
 //!   contribution status of the community.
-//! - `add_member`: Enroll an account as a community member. In theory, any
-//!   community member should be able to add a member. However, this can be
+//! - [`add_member`][10]: Enroll an account as a community member. In theory,
+//!   any community member should be able to add a member. However, this can be
 //!   changed to ensure it is a privileged function.
 //! - `open_proposal`: Creates a proposal to be voted by the community. At
 //! this point, there can only be a single proposal at a time.
@@ -127,7 +127,7 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - [`set_metadata`][10]: Sets some [`CommunityMetadata`][11] to describe the
+//! - [`set_metadata`][11]: Sets some [`CommunityMetadata`][12] to describe the
 //! community.
 //! - `remove_member`: Removes an account as a community member. While enrolling
 //!   a member into the community can be an action taken by any member, the
@@ -167,8 +167,10 @@
 //! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
 //! [8]: `crate::Pallet::apply`
 //! [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
-//! [10]: `crate::Pallet::set_metadata`
-//! [11]: `types::CommunityMetadata`
+//! [c02]: `crate::Pallet::force_`
+//! [c03]: `crate::Pallet::add_member`
+//! [11]: `crate::Pallet::set_metadata`
+//! [12]: `types::CommunityMetadata`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -194,7 +196,8 @@ pub mod pallet {
 		traits::tokens::{fungible, fungibles},
 		Parameter,
 	};
-	use frame_system::pallet_prelude::*;
+	use frame_system::pallet_prelude::{OriginFor, *};
+	use sp_runtime::traits::StaticLookup;
 	use types::*;
 
 	#[pallet::pallet]
@@ -311,6 +314,9 @@ pub mod pallet {
 		/// A community with the same [`CommunityId`][`Config::CommunityId`]
 		/// already exists, therefore cannot be applied for.
 		CommunityAlreadyExists,
+		/// The specified [`CommunityId`][`Config::CommunityId`] is not
+		/// currently active
+		CommunityNotActive,
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// not a member of the community
 		NotAMember,
@@ -384,6 +390,23 @@ pub mod pallet {
 			});
 
 			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+		///
+		#[pallet::call_index(2)]
+		#[pallet::weight(T::WeightInfo::add_member())]
+		pub fn add_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_active(&community_id)?;
+			Self::ensure_member(origin, &community_id)?;
+
+			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			Self::do_insert_member(&community_id, &who)?;
+
 			Ok(())
 		}
 	}

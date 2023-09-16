@@ -125,25 +125,25 @@ mod apply {
 	}
 }
 
+fn setup() {
+	System::set_block_number(1);
+
+	let minimum_balance = <<Test as crate::Config>::Balances as fungible::Inspect<
+		<Test as frame_system::Config>::AccountId,
+	>>::minimum_balance();
+
+	assert_ok!(Balances::force_set_balance(
+		RuntimeOrigin::root(),
+		COMMUNITY_ADMIN,
+		2 * minimum_balance,
+	));
+
+	assert_ok!(Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY));
+}
+
 mod set_metadata {
 	use super::*;
 	use sp_runtime::BoundedVec;
-
-	fn setup() {
-		System::set_block_number(1);
-
-		let minimum_balance = <<Test as crate::Config>::Balances as fungible::Inspect<
-			<Test as frame_system::Config>::AccountId,
-		>>::minimum_balance();
-
-		assert_ok!(Balances::force_set_balance(
-			RuntimeOrigin::root(),
-			COMMUNITY_ADMIN,
-			2 * minimum_balance,
-		));
-
-		assert_ok!(Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY));
-	}
 
 	#[test]
 	fn fails_if_bad_origin() {
@@ -223,5 +223,108 @@ mod set_metadata {
 				}
 			);
 		});
+	}
+}
+
+mod add_member {
+	use super::*;
+
+	mod call {
+		use super::*;
+		use crate::{mock::new_test_ext, tests::COMMUNITY, CommunityMembers, CommunityMembersCount};
+
+		const COMMUNITY_MEMBER_1: u64 = 43;
+		const COMMUNITY_MEMBER_2: u64 = 44;
+		const COMMUNITY_NON_MEMBER: u64 = 45;
+
+		#[test]
+		fn fails_when_community_is_not_active() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::add_member(
+						RuntimeOrigin::signed(COMMUNITY_NON_MEMBER),
+						COMMUNITY,
+						COMMUNITY_MEMBER_1
+					),
+					Error::CommunityNotActive
+				);
+			});
+		}
+
+		#[test]
+		fn fails_when_caller_not_a_member() {
+			new_test_ext().execute_with(|| {
+				setup();
+				assert_ok!(crate::Pallet::<Test>::do_force_complete_challenge(&COMMUNITY));
+
+				assert_noop!(
+					Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
+					sp_runtime::DispatchError::BadOrigin
+				);
+
+				assert_noop!(
+					Communities::add_member(
+						RuntimeOrigin::signed(COMMUNITY_NON_MEMBER),
+						COMMUNITY,
+						COMMUNITY_MEMBER_1
+					),
+					sp_runtime::DispatchError::BadOrigin
+				);
+			});
+		}
+
+		#[test]
+		fn adds_members() {
+			new_test_ext().execute_with(|| {
+				setup();
+				assert_ok!(crate::Pallet::<Test>::do_force_complete_challenge(&COMMUNITY));
+
+				assert_noop!(
+					Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
+					sp_runtime::DispatchError::BadOrigin
+				);
+
+				// Successfully adds a member
+				assert_ok!(Communities::add_member(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					COMMUNITY_MEMBER_1
+				));
+
+				// Once a member, can add other members
+				assert_ok!(Communities::add_member(
+					RuntimeOrigin::signed(COMMUNITY_MEMBER_1),
+					COMMUNITY,
+					COMMUNITY_MEMBER_2
+				));
+
+				assert_eq!(<CommunityMembersCount<Test>>::get(COMMUNITY), Some(3));
+				assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_1), Some(()));
+				assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_2), Some(()));
+			});
+		}
+
+		#[test]
+		fn cannot_add_member_twice() {
+			new_test_ext().execute_with(|| {
+				setup();
+				assert_ok!(crate::Pallet::<Test>::do_force_complete_challenge(&COMMUNITY));
+
+				// Successfully adds a member
+				assert_ok!(Communities::add_member(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					COMMUNITY_MEMBER_1
+				));
+
+				// Fails to add a member twice
+				assert_noop!(
+					Communities::add_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
+					Error::AlreadyAMember
+				);
+			});
+		}
 	}
 }

@@ -3,11 +3,13 @@ use frame_support::pallet_prelude::{Decode, Encode};
 use frame_support::traits::fungibles::Inspect;
 use frame_support::{sp_runtime::BoundedVec, traits::ConstU32};
 use scale_info::TypeInfo;
+use sp_runtime::traits::StaticLookup;
 
 use crate::Config;
 use frame_system::Config as SystemConfig;
 
 pub type AccountIdOf<T> = <T as SystemConfig>::AccountId;
+pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
 pub type MembershipPassportOf<T> = <T as Config>::MembershipPassport;
 pub type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
