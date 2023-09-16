@@ -37,4 +37,29 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})
 	}
+
+	pub(crate) fn do_remove_member(community_id: &T::CommunityId, who: &T::AccountId) -> DispatchResult {
+		<CommunityMembers<T>>::try_mutate_exists(community_id, who, |value| {
+			if value.is_none() {
+				return Err(Error::<T>::NotAMember.into());
+			}
+
+			let Some(community_info) = <CommunityInfo<T>>::get(&community_id) else {
+				return Err(Error::<T>::CommunityDoesNotExist.into());
+			};
+
+			if community_info.admin == *who {
+				return Err(Error::<T>::CannotRemoveAdmin.into());
+			}
+
+			// Removes the member
+			*value = None;
+
+			// Decreases member count
+			let members_count = <CommunityMembersCount<T>>::try_get(community_id).unwrap_or_default();
+			<CommunityMembersCount<T>>::set(community_id, members_count.checked_sub(1));
+
+			return Ok(());
+		})
+	}
 }

@@ -107,7 +107,7 @@
 //!
 //! ### Permissionless Functions
 //!
-//! - [`apply`][8]: Registers an appliation as a new community, taking an
+//! - [`apply`][c00]: Registers an appliation as a new community, taking an
 //!   [existential deposit][9] used to create the community account.
 //!
 //! ### Permissioned Functions
@@ -116,7 +116,7 @@
 //!
 //! - `fulfill_challenge`: Submit the challenge proof to validate the
 //!   contribution status of the community.
-//! - [`add_member`][10]: Enroll an account as a community member. In theory,
+//! - [`add_member`][c02]: Enroll an account as a community member. In theory,
 //!   any community member should be able to add a member. However, this can be
 //!   changed to ensure it is a privileged function.
 //! - `open_proposal`: Creates a proposal to be voted by the community. At
@@ -127,12 +127,13 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - [`set_metadata`][11]: Sets some [`CommunityMetadata`][12] to describe the
+//! - [`set_metadata`][c01]: Sets some [`CommunityMetadata`][t01] to describe
+//!   the
 //! community.
-//! - `remove_member`: Removes an account as a community member. While enrolling
-//!   a member into the community can be an action taken by any member, the
-//!   decision to remove a member should not be taken arbitrarily by any
-//!   community member.
+//! - [`remove_member`][c03]: Removes an account as a community member. While
+//!   enrolling a member into the community can be an action taken by any
+//!   member, the decision to remove a member should not be taken arbitrarily by
+//!   any community member.
 //! - `promote_member`: Increases the rank of a member in the community. ! -
 //!   `demote_member`: Decreases the rank of a member in the community.
 //! - `issue_token`: Creates a token that is either governance (only one per
@@ -158,6 +159,7 @@
 //!
 //! ### Public Functions
 //!
+//! <!-- References -->
 //! [1]: `frame_system::Config::AccountId`
 //! [2]: https://h3geo.org/docs/highlights/indexing
 //! [3]: https://docs.substrate.io/reference/glossary/#collator
@@ -165,12 +167,14 @@
 //! [5]: https://github.com/virto-network/virto-node/tree/master/pallets/payments
 //! [6]: https://github.com/virto-network/virto-node/pull/282
 //! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
-//! [8]: `crate::Pallet::apply`
 //! [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
-//! [c02]: `crate::Pallet::force_`
-//! [c03]: `crate::Pallet::add_member`
-//! [11]: `crate::Pallet::set_metadata`
-//! [12]: `types::CommunityMetadata`
+//!
+//! [t01]: `types::CommunityMetadata`
+//!
+//! [c00]: `crate::Pallet::apply`
+//! [c01]: `crate::Pallet::set_metadata`
+//! [c02]: `crate::Pallet::add_member`
+//! [c03]: `crate::Pallet::remove_member`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -323,6 +327,10 @@ pub mod pallet {
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// already a member of the community
 		AlreadyAMember,
+		/// It is not possible to remove the sole admin for a specified
+		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
+		/// only member remaining. Please consider changing the admin first.
+		CannotRemoveAdmin,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -393,7 +401,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		///
+		/// Enroll an account as a community member. In theory,
+		/// any community member should be able to add a member. However, this
+		/// can be changed to ensure it is a privileged function.
 		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::add_member())]
 		pub fn add_member(
@@ -406,6 +416,26 @@ pub mod pallet {
 
 			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
 			Self::do_insert_member(&community_id, &who)?;
+
+			Ok(())
+		}
+
+		/// Removes an account as a community member. While
+		/// enrolling a member into the community can be an action taken by any
+		/// member, the decision to remove a member should not be taken
+		/// arbitrarily by any community member.
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::WeightInfo::remove_member())]
+		pub fn remove_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_active(&community_id)?;
+			Self::ensure_privileged(origin, &community_id)?;
+
+			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			Self::do_remove_member(&community_id, &who)?;
 
 			Ok(())
 		}
