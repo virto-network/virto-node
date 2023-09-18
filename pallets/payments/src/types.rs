@@ -2,7 +2,6 @@
 use crate::*;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::traits::OriginTrait;
-use frame_system::pallet_prelude::BlockNumberFor;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, BoundedVec, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
@@ -37,7 +36,7 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested,
 	/// Requested]
-	pub state: PaymentState<BlockNumberFor<T>>,
+	pub state: PaymentState,
 	/// fee charged and recipient account details
 	pub fees_details: Fees<T>,
 }
@@ -46,15 +45,13 @@ pub struct PaymentDetail<T: pallet::Config> {
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and
 /// hence not tracked by a state.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo, Debug)]
-pub enum PaymentState<BlockNumber> {
+pub enum PaymentState {
 	/// Amounts have been reserved and waiting for release/cancel
 	Created,
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested {
-		cancel_block: BlockNumber,
-	},
+	RefundRequested,
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
 	Finished,
