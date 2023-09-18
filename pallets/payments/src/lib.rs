@@ -331,10 +331,18 @@ pub mod pallet {
 						sender: sender.clone(),
 						beneficiary: beneficiary.clone(),
 					});
-					Payment::<T>::remove((&sender, &beneficiary, &payment_id));
+				}
+				PaymentState::RefundRequested => {
+					Self::cancel_payment(&sender, &beneficiary, payment)?;
+					Self::deposit_event(Event::PaymentRequestCompleted {
+						sender: sender.clone(),
+						beneficiary: beneficiary.clone(),
+					});
 				}
 				_ => fail!(Error::<T>::InvalidAction),
 			}
+
+			Payment::<T>::remove((&sender, &beneficiary, &payment_id));
 
 			Ok(().into())
 		}
@@ -384,7 +392,7 @@ pub mod pallet {
 					)
 					.is_ok();
 
-					payment.state = PaymentState::RefundRequested { cancel_block };
+					payment.state = PaymentState::RefundRequested;
 
 					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
 						sender,
@@ -412,7 +420,7 @@ impl<T: Config> Pallet<T> {
 		asset: AssetIdOf<T>,
 		payment_id: T::PaymentId,
 		amount: BalanceOf<T>,
-		payment_state: PaymentState<BlockNumberFor<T>>,
+		payment_state: PaymentState,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
 	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
