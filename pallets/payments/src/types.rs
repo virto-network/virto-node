@@ -17,6 +17,7 @@ pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
 pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
 pub type CallOf<T> = <T as Config>::RuntimeCall;
+pub type BoundedCallOf<T> = Bounded<CallOf<T>>;
 pub type PalletsOriginOf<T> = <<T as frame_system::Config>::RuntimeOrigin as OriginTrait>::PalletsOrigin;
 
 /// The PaymentDetail struct stores information about the payment/escrow
