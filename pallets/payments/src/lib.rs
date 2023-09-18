@@ -12,6 +12,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use sp_io::hashing::blake2_256;
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 
 use frame_support::{
@@ -27,12 +31,13 @@ use frame_support::{
 			Precision::Exact,
 			Preservation::{Expendable, Preserve},
 		},
+		Bounded, QueryPreimage, StorePreimage,
 	},
 };
 
 pub mod weights;
 use sp_runtime::{
-	traits::{Dispatchable, One, StaticLookup, Zero},
+	traits::{CheckedAdd, Dispatchable, One, StaticLookup, Zero},
 	DispatchError, DispatchResult, Percent, Saturating,
 };
 pub use weights::*;
@@ -42,6 +47,7 @@ pub use types::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+
 	use super::*;
 	use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::*;
@@ -91,7 +97,10 @@ pub mod pallet {
 			+ One
 			+ Zero;
 
-		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, PalletsOriginOf<Self>>;
+		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::RuntimeOrigin>;
+		/// The preimage provider with which we look up call hashes to get the
+		/// call.
+		type Preimages: QueryPreimage + StorePreimage;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -110,6 +119,11 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxDiscounts: Get<u32>;
+
+		/// Buffer period - number of blocks to wait before user can claim
+		/// canceled payment
+		#[pallet::constant]
+		type CancelBufferBlockLength: Get<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -332,16 +346,17 @@ pub mod pallet {
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
 		pub fn request_refund(
 			origin: OriginFor<T>,
-			recipient: T::AccountId,
+			beneficiary: AccountIdLookupOf<T>,
 			payment_id: T::PaymentId,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let sender = ensure_signed(origin.clone())?;
+			let beneficiary_account = T::Lookup::lookup(beneficiary)?;
 
 			Payment::<T>::try_mutate(
-				(who.clone(), recipient.clone(), payment_id),
-				|maybe_payment| -> DispatchResult {
+				(sender.clone(), beneficiary_account.clone(), payment_id),
+				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
 					// ensure the payment exists
-					let payment = maybe_payment.as_mut().ok_or(Error::<T>::InvalidPayment)?;
+					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
 					// refunds only possible for payments in created state
 					ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
@@ -351,24 +366,29 @@ pub mod pallet {
 						.checked_add(&T::CancelBufferBlockLength::get())
 						.ok_or(Error::<T>::MathError)?;
 
-					ScheduledTasks::<T>::try_mutate(|task_list| -> DispatchResult {
-						task_list
-							.try_insert(
-								(who.clone(), recipient.clone()),
-								ScheduledTask {
-									task: Task::Cancel,
-									when: cancel_block,
-								},
-							)
-							.map_err(|_| Error::<T>::RefundQueueFull)?;
-						Ok(())
-					})?;
+					let sender_unlookup = T::Lookup::unlookup(sender.clone());
+
+					let cancel_call: <T as Config>::RuntimeCall = pallet::Call::<T>::cancel {
+						sender: sender_unlookup,
+						payment_id,
+					}
+					.into();
+
+					let _ = T::Scheduler::schedule_named(
+						("payment", payment_id).using_encoded(blake2_256),
+						DispatchTime::At(cancel_block),
+						None,
+						63,
+						origin,
+						T::Preimages::bound(cancel_call)?,
+					)
+					.is_ok();
 
 					payment.state = PaymentState::RefundRequested { cancel_block };
 
 					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
-						from: who,
-						to: recipient,
+						sender,
+						beneficiary: beneficiary_account,
 						expiry: cancel_block,
 					});
 
@@ -514,27 +534,5 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})?;
 		Ok(())
-	}
-
-	fn schedule_enactment(
-		index: ReferendumIndex,
-		track: &TrackInfoOf<T, I>,
-		desired: DispatchTime<BlockNumberFor<T>>,
-		origin: PalletsOriginOf<T>,
-		call: BoundedCallOf<T, I>,
-	) {
-		let now = frame_system::Pallet::<T>::block_number();
-		let earliest_allowed = now.saturating_add(track.min_enactment_period);
-		let desired = desired.evaluate(now);
-		let ok = T::Scheduler::schedule_named(
-			(ASSEMBLY_ID, "enactment", index).using_encoded(sp_io::hashing::blake2_256),
-			DispatchTime::At(desired.max(earliest_allowed)),
-			None,
-			63,
-			origin,
-			call,
-		)
-		.is_ok();
-		debug_assert!(ok, "LOGIC ERROR: bake_referendum/schedule_named failed");
 	}
 }

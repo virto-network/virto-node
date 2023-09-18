@@ -21,7 +21,7 @@ frame-support = { git = "https://github.com/virto-network/substrate", default-fe
 frame-system = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 sp-runtime = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 sp-std = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
-
+sp-io = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
