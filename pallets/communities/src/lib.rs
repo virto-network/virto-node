@@ -81,10 +81,11 @@
 //! ## Lifecycle
 //!
 //! ```ignore
-//! [       ] --> [Awaiting]              --> [Active]            --> [Frozen]
-//! apply         set_metadata                set_metadata            set_metadata
-//!               fulfill_challenge           add_member              thaw
-//!               force_complete_challenge    remove_member
+//! [       ] --> [Awaiting]              --> [Active]            --> [Frozen]      --> [Blocked]
+//! apply         set_metadata                set_metadata            set_metadata      unblock
+//!               fulfill_challenge           block                   block
+//!               force_complete_challenge    add_member              thaw
+//!                                           remove_member
 //!                                           promote_member
 //!                                           demote_member
 //!                                           issue_token
@@ -108,7 +109,7 @@
 //! ### Permissionless Functions
 //!
 //! - [`apply`][c00]: Registers an appliation as a new community, taking an
-//!   [existential deposit][9] used to create the community account.
+//!   [existential deposit][8] used to create the community account.
 //!
 //! ### Permissioned Functions
 //!
@@ -147,6 +148,8 @@
 //!   account to a beneficiary.
 //! - `balance_transfer`: Transfers funds from the treasury account to a
 //!   beneficiary.
+//! - `set_sufficient_asset`: Marks an [asset][7] issued by the community as
+//!   sufficient. Only one asset at a time can be marked as such.
 //! - `set_admin`: Sets an [`AccountId`][1] of the _admin_ of the community.
 //!   Ensures that the specified account is a member of the community.
 //! - `set_voting_mechanism`: Transfers funds from the treasury account to a
@@ -161,6 +164,16 @@
 //!
 //! ### Public Functions
 //!
+//! - [`community`][g00]: Stores the basic information of the community. If a
+//!   value exists for a specified [`ComumunityId`][t00], this means a community
+//!   exists.
+//! - [`metadata`][g01]: Stores the metadata regarding a community.
+//! - [`member_information`][g02]: Stores the information of a community
+//!   (specified by its [`CommunityId`][t00]) member (specified by it's
+//!   [`AccountId`][1]).
+//! - [`members_count`][g03]: Store the count of community members. This
+//!   simplifies the process of keeping track of members' count.
+//!
 //! <!-- References -->
 //! [1]: `frame_system::Config::AccountId`
 //! [2]: https://h3geo.org/docs/highlights/indexing
@@ -169,14 +182,20 @@
 //! [5]: https://github.com/virto-network/virto-node/tree/master/pallets/payments
 //! [6]: https://github.com/virto-network/virto-node/pull/282
 //! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
-//! [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
+//! [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
 //!
+//! [t00]: `Config::CommunityId`
 //! [t01]: `types::CommunityMetadata`
 //!
 //! [c00]: `crate::Pallet::apply`
 //! [c01]: `crate::Pallet::set_metadata`
 //! [c02]: `crate::Pallet::add_member`
 //! [c03]: `crate::Pallet::remove_member`
+//!
+//! [g00]: `crate::Pallet::community`
+//! [g01]: `crate::Pallet::metadata`
+//! [g02]: `crate::Pallet::member_information`
+//! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -261,24 +280,24 @@ pub mod pallet {
 		type MaxLocations: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 	}
 
-	/// Store the basic information of the community. If a value exists for a
+	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
 	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
 
-	/// Store the metadata regarding a community.
+	/// Stores the metadata regarding a community.
 	#[pallet::storage]
 	#[pallet::getter(fn metadata)]
 	pub(super) type CommunityMetadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, types::CommunityMetadata<T>>;
 
-	/// Store the list of community members. If some values exist under a
-	/// specified [`ComumunityId`][`Config::CommunityId`] prefix, this means a
-	/// community exists.
+	/// Stores the information of a community (specified by its
+	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
+	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
-	#[pallet::getter(fn member_rank_for)]
+	#[pallet::getter(fn member_information)]
 	pub(super) type CommunityMembers<T> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -288,7 +307,7 @@ pub mod pallet {
 		MembershipPassportOf<T>,
 	>;
 
-	/// Store the count of community members. This simplifies the process of
+	/// Stores the count of community members. This simplifies the process of
 	/// keeping track of members' count.
 	#[pallet::storage]
 	#[pallet::getter(fn members_count)]
@@ -342,9 +361,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Registers an appliation as a new community, taking an
-		/// [existential deposit][9] used to create the community account.
+		/// [existential deposit][8] used to create the community account.
 		///
-		/// [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
+		/// [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::apply())]
 		pub fn apply(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
