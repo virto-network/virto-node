@@ -431,7 +431,7 @@ mod remove_member {
 mod assets_handling {
 	use super::*;
 	use frame_support::traits::{
-		fungible::{Inspect as FunInspect, Unbalanced as FunUnbalanced},
+		fungible::{Inspect as FunInspect, Unbalanced},
 		fungibles::{Create, Inspect, Mutate},
 		tokens::{Fortitude::Polite, Preservation::Preserve},
 	};
@@ -451,14 +451,9 @@ mod assets_handling {
 		let community_account_id = Communities::get_community_account_id(&COMMUNITY);
 
 		// Let's mint some balance
-		let minimum_balance =
-			<Balances as fungible::Inspect<<Test as frame_system::Config>::AccountId>>::minimum_balance();
-
 		assert_ok!(Balances::increase_balance(
 			&ALICE,
-			minimum_balance
-				.checked_add(1)
-				.expect("This should not overflow as ED is way below U128::MAX; qed"),
+			1,
 			frame_support::traits::tokens::Precision::Exact
 		));
 
