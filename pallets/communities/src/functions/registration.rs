@@ -12,7 +12,7 @@ impl<T: Config> Pallet<T> {
 	/// to its default value(awaiting)
 	pub(crate) fn do_register_community(who: &T::AccountId, community_id: &T::CommunityId) -> DispatchResult {
 		// Check that the community doesn't exist
-		if Self::community_exists(&community_id) {
+		if Self::community_exists(community_id) {
 			return Err(Error::<T>::CommunityAlreadyExists.into());
 		}
 
@@ -39,7 +39,7 @@ impl<T: Config> Pallet<T> {
 		let minimum_balance = <T::Balances as fungible::Inspect<T::AccountId>>::minimum_balance();
 
 		<T::Balances as fungible::Mutate<T::AccountId>>::transfer(
-			&caller,
+			caller,
 			&community_account_id,
 			minimum_balance,
 			frame_support::traits::tokens::Preservation::Preserve,
