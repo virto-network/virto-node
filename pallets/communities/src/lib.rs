@@ -462,5 +462,29 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		/// Transfers an amount of a given asset from the treasury account to a
+		/// beneficiary.
+		#[pallet::call_index(4)]
+		#[pallet::weight(T::WeightInfo::assets_transfer())]
+		pub fn assets_transfer(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			asset_id: AssetIdOf<T>,
+			dest: AccountIdLookupOf<T>,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_assets_transfer(
+				&community_id,
+				asset_id,
+				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
+				amount,
+			)?;
+
+			Ok(())
+		}
 	}
 }
