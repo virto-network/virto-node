@@ -8,7 +8,7 @@ impl<T: Config> Pallet<T> {
 		dest: &AccountIdOf<T>,
 		amount: BalanceOf<T>,
 	) -> DispatchResult {
-		let community_account_id = Self::get_community_account_id(&community_id);
+		let community_account_id = Self::get_community_account_id(community_id);
 		T::Assets::transfer(asset_id, &community_account_id, dest, amount, Preservation::Preserve)?;
 
 		Ok(())
@@ -19,7 +19,7 @@ impl<T: Config> Pallet<T> {
 		dest: &AccountIdOf<T>,
 		amount: NativeBalanceOf<T>,
 	) -> DispatchResult {
-		let community_account_id = Self::get_community_account_id(&community_id);
+		let community_account_id = Self::get_community_account_id(community_id);
 		T::Balances::transfer(&community_account_id, dest, amount, Preservation::Preserve)?;
 
 		Ok(())
