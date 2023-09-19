@@ -240,11 +240,7 @@ mod add_member {
 			setup();
 
 			assert_noop!(
-				Communities::add_member(
-					RuntimeOrigin::signed(COMMUNITY_NON_MEMBER),
-					COMMUNITY,
-					COMMUNITY_MEMBER_1
-				),
+				Communities::add_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
 				Error::CommunityNotActive
 			);
 		});
