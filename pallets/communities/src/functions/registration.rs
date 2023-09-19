@@ -1,16 +1,14 @@
 use super::*;
 
-use frame_support::traits::tokens::fungible;
-
 impl<T: Config> Pallet<T> {
-	pub(crate) fn community_exists(community_id: &T::CommunityId) -> bool {
-		<CommunityInfo<T>>::contains_key(community_id)
+	pub(crate) fn community_exists(community_id: &CommunityIdOf<T>) -> bool {
+		Self::community(community_id).is_some()
 	}
 
 	/// Stores an initial info about the community
 	/// Sets the caller as the community admin, the initial community state
 	/// to its default value(awaiting)
-	pub(crate) fn do_register_community(who: &T::AccountId, community_id: &T::CommunityId) -> DispatchResult {
+	pub(crate) fn do_register_community(who: &AccountIdOf<T>, community_id: &CommunityIdOf<T>) -> DispatchResult {
 		// Check that the community doesn't exist
 		if Self::community_exists(community_id) {
 			return Err(Error::<T>::CommunityAlreadyExists.into());
@@ -36,9 +34,9 @@ impl<T: Config> Pallet<T> {
 		community_id: &CommunityIdOf<T>,
 	) -> DispatchResult {
 		let community_account_id = Self::get_community_account_id(community_id);
-		let minimum_balance = <T::Balances as fungible::Inspect<T::AccountId>>::minimum_balance();
+		let minimum_balance = T::Balances::minimum_balance();
 
-		<T::Balances as fungible::Mutate<T::AccountId>>::transfer(
+		T::Balances::transfer(
 			caller,
 			&community_account_id,
 			minimum_balance,
@@ -46,11 +44,7 @@ impl<T: Config> Pallet<T> {
 		)?;
 
 		// Lock funds so the account can exist at all times
-		<T::Balances as fungible::MutateFreeze<T::AccountId>>::set_freeze(
-			&T::FreezeIdentifier::get(),
-			&community_account_id,
-			minimum_balance,
-		)?;
+		T::Balances::set_freeze(&T::FreezeIdentifier::get(), &community_account_id, minimum_balance)?;
 
 		Ok(())
 	}
