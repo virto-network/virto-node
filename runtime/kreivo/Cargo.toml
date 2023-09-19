@@ -26,6 +26,7 @@ pallet-asset-registry ={ workspace = true }
 pallet-lockdown-mode = { workspace = true }
 pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
+pallet-communities = { workspace = true }
 virto-common = { workspace = true }
 
 # Substrate
