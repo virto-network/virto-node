@@ -394,7 +394,7 @@ pub mod pallet {
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		) -> DispatchResult {
 			// Ensures caller is a privileged origin
-			Self::ensure_privileged(origin, &community_id)?;
+			Self::ensure_origin_privileged(origin, &community_id)?;
 
 			let metadata = <CommunityMetadata<T>>::get(&community_id).unwrap_or_default();
 
@@ -432,7 +432,7 @@ pub mod pallet {
 			community_id: T::CommunityId,
 			who: AccountIdLookupOf<T>,
 		) -> DispatchResult {
-			Self::ensure_member(origin, &community_id)?;
+			Self::ensure_origin_member(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 
 			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
@@ -454,7 +454,7 @@ pub mod pallet {
 			community_id: T::CommunityId,
 			who: AccountIdLookupOf<T>,
 		) -> DispatchResult {
-			Self::ensure_privileged(origin, &community_id)?;
+			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 
 			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;

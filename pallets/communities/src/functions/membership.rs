@@ -1,7 +1,10 @@
 use super::*;
 
 impl<T: Config> Pallet<T> {
-	pub(crate) fn ensure_member(origin: OriginFor<T>, community_id: &T::CommunityId) -> Result<(), DispatchError> {
+	pub(crate) fn ensure_origin_member(
+		origin: OriginFor<T>,
+		community_id: &T::CommunityId,
+	) -> Result<(), DispatchError> {
 		let caller = ensure_signed(origin)?;
 
 		if !<CommunityMembers<T>>::contains_key(community_id, caller) {
@@ -11,7 +14,10 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn ensure_privileged(origin: OriginFor<T>, community_id: &T::CommunityId) -> Result<(), DispatchError> {
+	pub(crate) fn ensure_origin_privileged(
+		origin: OriginFor<T>,
+		community_id: &T::CommunityId,
+	) -> Result<(), DispatchError> {
 		if let Some(caller) = ensure_signed_or_root(origin)? {
 			if caller != Self::get_community_admin(community_id)? {
 				return Err(DispatchError::BadOrigin);
