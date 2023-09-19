@@ -486,5 +486,26 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		/// Transfers funds from the treasury account to a beneficiary
+		#[pallet::call_index(5)]
+		#[pallet::weight(T::WeightInfo::balance_transfer())]
+		pub fn balance_transfer(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			dest: AccountIdLookupOf<T>,
+			amount: NativeBalanceOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_balance_transfer(
+				&community_id,
+				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
+				amount,
+			)?;
+
+			Ok(())
+		}
 	}
 }

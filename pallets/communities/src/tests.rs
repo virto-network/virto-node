@@ -431,10 +431,11 @@ mod remove_member {
 mod assets_handling {
 	use super::*;
 	use frame_support::traits::{
-		fungible::Unbalanced as FunUnbalanced,
+		fungible::{Inspect as FunInspect, Unbalanced},
 		fungibles::{Create, Inspect, Mutate},
 		tokens::{Fortitude::Polite, Preservation::Preserve},
 	};
+	use sp_runtime::TokenError;
 
 	const ALICE: u64 = 40;
 	const BOB: u64 = 41;
@@ -450,14 +451,9 @@ mod assets_handling {
 		let community_account_id = Communities::get_community_account_id(&COMMUNITY);
 
 		// Let's mint some balance
-		let minimum_balance =
-			<Balances as fungible::Inspect<<Test as frame_system::Config>::AccountId>>::minimum_balance();
-
 		assert_ok!(Balances::increase_balance(
 			&ALICE,
-			minimum_balance
-				.checked_add(1)
-				.expect("This should not overflow as ED is way below U128::MAX; qed"),
+			1,
 			frame_support::traits::tokens::Precision::Exact
 		));
 
@@ -489,8 +485,6 @@ mod assets_handling {
 	}
 
 	mod assets_transfer {
-		use sp_runtime::TokenError;
-
 		use super::*;
 
 		#[test]
@@ -555,5 +549,63 @@ mod assets_handling {
 		}
 	}
 
-	mod balances_transfer {}
+	mod balances_transfer {
+		use super::*;
+
+		#[test]
+		fn fails_if_bad_origin() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				// Fail if trying to call from unsigned origin
+				assert_noop!(
+					Communities::balance_transfer(RuntimeOrigin::none(), COMMUNITY, BOB, 1),
+					DispatchError::BadOrigin
+				);
+
+				// Fail if trying to call from non-admin
+				assert_noop!(
+					Communities::balance_transfer(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, BOB, 1),
+					DispatchError::BadOrigin
+				);
+			});
+		}
+
+		#[test]
+		fn fails_if_not_enough_balance() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::balance_transfer(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, BOB, 1),
+					TokenError::Frozen,
+				);
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				setup();
+				let community_account_id = Communities::get_community_account_id(&COMMUNITY);
+
+				assert_ok!(Balances::transfer(
+					RuntimeOrigin::signed(ALICE),
+					community_account_id,
+					1
+				));
+
+				assert_ok!(Communities::balance_transfer(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					BOB,
+					1
+				));
+
+				assert_eq!(Balances::reducible_balance(&ALICE, Preserve, Polite), 0);
+				assert_eq!(Balances::reducible_balance(&community_account_id, Preserve, Polite), 0);
+				assert_eq!(Balances::reducible_balance(&BOB, Preserve, Polite), 0);
+			});
+		}
+	}
 }
