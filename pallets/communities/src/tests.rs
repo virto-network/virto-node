@@ -2,6 +2,7 @@ use crate::types::*;
 use crate::{mock::*, CommunityInfo, Error as PalletError};
 use frame_support::traits::fungible;
 use frame_support::{assert_noop, assert_ok};
+use sp_runtime::{ArithmeticError, DispatchError};
 
 type Error = PalletError<Test>;
 
@@ -56,7 +57,7 @@ mod apply {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
 					Communities::do_create_community_account(&COMMUNITY_ADMIN, &COMMUNITY),
-					sp_runtime::DispatchError::Arithmetic(sp_runtime::ArithmeticError::Underflow)
+					DispatchError::Arithmetic(ArithmeticError::Underflow)
 				);
 			});
 		}
@@ -153,7 +154,7 @@ mod set_metadata {
 			// Fail if trying to call from unsigned origin
 			assert_noop!(
 				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None, None),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 			// Fail if trying to call from non-admin
 			assert_noop!(
@@ -165,7 +166,7 @@ mod set_metadata {
 					None,
 					None
 				),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 		});
 	}
@@ -254,7 +255,7 @@ mod add_member {
 
 			assert_noop!(
 				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 
 			assert_noop!(
@@ -263,7 +264,7 @@ mod add_member {
 					COMMUNITY,
 					COMMUNITY_MEMBER_1
 				),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 		});
 	}
@@ -276,7 +277,7 @@ mod add_member {
 
 			assert_noop!(
 				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 
 			// Successfully adds a member
@@ -350,12 +351,12 @@ mod remove_member {
 
 			assert_noop!(
 				Communities::remove_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 
 			assert_noop!(
 				Communities::remove_member(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, COMMUNITY_MEMBER_2),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 		});
 	}
