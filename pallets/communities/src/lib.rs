@@ -81,10 +81,11 @@
 //! ## Lifecycle
 //!
 //! ```ignore
-//! [       ] --> [Awaiting]              --> [Active]            --> [Frozen]
-//! apply         set_metadata                set_metadata            set_metadata
-//!               fulfill_challenge           add_member              thaw
-//!               force_complete_challenge    remove_member
+//! [       ] --> [Awaiting]              --> [Active]            --> [Frozen]      --> [Blocked]
+//! apply         set_metadata                set_metadata            set_metadata      unblock
+//!               fulfill_challenge           block                   block
+//!               force_complete_challenge    add_member              thaw
+//!                                           remove_member
 //!                                           promote_member
 //!                                           demote_member
 //!                                           issue_token
@@ -107,8 +108,8 @@
 //!
 //! ### Permissionless Functions
 //!
-//! - [`apply`][8]: Registers an appliation as a new community, taking an
-//!   [existential deposit][9] used to create the community account.
+//! - [`apply`][c00]: Registers an appliation as a new community, taking an
+//!   [existential deposit][8] used to create the community account.
 //!
 //! ### Permissioned Functions
 //!
@@ -116,8 +117,8 @@
 //!
 //! - `fulfill_challenge`: Submit the challenge proof to validate the
 //!   contribution status of the community.
-//! - `add_member`: Enroll an account as a community member. In theory, any
-//!   community member should be able to add a member. However, this can be
+//! - [`add_member`][c02]: Enroll an account as a community member. In theory,
+//!   any community member should be able to add a member. However, this can be
 //!   changed to ensure it is a privileged function.
 //! - `open_proposal`: Creates a proposal to be voted by the community. At
 //! this point, there can only be a single proposal at a time.
@@ -127,12 +128,15 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - [`set_metadata`][10]: Sets some [`CommunityMetadata`][11] to describe the
+//! - [`set_metadata`][c01]: Sets some [`CommunityMetadata`][t01] to describe
+//!   the
 //! community.
-//! - `remove_member`: Removes an account as a community member. While enrolling
-//!   a member into the community can be an action taken by any member, the
-//!   decision to remove a member should not be taken arbitrarily by any
-//!   community member.
+//! - [`remove_member`][c03]: Removes an account as a community member. While
+//!   enrolling a member into the community can be an action taken by any
+//!   member, the decision to remove a member should not be taken arbitrarily by
+//!   any community member. Also, it shouldn't be possible to arbitrarily remove
+//!   the community admin, as some privileged calls would be impossible execute
+//!   thereafter.
 //! - `promote_member`: Increases the rank of a member in the community. ! -
 //!   `demote_member`: Decreases the rank of a member in the community.
 //! - `issue_token`: Creates a token that is either governance (only one per
@@ -144,6 +148,8 @@
 //!   account to a beneficiary.
 //! - `balance_transfer`: Transfers funds from the treasury account to a
 //!   beneficiary.
+//! - `set_sufficient_asset`: Marks an [asset][7] issued by the community as
+//!   sufficient. Only one asset at a time can be marked as such.
 //! - `set_admin`: Sets an [`AccountId`][1] of the _admin_ of the community.
 //!   Ensures that the specified account is a member of the community.
 //! - `set_voting_mechanism`: Transfers funds from the treasury account to a
@@ -158,6 +164,17 @@
 //!
 //! ### Public Functions
 //!
+//! - [`community`][g00]: Stores the basic information of the community. If a
+//!   value exists for a specified [`ComumunityId`][t00], this means a community
+//!   exists.
+//! - [`metadata`][g01]: Stores the metadata regarding a community.
+//! - [`member_information`][g02]: Stores the information of a community
+//!   (specified by its [`CommunityId`][t00]) member (specified by it's
+//!   [`AccountId`][1]).
+//! - [`members_count`][g03]: Store the count of community members. This
+//!   simplifies the process of keeping track of members' count.
+//!
+//! <!-- References -->
 //! [1]: `frame_system::Config::AccountId`
 //! [2]: https://h3geo.org/docs/highlights/indexing
 //! [3]: https://docs.substrate.io/reference/glossary/#collator
@@ -165,10 +182,20 @@
 //! [5]: https://github.com/virto-network/virto-node/tree/master/pallets/payments
 //! [6]: https://github.com/virto-network/virto-node/pull/282
 //! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
-//! [8]: `crate::Pallet::apply`
-//! [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
-//! [10]: `crate::Pallet::set_metadata`
-//! [11]: `types::CommunityMetadata`
+//! [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
+//!
+//! [t00]: `Config::CommunityId`
+//! [t01]: `types::CommunityMetadata`
+//!
+//! [c00]: `crate::Pallet::apply`
+//! [c01]: `crate::Pallet::set_metadata`
+//! [c02]: `crate::Pallet::add_member`
+//! [c03]: `crate::Pallet::remove_member`
+//!
+//! [g00]: `crate::Pallet::community`
+//! [g01]: `crate::Pallet::metadata`
+//! [g02]: `crate::Pallet::member_information`
+//! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -194,7 +221,8 @@ pub mod pallet {
 		traits::tokens::{fungible, fungibles},
 		Parameter,
 	};
-	use frame_system::pallet_prelude::*;
+	use frame_system::pallet_prelude::{OriginFor, *};
+	use sp_runtime::traits::StaticLookup;
 	use types::*;
 
 	#[pallet::pallet]
@@ -252,24 +280,24 @@ pub mod pallet {
 		type MaxLocations: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 	}
 
-	/// Store the basic information of the community. If a value exists for a
+	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
 	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
 
-	/// Store the metadata regarding a community.
+	/// Stores the metadata regarding a community.
 	#[pallet::storage]
 	#[pallet::getter(fn metadata)]
 	pub(super) type CommunityMetadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, types::CommunityMetadata<T>>;
 
-	/// Store the list of community members. If some values exist under a
-	/// specified [`ComumunityId`][`Config::CommunityId`] prefix, this means a
-	/// community exists.
+	/// Stores the information of a community (specified by its
+	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
+	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
-	#[pallet::getter(fn member_rank_for)]
+	#[pallet::getter(fn member_information)]
 	pub(super) type CommunityMembers<T> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -279,7 +307,7 @@ pub mod pallet {
 		MembershipPassportOf<T>,
 	>;
 
-	/// Store the count of community members. This simplifies the process of
+	/// Stores the count of community members. This simplifies the process of
 	/// keeping track of members' count.
 	#[pallet::storage]
 	#[pallet::getter(fn members_count)]
@@ -296,9 +324,9 @@ pub mod pallet {
 		/// for a community.
 		MetadataSet {
 			id: T::CommunityId,
-			name: Option<Field<64>>,
-			description: Option<Field<256>>,
-			urls: Option<BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>>,
+			name: Option<ConstSizedField<64>>,
+			description: Option<ConstSizedField<256>>,
+			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		},
 	}
@@ -311,12 +339,19 @@ pub mod pallet {
 		/// A community with the same [`CommunityId`][`Config::CommunityId`]
 		/// already exists, therefore cannot be applied for.
 		CommunityAlreadyExists,
+		/// The specified [`CommunityId`][`Config::CommunityId`] is not
+		/// currently active
+		CommunityNotActive,
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// not a member of the community
 		NotAMember,
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// already a member of the community
 		AlreadyAMember,
+		/// It is not possible to remove the sole admin for a specified
+		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
+		/// only member remaining. Please consider changing the admin first.
+		CannotRemoveAdmin,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -326,9 +361,9 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Registers an appliation as a new community, taking an
-		/// [existential deposit][9] used to create the community account.
+		/// [existential deposit][8] used to create the community account.
 		///
-		/// [9]: https://docs.substrate.io/reference/glossary/#existential-deposit
+		/// [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::apply())]
 		pub fn apply(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
@@ -353,13 +388,13 @@ pub mod pallet {
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
-			name: Option<Field<64>>,
-			description: Option<Field<256>>,
-			urls: Option<BoundedVec<BoundedVec<u8, T::MetadataUrlSize>, T::MaxUrls>>,
+			name: Option<ConstSizedField<64>>,
+			description: Option<ConstSizedField<256>>,
+			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		) -> DispatchResult {
 			// Ensures caller is a privileged origin
-			Self::ensure_privileged(origin, &community_id)?;
+			Self::ensure_origin_privileged(origin, &community_id)?;
 
 			let metadata = <CommunityMetadata<T>>::get(&community_id).unwrap_or_default();
 
@@ -384,6 +419,47 @@ pub mod pallet {
 			});
 
 			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+		/// Enroll an account as a community member. In theory,
+		/// any community member should be able to add a member. However, this
+		/// can be changed to ensure it is a privileged function.
+		#[pallet::call_index(2)]
+		#[pallet::weight(T::WeightInfo::add_member())]
+		pub fn add_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_member(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			Self::do_insert_member(&community_id, &who)?;
+
+			Ok(())
+		}
+
+		/// Removes an account as a community member. While
+		/// enrolling a member into the community can be an action taken by any
+		/// member, the decision to remove a member should not be taken
+		/// arbitrarily by any community member. Also, it shouldn't be possible
+		/// to arbitrarily remove the community admin, as some privileged calls
+		/// would be impossible to execute thereafter.
+		#[pallet::call_index(3)]
+		#[pallet::weight(T::WeightInfo::remove_member())]
+		pub fn remove_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			Self::do_remove_member(&community_id, &who)?;
+
 			Ok(())
 		}
 	}
