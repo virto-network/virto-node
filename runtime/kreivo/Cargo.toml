@@ -22,7 +22,7 @@ scale-info = { workspace = true, features = ["derive"] }
 smallvec = { workspace = true }
 
 # Local
-pallet-asset-registry ={ workspace = true }
+pallet-asset-registry = { workspace = true }
 pallet-lockdown-mode = { workspace = true }
 pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
@@ -30,13 +30,13 @@ pallet-communities = { workspace = true }
 virto-common = { workspace = true }
 
 # Substrate
-frame-benchmarking = { workspace = true, optional = true}
+frame-benchmarking = { workspace = true, optional = true }
 frame-executive = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-frame-system-benchmarking = { workspace = true, optional = true}
+frame-system-benchmarking = { workspace = true, optional = true }
 frame-system-rpc-runtime-api = { workspace = true }
-frame-try-runtime = { workspace = true, optional = true}
+frame-try-runtime = { workspace = true, optional = true }
 assets-common = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-assets = { workspace = true }
@@ -74,14 +74,14 @@ polkadot-runtime-common = { workspace = true }
 xcm = { workspace = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
-pallet-xcm-benchmarks = { workspace = true, optional = true}
+pallet-xcm-benchmarks = { workspace = true, optional = true }
 polkadot-parachain-primitives = { workspace = true }
 
 # Cumulus
 cumulus-pallet-aura-ext = { workspace = true }
 cumulus-pallet-dmp-queue = { workspace = true }
 cumulus-pallet-parachain-system = { workspace = true }
-cumulus-pallet-session-benchmarking =  { workspace = true }
+cumulus-pallet-session-benchmarking = { workspace = true }
 cumulus-pallet-xcm = { workspace = true }
 cumulus-pallet-xcmp-queue = { workspace = true }
 cumulus-primitives-core = { workspace = true }
@@ -89,12 +89,10 @@ cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }
 pallet-collator-selection = { workspace = true }
 parachain-info = { workspace = true }
-parachains-common =  { workspace = true }
+parachains-common = { workspace = true }
 
 [features]
-default = [
-	"std",
-]
+default = ["std"]
 std = [
 	"parity-scale-codec/std",
 	"log/std",
