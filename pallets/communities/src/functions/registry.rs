@@ -42,9 +42,7 @@ impl<T: Config> Pallet<T> {
 				*metadata = Some(value);
 			}
 
-			Ok::<(), DispatchError>(())
-		})?;
-
-		Ok(())
+			Ok(())
+		})
 	}
 }

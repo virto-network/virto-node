@@ -10,5 +10,5 @@ pub(self) use types::*;
 mod challenges;
 mod getters;
 mod membership;
-mod registration;
+mod registry;
 mod treasury;
