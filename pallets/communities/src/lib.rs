@@ -361,6 +361,8 @@ pub mod pallet {
 	// weight and must return a DispatchResult.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// === Registry management ===
+
 		/// Registers an appliation as a new community, taking an
 		/// [existential deposit][8] used to create the community account.
 		///
@@ -423,6 +425,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// === Memberships management ===
+
 		/// Enroll an account as a community member. In theory,
 		/// any community member should be able to add a member. However, this
 		/// can be changed to ensure it is a privileged function.
@@ -463,6 +467,8 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		// === Treasury management ===
 
 		/// Transfers an amount of a given asset from the treasury account to a
 		/// beneficiary.
