@@ -11,4 +11,4 @@ mod challenges;
 mod getters;
 mod membership;
 mod registration;
-mod tokens;
+mod treasury;
