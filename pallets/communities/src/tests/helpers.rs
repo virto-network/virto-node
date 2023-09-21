@@ -7,10 +7,7 @@ pub(super) fn get_asset(asset_id: AssetId) -> Option<Vec<u8>> {
 	let prefix = storage_prefix(b"Assets", b"Asset");
 	let asset_key = Blake2_128Concat::hash(&asset_id.to_le_bytes());
 
-	match sp_io::storage::get(&[prefix.to_vec(), asset_key].concat()) {
-		Some(bytes) => Some(bytes.to_vec()),
-		None => None,
-	}
+	sp_io::storage::get(&[prefix.to_vec(), asset_key].concat()).map(|bytes| bytes.to_vec())
 }
 
 pub(super) fn assert_sufficiency(
@@ -25,7 +22,7 @@ pub(super) fn assert_sufficiency(
 
 	let community_account_id = Communities::get_community_account_id(&community_id);
 
-	let value = get_asset(asset_id.clone()).expect("we just saved this asset");
+	let value = get_asset(asset_id).expect("we just saved this asset");
 	let value_expected = [
 		community_account_id.to_le_bytes().to_vec(), // owner
 		community_account_id.to_le_bytes().to_vec(), // issuer

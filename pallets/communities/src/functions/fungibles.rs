@@ -1,5 +1,6 @@
 use super::*;
 use frame_support::traits::tokens::fungibles::{roles::Inspect, Create, Destroy};
+use sp_runtime::traits::Zero;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_create_asset(
@@ -13,7 +14,7 @@ impl<T: Config> Pallet<T> {
 		T::Assets::create(
 			asset_id.clone(),
 			community_account_id,
-			community_assets_count == 0,
+			community_assets_count.is_zero(),
 			min_balance,
 		)?;
 
@@ -31,7 +32,7 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::CannotDestroyUncontrolledAsset)?;
 		}
 
-		T::Assets::start_destroy(asset_id.clone(), Some(community_account_id.clone()))?;
+		T::Assets::start_destroy(asset_id.clone(), Some(community_account_id))?;
 		T::Assets::destroy_accounts(asset_id.clone(), u32::MAX)?;
 		T::Assets::destroy_approvals(asset_id.clone(), u32::MAX)?;
 		T::Assets::finish_destroy(asset_id)?;

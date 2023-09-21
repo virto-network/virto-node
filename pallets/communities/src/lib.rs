@@ -222,6 +222,7 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
+		dispatch::Vec,
 		pallet_prelude::*,
 		traits::tokens::{fungible, fungibles},
 		Parameter,
