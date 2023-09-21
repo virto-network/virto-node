@@ -31,7 +31,7 @@ use frame_support::{
 			Precision::Exact,
 			Preservation::{Expendable, Preserve},
 		},
-		Bounded, QueryPreimage, StorePreimage,
+		Bounded, CallerTrait, QueryPreimage, StorePreimage,
 	},
 };
 
@@ -97,7 +97,9 @@ pub mod pallet {
 			+ One
 			+ Zero;
 
-		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>;
+		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>
+			+ CallerTrait<Self::AccountId>
+			+ MaxEncodedLen;
 
 		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
 		/// The preimage provider with which we look up call hashes to get the
