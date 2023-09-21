@@ -4,10 +4,14 @@ use frame_support::traits::fungible;
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::{ArithmeticError, DispatchError};
 
+mod helpers;
+use helpers::*;
+
+pub(self) type CommunityId = CommunityIdOf<Test>;
 type Error = PalletError<Test>;
 
-const COMMUNITY: u128 = 1;
-const COMMUNITY_ADMIN: u64 = 42;
+const COMMUNITY: CommunityId = 1;
+const COMMUNITY_ADMIN: AccountId = 42;
 
 fn setup() {
 	System::set_block_number(1);
@@ -552,6 +556,100 @@ mod treasury {
 				assert_eq!(Balances::reducible_balance(&ALICE, Preserve, Polite), 0);
 				assert_eq!(Balances::reducible_balance(&community_account_id, Preserve, Polite), 0);
 				assert_eq!(Balances::reducible_balance(&BOB, Preserve, Polite), 0);
+			});
+		}
+	}
+}
+
+mod fungibles {
+	use super::*;
+	use frame_support::traits::{fungible::Unbalanced, fungibles::Create, tokens::Precision::Exact, Currency};
+
+	const COMMUNITY_B: CommunityId = 2;
+
+	const ALICE: AccountId = 40;
+	const BOB: AccountId = 41;
+	const COMMUNITY_MEMBER_1: AccountId = 43;
+
+	const ASSET_A: AssetId = 100;
+	const ASSET_B: AssetId = 101;
+	const ASSET_C: AssetId = 102;
+	const ASSET_D: AssetId = 103;
+
+	fn setup() {
+		super::setup();
+
+		assert_ok!(<Assets as Create<AccountIdOf<Test>>>::create(ASSET_A, ALICE, true, 1));
+
+		let minimum_balance = Balances::minimum_balance();
+		assert_ok!(Balances::increase_balance(&BOB, 2 * minimum_balance, Exact));
+		assert_ok!(Communities::apply(RuntimeOrigin::signed(BOB), COMMUNITY_B));
+
+		assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+		assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY_B));
+	}
+
+	mod create_asset {
+		use super::*;
+
+		#[test]
+		fn fails_if_bad_origin() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				// Fail if trying to call from unsigned origin
+				assert_noop!(
+					Communities::create_asset(RuntimeOrigin::none(), COMMUNITY, ASSET_A, 1),
+					DispatchError::BadOrigin
+				);
+
+				// Fail if trying to call from non-admin
+				assert_noop!(
+					Communities::create_asset(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, ASSET_A, 1),
+					DispatchError::BadOrigin
+				);
+			});
+		}
+
+		#[test]
+		fn fails_if_asset_exists() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::create_asset(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, ASSET_A, 1),
+					pallet_assets::Error::<Test>::InUse
+				);
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				// Can register a new asset
+				assert_ok!(Communities::create_asset(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					ASSET_B,
+					1
+				));
+
+				// Can register additional assets
+				assert_ok!(Communities::create_asset(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					ASSET_C,
+					1
+				));
+
+				// First asset owned by the community is sufficient by default
+				assert_sufficiency(COMMUNITY, ASSET_B, 1, true);
+
+				// Additional assets owned by the community are not sufficient
+				// by default
+				assert_sufficiency(COMMUNITY, ASSET_C, 1, false);
 			});
 		}
 	}

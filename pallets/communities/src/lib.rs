@@ -136,19 +136,19 @@
 //!   any community member. Also, it shouldn't be possible to arbitrarily remove
 //!   the community admin, as some privileged calls would be impossible execute
 //!   thereafter.
-//! - `promote_member`: Increases the rank of a member in the community. ! -
-//!   `demote_member`: Decreases the rank of a member in the community.
-//! - `issue_token`: Creates a token that is either governance (only one per
-//!   community allowed) or economic. While the first economic token is
-//!   _"free"_," further ones would be subject to network-wide referenda.
+//! - `promote_member`: Increases the rank of a member in the community.
+//! - `demote_member`: Decreases the rank of a member in the community.
 //! - `close_proposal`: Forcefully closes a proposal, dispatching the call when
 //!   approved.
 //! - [`assets_transfer`][c04]: Transfers an amount of a given asset from the
 //!   treasury account to a beneficiary.
 //! - [`balance_transfer`][c05]: Transfers funds from the treasury account to a
 //!   beneficiary.
-//! - `set_sufficient_asset`: Marks an [asset][7] issued by the community as
-//!   sufficient. Only one asset at a time can be marked as such.
+//! - [`create_asset`][c06]: Creates a [fungible asset][7] that is controlled by
+//!   the community treasury. The asset is not marked as sufficient, unless it's
+//!   the first one being issued.
+//! - [`destroy_asset`][c07]: Destroys a [fungible asset][1] issued by the
+//!   community.
 //! - `set_admin`: Sets an [`AccountId`][1] of the _admin_ of the community.
 //!   Ensures that the specified account is a member of the community.
 //! - `set_voting_mechanism`: Transfers funds from the treasury account to a
@@ -170,8 +170,9 @@
 //! - [`member_information`][g02]: Stores the information of a community
 //!   (specified by its [`CommunityId`][t00]) member (specified by it's
 //!   [`AccountId`][1]).
-//! - [`members_count`][g03]: Store the count of community members. This
+//! - [`members_count`][g03]: Stores the count of community members. This
 //!   simplifies the process of keeping track of members' count.
+//! - [`assets`][g04]: Stores the list of assets created by the community.
 //!
 //! <!-- References -->
 //! [1]: `frame_system::Config::AccountId`
@@ -192,11 +193,14 @@
 //! [c03]: `crate::Pallet::remove_member`
 //! [c04]: `crate::Pallet::assets_transfer`
 //! [c05]: `crate::Pallet::balance_transfer`
+//! [c06]: `crate::Pallet::create_asset`
+//! [c07]: `crate::Pallet::destroy_asset`
 //!
 //! [g00]: `crate::Pallet::community`
 //! [g01]: `crate::Pallet::metadata`
 //! [g02]: `crate::Pallet::member_information`
 //! [g03]: `crate::Pallet::members_count`
+//! [g04]: `crate::Pallet::assets`
 pub use pallet::*;
 
 #[cfg(test)]
@@ -243,7 +247,8 @@ pub mod pallet {
 		type Assets: fungibles::Inspect<Self::AccountId>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Create<Self::AccountId>
-			+ fungibles::Destroy<Self::AccountId>;
+			+ fungibles::Destroy<Self::AccountId>
+			+ fungibles::roles::Inspect<Self::AccountId>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Balances: fungible::Inspect<Self::AccountId>
@@ -314,6 +319,13 @@ pub mod pallet {
 	#[pallet::getter(fn members_count)]
 	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
 
+	/// Stores the list of assets created by the community.
+	#[pallet::storage]
+	#[pallet::unbounded]
+	#[pallet::getter(fn assets)]
+	pub(super) type CommunityAssets<T> =
+		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Vec<AssetIdOf<T>>, ValueQuery>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -353,6 +365,13 @@ pub mod pallet {
 		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
 		/// only member remaining. Please consider changing the admin first.
 		CannotRemoveAdmin,
+		/// The asset indicated with a specified
+		/// [`AssetId`][frame_system::Config::AssetId] cannot be found
+		UnknownAsset,
+		/// The asset specified with a certain
+		/// [`AssetId`][frame_system::Config::AssetId] is not controlled by the
+		/// community, therefore can't be destroyed
+		CannotDestroyUncontrolledAsset,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -511,6 +530,29 @@ pub mod pallet {
 				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
 				amount,
 			)?;
+
+			Ok(())
+		}
+
+		// === Fungibles management ===
+
+		/// Creates a [fungible asset][1] that is controlled by the community
+		/// treasury. The asset is not marked as sufficient, unless it's the
+		/// first one being issued.
+		///
+		/// [1]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
+		#[pallet::call_index(6)]
+		#[pallet::weight(T::WeightInfo::create_asset())]
+		pub fn create_asset(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			asset_id: AssetIdOf<T>,
+			min_balance: BalanceOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_create_asset(&community_id, asset_id, min_balance)?;
 
 			Ok(())
 		}

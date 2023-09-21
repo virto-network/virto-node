@@ -8,6 +8,7 @@ pub(self) use frame_system::pallet_prelude::*;
 pub(self) use types::*;
 
 mod challenges;
+mod fungibles;
 mod getters;
 mod membership;
 mod registry;
