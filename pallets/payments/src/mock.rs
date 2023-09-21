@@ -2,10 +2,12 @@ pub use crate as pallet_payments;
 pub use crate::types::*;
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, EqualPrivilegeOnly},
+	weights::Weight,
 	PalletId,
 };
 
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
@@ -50,12 +52,16 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets,
 		Sudo: pallet_sudo,
 		Payments: pallet_payments,
+		Scheduler: pallet_scheduler,
+		Preimage: pallet_preimage,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
+	pub MaxWeight: Weight = Weight::from_parts(2_000_000_000_000, u64::MAX);
+
 }
 
 pub type Balance = u64;
@@ -133,6 +139,28 @@ impl pallet_sudo::Config for Test {
 	type WeightInfo = ();
 }
 
+impl pallet_preimage::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<u64>;
+	type BaseDeposit = ();
+	type ByteDeposit = ();
+}
+
+impl pallet_scheduler::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaxWeight;
+	type ScheduleOrigin = EnsureRoot<u64>;
+	type MaxScheduledPerBlock = ConstU32<100>;
+	type WeightInfo = ();
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type Preimages = Preimage;
+}
+
 pub struct MockFeeHandler;
 
 impl crate::types::FeeHandler<Test> for MockFeeHandler {
@@ -192,6 +220,11 @@ impl pallet_payments::Config for Test {
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type MaxDiscounts = ConstU32<50>;
 	type MaxFees = ConstU32<50>;
+	type RuntimeCall = RuntimeCall;
+	type Scheduler = Scheduler;
+	type Preimages = ();
+	type CancelBufferBlockLength = ConstU64<3>;
+	type PalletsOrigin = OriginCaller;
 }
 
 // Build genesis storage according to the mock runtime.

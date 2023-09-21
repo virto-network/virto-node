@@ -8,6 +8,27 @@ use frame_support::{assert_ok, traits::fungibles};
 
 use sp_runtime::BoundedVec;
 
+fn build_payment() {
+	let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
+	let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
+
+	assert_ok!(Payments::pay(
+		RuntimeOrigin::signed(SENDER_ACCOUNT),
+		PAYMENT_BENEFICIARY,
+		ASSET_ID,
+		PAYMENT_AMOUNT,
+		Some(remark.clone()),
+	));
+
+	System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
+		sender: SENDER_ACCOUNT,
+		beneficiary: PAYMENT_BENEFICIARY,
+		asset: ASSET_ID,
+		amount: PAYMENT_AMOUNT,
+		remark: Some(remark.clone()),
+	}));
+}
+
 /// What we will do:
 /// Sender(2) pays 20 tokens to the PAYMENT_BENEFICIARY(21)
 /// Sender pays the following fees:
@@ -209,4 +230,7 @@ fn test_pay_and_cancel_works() {
 			100
 		);
 	});
+
+	#[test]
+	fn payment_refunded_request() {}
 }

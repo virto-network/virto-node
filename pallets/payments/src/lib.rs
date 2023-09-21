@@ -97,7 +97,9 @@ pub mod pallet {
 			+ One
 			+ Zero;
 
-		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::RuntimeOrigin>;
+		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>;
+
+		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
 		/// The preimage provider with which we look up call hashes to get the
 		/// call.
 		type Preimages: QueryPreimage + StorePreimage;
@@ -354,6 +356,7 @@ pub mod pallet {
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
 		pub fn request_refund(
 			origin: OriginFor<T>,
+			pallet_origin: <T as Config>::PalletsOrigin,
 			beneficiary: AccountIdLookupOf<T>,
 			payment_id: T::PaymentId,
 		) -> DispatchResultWithPostInfo {
@@ -387,7 +390,7 @@ pub mod pallet {
 						DispatchTime::At(cancel_block),
 						None,
 						63,
-						origin,
+						pallet_origin,
 						T::Preimages::bound(cancel_call)?,
 					)
 					.is_ok();
