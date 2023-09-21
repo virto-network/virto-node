@@ -28,6 +28,9 @@ serde = { version = "1.0.132" }
 pallet-balances = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 pallet-sudo = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
 pallet-assets = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+pallet-preimage = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+pallet-scheduler = { git = "https://github.com/virto-network/substrate", default-features = false, branch = "nicof-adding-hold-traits-asset-pallet" }
+
 sp-keystore = { git = "https://github.com/virto-network/substrate", branch = "nicof-adding-hold-traits-asset-pallet" }
 
 # Substrate
@@ -48,6 +51,8 @@ std = [
 	"pallet-balances/std",
 	"pallet-sudo/std",
 	"pallet-assets/std",
+	"pallet-preimage/std",
+	"pallet-scheduler/std",
 	"sp-std/std",
 	"sp-io/std",
 ]

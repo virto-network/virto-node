@@ -4487,12 +4487,12 @@ dependencies = [
  "pallet-nomination-pools-runtime-api",
  "pallet-offences",
  "pallet-offences-benchmarking",
- "pallet-preimage",
+ "pallet-preimage 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-proxy",
  "pallet-ranked-collective",
  "pallet-recovery",
  "pallet-referenda",
- "pallet-scheduler",
+ "pallet-scheduler 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-society",
@@ -6721,6 +6721,8 @@ dependencies = [
  "log",
  "pallet-assets 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "pallet-balances 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "pallet-preimage 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "pallet-scheduler 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "pallet-sudo 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "parity-scale-codec",
  "scale-info",
@@ -6728,6 +6730,23 @@ dependencies = [
  "sp-core 21.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "sp-io 23.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "sp-keystore 0.27.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "sp-runtime 24.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "sp-std 8.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+]
+
+[[package]]
+name = "pallet-preimage"
+version = "4.0.0-dev"
+source = "git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet#26c3601308e8743b909af0ed27cf00599db99131"
+dependencies = [
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "frame-support 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "frame-system 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core 21.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "sp-io 23.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "sp-runtime 24.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
  "sp-std 8.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
 ]
@@ -6829,6 +6848,23 @@ dependencies = [
  "sp-io 23.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "sp-runtime 24.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "sp-std 8.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
+]
+
+[[package]]
+name = "pallet-scheduler"
+version = "4.0.0-dev"
+source = "git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet#26c3601308e8743b909af0ed27cf00599db99131"
+dependencies = [
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "frame-support 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "frame-system 4.0.0-dev (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io 23.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "sp-runtime 24.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "sp-std 8.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
+ "sp-weights 20.0.0 (git+https://github.com/virto-network/substrate?branch=nicof-adding-hold-traits-asset-pallet)",
 ]
 
 [[package]]
@@ -8395,10 +8431,10 @@ dependencies = [
  "pallet-nomination-pools-runtime-api",
  "pallet-offences",
  "pallet-offences-benchmarking",
- "pallet-preimage",
+ "pallet-preimage 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-proxy",
  "pallet-referenda",
- "pallet-scheduler",
+ "pallet-scheduler 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-staking",
@@ -9464,10 +9500,10 @@ dependencies = [
  "pallet-multisig",
  "pallet-nis",
  "pallet-offences",
- "pallet-preimage",
+ "pallet-preimage 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-proxy",
  "pallet-recovery",
- "pallet-scheduler",
+ "pallet-scheduler 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-session",
  "pallet-society",
  "pallet-staking",
@@ -14498,10 +14534,10 @@ dependencies = [
  "pallet-nomination-pools-runtime-api",
  "pallet-offences",
  "pallet-offences-benchmarking",
- "pallet-preimage",
+ "pallet-preimage 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-proxy",
  "pallet-recovery",
- "pallet-scheduler",
+ "pallet-scheduler 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-society",
