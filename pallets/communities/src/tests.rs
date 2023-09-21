@@ -653,4 +653,94 @@ mod fungibles {
 			});
 		}
 	}
+
+	mod destroy_asset {
+		use super::*;
+
+		fn setup() {
+			super::setup();
+
+			assert_ok!(Communities::create_asset(
+				RuntimeOrigin::signed(COMMUNITY_ADMIN),
+				COMMUNITY,
+				ASSET_B,
+				1
+			));
+			assert_ok!(Communities::create_asset(
+				RuntimeOrigin::signed(BOB),
+				COMMUNITY_B,
+				ASSET_C,
+				1
+			));
+		}
+
+		#[test]
+		fn fails_if_bad_origin() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				// Fail if trying to call from unsigned origin
+				assert_noop!(
+					Communities::destroy_asset(RuntimeOrigin::none(), COMMUNITY, ASSET_A),
+					DispatchError::BadOrigin
+				);
+
+				// Fail if trying to call from non-admin
+				assert_noop!(
+					Communities::destroy_asset(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, ASSET_A),
+					DispatchError::BadOrigin
+				);
+			});
+		}
+
+		#[test]
+		fn fails_if_asset_does_not_exist() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::destroy_asset(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, ASSET_D),
+					Error::UnknownAsset,
+				);
+			});
+		}
+
+		#[test]
+		fn fails_if_asset_is_not_controlled_by_the_community() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::destroy_asset(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, ASSET_C),
+					Error::CannotDestroyUncontrolledAsset,
+				);
+
+				assert_noop!(
+					Communities::destroy_asset(RuntimeOrigin::signed(BOB), COMMUNITY_B, ASSET_B),
+					Error::CannotDestroyUncontrolledAsset,
+				);
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_ok!(Communities::destroy_asset(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					ASSET_B
+				));
+				assert!(get_asset(ASSET_B).is_none());
+
+				assert_ok!(Communities::destroy_asset(
+					RuntimeOrigin::signed(BOB),
+					COMMUNITY_B,
+					ASSET_C
+				));
+				assert!(get_asset(ASSET_B).is_none());
+			});
+		}
+	}
 }

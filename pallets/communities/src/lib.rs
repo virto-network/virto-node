@@ -556,5 +556,27 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		/// Destroys a [fungible asset][1] issued by the community.
+		///
+		/// **Warning:** By calling this method, you'll be entirely destroying
+		/// such asset, which will burn it from the holders' accounts as a
+		/// consequence.
+		///
+		/// [1]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::WeightInfo::destroy_asset())]
+		pub fn destroy_asset(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			asset_id: AssetIdOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_destroy_asset(&community_id, asset_id)?;
+
+			Ok(())
+		}
 	}
 }
