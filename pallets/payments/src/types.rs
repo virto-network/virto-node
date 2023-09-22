@@ -1,7 +1,6 @@
 #![allow(unused_qualifications)]
 use crate::*;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
-use frame_support::traits::OriginTrait;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, BoundedVec, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
@@ -35,7 +34,7 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested,
 	/// Requested]
-	pub state: PaymentState,
+	pub state: PaymentState<BlockNumberFor<T>>,
 	/// fee charged and recipient account details
 	pub fees_details: Fees<T>,
 }
@@ -44,13 +43,15 @@ pub struct PaymentDetail<T: pallet::Config> {
 /// When a payment is 'completed' or 'cancelled' it is removed from storage and
 /// hence not tracked by a state.
 #[derive(Clone, Encode, Decode, Eq, PartialEq, MaxEncodedLen, TypeInfo, Debug)]
-pub enum PaymentState {
+pub enum PaymentState<BlockNumber> {
 	/// Amounts have been reserved and waiting for release/cancel
 	Created,
 	/// A judge needs to review and release manually
 	NeedsReview,
 	/// The user has requested refund and will be processed by `BlockNumber`
-	RefundRequested,
+	RefundRequested {
+		cancel_block: BlockNumber,
+	},
 	/// The recipient of this transaction has created a request
 	PaymentRequested,
 	Finished,
@@ -122,4 +123,11 @@ pub struct ScheduledTask<Time: HasCompact> {
 	pub task: Task,
 	/// the 'time' at which the task should be executed
 	pub when: Time,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub struct DisputeResult {
+	pub percent_beneficiary: Percent,
+	pub sender_pay_fees: bool,
+	pub beneficiary_pay_fees: bool,
 }

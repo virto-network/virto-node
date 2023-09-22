@@ -306,7 +306,7 @@ pub mod pallet {
 				Payment::<T>::get((&sender, &beneficiary, &payment_id)).map_err(|_| Error::<T>::InvalidPayment)?;
 			ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
-			Self::settle_payment(&sender, &beneficiary, &payment_id)?;
+			Self::settle_payment(&sender, &beneficiary, &payment_id, None)?;
 
 			Self::deposit_event(Event::PaymentReleased { sender, beneficiary });
 			Ok(().into())
@@ -336,7 +336,7 @@ pub mod pallet {
 						beneficiary: beneficiary.clone(),
 					});
 				}
-				PaymentState::RefundRequested => {
+				PaymentState::RefundRequested { cancel_block: _ } => {
 					Self::cancel_payment(&sender, &beneficiary, payment)?;
 					Self::deposit_event(Event::PaymentRequestCompleted {
 						sender: sender.clone(),
@@ -397,13 +397,60 @@ pub mod pallet {
 					)
 					.is_ok();
 
-					payment.state = PaymentState::RefundRequested;
+					payment.state = PaymentState::RefundRequested { cancel_block };
 
 					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
 						sender,
 						beneficiary: beneficiary_account,
 						expiry: cancel_block,
 					});
+
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+
+		/// Allow payment recipient to dispute the refund request from the
+		/// payment creator This does not cancel the request, instead sends the
+		/// payment to a NeedsReview state The assigned resolver account can
+		/// then change the state of the payment after review.
+		#[pallet::call_index(4)]
+		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		pub fn dispute_refund(
+			origin: OriginFor<T>,
+			sender: AccountIdLookupOf<T>,
+			payment_id: T::PaymentId,
+			dispute_result: DisputeResult,
+		) -> DispatchResultWithPostInfo {
+			use PaymentState::*;
+			let beneficiary = ensure_signed(origin)?;
+			let sender = T::Lookup::lookup(sender)?;
+			Payment::<T>::try_mutate(
+				(sender.clone(), beneficiary.clone(), payment_id),
+				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
+					// ensure the payment exists
+					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
+					// ensure the payment is in Requested Refund state
+					match payment.state {
+						RefundRequested { cancel_block } => {
+							ensure!(
+								cancel_block > frame_system::Pallet::<T>::block_number(),
+								Error::<T>::InvalidAction
+							);
+
+							payment.state = PaymentState::NeedsReview;
+
+							let _ =
+								T::Scheduler::cancel_named(("payment", payment_id).using_encoded(blake2_256)).is_ok();
+
+							let _ = Self::settle_payment(&sender, &beneficiary, &payment_id, Some(dispute_result))?;
+
+							Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
+						}
+						_ => fail!(Error::<T>::InvalidAction),
+					}
 
 					Ok(())
 				},
@@ -425,7 +472,7 @@ impl<T: Config> Pallet<T> {
 		asset: AssetIdOf<T>,
 		payment_id: T::PaymentId,
 		amount: BalanceOf<T>,
-		payment_state: PaymentState,
+		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
 	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
@@ -499,7 +546,12 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn settle_payment(sender: &T::AccountId, beneficiary: &T::AccountId, payment_id: &T::PaymentId) -> DispatchResult {
+	fn settle_payment(
+		sender: &T::AccountId,
+		beneficiary: &T::AccountId,
+		payment_id: &T::PaymentId,
+		dispute_result: Option<DisputeResult>,
+	) -> DispatchResult {
 		Payment::<T>::try_mutate((sender, beneficiary, payment_id), |maybe_payment| -> DispatchResult {
 			let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
 
@@ -510,35 +562,33 @@ impl<T: Config> Pallet<T> {
 				payment.fees_details.get_fees_details_for_sender()?;
 			let total_sender_release = total_sender_fee_amount.saturating_add(payment.incentive_amount);
 
+			// Sender release for paying fees if
 			T::Assets::release(payment.asset.clone(), reason, sender, total_sender_release, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			for (sender_fee_recipient_account, fee_amount) in fee_sender_recipients.iter() {
-				T::Assets::transfer(
-					payment.asset.clone(),
-					sender,
-					sender_fee_recipient_account,
-					*fee_amount,
-					Preserve,
-				)
-				.map_err(|_| Error::<T>::TransferFailed)?;
-			}
-
-			// Release the whole payment
+			// Beneficiary release the whole payment
 			T::Assets::release(payment.asset.clone(), reason, beneficiary, payment.amount, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			let (fee_beneficiary_recipients, _) = payment.fees_details.get_fees_details_for_beneficiary()?;
+			match dispute_result {
+				Some(dispute_result) => {
+					// Add logics for deduct fee amounts by getting the totals.
+					if dispute_result.sender_pay_fees == true {
+						let total = Self::get_and_transfer_fees(&sender, &payment, true);
+					}
 
-			for (beneficiary_recipient_account, fee_amount) in fee_beneficiary_recipients.iter() {
-				T::Assets::transfer(
-					payment.asset.clone(),
-					beneficiary,
-					beneficiary_recipient_account,
-					*fee_amount,
-					Preserve,
-				)
-				.map_err(|_| Error::<T>::TransferFailed)?;
+					if dispute_result.beneficiary_pay_fees == true {
+						Self::get_and_transfer_fees(&beneficiary, &payment, false)?;
+					}
+
+					let amount_to_beneficiary = dispute_result.percent_beneficiary.mul_floor(payment.amount);
+					let amount_to_sender = payment.amount.saturating_sub(amount_to_beneficiary);
+					// send share to recipient
+				}
+				None => {
+					Self::get_and_transfer_fees(&sender, &payment, true)?;
+					Self::get_and_transfer_fees(&beneficiary, &payment, false)?;
+				}
 			}
 
 			payment.state = PaymentState::Finished;
@@ -547,5 +597,23 @@ impl<T: Config> Pallet<T> {
 			Ok(())
 		})?;
 		Ok(())
+	}
+
+	fn get_and_transfer_fees(
+		account: &T::AccountId,
+		payment: &PaymentDetail<T>,
+		is_sender: bool,
+	) -> Result<<T as Config>::AssetsBalance, sp_runtime::DispatchError> {
+		let (fee_recipients, total) = if is_sender {
+			payment.fees_details.get_fees_details_for_sender()?
+		} else {
+			payment.fees_details.get_fees_details_for_beneficiary()?
+		};
+
+		for (recipient_account, fee_amount) in fee_recipients.iter() {
+			T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
+				.map_err(|_| Error::<T>::TransferFailed)?;
+		}
+		Ok(total)
 	}
 }
