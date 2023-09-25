@@ -172,23 +172,35 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 		_remark: Option<&[u8]>,
 	) -> Fees<Test> {
 		let sender_fees = vec![
-			SubTypes::Fixed(FEE_SENDER_ACCOUNT, FEE_SENDER_AMOUNT),
-			SubTypes::Percentage(FEE_SYSTEM_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
+			SubTypes::Fixed(FEE_SENDER_ACCOUNT, FEE_SENDER_AMOUNT, false),
+			SubTypes::Percentage(
+				FEE_SYSTEM_ACCOUNT,
+				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
+				true,
+			),
 		];
 
 		let beneficiary_fees = vec![
-			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, FEE_BENEFICIARY_AMOUNT),
-			SubTypes::Percentage(FEE_SYSTEM_ACCOUNT, Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE)),
+			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, FEE_BENEFICIARY_AMOUNT, false),
+			SubTypes::Percentage(
+				FEE_SYSTEM_ACCOUNT,
+				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
+				true,
+			),
 		];
 
 		let compute_fee = |fees: &Vec<SubTypes<Test>>| -> FeeDetails<Test> {
 			let details = fees
 				.iter()
 				.map(|fee| match fee {
-					SubTypes::Fixed(account, amount_fixed) => (*account, *amount_fixed),
-					SubTypes::Percentage(account, percent) => (*account, percent.mul_floor(*amount)),
+					SubTypes::Fixed(account, amount_fixed, charged_disputes) => {
+						(*account, *amount_fixed, *charged_disputes)
+					}
+					SubTypes::Percentage(account, percent, charged_disputes) => {
+						(*account, percent.mul_floor(*amount), *charged_disputes)
+					}
 				})
-				.collect::<Vec<(AccountId, Balance)>>();
+				.collect::<Vec<(AccountId, Balance, bool)>>();
 			// This is a test, so i'm just unwrapping
 			let bounded_details: FeeDetails<Test> = BoundedVec::try_from(details).unwrap();
 			bounded_details
