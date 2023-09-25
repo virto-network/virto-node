@@ -12,7 +12,7 @@ const DEFAULT_PROTOCOL_ID: &str = "kreivo";
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<kreivo_runtime::RuntimeGenesisConfig, Extensions>;
 
-const KREIVO_PARA_ID: u32 = 2000;
+const KREIVO_PARA_ID: u32 = 2281;
 
 /// Generate the session keys from individual elements.
 ///
@@ -82,15 +82,15 @@ pub fn kreivo_rococo_chain_spec_local() -> ChainSpec {
 pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 	// Give your kreivo currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("ss58Format".into(), 2.into());
 	properties.insert("tokenSymbol".into(), "KSM".into());
 	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 2.into());
 
 	ChainSpec::from_genesis(
 		// Name
 		"Kreivo Local-Kusama Local",
 		// ID
-		"kreivo_kusama_local",
+		"kreivo-kusama-local",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -106,7 +106,7 @@ pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 					),
 				],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				hex!("49daa32c7287890f38b7e1a8cd2961723d36d20baa0bf3b82e0c4bdda93b1c0a").into(),
 				// Pre-funded accounts
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -152,7 +152,12 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.chain(std::iter::once(root_key.clone()))
+				.map(|k| (k, 2_000_000_000_000_000))
+				.collect(),
 		},
 		parachain_info: kreivo_runtime::ParachainInfoConfig {
 			parachain_id: id,
@@ -197,9 +202,9 @@ fn testnet_genesis(
 
 pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 	let mut properties = sc_chain_spec::Properties::new();
+	properties.insert("ss58Format".into(), 2.into());
 	properties.insert("tokenSymbol".into(), "KSM".into());
 	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 2.into());
 
 	ChainSpec::from_genesis(
 		// Name
@@ -212,23 +217,20 @@ pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 				// initial collators.
 				vec![
 					(
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").unchecked_into(),
+						hex!("203aec61cedbfa0cd23f183a972b8646794b9106e62d141c6af4fbbbe293847b").into(),
+						hex!("203aec61cedbfa0cd23f183a972b8646794b9106e62d141c6af4fbbbe293847b").unchecked_into(),
 					),
 					(
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-						hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").unchecked_into(),
+						hex!("74d538cee938b3f988567a3d0ad4b0dd84735ceab8b51cdfb850ecf58accfd7e").into(),
+						hex!("74d538cee938b3f988567a3d0ad4b0dd84735ceab8b51cdfb850ecf58accfd7e").unchecked_into(),
 					),
 				],
-				hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
+				hex!("7b953019065b4342a4f1fcf62be8f3e83c8d15303b674fd7191e598f699e764f").into(),
 				vec![
 					// This account will have root origin
-					hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-					hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-					hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-					hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-					hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
-					hex!("441f1878b52468c7f4da41cec27dc13e6843c283a58d33485212ae48cf94fb3c").into(),
+					hex!("68170716ab7c6735dd0a1012045d9ea33891b5f6596cf97eb217d0962d86a518").into(),
+					hex!("556d3b25d068997f358622cc0f9531e4175d0d10d8ae8511c091d61efc21f65c").into(),
+					hex!("8a0b6ddc780dbeb1c943caeadc7d09d85b2dc5b74026153f7931e068390d4441").into(),
 				],
 				KREIVO_PARA_ID.into(),
 			)
@@ -263,7 +265,7 @@ fn kreivo_live_genesis(
 				.iter()
 				.cloned()
 				.chain(std::iter::once(root_key.clone()))
-				.map(|k| (k, 1_500_000_000_000_000_000))
+				.map(|k| (k, 2_000_000_000_000_000))
 				.collect(),
 		},
 		parachain_info: kreivo_runtime::ParachainInfoConfig {

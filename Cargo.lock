@@ -4357,7 +4357,7 @@ dependencies = [
 
 [[package]]
 name = "kreivo-runtime"
-version = "0.4.0"
+version = "0.5.2"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
@@ -13679,7 +13679,7 @@ dependencies = [
 
 [[package]]
 name = "virto-node"
-version = "0.4.0"
+version = "0.5.2"
 dependencies = [
  "assert_cmd",
  "async-trait",
@@ -13754,7 +13754,7 @@ dependencies = [
 
 [[package]]
 name = "virto-runtime"
-version = "0.4.0"
+version = "0.5.2"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
