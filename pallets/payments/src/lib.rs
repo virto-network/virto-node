@@ -58,11 +58,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// The aggregated origin which the dispatch will take.
-		type RuntimeOrigin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
-			+ From<Self::PalletsOrigin>
-			+ IsType<<Self as frame_system::Config>::RuntimeOrigin>;
-
 		/// The caller origin, overarching type of all pallets origins.
 		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>
 			+ CallerTrait<Self::AccountId>
@@ -70,7 +65,7 @@ pub mod pallet {
 
 		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin, PostInfo = PostDispatchInfo>
 			+ GetDispatchInfo
 			+ From<Call<Self>>;
 
@@ -95,7 +90,7 @@ pub mod pallet {
 
 		type FeeHandler: FeeHandler<Self>;
 
-		type DisputeResolver: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
+		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin>;
 
 		type PaymentId: Member
 			+ Parameter

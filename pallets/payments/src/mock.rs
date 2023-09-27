@@ -20,18 +20,15 @@ type AccountId = u64;
 
 pub const SENDER_ACCOUNT: AccountId = 10;
 pub const PAYMENT_BENEFICIARY: AccountId = 11;
-pub const ASSET_ADMIN_ACCOUNT: AccountId = 1;
+pub const ASSET_ADMIN_ACCOUNT: AccountId = 3;
+pub const ROOT_ACCOUNT: AccountId = 1;
+
 pub const ASSET_ID: u32 = 1;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
 pub const INITIAL_BALANCE: u64 = 100;
 pub const PAYMENT_ID: u32 = 1;
 
-/* for future uses
-pub const PAYMENT_RECIPENT_FEE_CHARGED: AccountId = 21;
-pub const CANCEL_BLOCK_BUFFER: u64 = 600;
-*/
-/// Destination account for the fee payment
 pub const FEE_SENDER_ACCOUNT: AccountId = 30;
 pub const FEE_BENEFICIARY_ACCOUNT: AccountId = 31;
 pub const FEE_SYSTEM_ACCOUNT: AccountId = 32;
@@ -220,7 +217,6 @@ parameter_types! {
 }
 
 impl pallet_payments::Config for Test {
-	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
 	type Assets = Assets;
 	type AssetsBalance = u64;
@@ -269,6 +265,12 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 			// id, account_id, balance
 			(ASSET_ID, SENDER_ACCOUNT, 100),
 		],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+
+	pallet_sudo::GenesisConfig::<Test> {
+		key: Some(ROOT_ACCOUNT),
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
