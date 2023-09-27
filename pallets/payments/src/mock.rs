@@ -220,6 +220,7 @@ parameter_types! {
 }
 
 impl pallet_payments::Config for Test {
+	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
 	type Assets = Assets;
 	type AssetsBalance = u64;
@@ -235,7 +236,7 @@ impl pallet_payments::Config for Test {
 	type RuntimeCall = RuntimeCall;
 	type Scheduler = Scheduler;
 	type Preimages = ();
-	type CancelBufferBlockLength = ConstU64<3>;
+	type CancelBufferBlockLength = ConstU64<10>;
 	type PalletsOrigin = OriginCaller;
 }
 
