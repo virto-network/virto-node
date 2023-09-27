@@ -2,12 +2,14 @@ pub use crate as pallet_payments;
 pub use crate::types::*;
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, EqualPrivilegeOnly, OnFinalize, OnInitialize},
+	traits::{
+		AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EnsureOrigin, EqualPrivilegeOnly, OnFinalize, OnInitialize,
+	},
 	weights::Weight,
 	PalletId,
 };
 
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureRootWithSuccess, RawOrigin};
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
@@ -224,7 +226,7 @@ impl pallet_payments::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
-	type DisputeResolver = frame_system::EnsureRoot<u64>;
+	type DisputeResolver = frame_system::EnsureRootWithSuccess<u64, ConstU64<ROOT_ACCOUNT>>;
 	type PalletId = PaymentPalletId;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type MaxDiscounts = ConstU32<50>;

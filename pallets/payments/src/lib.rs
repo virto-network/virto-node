@@ -90,7 +90,7 @@ pub mod pallet {
 
 		type FeeHandler: FeeHandler<Self>;
 
-		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin>;
+		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 
 		type PaymentId: Member
 			+ Parameter
@@ -475,8 +475,8 @@ pub mod pallet {
 			payment_id: T::PaymentId,
 			dispute_result: DisputeResult,
 		) -> DispatchResultWithPostInfo {
-			let dispute_resolver = ensure_signed(origin.clone())?;
-			T::DisputeResolver::ensure_origin(origin)?;
+			let dispute_resolver = T::DisputeResolver::ensure_origin(origin)?;
+
 			let sender = T::Lookup::lookup(sender)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
