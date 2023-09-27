@@ -2,12 +2,12 @@ pub use crate as pallet_payments;
 pub use crate::types::*;
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, EqualPrivilegeOnly},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, EqualPrivilegeOnly, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
 
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
@@ -276,4 +276,12 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 	ext.register_extension(KeystoreExt::new(MemoryKeystore::new()));
 	ext.execute_with(|| System::set_block_number(1));
 	ext
+}
+
+pub fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		Scheduler::on_finalize(System::block_number());
+		System::set_block_number(System::block_number() + 1);
+		Scheduler::on_initialize(System::block_number());
+	}
 }

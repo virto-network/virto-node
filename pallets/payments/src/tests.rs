@@ -8,7 +8,7 @@ use frame_support::{assert_ok, traits::fungibles};
 
 use sp_runtime::BoundedVec;
 
-fn build_payment() {
+fn build_payment() -> Fees<Test> {
 	let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 	let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
 
@@ -27,6 +27,36 @@ fn build_payment() {
 		amount: PAYMENT_AMOUNT,
 		remark: Some(remark.clone()),
 	}));
+
+	let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+		&ASSET_ID,
+		&SENDER_ACCOUNT,
+		&PAYMENT_BENEFICIARY,
+		&PAYMENT_AMOUNT,
+		Some(remark.as_slice()),
+	);
+
+	assert_eq!(
+		PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+		PaymentDetail {
+			asset: ASSET_ID,
+			amount: PAYMENT_AMOUNT,
+			incentive_amount: INCENTIVE_AMOUNT,
+			state: PaymentState::Created,
+			fees_details: fees_details.clone(),
+		}
+	);
+
+	assert_eq!(
+		<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
+		PAYMENT_AMOUNT
+	);
+	assert_eq!(
+		<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
+		INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
+	);
+
+	fees_details
 }
 
 /// What we will do:
@@ -49,52 +79,7 @@ fn build_payment() {
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
-		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
-		let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
-
-		assert_ok!(Payments::pay(
-			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
-			ASSET_ID,
-			PAYMENT_AMOUNT,
-			Some(remark.clone()),
-		));
-
-		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
-			asset: ASSET_ID,
-			amount: PAYMENT_AMOUNT,
-			remark: Some(remark.clone()),
-		}));
-
-		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
-			&ASSET_ID,
-			&SENDER_ACCOUNT,
-			&PAYMENT_BENEFICIARY,
-			&PAYMENT_AMOUNT,
-			Some(remark.as_slice()),
-		);
-
-		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
-			PaymentDetail {
-				asset: ASSET_ID,
-				amount: PAYMENT_AMOUNT,
-				incentive_amount: INCENTIVE_AMOUNT,
-				state: PaymentState::Created,
-				fees_details: fees_details.clone(),
-			}
-		);
-
-		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
-			PAYMENT_AMOUNT
-		);
-		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
-			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
-		);
+		let fees_details: Fees<Test> = build_payment();
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -146,53 +131,7 @@ fn test_pay_and_release_works() {
 #[test]
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
-		let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
-		let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
-
-		assert_ok!(Payments::pay(
-			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
-			ASSET_ID,
-			PAYMENT_AMOUNT,
-			Some(remark.clone()),
-		));
-
-		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
-			asset: ASSET_ID,
-			amount: PAYMENT_AMOUNT,
-			remark: Some(remark.clone()),
-		}));
-
-		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
-			&ASSET_ID,
-			&SENDER_ACCOUNT,
-			&PAYMENT_BENEFICIARY,
-			&PAYMENT_AMOUNT,
-			Some(remark.as_slice()),
-		);
-
-		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
-			PaymentDetail {
-				asset: ASSET_ID,
-				amount: PAYMENT_AMOUNT,
-				incentive_amount: INCENTIVE_AMOUNT,
-				state: PaymentState::Created,
-				fees_details,
-			}
-		);
-
-		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
-			PAYMENT_AMOUNT
-		);
-		assert_eq!(
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
-			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
-		);
-
+		build_payment();
 		assert_ok!(Payments::cancel(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
@@ -230,7 +169,15 @@ fn test_pay_and_cancel_works() {
 			100
 		);
 	});
+}
 
-	#[test]
-	fn payment_refunded_request() {}
+#[test]
+fn payment_refunded_request() {
+	let fees_details: Fees<Test> = build_payment();
+
+	assert_ok!(Payments::request_refund(
+		RuntimeOrigin::signed(SENDER_ACCOUNT),
+		PAYMENT_BENEFICIARY,
+		PAYMENT_ID
+	));
 }
