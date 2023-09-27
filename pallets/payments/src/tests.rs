@@ -59,6 +59,31 @@ fn build_payment() -> Fees<Test> {
 	fees_details
 }
 
+fn check_balance_cancellation() {
+	assert_eq!(
+		<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
+		0
+	);
+
+	assert_eq!(
+		<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT),
+		0
+	);
+	assert_eq!(
+		<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT),
+		0
+	);
+	assert_eq!(
+		<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY),
+		0
+	);
+
+	assert_eq!(
+		<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT),
+		100
+	);
+}
+
 /// What we will do:
 /// Sender(2) pays 20 tokens to the PAYMENT_BENEFICIARY(21)
 /// Sender pays the following fees:
@@ -173,11 +198,83 @@ fn test_pay_and_cancel_works() {
 
 #[test]
 fn payment_refunded_request() {
-	let fees_details: Fees<Test> = build_payment();
+	new_test_ext().execute_with(|| {
+		let fees_details: Fees<Test> = build_payment();
 
-	assert_ok!(Payments::request_refund(
-		RuntimeOrigin::signed(SENDER_ACCOUNT),
-		PAYMENT_BENEFICIARY,
-		PAYMENT_ID
-	));
+		assert_ok!(Payments::request_refund(
+			RuntimeOrigin::signed(SENDER_ACCOUNT),
+			PAYMENT_BENEFICIARY,
+			PAYMENT_ID
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
+				asset: ASSET_ID,
+				amount: PAYMENT_AMOUNT,
+				incentive_amount: INCENTIVE_AMOUNT,
+				state: PaymentState::RefundRequested { cancel_block: 11 },
+				fees_details,
+			}
+		);
+
+		run_to_block(11);
+
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentRefunded {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
+		}));
+
+		check_balance_cancellation();
+	})
+}
+
+#[test]
+fn payment_refunded_request_gets_disputed() {
+	new_test_ext().execute_with(|| {
+		let fees_details: Fees<Test> = build_payment();
+
+		assert_ok!(Payments::request_refund(
+			RuntimeOrigin::signed(SENDER_ACCOUNT),
+			PAYMENT_BENEFICIARY,
+			PAYMENT_ID
+		));
+
+		let _ = Assets::mint(
+			RuntimeOrigin::signed(ASSET_ADMIN_ACCOUNT),
+			ASSET_ID,
+			PAYMENT_BENEFICIARY,
+			10,
+		);
+
+		assert_ok!(Payments::dispute_refund(
+			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
+			SENDER_ACCOUNT,
+			PAYMENT_ID
+		));
+
+		assert_eq!(
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
+				asset: ASSET_ID,
+				amount: PAYMENT_AMOUNT,
+				incentive_amount: INCENTIVE_AMOUNT,
+				state: PaymentState::NeedsReview,
+				fees_details,
+			}
+		);
+
+		assert_ok!(Payments::resolve_dispute(
+			RuntimeOrigin::root(),
+			SENDER_ACCOUNT,
+			PAYMENT_BENEFICIARY,
+			PAYMENT_ID,
+			DisputeResult {
+				percent_beneficiary: Percent::from_percent(90),
+				sender_pay_fees: false,
+				beneficiary_pay_fees: false,
+				in_favor_of: Role::Beneficiary
+			}
+		));
+	})
 }

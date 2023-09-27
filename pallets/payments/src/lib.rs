@@ -19,6 +19,7 @@ mod benchmarking;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 
 use frame_support::{
+	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	ensure, fail,
 	traits::{
 		fungibles::{
@@ -31,7 +32,7 @@ use frame_support::{
 			Precision::Exact,
 			Preservation::{Expendable, Preserve},
 		},
-		Bounded, CallerTrait, QueryPreimage, StorePreimage,
+		Bounded, CallerTrait, OriginTrait, QueryPreimage, StorePreimage,
 	},
 };
 
@@ -57,12 +58,21 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		// System level stuff.
+		/// The aggregated origin which the dispatch will take.
+		type RuntimeOrigin: OriginTrait<PalletsOrigin = Self::PalletsOrigin>
+			+ From<Self::PalletsOrigin>
+			+ IsType<<Self as frame_system::Config>::RuntimeOrigin>;
+
+		/// The caller origin, overarching type of all pallets origins.
+		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>
+			+ CallerTrait<Self::AccountId>
+			+ MaxEncodedLen;
+
+		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin>
-			+ From<Call<Self>>
-			+ IsType<<Self as frame_system::Config>::RuntimeCall>
-			+ From<frame_system::Call<Self>>;
+			+ Dispatchable<RuntimeOrigin = <Self as Config>::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ GetDispatchInfo
+			+ From<Call<Self>>;
 
 		/// Currency type that this works on.
 		type Assets: FunInspect<Self::AccountId, Balance = Self::AssetsBalance>
@@ -85,7 +95,7 @@ pub mod pallet {
 
 		type FeeHandler: FeeHandler<Self>;
 
-		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin>;
+		type DisputeResolver: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
 		type PaymentId: Member
 			+ Parameter
@@ -96,10 +106,6 @@ pub mod pallet {
 			+ Saturating
 			+ One
 			+ Zero;
-
-		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>
-			+ CallerTrait<Self::AccountId>
-			+ MaxEncodedLen;
 
 		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
 		/// The preimage provider with which we look up call hashes to get the
@@ -188,6 +194,11 @@ pub mod pallet {
 			sender: T::AccountId,
 			beneficiary: T::AccountId,
 			expiry: BlockNumberFor<T>,
+		},
+		/// the payment was refunded
+		PaymentRefunded {
+			sender: T::AccountId,
+			beneficiary: T::AccountId,
 		},
 		/// the refund request from creator was disputed by recipient
 		PaymentRefundDisputed {
@@ -338,7 +349,7 @@ pub mod pallet {
 				}
 				PaymentState::RefundRequested { cancel_block: _ } => {
 					Self::cancel_payment(&sender, &beneficiary, payment)?;
-					Self::deposit_event(Event::PaymentRequestCompleted {
+					Self::deposit_event(Event::PaymentRefunded {
 						sender: sender.clone(),
 						beneficiary: beneficiary.clone(),
 					});
@@ -358,7 +369,6 @@ pub mod pallet {
 		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
 		pub fn request_refund(
 			origin: OriginFor<T>,
-			pallet_origin: <T as Config>::PalletsOrigin,
 			beneficiary: AccountIdLookupOf<T>,
 			payment_id: T::PaymentId,
 		) -> DispatchResultWithPostInfo {
@@ -381,18 +391,17 @@ pub mod pallet {
 
 					let sender_unlookup = T::Lookup::unlookup(sender.clone());
 
-					let cancel_call: <T as Config>::RuntimeCall = pallet::Call::<T>::cancel {
+					let cancel_call = <T as Config>::RuntimeCall::from(pallet::Call::<T>::cancel {
 						sender: sender_unlookup,
 						payment_id,
-					}
-					.into();
+					});
 
 					let _ = T::Scheduler::schedule_named(
 						("payment", payment_id).using_encoded(blake2_256),
 						DispatchTime::At(cancel_block),
 						None,
 						63,
-						pallet_origin,
+						frame_system::RawOrigin::Signed(beneficiary_account.clone()).into(),
 						T::Preimages::bound(cancel_call)?,
 					)
 					.is_ok();
