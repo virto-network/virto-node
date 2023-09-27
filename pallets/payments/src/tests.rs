@@ -271,10 +271,31 @@ fn payment_refunded_request_gets_disputed() {
 			PAYMENT_ID,
 			DisputeResult {
 				percent_beneficiary: Percent::from_percent(90),
-				sender_pay_fees: false,
-				beneficiary_pay_fees: false,
+				sender_pay_fees: true,
+				beneficiary_pay_fees: true,
 				in_favor_of: Role::Beneficiary
 			}
 		));
+
+		println!(
+			"{:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT)
+		);
+		println!(
+			"{:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT)
+		);
+		println!(
+			"{:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT)
+		);
+		println!(
+			"{:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+		);
+		println!(
+			"{:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
+		);
 	})
 }
