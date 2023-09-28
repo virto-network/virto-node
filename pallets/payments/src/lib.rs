@@ -493,9 +493,6 @@ pub mod pallet {
 
 							payment.state = PaymentState::NeedsReview;
 
-							let _ =
-								T::Scheduler::cancel_named(("payment", payment_id).using_encoded(blake2_256)).is_ok();
-
 							let dispute = DisputeResultWithResolver {
 								dispute_result,
 								dispute_resolver,
