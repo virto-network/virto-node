@@ -29,9 +29,8 @@
 //! - **Community:** An entity comprised of _members_ —each one defined by their
 //!   [`AccountId`][1]— with a given _description_ who can vote on _proposals_
 //!   and actively take decisions on behalf of it. Communities are given a
-//!   _treasury account_ and can issue _governance_ and _economic_ tokens. It is
-//!   required that a community contributes to the network to be active and
-//!   operate within it.
+//!   _treasury account_ and can issue tokens. It is required that a community
+//!   contributes to the network to be active and operate within it.
 //! - **Community Description:** A set of metadata used to identify a community
 //!   distinctively. Typically, a name, a list of locations (given as a list of
 //!   one or more [`H3Index`][2]), and a list of URL links.
@@ -144,9 +143,9 @@
 //!   _"free"_," further ones would be subject to network-wide referenda.
 //! - `close_proposal`: Forcefully closes a proposal, dispatching the call when
 //!   approved.
-//! - `assets_transfer`: Transfers an amount of a given asset from the treasury
-//!   account to a beneficiary.
-//! - `balance_transfer`: Transfers funds from the treasury account to a
+//! - [`assets_transfer`][c04]: Transfers an amount of a given asset from the
+//!   treasury account to a beneficiary.
+//! - [`balance_transfer`][c05]: Transfers funds from the treasury account to a
 //!   beneficiary.
 //! - `set_sufficient_asset`: Marks an [asset][7] issued by the community as
 //!   sufficient. Only one asset at a time can be marked as such.
@@ -191,6 +190,8 @@
 //! [c01]: `crate::Pallet::set_metadata`
 //! [c02]: `crate::Pallet::add_member`
 //! [c03]: `crate::Pallet::remove_member`
+//! [c04]: `crate::Pallet::assets_transfer`
+//! [c05]: `crate::Pallet::balance_transfer`
 //!
 //! [g00]: `crate::Pallet::community`
 //! [g01]: `crate::Pallet::metadata`
@@ -459,6 +460,51 @@ pub mod pallet {
 
 			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
 			Self::do_remove_member(&community_id, &who)?;
+
+			Ok(())
+		}
+
+		/// Transfers an amount of a given asset from the treasury account to a
+		/// beneficiary.
+		#[pallet::call_index(4)]
+		#[pallet::weight(T::WeightInfo::assets_transfer())]
+		pub fn assets_transfer(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			asset_id: AssetIdOf<T>,
+			dest: AccountIdLookupOf<T>,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_assets_transfer(
+				&community_id,
+				asset_id,
+				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
+				amount,
+			)?;
+
+			Ok(())
+		}
+
+		/// Transfers funds from the treasury account to a beneficiary
+		#[pallet::call_index(5)]
+		#[pallet::weight(T::WeightInfo::balance_transfer())]
+		pub fn balance_transfer(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			dest: AccountIdLookupOf<T>,
+			amount: NativeBalanceOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_balance_transfer(
+				&community_id,
+				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
+				amount,
+			)?;
 
 			Ok(())
 		}
