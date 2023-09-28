@@ -2,6 +2,7 @@ use crate::types::*;
 use crate::{mock::*, CommunityInfo, Error as PalletError};
 use frame_support::traits::fungible;
 use frame_support::{assert_noop, assert_ok};
+use sp_runtime::{ArithmeticError, DispatchError};
 
 type Error = PalletError<Test>;
 
@@ -56,7 +57,7 @@ mod apply {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
 					Communities::do_create_community_account(&COMMUNITY_ADMIN, &COMMUNITY),
-					sp_runtime::DispatchError::Arithmetic(sp_runtime::ArithmeticError::Underflow)
+					DispatchError::Arithmetic(ArithmeticError::Underflow)
 				);
 			});
 		}
@@ -153,7 +154,7 @@ mod set_metadata {
 			// Fail if trying to call from unsigned origin
 			assert_noop!(
 				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None, None),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 			// Fail if trying to call from non-admin
 			assert_noop!(
@@ -165,7 +166,7 @@ mod set_metadata {
 					None,
 					None
 				),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 		});
 	}
@@ -254,7 +255,7 @@ mod add_member {
 
 			assert_noop!(
 				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 
 			assert_noop!(
@@ -263,7 +264,7 @@ mod add_member {
 					COMMUNITY,
 					COMMUNITY_MEMBER_1
 				),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 		});
 	}
@@ -276,7 +277,7 @@ mod add_member {
 
 			assert_noop!(
 				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 
 			// Successfully adds a member
@@ -350,12 +351,12 @@ mod remove_member {
 
 			assert_noop!(
 				Communities::remove_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 
 			assert_noop!(
 				Communities::remove_member(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, COMMUNITY_MEMBER_2),
-				sp_runtime::DispatchError::BadOrigin
+				DispatchError::BadOrigin
 			);
 		});
 	}
@@ -424,5 +425,187 @@ mod remove_member {
 			assert_eq!(<CommunityMembersCount<Test>>::get(COMMUNITY), Some(1));
 			assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_1), None);
 		});
+	}
+}
+
+mod assets_handling {
+	use super::*;
+	use frame_support::traits::{
+		fungible::{Inspect as FunInspect, Unbalanced},
+		fungibles::{Create, Inspect, Mutate},
+		tokens::{Fortitude::Polite, Preservation::Preserve},
+	};
+	use sp_runtime::TokenError;
+
+	const ALICE: u64 = 40;
+	const BOB: u64 = 41;
+	const COMMUNITY_MEMBER_1: u64 = 43;
+
+	const ASSET_A: u32 = 100;
+
+	fn setup() {
+		super::setup();
+
+		// Let's activate the community
+		assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+		let community_account_id = Communities::get_community_account_id(&COMMUNITY);
+
+		// Let's mint some balance
+		assert_ok!(Balances::increase_balance(
+			&ALICE,
+			1,
+			frame_support::traits::tokens::Precision::Exact
+		));
+
+		// Let's issue/mint some assets
+		let minimum_balance = 1;
+
+		assert_ok!(<Assets as Create<AccountIdOf<Test>>>::create(
+			ASSET_A,
+			community_account_id,
+			true,
+			minimum_balance
+		));
+
+		assert_ok!(<Assets as Mutate<AccountIdOf<Test>>>::mint_into(
+			ASSET_A,
+			&ALICE,
+			minimum_balance
+				.checked_add(1)
+				.expect("This should not overflow as ED is way below U128::MAX; qed")
+		));
+		assert_ok!(<Assets as Mutate<AccountIdOf<Test>>>::mint_into(
+			ASSET_A,
+			&community_account_id,
+			minimum_balance
+		));
+
+		// Let's add COMMUNITY_MEMBER_1 to the community
+		assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
+	}
+
+	mod assets_transfer {
+		use super::*;
+
+		#[test]
+		fn fails_if_bad_origin() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				// Fail if trying to call from unsigned origin
+				assert_noop!(
+					Communities::assets_transfer(RuntimeOrigin::none(), COMMUNITY, ASSET_A, BOB, 1),
+					DispatchError::BadOrigin
+				);
+
+				// Fail if trying to call from non-admin
+				assert_noop!(
+					Communities::assets_transfer(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, ASSET_A, BOB, 1),
+					DispatchError::BadOrigin
+				);
+			});
+		}
+
+		#[test]
+		fn fails_if_not_enough_balance() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::assets_transfer(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, ASSET_A, BOB, 1),
+					TokenError::NotExpendable,
+				);
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				setup();
+				let community_account_id = Communities::get_community_account_id(&COMMUNITY);
+
+				assert_ok!(Assets::transfer(
+					RuntimeOrigin::signed(ALICE),
+					codec::Compact(ASSET_A),
+					community_account_id,
+					1
+				));
+
+				assert_ok!(Communities::assets_transfer(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					ASSET_A,
+					BOB,
+					1
+				));
+
+				assert_eq!(Assets::reducible_balance(ASSET_A, &ALICE, Preserve, Polite), 0);
+				assert_eq!(
+					Assets::reducible_balance(ASSET_A, &community_account_id, Preserve, Polite),
+					0
+				);
+				assert_eq!(Assets::reducible_balance(ASSET_A, &BOB, Preserve, Polite), 0);
+			});
+		}
+	}
+
+	mod balances_transfer {
+		use super::*;
+
+		#[test]
+		fn fails_if_bad_origin() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				// Fail if trying to call from unsigned origin
+				assert_noop!(
+					Communities::balance_transfer(RuntimeOrigin::none(), COMMUNITY, BOB, 1),
+					DispatchError::BadOrigin
+				);
+
+				// Fail if trying to call from non-admin
+				assert_noop!(
+					Communities::balance_transfer(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, BOB, 1),
+					DispatchError::BadOrigin
+				);
+			});
+		}
+
+		#[test]
+		fn fails_if_not_enough_balance() {
+			new_test_ext().execute_with(|| {
+				setup();
+
+				assert_noop!(
+					Communities::balance_transfer(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, BOB, 1),
+					TokenError::Frozen,
+				);
+			});
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				setup();
+				let community_account_id = Communities::get_community_account_id(&COMMUNITY);
+
+				assert_ok!(Balances::transfer(
+					RuntimeOrigin::signed(ALICE),
+					community_account_id,
+					1
+				));
+
+				assert_ok!(Communities::balance_transfer(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					BOB,
+					1
+				));
+
+				assert_eq!(Balances::reducible_balance(&ALICE, Preserve, Polite), 0);
+				assert_eq!(Balances::reducible_balance(&community_account_id, Preserve, Polite), 0);
+				assert_eq!(Balances::reducible_balance(&BOB, Preserve, Polite), 0);
+			});
+		}
 	}
 }

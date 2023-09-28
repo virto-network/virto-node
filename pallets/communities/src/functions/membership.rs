@@ -3,11 +3,11 @@ use super::*;
 impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_origin_member(
 		origin: OriginFor<T>,
-		community_id: &T::CommunityId,
+		community_id: &CommunityIdOf<T>,
 	) -> Result<(), DispatchError> {
 		let caller = ensure_signed(origin)?;
 
-		if !<CommunityMembers<T>>::contains_key(community_id, caller) {
+		if Self::member_information(community_id, caller).is_none() {
 			return Err(DispatchError::BadOrigin);
 		}
 
@@ -16,7 +16,7 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn ensure_origin_privileged(
 		origin: OriginFor<T>,
-		community_id: &T::CommunityId,
+		community_id: &CommunityIdOf<T>,
 	) -> Result<(), DispatchError> {
 		if let Some(caller) = ensure_signed_or_root(origin)? {
 			if caller != Self::get_community_admin(community_id)? {
@@ -27,7 +27,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn do_insert_member(community_id: &T::CommunityId, who: &T::AccountId) -> DispatchResult {
+	pub(crate) fn do_insert_member(community_id: &CommunityIdOf<T>, who: &AccountIdOf<T>) -> DispatchResult {
 		<CommunityMembers<T>>::try_mutate_exists(community_id, who, |value| {
 			if value.is_some() {
 				return Err(Error::<T>::AlreadyAMember.into());
@@ -37,7 +37,7 @@ impl<T: Config> Pallet<T> {
 			*value = Some(Default::default());
 
 			// Increases member count
-			let members_count = <CommunityMembersCount<T>>::try_get(community_id).unwrap_or_default();
+			let members_count = Self::members_count(community_id).unwrap_or_default();
 			<CommunityMembersCount<T>>::set(community_id, members_count.checked_add(1));
 
 			Ok(())
@@ -50,7 +50,7 @@ impl<T: Config> Pallet<T> {
 				return Err(Error::<T>::NotAMember.into());
 			}
 
-			let Some(community_info) = <CommunityInfo<T>>::get(community_id) else {
+			let Some(community_info) = Self::community(community_id) else {
 				return Err(Error::<T>::CommunityDoesNotExist.into());
 			};
 
@@ -62,7 +62,7 @@ impl<T: Config> Pallet<T> {
 			*value = None;
 
 			// Decreases member count
-			let members_count = <CommunityMembersCount<T>>::try_get(community_id).unwrap_or_default();
+			let members_count = Self::members_count(community_id).unwrap_or_default();
 			<CommunityMembersCount<T>>::set(community_id, members_count.checked_sub(1));
 
 			Ok(())
