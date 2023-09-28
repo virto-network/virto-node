@@ -24,9 +24,8 @@ facilitating its participants to have governance over the community entity
 - **Community:** An entity comprised of _members_ —each one defined by their
   [`AccountId`][1]— with a given _description_ who can vote on _proposals_
   and actively take decisions on behalf of it. Communities are given a
-  _treasury account_ and can issue _governance_ and _economic_ tokens. It is
-  required that a community contributes to the network to be active and
-  operate within it.
+  _treasury account_ and can issue tokens. It is required that a community
+  contributes to the network to be active and operate within it.
 - **Community Description:** A set of metadata used to identify a community
   distinctively. Typically, a name, a list of locations (given as a list of
   one or more [`H3Index`][2]), and a list of URL links.
@@ -176,5 +175,5 @@ dispatched through an approved proposal. !
 [6]: https://github.com/virto-network/virto-node/pull/282
 [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
 [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
-[t00]: src/lib.rs#L233
+[t00]: src/lib.rs#L237
 [t01]: src/types.rs#L57
