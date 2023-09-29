@@ -229,10 +229,51 @@ fn payment_refunded_request() {
 	})
 }
 
+/// Initial balances before transactions:
+/// SENDER(10) = 100 / PAYMENT_BENEFICIARY(11) = 10
+///
+/// Testing scenario:
+/// 1) SENDER pays 20 tokens to the PAYMENT_BENEFICIARY
+/// 2) Sender requests a refund.
+/// 3) The PAYMENT_BENEFICIARY disputes the refund, a total of 2 tokens are
+/// locked from the PAYMENT_BENEFICIARY because of the incentive amount.
+/// 4) The RESOLVER, rule in favor of PAYMENT_BENEFICIARY to pay 90%.
+///
+///     Mandatory Fees:
+///        The SENDER should pay the mandatory fee:
+///           - 10% of the payment amount (meaning 2 tokens) to the
+///             FEE_SYSTEM_ACCOUNT
+///        The PAYMENT_BENEFICIARY should pay the mandatory fee:
+///           - 10% of the payment amount (meaning 2 tokens) to the
+///             FEE_SYSTEM_ACCOUNT
+///
+///     Fee not deducted during dispute:
+///        SENDER's fee:
+///           - 2 tokens to the FEE_SENDER_AMOUNT
+///        PAYMENT_BENEFICIARY's fee:
+///           - 3 tokens to FEE_BENEFICIARY_AMOUNT
+///
+///  4.1) PAYMENT_BENEFICIARY should receive:
+///     + 18 token (90% because of dispute ruling)
+/// 	+ 2 token (incentive amount give back because of wining side of dispute)
+/// 	- 2 tokens (deducted mandatory fee)
+/// 	total: 18 token / total balance: 28 token.
+///  4.2) SENDER should receive:
+///     + 2 token (remaining 10% of dispute ruling)
+///     + 2 token (fee not deducted )
+///     - 2 token (incentive amount deducted because of wining side of dispute)
+///     - 2 tokens (deducted mandatory fee)
+///     total: 0 token / total balance: 74 token.
+///
+/// The sender will need have a balance at least of 26 tokens to make the
+/// purchase:
+///  - 20 tokens for the payment + 4 tokens for the fee + 2 tokens for the
+///    incentive
 #[test]
 fn payment_refunded_request_gets_disputed() {
 	new_test_ext().execute_with(|| {
 		let fees_details: Fees<Test> = build_payment();
+		let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -271,31 +312,39 @@ fn payment_refunded_request_gets_disputed() {
 			PAYMENT_ID,
 			DisputeResult {
 				percent_beneficiary: Percent::from_percent(90),
-				sender_pay_fees: true,
-				beneficiary_pay_fees: true,
 				in_favor_of: Role::Beneficiary
 			}
 		));
 
 		println!(
-			"{:?}",
+			"FEE_SYSTEM_ACCOUNT balance {:?}",
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT)
 		);
 		println!(
-			"{:?}",
+			"FEE_SENDER_ACCOUNT balance {:?}",
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT)
 		);
 		println!(
-			"{:?}",
+			"FEE_BENEFICIARY_ACCOUNT balance {:?}",
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT)
 		);
 		println!(
-			"{:?}",
-			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+			"SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
 		);
 		println!(
-			"{:?}",
-			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
+			"PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+		);
+
+		println!(
+			"HOLD SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"HOLD PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY)
 		);
 	})
 }
