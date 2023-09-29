@@ -90,7 +90,7 @@ impl<T: pallet::Config> Fees<T> {
 		&self,
 		is_sender: bool,
 		is_dispute: bool,
-	) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
+	) -> Result<(Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>), DispatchError> {
 		let fees = if is_sender {
 			&self.sender_pays
 		} else {
@@ -102,22 +102,34 @@ impl<T: pallet::Config> Fees<T> {
 	pub fn get_fees_details_per_role(
 		fees: &FeeDetails<T>,
 		is_dispute: bool,
-	) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
+	) -> Result<(Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>), DispatchError> {
 		let mut fees_per_account: BTreeMap<AccountIdOf<T>, Fee<T>> = BTreeMap::new();
-		let mut total_fees: BalanceOf<T> = Zero::zero();
+		let mut total_to_discount: BalanceOf<T> = Zero::zero();
+		let mut total_to_return: BalanceOf<T> = Zero::zero();
 
 		for (account, fee, charged_dispute) in fees.iter() {
-			if (is_dispute && *charged_dispute) || !is_dispute {
-				let current_fee = fees_per_account
-					.entry(account.clone())
-					.or_insert_with(|| (account.clone(), Zero::zero(), *charged_dispute));
-				let (_, current_balance, _) = current_fee;
-				*current_balance = current_balance.saturating_add(*fee);
-				total_fees = total_fees.saturating_add(*fee);
+			if is_dispute {
+				if *charged_dispute {
+					total_to_discount = total_to_discount.saturating_add(*fee);
+				} else {
+					total_to_return = total_to_return.saturating_add(*fee);
+				}
+			} else {
+				total_to_discount = total_to_discount.saturating_add(*fee);
 			}
+
+			let current_fee = fees_per_account
+				.entry(account.clone())
+				.or_insert_with(|| (account.clone(), Zero::zero(), *charged_dispute));
+			let (_, current_balance, _) = current_fee;
+			*current_balance = current_balance.saturating_add(*fee);
 		}
 
-		Ok((fees_per_account.into_iter().map(|(_, v)| v).collect(), total_fees))
+		Ok((
+			fees_per_account.into_iter().map(|(_, v)| v).collect(),
+			total_to_discount,
+			total_to_return,
+		))
 	}
 }
 
@@ -140,8 +152,6 @@ pub enum Role {
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub struct DisputeResult {
 	pub percent_beneficiary: Percent,
-	pub sender_pay_fees: bool,
-	pub beneficiary_pay_fees: bool,
 	pub in_favor_of: Role,
 }
 

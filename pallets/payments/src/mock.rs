@@ -162,6 +162,8 @@ impl pallet_scheduler::Config for Test {
 
 pub struct MockFeeHandler;
 
+const MANDATORY_FEE: bool = true;
+
 impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	fn apply_fees(
 		_asset: &AssetIdOf<Test>,
@@ -171,20 +173,20 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 		_remark: Option<&[u8]>,
 	) -> Fees<Test> {
 		let sender_fees = vec![
-			SubTypes::Fixed(FEE_SENDER_ACCOUNT, FEE_SENDER_AMOUNT, false),
+			SubTypes::Fixed(FEE_SENDER_ACCOUNT, FEE_SENDER_AMOUNT, !MANDATORY_FEE),
 			SubTypes::Percentage(
 				FEE_SYSTEM_ACCOUNT,
 				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
-				true,
+				MANDATORY_FEE,
 			),
 		];
 
 		let beneficiary_fees = vec![
-			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, FEE_BENEFICIARY_AMOUNT, false),
+			SubTypes::Fixed(FEE_BENEFICIARY_ACCOUNT, FEE_BENEFICIARY_AMOUNT, !MANDATORY_FEE),
 			SubTypes::Percentage(
 				FEE_SYSTEM_ACCOUNT,
 				Percent::from_percent(MARKETPLACE_FEE_PERCENTAGE),
-				true,
+				MANDATORY_FEE,
 			),
 		];
 
