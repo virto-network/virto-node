@@ -468,3 +468,68 @@ fn payment_disputed_sender_wins() {
 		);
 	})
 }
+
+#[test]
+fn request_payment() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Payments::request_payment(
+			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
+			SENDER_ACCOUNT,
+			ASSET_ID,
+			PAYMENT_AMOUNT
+		));
+
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentRequestCreated {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
+		}));
+
+		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+			&ASSET_ID,
+			&SENDER_ACCOUNT,
+			&PAYMENT_BENEFICIARY,
+			&PAYMENT_AMOUNT,
+			None,
+		);
+
+		assert_eq!(
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
+				asset: ASSET_ID,
+				amount: PAYMENT_AMOUNT,
+				incentive_amount: INCENTIVE_AMOUNT,
+				state: PaymentState::PaymentRequested,
+				fees_details: fees_details.clone(),
+			}
+		);
+
+		assert_ok!(Payments::accept_and_pay(
+			RuntimeOrigin::signed(SENDER_ACCOUNT),
+			PAYMENT_BENEFICIARY,
+			PAYMENT_ID
+		));
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
+			EXPECTED_SYSTEM_TOTAL_FEE
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT),
+			FEE_SENDER_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT),
+			FEE_BENEFICIARY_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY),
+			PAYMENT_AMOUNT - FEE_BENEFICIARY_AMOUNT - SYSTEM_FEE
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT),
+			INITIAL_BALANCE - PAYMENT_AMOUNT - FEE_SENDER_AMOUNT - SYSTEM_FEE
+		);
+	})
+}

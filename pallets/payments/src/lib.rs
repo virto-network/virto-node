@@ -14,8 +14,6 @@ mod tests;
 
 use sp_io::hashing::blake2_256;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
 pub use codec::{Decode, Encode, MaxEncodedLen};
 
 use frame_support::{
@@ -266,16 +264,11 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
-			let last_id = LastId::<T>::get().unwrap_or(Zero::zero());
-
-			let payment_id: T::PaymentId = last_id.saturating_add(One::one());
-
 			// create PaymentDetail and add to storage
 			let payment_detail = Self::create_payment(
 				&sender,
 				&beneficiary,
 				asset.clone(),
-				payment_id,
 				amount,
 				PaymentState::Created,
 				T::IncentivePercentage::get(),
@@ -508,6 +501,82 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		// Creates a new payment with the given details. This can be called by the
+		// recipient of the payment to create a payment and then completed by the sender
+		// using the `accept_and_pay` extrinsic.  The payment will be in
+		// PaymentRequested State and can only be modified by the `accept_and_pay`
+		// extrinsic.
+		#[pallet::call_index(6)]
+		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		pub fn request_payment(
+			origin: OriginFor<T>,
+			sender: AccountIdLookupOf<T>,
+			asset: AssetIdOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let beneficiary = ensure_signed(origin)?;
+			let sender = T::Lookup::lookup(sender)?;
+			// create PaymentDetail and add to storage
+			Self::create_payment(
+				&sender,
+				&beneficiary,
+				asset,
+				amount,
+				PaymentState::PaymentRequested,
+				T::IncentivePercentage::get(),
+				None,
+			)?;
+
+			Self::deposit_event(Event::PaymentRequestCreated { sender, beneficiary });
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		pub fn accept_and_pay(
+			origin: OriginFor<T>,
+			beneficiary: AccountIdLookupOf<T>,
+			payment_id: T::PaymentId,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			let beneficiary = T::Lookup::lookup(beneficiary)?;
+
+			Payment::<T>::try_mutate(
+				(sender.clone(), beneficiary.clone(), payment_id),
+				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
+					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
+					let is_dispute = false;
+
+					// Release sender fees recipients
+					let (fee_sender_recipients, _total_sender_fee_amount_mandatory, _total_sender_fee_amount_optional) =
+						payment.fees_details.get_fees_details(true, is_dispute)?;
+
+					let (
+						fee_beneficiary_recipients,
+						_total_beneficiary_fee_amount_mandatory,
+						_total_beneficiary_fee_amount_optional,
+					) = payment.fees_details.get_fees_details(false, is_dispute)?;
+
+					Self::get_and_transfer_fees(&sender, payment, fee_sender_recipients, is_dispute)?;
+
+					T::Assets::transfer(payment.asset.clone(), &sender, &beneficiary, payment.amount, Expendable)
+						.map_err(|_| Error::<T>::TransferFailed)?;
+
+					Self::get_and_transfer_fees(&beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
+
+					Self::deposit_event(Event::PaymentRequestCreated { sender, beneficiary });
+
+					payment.state = PaymentState::Finished;
+					*maybe_payment = Ok(payment.clone());
+
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
 	}
 }
 
@@ -520,12 +589,12 @@ impl<T: Config> Pallet<T> {
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		asset: AssetIdOf<T>,
-		payment_id: T::PaymentId,
 		amount: BalanceOf<T>,
 		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
 	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
+		let payment_id = Self::read_and_increase_id()?;
 		Payment::<T>::try_mutate(
 			(sender, beneficiary, payment_id),
 			|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
@@ -731,5 +800,11 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 		Ok(())
+	}
+
+	fn read_and_increase_id() -> Result<T::PaymentId, sp_runtime::DispatchError> {
+		let last_id = LastId::<T>::get().unwrap_or(Zero::zero());
+		let payment_id: T::PaymentId = last_id.saturating_add(One::one());
+		Ok(payment_id)
 	}
 }
