@@ -15,7 +15,6 @@ mod tests;
 use sp_io::hashing::blake2_256;
 
 pub use codec::{Decode, Encode, MaxEncodedLen};
-
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	ensure, fail,
@@ -33,6 +32,7 @@ use frame_support::{
 		Bounded, CallerTrait, QueryPreimage, StorePreimage,
 	},
 };
+use sp_std::vec::Vec;
 
 pub mod weights;
 use sp_runtime::{

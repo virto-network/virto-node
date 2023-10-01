@@ -122,6 +122,7 @@ std = [
 	"pallet-collator-selection/std",
 	"pallet-multisig/std",
 	"pallet-proxy/std",
+	"pallet-payments/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
