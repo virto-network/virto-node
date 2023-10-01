@@ -2,14 +2,12 @@ pub use crate as pallet_payments;
 pub use crate::types::*;
 use frame_support::{
 	parameter_types,
-	traits::{
-		AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EnsureOrigin, EqualPrivilegeOnly, OnFinalize, OnInitialize,
-	},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, EqualPrivilegeOnly, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
 };
 
-use frame_system::{EnsureRoot, EnsureRootWithSuccess, RawOrigin};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
