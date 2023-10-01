@@ -35,8 +35,8 @@ pub const FEE_SENDER_ACCOUNT: AccountId = 30;
 pub const FEE_BENEFICIARY_ACCOUNT: AccountId = 31;
 pub const FEE_SYSTEM_ACCOUNT: AccountId = 32;
 
-pub const SYSTEM_FEE: u64 = 2;
-pub const EXPECTED_SYSTEM_TOTAL_FEE: u64 = 4;
+pub const SYSTEM_FEE: u64 = 3;
+pub const EXPECTED_SYSTEM_TOTAL_FEE: u64 = 6;
 pub const EXPECTED_SYSTEM_SENDER_FEE: u64 = 3; // 15% of 20
 
 pub const FEE_SENDER_AMOUNT: Balance = 2;

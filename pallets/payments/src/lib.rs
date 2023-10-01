@@ -635,11 +635,19 @@ impl<T: Config> Pallet<T> {
 				_total_beneficiary_fee_amount_optional,
 			) = payment.fees_details.get_fees_details(false, is_dispute)?;
 
-			let beneficiary_release_amount = payment.amount.clone();
+			let mut beneficiary_release_amount = payment.amount.clone();
+
 			if is_dispute {
-				beneficiary_release_amount.saturating_add(payment.incentive_amount);
+				beneficiary_release_amount = beneficiary_release_amount.saturating_add(payment.incentive_amount);
 			}
-			println!("beneficiary_release_amount: {:?}", beneficiary_release_amount);
+
+			println!("payment.incentive_amount: {:?}", payment.incentive_amount);
+			println!("is_dispute {:?}", is_dispute);
+			/* 			use frame_support::traits::fungibles::InspectHold;
+			println!(
+				"balance_on_hold beneficiary{:?}",
+				T::Assets::balance_on_hold(payment.asset.clone(), reason, beneficiary)
+			); */
 
 			T::Assets::release(
 				payment.asset.clone(),
@@ -650,6 +658,8 @@ impl<T: Config> Pallet<T> {
 			)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
+			println!("beneficiary_release_amount: {:?}", beneficiary_release_amount);
+
 			match dispute {
 				Some(dispute) => {
 					let dispute_result = &dispute.dispute_result;
@@ -658,14 +668,10 @@ impl<T: Config> Pallet<T> {
 
 					Self::get_and_transfer_fees(beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
 
-					let amount_to_beneficiary = dispute_result.percent_beneficiary.mul_floor(payment.amount);
-					let amount_to_sender = payment.amount.saturating_sub(amount_to_beneficiary);
-
-					println!("amount_to_beneficiary: {:?}", amount_to_beneficiary);
-					println!("amount_to_sender: {:?}", amount_to_sender);
-
 					match dispute_result.in_favor_of {
 						Role::Sender => {
+							let amount_to_sender = dispute_result.percent_beneficiary.mul_floor(payment.amount);
+
 							// Beneficiary looses the dispute and has to transfer the incentive_amount to
 							// the dispute_resolver.
 							T::Assets::transfer(
@@ -688,6 +694,8 @@ impl<T: Config> Pallet<T> {
 							.map_err(|_| Error::<T>::TransferFailed)?;
 						}
 						Role::Beneficiary => {
+							let amount_to_beneficiary = dispute_result.percent_beneficiary.mul_floor(payment.amount);
+							let amount_to_sender = payment.amount.saturating_sub(amount_to_beneficiary);
 							T::Assets::transfer(
 								payment.asset.clone(),
 								sender,
@@ -705,15 +713,6 @@ impl<T: Config> Pallet<T> {
 								Expendable,
 							)
 							.map_err(|_| Error::<T>::TransferFailed)?;
-
-							T::Assets::release(
-								payment.asset.clone(),
-								reason,
-								beneficiary,
-								payment.incentive_amount,
-								Exact,
-							)
-							.map_err(|_| Error::<T>::ReleaseFailed)?;
 						}
 					}
 				}
@@ -738,11 +737,11 @@ impl<T: Config> Pallet<T> {
 		is_dispute: bool,
 	) -> Result<(), sp_runtime::DispatchError> {
 		for (recipient_account, fee_amount, mandatory) in fee_recipients.iter() {
-			println!(
-				"recipient_account: {:?}, fee_amount: {:?} mandatory: {:?}",
-				recipient_account, fee_amount, mandatory
-			);
 			if (is_dispute && *mandatory) || !is_dispute {
+				println!(
+					"recipient_account: {:?}, fee_amount: {:?} mandatory: {:?}",
+					recipient_account, fee_amount, mandatory
+				);
 				T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
 					.map_err(|_| Error::<T>::TransferFailed)?;
 			}
