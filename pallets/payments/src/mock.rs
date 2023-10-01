@@ -27,7 +27,7 @@ pub const ROOT_ACCOUNT: AccountId = 1;
 
 pub const ASSET_ID: u32 = 1;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
-pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 10;
+pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 15;
 pub const INITIAL_BALANCE: u64 = 100;
 pub const PAYMENT_ID: u32 = 1;
 
@@ -37,6 +37,8 @@ pub const FEE_SYSTEM_ACCOUNT: AccountId = 32;
 
 pub const SYSTEM_FEE: u64 = 2;
 pub const EXPECTED_SYSTEM_TOTAL_FEE: u64 = 4;
+pub const EXPECTED_SYSTEM_SENDER_FEE: u64 = 3; // 15% of 20
+
 pub const FEE_SENDER_AMOUNT: Balance = 2;
 pub const FEE_BENEFICIARY_AMOUNT: Balance = 3;
 pub const PAYMENT_AMOUNT: u64 = 20;

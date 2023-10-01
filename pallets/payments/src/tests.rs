@@ -53,7 +53,7 @@ fn build_payment() -> Fees<Test> {
 	);
 	assert_eq!(
 		<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
-		INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + INCENTIVE_AMOUNT
+		INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + EXPECTED_SYSTEM_SENDER_FEE
 	);
 
 	fees_details
@@ -85,21 +85,21 @@ fn check_balance_cancellation() {
 }
 
 /// What we will do:
-/// Sender(2) pays 20 tokens to the PAYMENT_BENEFICIARY(21)
+/// Sender(2) pays 20 tokens to the PAYMENT_BENEFICIARY(11)
 /// Sender pays the following fees:
 ///   - 2 tokens to the FEE_SENDER_ACCOUNT(30)
-///   - 10% of the payment amount (meaning 2 tokens) to the
-///     FEE_SYSTEM_ACCOUNT(31)
-///   (total of 4 tokens)
-/// Beneficiary pays the following fees:
-///   - 3 tokens to the FEE_BENEFICIARY_ACCOUNT(32)
-///   - 10% of the payment amount (meaning 2 tokens) to the
+///   - 15% of the payment amount (meaning 3 tokens) to the
 ///     FEE_SYSTEM_ACCOUNT(31)
 ///   (total of 5 tokens)
-/// The PAYMENT_BENEFICIARY will receive 15 tokens free of charge
-/// The sender will need have a balance at least of 26 tokens to make the
+/// Beneficiary pays the following fees:
+///   - 3 tokens to the FEE_BENEFICIARY_ACCOUNT(32)
+///   - 15% of the payment amount (meaning 3 tokens) to the
+///     FEE_SYSTEM_ACCOUNT(31)
+///   (total of 6 tokens)
+/// The PAYMENT_BENEFICIARY will receive 14 tokens free of charge
+/// The sender will need have a balance at least of 27 tokens to make the
 /// purchase:
-///  - 20 tokens for the payment + 4 tokens for the fee + 2 tokens for the
+///  - 20 tokens for the payment + 5 tokens for the fee + 2 tokens for the
 ///    incentive
 #[test]
 fn test_pay_and_release_works() {
@@ -241,10 +241,10 @@ fn payment_refunded_request() {
 ///
 ///     Mandatory Fees:
 ///        The SENDER should pay the mandatory fee:
-///           - 10% of the payment amount (meaning 2 tokens) to the
+///           - 15% of the payment amount (meaning 3 tokens) to the
 ///             FEE_SYSTEM_ACCOUNT
 ///        The PAYMENT_BENEFICIARY should pay the mandatory fee:
-///           - 10% of the payment amount (meaning 2 tokens) to the
+///           - 15% of the payment amount (meaning 3 tokens) to the
 ///             FEE_SYSTEM_ACCOUNT
 ///
 ///     Fee not deducted during dispute:
@@ -256,24 +256,95 @@ fn payment_refunded_request() {
 ///  4.1) PAYMENT_BENEFICIARY should receive:
 ///     + 18 token (90% because of dispute ruling)
 /// 	+ 2 token (incentive amount give back because of wining side of dispute)
-/// 	- 2 tokens (deducted mandatory fee)
-/// 	total: 18 token / total balance: 28 token.
+/// 	- 3 tokens (deducted mandatory fee)
+/// 	Beneficiary receives: 17 token / total balance: 27 token.
 ///  4.2) SENDER should receive:
 ///     + 2 token (remaining 10% of dispute ruling)
 ///     + 2 token (fee not deducted )
 ///     - 2 token (incentive amount deducted because of wining side of dispute)
-///     - 2 tokens (deducted mandatory fee)
-///     total: 0 token / total balance: 74 token.
+///     - 3 tokens (deducted mandatory fee)
+///     total: -1 token / total balance: 73 token.
 ///
-/// The sender will need have a balance at least of 26 tokens to make the
-/// purchase:
-///  - 20 tokens for the payment + 4 tokens for the fee + 2 tokens for the
-///    incentive
+///  Sender's expected Balance after dispute:
+/// 	100(initial) - 18(payment) - 3(system fee) - 2(incentive for loosing) = 77
+///  Beneficiary's expected Balance after dispute:
+/// 	10(initial) + 18(payment) - 3(system fee) = 25
+
 #[test]
 fn payment_refunded_request_gets_disputed() {
 	new_test_ext().execute_with(|| {
-		let fees_details: Fees<Test> = build_payment();
 		let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
+		let _ = Assets::mint(
+			RuntimeOrigin::signed(ASSET_ADMIN_ACCOUNT),
+			ASSET_ID,
+			PAYMENT_BENEFICIARY,
+			10,
+		);
+		println!("--------INITIAL---------");
+		println!(
+			"SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"HOLD SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+		);
+
+		println!(
+			"HOLD PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY)
+		);
+		println!(
+			"FEE_SYSTEM_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT)
+		);
+		println!(
+			"FEE_SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT)
+		);
+		println!(
+			"FEE_BENEFICIARY_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT)
+		);
+		let fees_details: Fees<Test> = build_payment();
+
+		println!("--------PAYMENT---------");
+		println!(
+			"SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
+		);
+		println!(
+			"HOLD SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+		);
+
+		println!(
+			"HOLD PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY)
+		);
+		println!(
+			"FEE_SYSTEM_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT)
+		);
+		println!(
+			"FEE_SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT)
+		);
+		println!(
+			"FEE_BENEFICIARY_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT)
+		);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -281,18 +352,44 @@ fn payment_refunded_request_gets_disputed() {
 			PAYMENT_ID
 		));
 
-		let _ = Assets::mint(
-			RuntimeOrigin::signed(ASSET_ADMIN_ACCOUNT),
-			ASSET_ID,
-			PAYMENT_BENEFICIARY,
-			10,
-		);
-
 		assert_ok!(Payments::dispute_refund(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
 			PAYMENT_ID
 		));
+
+		println!("--------DISPUTED---------");
+		println!(
+			"SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"HOLD SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+		);
+
+		println!(
+			"HOLD PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY)
+		);
+		println!(
+			"FEE_SYSTEM_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT)
+		);
+		println!(
+			"FEE_SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT)
+		);
+		println!(
+			"FEE_BENEFICIARY_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT)
+		);
 
 		assert_eq!(
 			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
@@ -316,6 +413,27 @@ fn payment_refunded_request_gets_disputed() {
 			}
 		));
 
+		println!("--------RESOLVED---------");
+		println!(
+			"SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"HOLD SENDER_ACCOUNT balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT)
+		);
+
+		println!(
+			"PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+		);
+
+		println!(
+			"HOLD PAYMENT_BENEFICIARY balance {:?}",
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY)
+		);
+
 		println!(
 			"FEE_SYSTEM_ACCOUNT balance {:?}",
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT)
@@ -328,23 +446,30 @@ fn payment_refunded_request_gets_disputed() {
 			"FEE_BENEFICIARY_ACCOUNT balance {:?}",
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT)
 		);
-		println!(
-			"SENDER_ACCOUNT balance {:?}",
-			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT)
-		);
-		println!(
-			"PAYMENT_BENEFICIARY balance {:?}",
-			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY)
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &SENDER_ACCOUNT),
+			77
 		);
 
-		println!(
-			"HOLD SENDER_ACCOUNT balance {:?}",
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT)
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &PAYMENT_BENEFICIARY),
+			25
 		);
 
-		println!(
-			"HOLD PAYMENT_BENEFICIARY balance {:?}",
-			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY)
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SENDER_ACCOUNT),
+			0
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_BENEFICIARY_ACCOUNT),
+			0
+		);
+
+		assert_eq!(
+			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
+			6
 		);
 	})
 }

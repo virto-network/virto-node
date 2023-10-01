@@ -488,10 +488,7 @@ pub mod pallet {
 					// ensure the payment is in Requested Refund state
 					match payment.state {
 						PaymentState::NeedsReview => {
-							let reason = &HoldReason::TransferPayment.into();
-							T::Assets::hold(payment.asset.clone(), reason, &beneficiary, payment.incentive_amount)?;
-
-							payment.state = PaymentState::NeedsReview;
+							payment.state = PaymentState::Finished;
 
 							let dispute = DisputeResultWithResolver {
 								dispute_result,
@@ -626,6 +623,8 @@ impl<T: Config> Pallet<T> {
 				.saturating_add(payment.incentive_amount)
 				.saturating_add(total_sender_fee_amount_optional);
 
+			println!("total_sender_release: {:?}", total_sender_release);
+
 			T::Assets::release(payment.asset.clone(), reason, sender, total_sender_release, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
@@ -633,6 +632,7 @@ impl<T: Config> Pallet<T> {
 			if is_dispute {
 				beneficiary_release_amount.saturating_add(payment.incentive_amount);
 			}
+			println!("beneficiary_release_amount: {:?}", beneficiary_release_amount);
 
 			T::Assets::release(
 				payment.asset.clone(),
@@ -649,13 +649,17 @@ impl<T: Config> Pallet<T> {
 
 					let (deducted_sender_fees, sender_fees_to_return) =
 						Self::get_and_transfer_fees(sender, payment, true, is_dispute)?;
+
+					println!("deducted_sender_fees: {:?}", deducted_sender_fees);
+
 					let (_deducted_beneficiary_fees, _fee) =
 						Self::get_and_transfer_fees(beneficiary, payment, false, is_dispute)?;
 
-					// TODO: the whole calculation is wrong.
 					let amount_to_beneficiary = dispute_result.percent_beneficiary.mul_floor(payment.amount);
 					let amount_to_sender = payment.amount.saturating_sub(amount_to_beneficiary);
-					let sender_after_fees = amount_to_sender.saturating_sub(deducted_sender_fees);
+
+					println!("amount_to_beneficiary: {:?}", amount_to_beneficiary);
+					println!("amount_to_sender: {:?}", amount_to_sender);
 
 					match dispute_result.in_favor_of {
 						Role::Sender => {
@@ -675,7 +679,7 @@ impl<T: Config> Pallet<T> {
 								payment.asset.clone(),
 								beneficiary,
 								sender,
-								sender_after_fees,
+								amount_to_sender,
 								Expendable,
 							)
 							.map_err(|_| Error::<T>::TransferFailed)?;
@@ -694,7 +698,7 @@ impl<T: Config> Pallet<T> {
 								payment.asset.clone(),
 								beneficiary,
 								sender,
-								sender_after_fees.saturating_sub(payment.incentive_amount),
+								amount_to_sender,
 								Expendable,
 							)
 							.map_err(|_| Error::<T>::TransferFailed)?;
@@ -730,12 +734,40 @@ impl<T: Config> Pallet<T> {
 		is_sender: bool,
 		is_dispute: bool,
 	) -> Result<(BalanceOf<T>, BalanceOf<T>), sp_runtime::DispatchError> {
+		//let reason = &HoldReason::TransferPayment.into();
 		let (fee_recipients, total_to_discount, total_to_return) =
 			payment.fees_details.get_fees_details(is_sender, is_dispute)?;
 
-		for (recipient_account, fee_amount, _) in fee_recipients.iter() {
-			T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
-				.map_err(|_| Error::<T>::TransferFailed)?;
+		/* 		println!("account: {:?}", account);
+		for (recipient_account, fee_amount, mandatory) in fee_recipients.iter() {
+			println!(
+				"recipient_account: {:?}, fee_amount: {:?} mandatory: {:?}",
+				recipient_account, fee_amount, mandatory
+			);
+			if *mandatory || !is_dispute {
+				T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
+					.map_err(|_| Error::<T>::TransferFailed)?;
+			}
+			if is_dispute && !mandatory {
+				T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
+					.map_err(|_| Error::<T>::TransferFailed)?;
+			}
+		}
+
+		if !total_to_return.is_zero() {
+			T::Assets::release(payment.asset.clone(), reason, account, total_to_return, Exact)
+				.map_err(|_| Error::<T>::ReleaseFailed)?;
+		} */
+
+		for (recipient_account, fee_amount, mandatory) in fee_recipients.iter() {
+			println!(
+				"recipient_account: {:?}, fee_amount: {:?} mandatory: {:?}",
+				recipient_account, fee_amount, mandatory
+			);
+			if (is_dispute && *mandatory) || !is_dispute {
+				T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
+					.map_err(|_| Error::<T>::TransferFailed)?;
+			}
 		}
 		Ok((total_to_discount, total_to_return))
 	}
