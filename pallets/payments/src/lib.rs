@@ -32,7 +32,7 @@ use frame_support::{
 			Precision::Exact,
 			Preservation::{Expendable, Preserve},
 		},
-		Bounded, CallerTrait, OriginTrait, QueryPreimage, StorePreimage,
+		Bounded, CallerTrait, QueryPreimage, StorePreimage,
 	},
 };
 
@@ -624,8 +624,6 @@ impl<T: Config> Pallet<T> {
 				.saturating_add(payment.incentive_amount)
 				.saturating_add(total_sender_fee_amount_optional);
 
-			println!("total_sender_release: {:?}", total_sender_release);
-
 			T::Assets::release(payment.asset.clone(), reason, sender, total_sender_release, Exact)
 				.map_err(|_| Error::<T>::ReleaseFailed)?;
 
@@ -641,14 +639,6 @@ impl<T: Config> Pallet<T> {
 				beneficiary_release_amount = beneficiary_release_amount.saturating_add(payment.incentive_amount);
 			}
 
-			println!("payment.incentive_amount: {:?}", payment.incentive_amount);
-			println!("is_dispute {:?}", is_dispute);
-			/* 			use frame_support::traits::fungibles::InspectHold;
-			println!(
-				"balance_on_hold beneficiary{:?}",
-				T::Assets::balance_on_hold(payment.asset.clone(), reason, beneficiary)
-			); */
-
 			T::Assets::release(
 				payment.asset.clone(),
 				reason,
@@ -657,8 +647,6 @@ impl<T: Config> Pallet<T> {
 				Exact,
 			)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
-
-			println!("beneficiary_release_amount: {:?}", beneficiary_release_amount);
 
 			match dispute {
 				Some(dispute) => {
@@ -738,10 +726,6 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), sp_runtime::DispatchError> {
 		for (recipient_account, fee_amount, mandatory) in fee_recipients.iter() {
 			if (is_dispute && *mandatory) || !is_dispute {
-				println!(
-					"recipient_account: {:?}, fee_amount: {:?} mandatory: {:?}",
-					recipient_account, fee_amount, mandatory
-				);
 				T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
 					.map_err(|_| Error::<T>::TransferFailed)?;
 			}
