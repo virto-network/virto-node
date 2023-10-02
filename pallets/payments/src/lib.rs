@@ -488,7 +488,7 @@ pub mod pallet {
 								dispute_resolver,
 							};
 
-							let _ = Self::settle_payment(&sender, &beneficiary, &payment_id, Some(dispute))?;
+							Self::settle_payment(&sender, &beneficiary, &payment_id, Some(dispute))?;
 
 							Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
 						}
@@ -702,7 +702,7 @@ impl<T: Config> Pallet<T> {
 				_total_beneficiary_fee_amount_optional,
 			) = payment.fees_details.get_fees_details(false, is_dispute)?;
 
-			let mut beneficiary_release_amount = payment.amount.clone();
+			let mut beneficiary_release_amount = payment.amount;
 
 			if is_dispute {
 				beneficiary_release_amount = beneficiary_release_amount.saturating_add(payment.incentive_amount);
@@ -794,7 +794,7 @@ impl<T: Config> Pallet<T> {
 		is_dispute: bool,
 	) -> Result<(), sp_runtime::DispatchError> {
 		for (recipient_account, fee_amount, mandatory) in fee_recipients.iter() {
-			if (is_dispute && *mandatory) || !is_dispute {
+			if !is_dispute || *mandatory {
 				T::Assets::transfer(payment.asset.clone(), account, recipient_account, *fee_amount, Preserve)
 					.map_err(|_| Error::<T>::TransferFailed)?;
 			}
