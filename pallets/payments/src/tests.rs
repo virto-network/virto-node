@@ -254,21 +254,21 @@ fn payment_refunded_request() {
 ///           - 3 tokens to FEE_BENEFICIARY_AMOUNT
 ///
 ///  4.1) PAYMENT_BENEFICIARY should receive:
-///     + 18 token (90% because of dispute ruling)
-/// 	+ 2 token (incentive amount give back because of wining side of dispute)
-/// 	- 3 tokens (deducted mandatory fee)
-/// 	Beneficiary receives: 17 token / total balance: 27 token.
+///    + 18 token (90% because of dispute ruling)
+///    + 2 token (incentive amount give back because of wining side of dispute)
+///    - 3 tokens (deducted mandatory fee)
+///  Beneficiary receives: 17 token / total balance: 27 token.
 ///  4.2) SENDER should receive:
-///     + 2 token (remaining 10% of dispute ruling)
-///     + 2 token (fee not deducted )
-///     - 2 token (incentive amount deducted because of wining side of dispute)
-///     - 3 tokens (deducted mandatory fee)
-///     total: -1 token / total balance: 73 token.
+///    + 2 token (remaining 10% of dispute ruling)
+///    + 2 token (fee not deducted )
+///    - 2 token (incentive amount deducted because of wining side of dispute)
+///    - 3 tokens (deducted mandatory fee)
+///    total: -1 token / total balance: 73 token.
 ///
 ///  Sender's expected Balance after dispute:
-/// 	100(initial) - 18(payment) - 3(system fee) - 2(incentive for loosing) = 77
-///  Beneficiary's expected Balance after dispute:
-/// 	10(initial) + 18(payment) - 3(system fee) = 25
+///    100(initial) - 18(payment) - 3(system fee) - 2(incentive for loosing) =
+/// 77  Beneficiary's expected Balance after dispute:
+///    10(initial) + 18(payment) - 3(system fee) = 25
 
 #[test]
 fn payment_disputed_beneficiary_wins() {
@@ -371,10 +371,10 @@ fn payment_disputed_beneficiary_wins() {
 ///           - 3 tokens to FEE_BENEFICIARY_AMOUNT
 ///
 ///  4.1) PAYMENT_BENEFICIARY should receive:
-///     + 2 token (10% because of dispute ruling)
-/// 	- 2 token (incentive amount give back because of loosing side of dispute)
-/// 	- 3 tokens (deducted mandatory fee)
-/// 	Beneficiary loose: -3 tokens
+///    + 2 token (10% because of dispute ruling)
+///    - 2 token (incentive amount give back because of loosing side of dispute)
+///    - 3 tokens (deducted mandatory fee)
+///    Beneficiary loose: -3 tokens
 ///  4.2) SENDER should receive:
 ///     + 18 token (remaining 90% of dispute ruling)
 ///     + 2 token (fee not deducted )
@@ -383,10 +383,10 @@ fn payment_disputed_beneficiary_wins() {
 ///     total: 19 token / total balance: 81 token.
 ///
 ///  Sender's expected Balance after dispute:
-/// 	100(initial) - 2 (dispute ruling) - 3(system fee) = 95
+///    100(initial) - 2 (dispute ruling) - 3(system fee) = 95
 ///  Beneficiary's expected Balance after dispute:
-/// 	10(initial) + 2(dispute ruling) - 3(system fee) - 2(incentive for loosing)=
-/// 7
+///    10(initial) + 2(dispute ruling) - 3(system fee) - 2(incentive for
+/// loosing)= 7
 #[test]
 fn payment_disputed_sender_wins() {
 	new_test_ext().execute_with(|| {
@@ -499,7 +499,7 @@ fn request_payment() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::PaymentRequested,
-				fees_details: fees_details.clone(),
+				fees_details,
 			}
 		);
 

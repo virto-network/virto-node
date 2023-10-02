@@ -14,6 +14,7 @@ pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLo
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
 pub type ChargableOnDisputes = bool;
 pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>, ChargableOnDisputes);
+pub type FeeDetailsPerRole<T> = (Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>);
 pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
 pub type CallOf<T> = <T as Config>::RuntimeCall;
 pub type BoundedCallOf<T> = Bounded<CallOf<T>>;
@@ -86,11 +87,7 @@ pub struct Fees<T: pallet::Config> {
 }
 
 impl<T: pallet::Config> Fees<T> {
-	pub fn get_fees_details(
-		&self,
-		is_sender: bool,
-		is_dispute: bool,
-	) -> Result<(Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>), DispatchError> {
+	pub fn get_fees_details(&self, is_sender: bool, is_dispute: bool) -> Result<FeeDetailsPerRole<T>, DispatchError> {
 		let fees = if is_sender {
 			&self.sender_pays
 		} else {
@@ -102,7 +99,7 @@ impl<T: pallet::Config> Fees<T> {
 	pub fn get_fees_details_per_role(
 		fees: &FeeDetails<T>,
 		is_dispute: bool,
-	) -> Result<(Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>), DispatchError> {
+	) -> Result<FeeDetailsPerRole<T>, DispatchError> {
 		let mut fees_per_account: BTreeMap<AccountIdOf<T>, Fee<T>> = BTreeMap::new();
 		let mut total_to_discount: BalanceOf<T> = Zero::zero();
 		let mut total_to_return: BalanceOf<T> = Zero::zero();
@@ -126,7 +123,7 @@ impl<T: pallet::Config> Fees<T> {
 		}
 
 		Ok((
-			fees_per_account.into_iter().map(|(_, v)| v).collect(),
+			fees_per_account.into_values().collect(),
 			total_to_discount,
 			total_to_return,
 		))
