@@ -67,18 +67,22 @@ build-container-local: build-local
 	CMD ["--dev"]'
 	| {{ podman }} build . -t {{ image }}:{{ ver }} -t {{ image }}:latest -f -
 
-node_args := "--base-path /data '$NODE_ARGS'" + if rol == "collator" {
-	" --collator"
+### container set-up with base configuration ###
+node_args := "--base-path /data '$NODE_ARGS' " + if rol == "collator" {
+	"--collator"
+} else { "--rpc-external --rpc-cors=all" }
+container_args := node_args + " -- '$RELAY_ARGS' --sync=warp --no-telemetry --chain " + relay + if rol == "full" {
+	" --rpc-external --rpc-cors=all"
 } else { "" }
-container_args := node_args + " -- '$RELAY_ARGS' --sync=warp --no-telemetry --chain " + relay
 container_name := chain + "-" + rol
+container_net := "podman6"
 expose_rpc := if rol == "full" { " -p 9944:9944 -p 9945:9945" } else { "" }
 
 create-container:
 	@^mkdir -p release
 	podman rm -f {{ container_name }}
-	podman network create --ignore --ipv6 podman6
-	podman create --name {{ container_name }}{{ expose_rpc }} -p 30333:30333 -p 30334:30334 -p 127.0.0.1:9101:9615 --network podman6 --volume {{ container_name }}-data:/data {{ image }} {{ container_args }}
+	podman network create --ignore --ipv6 {{ container_net }}
+	podman create --name {{ container_name }}{{ expose_rpc }} -p 30333:30333 -p 30334:30334 -p 9615:9615 --network {{ container_net }} --volume {{ container_name }}-data:/data {{ image }} {{ container_args }}
 	podman generate systemd --new --no-header --env 'NODE_ARGS=' --env 'RELAY_ARGS=' --name {{ container_name }} | str replace -a '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
 	open release/container-{{ chain }}-{{ rol }}.service | str replace "ExecStart" "ExecStartPre=/bin/rm -f %t/%n.ctr-id\nExecStart" | save -f release/container-{{ chain }}-{{ rol }}.service
 
