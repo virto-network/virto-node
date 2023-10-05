@@ -14,7 +14,7 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::CommunityAlreadyExists.into());
 		}
 
-		<CommunityInfo<T>>::insert(
+		CommunityInfo::<T>::insert(
 			community_id.clone(),
 			Community {
 				admin: who.clone(),
@@ -28,11 +28,8 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn do_set_metadata(
-		community_id: &CommunityIdOf<T>,
-		value: types::CommunityMetadata<T>,
-	) -> DispatchResult {
-		<pallet::CommunityMetadata<T>>::try_mutate(community_id, |metadata| {
+	pub(crate) fn do_set_metadata(community_id: &CommunityIdOf<T>, value: CommunityMetadata<T>) -> DispatchResult {
+		Metadata::<T>::try_mutate(community_id, |metadata| {
 			*metadata = Some(value);
 
 			Ok(())

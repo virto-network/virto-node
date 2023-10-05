@@ -291,8 +291,7 @@ pub mod pallet {
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
 	#[pallet::getter(fn metadata)]
-	pub(super) type CommunityMetadata<T: Config> =
-		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, types::CommunityMetadata<T>>;
+	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata<T>>;
 
 	/// Stores the information of a community (specified by its
 	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
@@ -397,12 +396,12 @@ pub mod pallet {
 			// Ensures caller is a privileged origin
 			Self::ensure_origin_privileged(origin, &community_id)?;
 
-			let metadata = <CommunityMetadata<T>>::get(&community_id).unwrap_or_default();
+			let metadata = Self::metadata(&community_id).unwrap_or_default();
 
 			// Deposits metadata
 			Self::do_set_metadata(
 				&community_id,
-				types::CommunityMetadata {
+				CommunityMetadata {
 					name: name.clone().unwrap_or(metadata.name),
 					description: description.clone().unwrap_or(metadata.description),
 					urls: urls.clone().unwrap_or(metadata.urls),
