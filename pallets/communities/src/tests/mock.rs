@@ -1,4 +1,3 @@
-use crate as pallet_communities;
 use frame_support::{
 	parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64},
@@ -11,8 +10,13 @@ use sp_runtime::{
 	BuildStorage,
 };
 
-type Block = frame_system::mocking::MockBlock<Test>;
-type Balance = u128;
+use crate as pallet_communities;
+
+pub type Block = frame_system::mocking::MockBlock<Test>;
+pub type Balance = u128;
+pub type AccountId = u64;
+pub type AssetId = u32;
+pub type CommunityId = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -35,7 +39,7 @@ impl frame_system::Config for Test {
 	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Block = Block;
 	type RuntimeEvent = RuntimeEvent;
@@ -54,7 +58,7 @@ impl frame_system::Config for Test {
 impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = u32;
+	type AssetId = AssetId;
 	type AssetIdParameter = codec::Compact<u32>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
@@ -106,7 +110,7 @@ impl pallet_communities::Config for Test {
 	type WeightInfo = ();
 	type Assets = Assets;
 	type Balances = Balances;
-	type CommunityId = u128;
+	type CommunityId = CommunityId;
 	type MembershipPassport = ();
 	type PalletId = CommunitiesPalletId;
 	type FreezeIdentifier = CommunitiesFreezeIdentifier;
