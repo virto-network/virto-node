@@ -1,5 +1,4 @@
 use super::*;
-use crate::{CommunityMembers, CommunityMembersCount};
 
 mod add_member {
 	use super::*;
@@ -67,9 +66,9 @@ mod add_member {
 				COMMUNITY_MEMBER_2
 			));
 
-			assert_eq!(<CommunityMembersCount<Test>>::get(COMMUNITY), Some(3));
-			assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_1), Some(()));
-			assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_2), Some(()));
+			assert_eq!(Communities::members_count(COMMUNITY), Some(3));
+			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_1), Some(()));
+			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_2), Some(()));
 		});
 	}
 
@@ -179,8 +178,8 @@ mod remove_member {
 				COMMUNITY_MEMBER_1
 			));
 
-			assert_eq!(<CommunityMembersCount<Test>>::get(COMMUNITY), Some(1));
-			assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_1), None);
+			assert_eq!(Communities::members_count(COMMUNITY), Some(1));
+			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_1), None);
 		});
 
 		new_test_ext().execute_with(|| {
@@ -194,8 +193,8 @@ mod remove_member {
 				COMMUNITY_MEMBER_1
 			));
 
-			assert_eq!(<CommunityMembersCount<Test>>::get(COMMUNITY), Some(1));
-			assert_eq!(<CommunityMembers<Test>>::get(COMMUNITY, COMMUNITY_MEMBER_1), None);
+			assert_eq!(Communities::members_count(COMMUNITY), Some(1));
+			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_1), None);
 		});
 	}
 }

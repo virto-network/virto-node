@@ -7,9 +7,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn get_community_admin(community_id: &CommunityIdOf<T>) -> Result<AccountIdOf<T>, DispatchError> {
-		let Some(community) = <CommunityInfo<T>>::get(community_id) else {
-			Err(Error::<T>::CommunityDoesNotExist)?
-		};
+		let community = Self::community(community_id).ok_or(Error::<T>::CommunityDoesNotExist)?;
 
 		Ok(community.admin)
 	}

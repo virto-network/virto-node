@@ -1,5 +1,5 @@
 use super::*;
-use crate::{CommunityInfo, Event};
+use crate::{Event, Info};
 use sp_runtime::BoundedVec;
 
 mod apply {
@@ -9,9 +9,9 @@ mod apply {
 	fn fails_if_community_already_exists() {
 		new_test_ext().execute_with(|| {
 			// Simulate a pre-existing community
-			CommunityInfo::<Test>::insert(
+			Info::<Test>::insert(
 				COMMUNITY,
-				Community {
+				CommunityInfo {
 					admin: COMMUNITY_ADMIN,
 					state: CommunityState::Awaiting,
 					sufficient_asset_id: None,

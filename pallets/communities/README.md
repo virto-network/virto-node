@@ -161,7 +161,7 @@ dispatched through an approved proposal. !
 - `community`: Stores the basic information of the community. If a value exists for a
   specified [`ComumunityId`][t00], this means a community exists.
 - `metadata`: Stores the metadata regarding a community.
-- `member_information`: Stores the information of a community (specified by its
+- `membership`: Stores the information of a community (specified by its
   [`CommunityId`][t00]) member (specified by it's [`AccountId`][1]).
 - `members_count`: Store the count of community members. This simplifies the process of keeping track of members' count.
 

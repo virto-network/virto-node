@@ -30,7 +30,7 @@ pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
 /// [1]: `frame_system::Config::AccountId`
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
-pub struct Community<T: crate::Config> {
+pub struct CommunityInfo<T: crate::Config> {
 	/// The [`AccountId`][1] of the current community administrator.
 	///
 	/// [1]: `frame_system::Config::AccountId`

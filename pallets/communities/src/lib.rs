@@ -167,10 +167,9 @@
 //!   value exists for a specified [`ComumunityId`][t00], this means a community
 //!   exists.
 //! - [`metadata`][g01]: Stores the metadata regarding a community.
-//! - [`member_information`][g02]: Stores the information of a community
-//!   (specified by its [`CommunityId`][t00]) member (specified by it's
-//!   [`AccountId`][1]).
-//! - [`members_count`][g03]: Store the count of community members. This
+//! - [`membership`][g02]: Stores the information of a community (specified by
+//!   its [`CommunityId`][t00]) member (specified by it's [`AccountId`][1]).
+//! - [`members_count`][g03]: Stores the count of community members. This
 //!   simplifies the process of keeping track of members' count.
 //!
 //! <!-- References -->
@@ -195,7 +194,7 @@
 //!
 //! [g00]: `crate::Pallet::community`
 //! [g01]: `crate::Pallet::metadata`
-//! [g02]: `crate::Pallet::member_information`
+//! [g02]: `crate::Pallet::membership`
 //! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
 
@@ -283,7 +282,7 @@ pub mod pallet {
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
-	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
+	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo<T>>;
 
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
@@ -294,8 +293,8 @@ pub mod pallet {
 	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
 	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
-	#[pallet::getter(fn member_information)]
-	pub(super) type CommunityMembers<T> = StorageDoubleMap<
+	#[pallet::getter(fn membership)]
+	pub(super) type Members<T> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		CommunityIdOf<T>,
@@ -308,7 +307,7 @@ pub mod pallet {
 	/// keeping track of members' count.
 	#[pallet::storage]
 	#[pallet::getter(fn members_count)]
-	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
+	pub(super) type MembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/

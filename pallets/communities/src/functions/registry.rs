@@ -14,9 +14,9 @@ impl<T: Config> Pallet<T> {
 			return Err(Error::<T>::CommunityAlreadyExists.into());
 		}
 
-		CommunityInfo::<T>::insert(
+		Info::<T>::insert(
 			community_id.clone(),
-			Community {
+			CommunityInfo {
 				admin: who.clone(),
 				state: Default::default(),
 				sufficient_asset_id: None,
