@@ -355,7 +355,7 @@ pub mod pallet {
 	// state changes. These functions materialize as "extrinsics", which are often
 	// compared to transactions. Dispatchable functions must be annotated with a
 	// weight and must return a DispatchResult.
-	#[pallet::call]
+	#[pallet::call(weight(<T as Config>::WeightInfo))]
 	impl<T: Config> Pallet<T> {
 		// === Registry management ===
 
@@ -364,7 +364,6 @@ pub mod pallet {
 		///
 		/// [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::apply())]
 		pub fn apply(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -383,7 +382,6 @@ pub mod pallet {
 		///
 		/// [11]: `types::CommunityMetadata`
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::set_metadata())]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -427,7 +425,6 @@ pub mod pallet {
 		/// any community member should be able to add a member. However, this
 		/// can be changed to ensure it is a privileged function.
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::add_member())]
 		pub fn add_member(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -449,7 +446,6 @@ pub mod pallet {
 		/// to arbitrarily remove the community admin, as some privileged calls
 		/// would be impossible to execute thereafter.
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::remove_member())]
 		pub fn remove_member(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -469,7 +465,6 @@ pub mod pallet {
 		/// Transfers an amount of a given asset from the treasury account to a
 		/// beneficiary.
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::assets_transfer())]
 		pub fn assets_transfer(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -492,7 +487,6 @@ pub mod pallet {
 
 		/// Transfers funds from the treasury account to a beneficiary
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::balance_transfer())]
 		pub fn balance_transfer(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
