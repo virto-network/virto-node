@@ -56,15 +56,11 @@
 //!   the community. Can receive [payments][5], transfers, or payment [fees][6].
 //!   It can transfer funds via a privileged call executed by the community
 //!   _admin_ or a call dispatched from a proposal.
-//! - **Governance Token:** A [non-sufficient fungible asset][7] issued and
-//!   administered by the _Treasury Account_ of the community. Customarily, it's
-//!   given among community members and can be used to vote depending on the
-//!   voting mechanism set by the community.
-//! - **Economic Token:** A [sufficient fungible asset][7] issued and
-//!   administered by the _Treasury Account_ of the community. Generally used
-//!   for monetary purposes, it can be transferred among members and non-members
-//!   of the community, used to pay network fees, and for [payments][5] and its
-//!   corresponding [fees][6].
+//! - **Community Token:** A Community might create and manage tokens by
+//!   dispatching the respective call from the corresponding origin. These
+//!   tokens also might be used to vote if set via Voting Mechanism.
+//! - **Voting Method:** Can be either rank weighed, member-counted, or
+//!   asset-weighed and determines how the votes of proposals will be tallied.
 //!
 //! ## Goals
 //!
