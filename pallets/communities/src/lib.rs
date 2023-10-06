@@ -56,15 +56,11 @@
 //!   the community. Can receive [payments][5], transfers, or payment [fees][6].
 //!   It can transfer funds via a privileged call executed by the community
 //!   _admin_ or a call dispatched from a proposal.
-//! - **Governance Token:** A [non-sufficient fungible asset][7] issued and
-//!   administered by the _Treasury Account_ of the community. Customarily, it's
-//!   given among community members and can be used to vote depending on the
-//!   voting mechanism set by the community.
-//! - **Economic Token:** A [sufficient fungible asset][7] issued and
-//!   administered by the _Treasury Account_ of the community. Generally used
-//!   for monetary purposes, it can be transferred among members and non-members
-//!   of the community, used to pay network fees, and for [payments][5] and its
-//!   corresponding [fees][6].
+//! - **Community Token:** A Community might create and manage tokens by
+//!   dispatching the respective call from the corresponding origin. These
+//!   tokens also might be used to vote if set via Voting Mechanism.
+//! - **Voting Method:** Can be either rank weighed, member-counted, or
+//!   asset-weighed and determines how the votes of proposals will be tallied.
 //!
 //! ## Goals
 //!
@@ -167,10 +163,9 @@
 //!   value exists for a specified [`ComumunityId`][t00], this means a community
 //!   exists.
 //! - [`metadata`][g01]: Stores the metadata regarding a community.
-//! - [`member_information`][g02]: Stores the information of a community
-//!   (specified by its [`CommunityId`][t00]) member (specified by it's
-//!   [`AccountId`][1]).
-//! - [`members_count`][g03]: Store the count of community members. This
+//! - [`membership`][g02]: Stores the information of a community (specified by
+//!   its [`CommunityId`][t00]) member (specified by it's [`AccountId`][1]).
+//! - [`members_count`][g03]: Stores the count of community members. This
 //!   simplifies the process of keeping track of members' count.
 //!
 //! <!-- References -->
@@ -195,12 +190,9 @@
 //!
 //! [g00]: `crate::Pallet::community`
 //! [g01]: `crate::Pallet::metadata`
-//! [g02]: `crate::Pallet::member_information`
+//! [g02]: `crate::Pallet::membership`
 //! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
-
-#[cfg(test)]
-mod mock;
 
 #[cfg(test)]
 mod tests;
@@ -286,20 +278,19 @@ pub mod pallet {
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
-	pub(super) type CommunityInfo<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, Community<T>>;
+	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo<T>>;
 
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
 	#[pallet::getter(fn metadata)]
-	pub(super) type CommunityMetadata<T: Config> =
-		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, types::CommunityMetadata<T>>;
+	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata<T>>;
 
 	/// Stores the information of a community (specified by its
 	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
 	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
-	#[pallet::getter(fn member_information)]
-	pub(super) type CommunityMembers<T> = StorageDoubleMap<
+	#[pallet::getter(fn membership)]
+	pub(super) type Members<T> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		CommunityIdOf<T>,
@@ -312,7 +303,7 @@ pub mod pallet {
 	/// keeping track of members' count.
 	#[pallet::storage]
 	#[pallet::getter(fn members_count)]
-	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
+	pub(super) type MembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
@@ -359,14 +350,15 @@ pub mod pallet {
 	// state changes. These functions materialize as "extrinsics", which are often
 	// compared to transactions. Dispatchable functions must be annotated with a
 	// weight and must return a DispatchResult.
-	#[pallet::call]
+	#[pallet::call(weight(<T as Config>::WeightInfo))]
 	impl<T: Config> Pallet<T> {
+		// === Registry management ===
+
 		/// Registers an appliation as a new community, taking an
 		/// [existential deposit][8] used to create the community account.
 		///
 		/// [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::apply())]
 		pub fn apply(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
@@ -385,7 +377,6 @@ pub mod pallet {
 		///
 		/// [11]: `types::CommunityMetadata`
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::set_metadata())]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -397,12 +388,12 @@ pub mod pallet {
 			// Ensures caller is a privileged origin
 			Self::ensure_origin_privileged(origin, &community_id)?;
 
-			let metadata = <CommunityMetadata<T>>::get(&community_id).unwrap_or_default();
+			let metadata = Self::metadata(&community_id).unwrap_or_default();
 
 			// Deposits metadata
 			Self::do_set_metadata(
 				&community_id,
-				types::CommunityMetadata {
+				CommunityMetadata {
 					name: name.clone().unwrap_or(metadata.name),
 					description: description.clone().unwrap_or(metadata.description),
 					urls: urls.clone().unwrap_or(metadata.urls),
@@ -423,11 +414,12 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// === Memberships management ===
+
 		/// Enroll an account as a community member. In theory,
 		/// any community member should be able to add a member. However, this
 		/// can be changed to ensure it is a privileged function.
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::add_member())]
 		pub fn add_member(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -449,7 +441,6 @@ pub mod pallet {
 		/// to arbitrarily remove the community admin, as some privileged calls
 		/// would be impossible to execute thereafter.
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::remove_member())]
 		pub fn remove_member(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -464,10 +455,11 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// === Treasury management ===
+
 		/// Transfers an amount of a given asset from the treasury account to a
 		/// beneficiary.
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::assets_transfer())]
 		pub fn assets_transfer(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -490,7 +482,6 @@ pub mod pallet {
 
 		/// Transfers funds from the treasury account to a beneficiary
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::balance_transfer())]
 		pub fn balance_transfer(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
