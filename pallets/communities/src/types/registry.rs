@@ -1,26 +1,4 @@
-use codec::MaxEncodedLen;
-use frame_support::pallet_prelude::{Decode, Encode};
-use frame_support::traits::{fungible::Inspect, fungibles::Inspect as InspectFuns};
-use frame_support::{sp_runtime::BoundedVec, traits::ConstU32};
-use scale_info::{prelude::vec::Vec, TypeInfo};
-use sp_runtime::traits::StaticLookup;
-
-use crate::Config;
-use frame_system::Config as SystemConfig;
-
-pub type AssetIdOf<T> = <<T as Config>::Assets as InspectFuns<AccountIdOf<T>>>::AssetId;
-pub type BalanceOf<T> = <<T as Config>::Assets as InspectFuns<AccountIdOf<T>>>::Balance;
-pub type NativeBalanceOf<T> = <<T as Config>::Balances as Inspect<AccountIdOf<T>>>::Balance;
-pub type AccountIdOf<T> = <T as SystemConfig>::AccountId;
-pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
-pub type CommunityIdOf<T> = <T as Config>::CommunityId;
-pub type MembershipPassportOf<T> = <T as Config>::MembershipPassport;
-pub type MemberListOf<T> = Vec<AccountIdOf<T>>;
-
-pub type Cell = u32;
-
-pub type SizedField<S> = BoundedVec<u8, S>;
-pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
+use super::*;
 
 /// The Community struct holds the basic definition of a community. It includes
 /// the current state of a community, the [`AccountId`][1] for the community
@@ -30,7 +8,7 @@ pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
 /// [1]: `frame_system::Config::AccountId`
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
-pub struct Community<T: crate::Config> {
+pub struct CommunityInfo<T: crate::Config> {
 	/// The [`AccountId`][1] of the current community administrator.
 	///
 	/// [1]: `frame_system::Config::AccountId`

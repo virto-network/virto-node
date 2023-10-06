@@ -7,7 +7,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), DispatchError> {
 		let caller = ensure_signed(origin)?;
 
-		if Self::member_information(community_id, caller).is_none() {
+		if Self::membership(community_id, caller).is_none() {
 			return Err(DispatchError::BadOrigin);
 		}
 
@@ -28,7 +28,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_insert_member(community_id: &CommunityIdOf<T>, who: &AccountIdOf<T>) -> DispatchResult {
-		<CommunityMembers<T>>::try_mutate_exists(community_id, who, |value| {
+		Members::<T>::try_mutate_exists(community_id, who, |value| {
 			if value.is_some() {
 				return Err(Error::<T>::AlreadyAMember.into());
 			}
@@ -38,14 +38,14 @@ impl<T: Config> Pallet<T> {
 
 			// Increases member count
 			let members_count = Self::members_count(community_id).unwrap_or_default();
-			<CommunityMembersCount<T>>::set(community_id, members_count.checked_add(1));
+			MembersCount::<T>::set(community_id, members_count.checked_add(1));
 
 			Ok(())
 		})
 	}
 
 	pub(crate) fn do_remove_member(community_id: &T::CommunityId, who: &T::AccountId) -> DispatchResult {
-		<CommunityMembers<T>>::try_mutate_exists(community_id, who, |value| {
+		Members::<T>::try_mutate_exists(community_id, who, |value| {
 			if value.is_none() {
 				return Err(Error::<T>::NotAMember.into());
 			}
@@ -63,7 +63,7 @@ impl<T: Config> Pallet<T> {
 
 			// Decreases member count
 			let members_count = Self::members_count(community_id).unwrap_or_default();
-			<CommunityMembersCount<T>>::set(community_id, members_count.checked_sub(1));
+			MembersCount::<T>::set(community_id, members_count.checked_sub(1));
 
 			Ok(())
 		})
