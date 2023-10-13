@@ -1,5 +1,5 @@
 use super::*;
-use crate::{Event, Info};
+use crate::{Event, GovernanceStrategy, Info};
 use sp_runtime::BoundedVec;
 
 mod apply {
@@ -12,11 +12,11 @@ mod apply {
 			Info::<Test>::insert(
 				COMMUNITY,
 				CommunityInfo {
-					admin: COMMUNITY_ADMIN,
 					state: CommunityState::Awaiting,
-					sufficient_asset_id: None,
 				},
 			);
+			GovernanceStrategy::<Test>::insert(COMMUNITY, CommunityGovernanceStrategy::AdminBased(COMMUNITY_ADMIN));
+
 			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_ADMIN));
 
 			// Should fail adding the community

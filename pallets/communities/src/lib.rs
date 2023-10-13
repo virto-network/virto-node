@@ -253,6 +253,17 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
+		/// Type represents a vote unit
+		type VoteWeight: AtLeast32BitUnsigned
+			+ Parameter
+			+ Default
+			+ Copy
+			+ Saturating
+			+ PartialOrd
+			+ MaxEncodedLen
+			+ From<BalanceOf<Self>>
+			+ From<Self::MembershipRank>;
+
 		/// The Communities' pallet id, used for deriving its sovereign account
 		/// ID.
 		#[pallet::constant]
@@ -274,14 +285,22 @@ pub mod pallet {
 		/// Max amount of locations a community can hold on its metadata.
 		#[pallet::constant]
 		type MaxLocations: Get<u32> + Clone + PartialEq + core::fmt::Debug;
+
+		/// Max amount of proposals a community can have enqueued
+		#[pallet::constant]
+		type MaxProposals: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 	}
+
+	/// The origin of the pallet
+	#[pallet::origin]
+	pub type Origin<T> = types::RawOrigin<T>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
-	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo<T>>;
+	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo>;
 
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
@@ -307,6 +326,37 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn members_count)]
 	pub(super) type MembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
+
+	/// Stores the governance strategy for the community.
+	#[pallet::storage]
+	#[pallet::getter(fn governance_strategy)]
+	pub(super) type GovernanceStrategy<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		CommunityIdOf<T>,
+		CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>, VoteWeightFor<T>>,
+	>;
+
+	/// Stores a queue of the proposals.
+	#[pallet::storage]
+	#[pallet::getter(fn proposals)]
+	pub(super) type Proposals<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		CommunityIdOf<T>,
+		BoundedVec<CommunityProposal<T>, <T as Config>::MaxProposals>,
+		ValueQuery,
+	>;
+
+	/// Stores a poll representing the current proposal.
+	#[pallet::storage]
+	#[pallet::getter(fn poll)]
+	pub(super) type Poll<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityPoll<T>>;
+
+	/// Stores the list of votes for a community.
+	#[pallet::storage]
+	pub(super) type VoteOf<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, ()>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
