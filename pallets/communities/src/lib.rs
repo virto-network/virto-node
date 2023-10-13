@@ -393,6 +393,13 @@ pub mod pallet {
 			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
 		},
+		/// A proposal has been enqueued and is ready to be
+		/// decided whenever it comes to the head of the comomunity
+		/// proposals queue
+		ProposalEnqueued {
+			community_id: CommunityIdOf<T>,
+			proposer: AccountIdOf<T>,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -586,6 +593,62 @@ pub mod pallet {
 				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
 				amount,
 			)?;
+
+			Ok(())
+		}
+
+		/// Schedules a call on behalf of the treasury account. It should be
+		/// exectued within the following block
+		#[pallet::call_index(6)]
+		pub fn open_proposal(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			call: Box<RuntimeCallOf<T>>,
+		) -> DispatchResult {
+			let caller = Self::ensure_origin_member(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_create_proposal(&caller, &community_id, *call)?;
+
+			Self::deposit_event(Event::ProposalEnqueued {
+				community_id,
+				proposer: caller,
+			});
+
+			Ok(())
+		}
+
+		/// Creates a proposal, and immediately closes a poll, effectively
+		/// executing a call (to be dispatched by the runtime scheduler). Called
+		/// by the community admin when the current governance strategy for the
+		/// community is
+		/// [`AdminBased`][`CommunityGovernanceStrategy::AdminBased`].
+
+		#[pallet::call_index(9)]
+		pub fn execute_call(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			call: Box<RuntimeCallOf<T>>,
+		) -> DispatchResult {
+			let Some(caller) = Self::ensure_origin_privileged(origin, &community_id)? else {
+				Err(DispatchError::BadOrigin)?
+			};
+			Self::ensure_active(&community_id)?;
+
+			Self::do_create_proposal(&caller, &community_id, *call)?;
+			Self::deposit_event(Event::ProposalEnqueued {
+				community_id: community_id.clone(),
+				proposer: caller.clone(),
+			});
+
+			Self::do_initiate_poll(&community_id)?;
+			// Deposit event for Poll Initiated
+
+			Self::do_vote_in_poll(&caller, &community_id, CommunityPollVote::Aye(1u32.into()))?;
+			// Deposit event for Poll Voted
+
+			Self::do_close_poll(&community_id)?;
+			// Deposit event for Poll Closed
 
 			Ok(())
 		}
