@@ -1,4 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(let_chains)]
+#![feature(trait_alias)]
 
 //! # Communities Pallet
 //!
@@ -193,6 +195,7 @@
 //! [g02]: `crate::Pallet::membership`
 //! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
+pub use types::RawOrigin;
 
 #[cfg(test)]
 mod tests;
@@ -202,6 +205,7 @@ mod benchmarking;
 
 mod functions;
 
+pub mod traits;
 pub mod types;
 pub mod weights;
 pub use weights::*;
@@ -210,12 +214,18 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::*,
-		traits::tokens::{fungible, fungibles},
+		pallet_prelude::{DispatchResult, ValueQuery, *},
+		traits::{
+			schedule::v3::Anon as AnonV3,
+			tokens::{fungible, fungibles},
+			CallerTrait, QueryPreimage, StorePreimage,
+		},
 		Parameter,
 	};
-	use frame_system::pallet_prelude::{OriginFor, *};
-	use sp_runtime::traits::StaticLookup;
+	use frame_system::pallet_prelude::{BlockNumberFor, OriginFor, *};
+	use scale_info::prelude::boxed::Box;
+	use sp_runtime::traits::{AtLeast32BitUnsigned, Saturating, StaticLookup};
+	use traits::rank::MemberRank;
 	use types::*;
 
 	#[pallet::pallet]
@@ -226,7 +236,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// This type represents an unique ID for the community
-		type CommunityId: Parameter + MaxEncodedLen;
+		type CommunityId: Default + Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
 		type MembershipRank: Default + AtLeast32BitUnsigned + Parameter + MaxEncodedLen + PartialOrd;
@@ -252,6 +262,15 @@ pub mod pallet {
 
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
+
+		/// Type represents the actions for storing call preimages
+		type Preimage: QueryPreimage + StorePreimage;
+
+		/// Type represents interactions with the dispatch scheduler
+		type Scheduler: AnonV3<BlockNumberFor<Self>, RuntimeCallOf<Self>, Self::PalletsOrigin>;
+
+		/// The caller origin, overarching type of all pallets origins.
+		type PalletsOrigin: From<RawOrigin<Self>> + CallerTrait<Self::AccountId> + MaxEncodedLen;
 
 		/// Type represents a vote unit
 		type VoteWeight: AtLeast32BitUnsigned
@@ -397,6 +416,24 @@ pub mod pallet {
 		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
 		/// only member remaining. Please consider changing the admin first.
 		CannotRemoveAdmin,
+		/// It is not possible to encode the call into a preimage.
+		CannotEncodeCall,
+		/// It is not possible to enqueue a proposal for a community
+		CannotEnqueueProposal,
+		/// The community has exceeded the max amount of enqueded proposals at
+		/// this moment.
+		ExceededMaxProposals,
+		/// It is not possible to dequeue a proposal
+		CannotDequeueProposal,
+		/// A call for the spciefied [Hash][`frame_system::Config::Hash`] is not
+		/// found
+		CannotFindCall,
+		/// The poll the caller is trying to open is already opened.
+		PollAlreadyOpened,
+		/// The poll the caller is trying to close is already closed.
+		PollAlreadyClosed,
+		/// The criteria needed to close the poll is not met
+		CannotClosePoll,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke

@@ -1,6 +1,7 @@
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64},
+	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EqualPrivilegeOnly},
+	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
@@ -22,6 +23,7 @@ pub type CommunityId = u128;
 
 pub type MembershipRank = u32;
 pub type MembershipPassport = ();
+pub type VoteWeight = u128;
 
 impl pallet_communities::traits::rank::MemberRank<MembershipRank> for MembershipPassport {
 	fn rank(&self) -> u32 {
@@ -36,9 +38,30 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets,
 		Balances: pallet_balances,
 		Communities: pallet_communities,
+		Preimage: pallet_preimage,
+		Scheduler: pallet_scheduler,
 		System: frame_system,
 	}
 );
+
+impl<T: pallet_communities::Config>
+	Into<Result<frame_system::RawOrigin<T::AccountId>, pallet_communities::RawOrigin<T>>>
+	for pallet_communities::RawOrigin<T>
+{
+	fn into(self) -> Result<frame_system::RawOrigin<T::AccountId>, pallet_communities::RawOrigin<T>> {
+		Ok(frame_system::RawOrigin::Signed(
+			pallet_communities::Pallet::<T>::get_community_account_id(&self.community_id),
+		))
+	}
+}
+
+impl<T: pallet_communities::Config> From<pallet_communities::RawOrigin<T>> for frame_system::RawOrigin<T::AccountId> {
+	fn from(o: pallet_communities::RawOrigin<T>) -> frame_system::RawOrigin<T::AccountId> {
+		frame_system::RawOrigin::Signed(pallet_communities::Pallet::<T>::get_community_account_id(
+			&o.community_id,
+		))
+	}
+}
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -106,6 +129,35 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Weight::from_parts(1_000_000_000, 1_048_576);
+	pub const MaxScheduledPerBlock: u32 = 512;
+	pub const PreimageBaseDeposit: u64 = 2;
+	pub const PreimageByteDeposit: u64 = 1;
+}
+
+impl pallet_preimage::Config for Test {
+	type WeightInfo = ();
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureSigned<AccountId>;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+}
+
+impl pallet_scheduler::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Self>;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	#[derive(Debug, Clone, PartialEq)]
 	pub const CommunitiesMetadataUrlSize: u32 = 32;
@@ -126,12 +178,16 @@ impl pallet_communities::Config for Test {
 
 	type MembershipRank = MembershipRank;
 	type MembershipPassport = MembershipPassport;
+	type VoteWeight = VoteWeight;
 
 	type PalletId = CommunitiesPalletId;
 	type FreezeIdentifier = <Test as pallet_balances::Config>::FreezeIdentifier;
 	type MetadataUrlSize = CommunitiesMetadataUrlSize;
 	type MaxUrls = CommunitiesMaxUrls;
 	type MaxLocations = CommunitiesMaxLocations;
+	type Preimage = Preimage;
+	type Scheduler = Scheduler;
+	type PalletsOrigin = OriginCaller;
 	type MaxProposals = CommunitiesMaxProposals;
 }
 
