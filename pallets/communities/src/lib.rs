@@ -229,7 +229,10 @@ pub mod pallet {
 		type CommunityId: Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
-		type MembershipPassport: Default + Parameter + MaxEncodedLen;
+		type MembershipRank: Default + AtLeast32BitUnsigned + Parameter + MaxEncodedLen + PartialOrd;
+
+		/// This type represents a rank for a member in a community
+		type MembershipPassport: Default + Parameter + MaxEncodedLen + MemberRank<Self::MembershipRank>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId>

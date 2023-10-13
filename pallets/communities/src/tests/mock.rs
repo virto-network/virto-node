@@ -111,7 +111,10 @@ impl pallet_communities::Config for Test {
 	type Assets = Assets;
 	type Balances = Balances;
 	type CommunityId = CommunityId;
-	type MembershipPassport = ();
+
+	type MembershipRank = MembershipRank;
+	type MembershipPassport = MembershipPassport;
+
 	type PalletId = CommunitiesPalletId;
 	type FreezeIdentifier = CommunitiesFreezeIdentifier;
 	type MetadataUrlSize = MetadataUrlSize;
