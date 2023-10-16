@@ -1,4 +1,5 @@
 use super::*;
+pub use frame_support::traits::OriginTrait;
 
 pub type AssetIdOf<T> = <<T as Config>::Assets as InspectFuns<AccountIdOf<T>>>::AssetId;
 pub type BalanceOf<T> = <<T as Config>::Assets as InspectFuns<AccountIdOf<T>>>::Balance;
@@ -9,6 +10,7 @@ pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::S
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
 pub type MemberListOf<T> = Vec<AccountIdOf<T>>;
 
+pub type PalletsOriginOf<T> = <T as Config>::PalletsOrigin;
 pub type RuntimeCallOf<T> = <T as SystemConfig>::RuntimeCall;
 
 pub type MembershipPassportOf<T> = <T as Config>::MembershipPassport;

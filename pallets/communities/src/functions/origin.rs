@@ -1,23 +1,28 @@
 use super::*;
-use frame_support::traits::{EnsureOrigin, OriginTrait};
+
+macro_rules! as_origin {
+	($origin: ident, $t: ty) => {{
+		TryInto::<$t>::try_into($origin.clone()).ok()
+	}};
+}
 
 impl<T: Config> Pallet<T> {
-	pub(crate) fn get_origin(community_id: &CommunityIdOf<T>) -> Result<RawOrigin<T>, DispatchError> {
-		let governance_strategy =
-			GovernanceStrategy::<T>::get(community_id).ok_or(Error::<T>::CommunityDoesNotExist)?;
+	pub(crate) fn ensure_proposal_origin(
+		community_id: &CommunityIdOf<T>,
+		origin: PalletsOriginOf<T>,
+	) -> DispatchResult {
+		let community_account_id = Self::get_community_account_id(community_id);
 
-		Ok(RawOrigin::<T> {
-			community_id: community_id.clone(),
-			body_part: match governance_strategy {
-				CommunityGovernanceStrategy::AdminBased(_) => BodyPart::Voice,
-				CommunityGovernanceStrategy::MemberCountPoll { min } => BodyPart::Members { min },
-				CommunityGovernanceStrategy::AssetWeighedPoll {
-					asset_id: _,
-					num,
-					denum,
-				} => BodyPart::Fraction { num, denum },
-				CommunityGovernanceStrategy::RankedWeighedPoll { num, denum } => BodyPart::Fraction { num, denum },
-			},
-		})
+		if let Some(o) = as_origin!(origin, frame_system::Origin<T>) {
+			match o {
+				frame_system::Origin::<T>::Signed(account) if account == community_account_id => Ok(()),
+				_ => Err(Error::<T>::InvalidProposalOrigin.into()),
+			}
+		} else {
+			match as_origin!(origin, pallet::Origin<T>) {
+				Some(_) => Ok(()),
+				None => Err(Error::<T>::InvalidProposalOrigin.into()),
+			}
+		}
 	}
 }

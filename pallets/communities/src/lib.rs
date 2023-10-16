@@ -270,7 +270,12 @@ pub mod pallet {
 		type Scheduler: AnonV3<BlockNumberFor<Self>, RuntimeCallOf<Self>, Self::PalletsOrigin>;
 
 		/// The caller origin, overarching type of all pallets origins.
-		type PalletsOrigin: From<RawOrigin<Self>> + CallerTrait<Self::AccountId> + MaxEncodedLen;
+		type PalletsOrigin: From<frame_system::Origin<Self>>
+			+ From<Origin<Self>>
+			+ TryInto<frame_system::Origin<Self>>
+			+ TryInto<Origin<Self>>
+			+ CallerTrait<Self::AccountId>
+			+ MaxEncodedLen;
 
 		/// Type represents a vote unit
 		type VoteWeight: AtLeast32BitUnsigned
@@ -312,7 +317,7 @@ pub mod pallet {
 
 	/// The origin of the pallet
 	#[pallet::origin]
-	pub type Origin<T> = types::RawOrigin<T>;
+	pub type Origin<T> = types::RawOrigin<CommunityIdOf<T>, VoteWeightFor<T>>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
@@ -423,6 +428,8 @@ pub mod pallet {
 		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
 		/// only member remaining. Please consider changing the admin first.
 		CannotRemoveAdmin,
+		/// The origin specified to propose the call execution is invalid.
+		InvalidProposalOrigin,
 		/// It is not possible to encode the call into a preimage.
 		CannotEncodeCall,
 		/// It is not possible to enqueue a proposal for a community
@@ -603,12 +610,13 @@ pub mod pallet {
 		pub fn open_proposal(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
+			call_origin: Box<PalletsOriginOf<T>>,
 			call: Box<RuntimeCallOf<T>>,
 		) -> DispatchResult {
 			let caller = Self::ensure_origin_member(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 
-			Self::do_create_proposal(&caller, &community_id, *call)?;
+			Self::do_create_proposal(&caller, &community_id, *call_origin, *call)?;
 
 			Self::deposit_event(Event::ProposalEnqueued {
 				community_id,
@@ -625,9 +633,10 @@ pub mod pallet {
 		/// [`AdminBased`][`CommunityGovernanceStrategy::AdminBased`].
 
 		#[pallet::call_index(9)]
-		pub fn execute_call(
+		pub fn execute(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
+			call_origin: Box<PalletsOriginOf<T>>,
 			call: Box<RuntimeCallOf<T>>,
 		) -> DispatchResult {
 			let Some(caller) = Self::ensure_origin_privileged(origin, &community_id)? else {
@@ -635,7 +644,7 @@ pub mod pallet {
 			};
 			Self::ensure_active(&community_id)?;
 
-			Self::do_create_proposal(&caller, &community_id, *call)?;
+			Self::do_create_proposal(&caller, &community_id, *call_origin, *call)?;
 			Self::deposit_event(Event::ProposalEnqueued {
 				community_id: community_id.clone(),
 				proposer: caller.clone(),

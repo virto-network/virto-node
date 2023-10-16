@@ -6,8 +6,11 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_create_proposal(
 		proposer: &AccountIdOf<T>,
 		community_id: &CommunityIdOf<T>,
+		call_origin: PalletsOriginOf<T>,
 		call: RuntimeCallOf<T>,
 	) -> DispatchResult {
+		Self::ensure_proposal_origin(community_id, call_origin.clone())?;
+
 		let bounded_call = T::Preimage::bound(call).map_err(|_| Error::<T>::CannotEncodeCall)?;
 
 		Self::do_enqueue_proposal(
@@ -15,6 +18,7 @@ impl<T: Config> Pallet<T> {
 			CommunityProposal {
 				proposer: proposer.clone(),
 				call: bounded_call,
+				origin: call_origin,
 			},
 		)?;
 
@@ -22,18 +26,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	#[allow(dead_code)]
-	pub(crate) fn do_call_execute(community_id: &CommunityIdOf<T>, proposal: CommunityProposal<T>) -> DispatchResult {
-		let origin = Self::get_origin(community_id)?;
-
+	pub(crate) fn do_execute_proposal(proposal: CommunityProposal<T>) -> DispatchResult {
 		T::Scheduler::schedule(
 			frame_support::traits::schedule::DispatchTime::After(Zero::zero()),
 			None,
 			Default::default(),
-			origin.into(),
+			proposal.origin,
 			proposal.call,
-		)?;
-
-		Ok(())
+		)
+		.and_then(|_| Ok(()))
 	}
 
 	fn do_enqueue_proposal(community_id: &CommunityIdOf<T>, proposal: CommunityProposal<T>) -> DispatchResult {

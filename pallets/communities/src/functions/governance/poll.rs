@@ -44,7 +44,7 @@ impl<T: Config> Pallet<T> {
 
 		match poll_outcome {
 			// Schedule the approved proposal
-			PollOutcome::Approved => Self::do_call_execute(community_id, proposal),
+			PollOutcome::Approved => Self::do_execute_proposal(proposal),
 			// Do nothing
 			PollOutcome::Rejected => Ok(()),
 		}?;

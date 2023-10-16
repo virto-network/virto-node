@@ -52,6 +52,7 @@ pub enum CommunityGovernanceStrategy<AccountId, AssetId, VoteWeight> {
 pub struct CommunityProposal<T: Config> {
 	pub(crate) proposer: AccountIdOf<T>,
 	pub(crate) call: Bounded<RuntimeCallOf<T>>,
+	pub(crate) origin: PalletsOriginOf<T>,
 }
 
 /// This structure holds a poll and the methods to increase/decrease

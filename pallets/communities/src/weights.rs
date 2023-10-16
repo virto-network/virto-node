@@ -41,7 +41,7 @@ pub trait WeightInfo {
 	fn assets_transfer() -> Weight;
 	fn balance_transfer() -> Weight;
 	fn open_proposal() -> Weight;
-	fn execute_call() -> Weight;
+	fn execute() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -126,7 +126,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	
 		/// Storage: Communities Something (r:0 w:1)
 		/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-		fn execute_call() -> Weight {
+		fn execute() -> Weight {
 			// Proof Size summary in bytes:
 			//  Measured:  `0`
 			//  Estimated: `0`
@@ -217,7 +217,7 @@ impl WeightInfo for () {
 
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn execute_call() -> Weight {
+	fn execute() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`

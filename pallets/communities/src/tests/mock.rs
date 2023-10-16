@@ -44,25 +44,6 @@ frame_support::construct_runtime!(
 	}
 );
 
-impl<T: pallet_communities::Config>
-	Into<Result<frame_system::RawOrigin<T::AccountId>, pallet_communities::RawOrigin<T>>>
-	for pallet_communities::RawOrigin<T>
-{
-	fn into(self) -> Result<frame_system::RawOrigin<T::AccountId>, pallet_communities::RawOrigin<T>> {
-		Ok(frame_system::RawOrigin::Signed(
-			pallet_communities::Pallet::<T>::get_community_account_id(&self.community_id),
-		))
-	}
-}
-
-impl<T: pallet_communities::Config> From<pallet_communities::RawOrigin<T>> for frame_system::RawOrigin<T::AccountId> {
-	fn from(o: pallet_communities::RawOrigin<T>) -> frame_system::RawOrigin<T::AccountId> {
-		frame_system::RawOrigin::Signed(pallet_communities::Pallet::<T>::get_community_account_id(
-			&o.community_id,
-		))
-	}
-}
-
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
