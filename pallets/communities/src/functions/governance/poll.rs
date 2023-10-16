@@ -97,7 +97,7 @@ impl<T: Config> Pallet<T> {
 		match governance_strategy {
 			CommunityGovernanceStrategy::AdminBased(_) => Ok(PollOutcome::Approved),
 			CommunityGovernanceStrategy::MemberCountPoll { min } => {
-				if ayes.saturating_add(nays) >= min.into() {
+				if ayes.saturating_add(nays) >= min {
 					if ayes > nays {
 						Ok(PollOutcome::Approved)
 					} else {

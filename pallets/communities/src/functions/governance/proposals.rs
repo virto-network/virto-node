@@ -34,7 +34,7 @@ impl<T: Config> Pallet<T> {
 			proposal.origin,
 			proposal.call,
 		)
-		.and_then(|_| Ok(()))
+		.map(|_| ())
 	}
 
 	fn do_enqueue_proposal(community_id: &CommunityIdOf<T>, proposal: CommunityProposal<T>) -> DispatchResult {

@@ -195,7 +195,7 @@ mod execute_call {
 				record.event
 					== frame_system::Event::<Test>::Remarked {
 						sender: community_account_id,
-						hash: H256::from(blake2_256(&b"Hello, governance!".to_vec())),
+						hash: H256::from(blake2_256(b"Hello, governance!".as_ref())),
 					}
 					.into()
 			}));

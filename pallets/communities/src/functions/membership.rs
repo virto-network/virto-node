@@ -8,8 +8,8 @@ impl<T: Config> Pallet<T> {
 		let caller = ensure_signed(origin)?;
 
 		Self::membership(community_id, &caller)
-			.ok_or(DispatchError::BadOrigin.into())
-			.and_then(|_| Ok(caller))
+			.ok_or(DispatchError::BadOrigin)
+			.map(|_| caller)
 	}
 
 	#[allow(dead_code)]
