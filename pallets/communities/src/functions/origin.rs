@@ -1,10 +1,6 @@
-use super::*;
+use sp_runtime::traits::CheckedConversion;
 
-macro_rules! as_origin {
-	($origin: ident, $t: ty) => {{
-		TryInto::<$t>::try_into($origin.clone()).ok()
-	}};
-}
+use super::*;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_proposal_origin(
@@ -13,13 +9,13 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let community_account_id = Self::get_community_account_id(community_id);
 
-		if let Some(o) = as_origin!(origin, frame_system::Origin<T>) {
+		if let Some(o) = origin.clone().checked_into::<frame_system::Origin<T>>() {
 			match o {
 				frame_system::Origin::<T>::Signed(account) if account == community_account_id => Ok(()),
 				_ => Err(Error::<T>::InvalidProposalOrigin.into()),
 			}
 		} else {
-			match as_origin!(origin, pallet::Origin<T>) {
+			match origin.checked_into::<pallet::Origin<T>>() {
 				Some(_) => Ok(()),
 				None => Err(Error::<T>::InvalidProposalOrigin.into()),
 			}
