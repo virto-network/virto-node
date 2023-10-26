@@ -24,7 +24,7 @@ use crate::{
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 
-use log::{info, warn};
+use log::info;
 use parachains_common::AuraId;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams, Result,
@@ -418,16 +418,8 @@ pub fn run() -> Result<()> {
 					if config.role.is_authority() { "yes" } else { "no" }
 				);
 
-				if !collator_options.relay_chain_rpc_urls.is_empty() && !cli.relaychain_args.is_empty() {
-					warn!(
-						"Detected relay chain node arguments together with --relay-chain-rpc-url. \
-						   This command starts a minimal Polkadot node that only uses a \
-						   network-related subset of all relay chain CLI options."
-					);
-				}
-
 				dispatch_runtime!(config.chain_spec.runtime(), |runtime| {
-					crate::service::start_generic_aura_node::<runtime::RuntimeApi, AuraId>(
+					crate::service::start_aura_node::<runtime::RuntimeApi, AuraId>(
 						config,
 						polkadot_config,
 						collator_options,

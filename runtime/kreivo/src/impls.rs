@@ -17,13 +17,13 @@
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for parachains.
 
 use super::*;
-use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler};
 use frame_support::{
 	traits::{Contains, Currency, InstanceFilter},
 	weights::Weight,
-	RuntimeDebug,
 };
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use sp_runtime::RuntimeDebug;
 
 use pallet_lockdown_mode::impls::PauseXcmExecution;
 use sp_runtime::DispatchResult;
