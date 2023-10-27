@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
-use codec::Encode;
 use cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider;
+use parity_scale_codec::Encode;
 use sc_client_api::BlockBackend;
 use sp_core::Pair;
 use sp_inherents::{InherentData, InherentDataProvider};

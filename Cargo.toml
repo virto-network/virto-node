@@ -1,18 +1,195 @@
+[workspace]
+members = ["node", "runtime/kreivo", "runtime/virto"]
+exclude = ["xcm-emulator"]
+resolver = "2"
+
 [profile.release]
-panic = 'unwind'
+panic = "unwind"
 
 [profile.production]
 inherits = "release"
 lto = true
 codegen-units = 1
 
-[workspace]
-members = [
-    'node',
-    'runtime/virto',
-    'runtime/kreivo',
-]
+[profile.test]
+debug = 0
 
-exclude = [
-    'virto-xcm-emulator'
-]
+[workspace.package]
+authors = ['Virto Team <contact@virto.team>']
+license = "GPL-3.0-only"
+homepage = 'https://github.com/virto-network/virto-node'
+repository = 'https://github.com/virto-network/virto-node'
+edition = "2021"
+
+
+[workspace.dependencies]
+
+# common
+async-trait = "0.1"
+clap = { version = "4.4.2" }
+parity-scale-codec = { version = "3.6.4", default-features = false, features = [
+	"derive",
+] }
+futures = { version = "0.3.28" }
+hex-literal = { version = "0.3.4" }
+log = { version = "0.4.20" }
+serde = { version = "1.0.188" }
+serde_json = "1.0.104"
+scale-info = { version = "2.9.0", default-features = false, features = [
+	"derive",
+] }
+smallvec = "1.11"
+
+# Local dependencies
+kreivo-runtime = { path = "runtime/kreivo" }
+virto-runtime = { path = "runtime/virto" }
+jsonrpsee = { version = "0.16.3" }
+
+
+# Virto Pallets
+pallet-asset-registry = { default-features = false, path = "pallets/asset-registry" }
+pallet-burner = { default-features = false, path = "pallets/burner" }
+pallet-lockdown-mode = { default-features = false, path = "pallets/lockdown-mode" }
+
+# Virto common
+virto-common =  { default-features = false, path = "runtime/common" }
+
+# Substrate std
+try-runtime-cli = { version = "0.33.0" }
+frame-benchmarking-cli = { version = "27.0.0" }
+frame-rpc-system = { package = "substrate-frame-rpc-system", default-features = false, version = "23.0.0" }
+pallet-transaction-payment-rpc = { version = "25.0.0" }
+sc-basic-authorship = { version = "0.29.0" }
+sc-chain-spec = { version = "22.0.0" }
+sc-consensus = { version = "0.28.0" }
+sc-cli = { version = "0.31.0" }
+sc-client-api = { version = "23.0.0" }
+sc-executor = { version = "0.27.0" }
+sc-service = { version = "0.30.0" }
+sc-telemetry = { version = "10.0.0" }
+sc-transaction-pool = { version = "23.0.0" }
+sc-network = { version = "0.29.0" }
+sc-network-sync = { version = "0.28.0" }
+sc-rpc = { version = "24.0.0" }
+sc-tracing = { version = "23.0.0" }
+sc-sysinfo = { version = "22.0.0" }
+sp-blockchain = { version = "23.0.0" }
+sp-consensus = { version = "0.27.0" }
+sp-keyring = { version = "26.0.0" }
+substrate-prometheus-endpoint = { version = "0.14.0" }
+substrate-state-trie-migration-rpc = { version = "22.0.0" }
+
+# Substrate non-std
+frame-benchmarking = { default-features = false, version = "23.0.0" }
+sp-io = { default-features = false, version = "25.0.0" }
+sp-core = { default-features = false, version = "23.0.0" }
+sp-session = { default-features = false, version = "22.0.0" }
+sp-timestamp = { default-features = false, version = "21.0.0" }
+sp-block-builder = { default-features = false, version = "21.0.0" }
+sp-keystore = { default-features = false, version = "0.29.0" }
+sp-offchain = { default-features = false, version = "21.0.0" }
+sp-api = { default-features = false, version = "21.0.0" }
+sp-consensus-aura = { default-features = false, version = "0.27.0" }
+sp-transaction-pool = { default-features = false, version = "21.0.0" }
+sc-transaction-pool-api = { default-features = false, version = "23.0.0" }
+
+
+# Substrate Runtime
+sp-runtime = { default-features = false, version = "26.0.0" }
+sp-inherents = { default-features = false, version = "21.0.0" }
+sp-arithmetic = { default-features = false, version = "18.0.0" }
+sp-std = { default-features = false, version = "10.0.0" }
+sp-version = { default-features = false, version = "24.0.0" }
+sp-weights = { default-features = false, version = "22.0.0" }
+
+# Build Dependencies
+substrate-build-script-utils = { version = "7.0.0" }
+substrate-wasm-builder = { version = "12.0.0" }
+
+## Substrate FRAME Dependencies
+frame-try-runtime = { default-features = false, version = "0.29.0" }
+frame-executive = { default-features = false, version = "23.0.0" }
+frame-support = { default-features = false, version = "23.0.0" }
+frame-system = { default-features = false, version = "23.0.0" }
+frame-system-benchmarking = { default-features = false, version = "23.0.0" }
+frame-system-rpc-runtime-api = { default-features = false, version = "21.0.0" }
+
+## Substrate Pallet Dependencies
+pallet-assets = { default-features = false, version = "24.0.0" }
+pallet-asset-tx-payment = { default-features = false, version = "23.0.0" }
+pallet-aura = { default-features = false, version = "22.0.0" }
+pallet-authorship = { default-features = false, version = "23.0.0" }
+pallet-balances = { default-features = false, version = "23.0.0" }
+pallet-collective = { default-features = false, version = "23.0.0" }
+pallet-contracts = { default-features = false, version = "22.0.0" }
+pallet-contracts-primitives = { default-features = false, version = "26.0.0" }
+pallet-democracy = { default-features = false, version = "23.0.0" }
+pallet-identity = { default-features = false, version = "23.0.0" }
+pallet-multisig = { default-features = false, version = "23.0.0" }
+pallet-proxy = { default-features = false, version = "23.0.0" }
+pallet-preimage = { default-features = false, version = "23.0.0" }
+pallet-insecure-randomness-collective-flip = { default-features = false, version = "11.0.0" }
+pallet-session = { default-features = false, version = "23.0.0" }
+pallet-scheduler = { default-features = false, version = "24.0.0" }
+pallet-sudo = { default-features = false, version = "23.0.0" }
+pallet-timestamp = { default-features = false, version = "22.0.0" }
+pallet-transaction-payment = { default-features = false, version = "23.0.0" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "23.0.0" }
+pallet-uniques = { default-features = false, version = "23.0.0" }
+pallet-utility = { default-features = false, version = "23.0.0" }
+pallet-treasury = { default-features = false, version = "22.0.0" }
+
+# Cumulus client dependencies
+cumulus-client-cli = { version = "0.2.0" }
+cumulus-client-collator = { version = "0.2.0" }
+cumulus-client-consensus-aura = { version = "0.2.0" }
+cumulus-client-consensus-relay-chain = { version = "0.2.0" }
+cumulus-client-consensus-common = { version = "0.2.0" }
+cumulus-client-consensus-proposer = { version = "0.2.0" }
+cumulus-client-service = { version = "0.2.0" }
+cumulus-client-network = { version = "0.2.0" }
+cumulus-primitives-parachain-inherent = { version = "0.2.0" }
+cumulus-relay-chain-interface = { version = "0.2.0" }
+
+# Cumulus runtime dependencies
+assets-common = { default-features = false, version = "0.2.0" }
+cumulus-pallet-aura-ext = { default-features = false, version = "0.2.0" }
+cumulus-pallet-dmp-queue = { default-features = false, version = "0.2.0" }
+cumulus-pallet-parachain-system = { default-features = false, version = "0.2.0" }
+cumulus-pallet-xcm = { default-features = false, version = "0.2.0" }
+cumulus-pallet-xcmp-queue = { default-features = false, version = "0.2.0" }
+cumulus-ping = { default-features = false, version = "0.2.0" }
+cumulus-primitives-core = { default-features = false, version = "0.2.0" }
+cumulus-primitives-timestamp = { default-features = false, version = "0.2.0" }
+cumulus-primitives-utility = { default-features = false, version = "0.2.0" }
+pallet-collator-selection = { default-features = false, version = "4.0.0" }
+parachains-common = { default-features = false, version = "2.0.0" }
+parachain-info = { package = "staging-parachain-info", default-features = false, version = "0.2.0" }
+cumulus-pallet-session-benchmarking = { default-features = false, version = "4.0.0" }
+
+# Polkadot
+polkadot-cli = { features = ["rococo-native"], version = "2.0.0" }
+polkadot-primitives = { version = "2.0.0" }
+polkadot-service = { version = "2.0.0" }
+polkadot-runtime-parachains = { default-features = false, version = "2.0.0" }
+
+# Polkadot Dependencies
+kusama-runtime-constants = { default-features = false, version = "2.0.0" }
+pallet-xcm = { default-features = false, version = "2.0.0" }
+polkadot-core-primitives = { default-features = false, version = "2.0.0" }
+polkadot-parachain-primitives = { default-features = false, version = "1.0.0" }
+polkadot-runtime-common = { default-features = false, version = "2.0.0" }
+xcm = { package = "staging-xcm", default-features = false, version = "2.0.0" }
+xcm-builder = { package = "staging-xcm-builder", default-features = false, version = "2.0.1" }
+xcm-executor = { package = "staging-xcm-executor", default-features = false, version = "2.0.0" }
+xcm-primitives = { path = "primitives/xcm", default-features = false }
+xcm-simulator = { default-features = false, version = "2.0.0" }
+pallet-xcm-benchmarks = { default-features = false, version = "2.0.0" }
+
+# Dev dependencies
+assert_cmd = "2.0"
+nix = "0.26"
+tempfile = "3.7"
+tokio = { version = "1.32.0", features = ["macros", "time", "parking_lot"] }
+wait-timeout = "0.2"
+pallet-remark = { default-features = false, version = "23.0.0" }
