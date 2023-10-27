@@ -185,6 +185,7 @@ where
 /// This is the actual implementation that is abstract over the executor and the
 /// runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
+#[allow(clippy::too_many_arguments)]
 async fn start_node_impl<RuntimeApi, RB, BIQ, SC>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -296,7 +297,7 @@ where
 		config: parachain_config,
 		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
-		network: network.clone(),
+		network,
 		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		tx_handler_controller,
@@ -353,7 +354,7 @@ where
 			&task_manager,
 			relay_chain_interface.clone(),
 			transaction_pool,
-			sync_service.clone(),
+			sync_service,
 			params.keystore_container.keystore(),
 			relay_chain_slot_duration,
 			para_id,
@@ -522,7 +523,7 @@ where
 				client.clone(),
 				transaction_pool,
 				prometheus_registry,
-				telemetry.clone(),
+				telemetry,
 			);
 			let proposer = Proposer::new(proposer_factory);
 
