@@ -51,6 +51,9 @@ pallet-asset-registry = { default-features = false, path = "pallets/asset-regist
 pallet-burner = { default-features = false, path = "pallets/burner" }
 pallet-lockdown-mode = { default-features = false, path = "pallets/lockdown-mode" }
 
+# Virto common
+virto-common =  { default-features = false, path = "runtime/common" }
+
 # Substrate std
 try-runtime-cli = { version = "0.33.0" }
 frame-benchmarking-cli = { version = "27.0.0" }
@@ -123,6 +126,7 @@ pallet-contracts-primitives = { default-features = false, version = "26.0.0" }
 pallet-democracy = { default-features = false, version = "23.0.0" }
 pallet-identity = { default-features = false, version = "23.0.0" }
 pallet-multisig = { default-features = false, version = "23.0.0" }
+pallet-proxy = { default-features = false, version = "23.0.0" }
 pallet-preimage = { default-features = false, version = "23.0.0" }
 pallet-insecure-randomness-collective-flip = { default-features = false, version = "11.0.0" }
 pallet-session = { default-features = false, version = "23.0.0" }
