@@ -1,7 +1,7 @@
 #![allow(unused_qualifications)]
 use crate::*;
-use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_system::pallet_prelude::BlockNumberFor;
+use parity_scale_codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, BoundedVec, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};

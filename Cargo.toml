@@ -50,6 +50,8 @@ jsonrpsee = { version = "0.16.3" }
 pallet-asset-registry = { default-features = false, path = "pallets/asset-registry" }
 pallet-burner = { default-features = false, path = "pallets/burner" }
 pallet-lockdown-mode = { default-features = false, path = "pallets/lockdown-mode" }
+pallet-payments = { default-features = false, path = "pallets/payments" }
+
 
 # Virto common
 virto-common =  { default-features = false, path = "runtime/common" }

@@ -8,6 +8,7 @@ repository = "https://github.com/paritytech/trappist"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
+
 [dependencies]
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 scale-info = { workspace = true }

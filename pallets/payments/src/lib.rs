@@ -12,7 +12,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use codec::{Decode, Encode, MaxEncodedLen};
+pub use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 
 use frame_support::{
 	ensure, fail,
@@ -60,7 +60,7 @@ pub mod pallet {
 		/// Just the `Currency::Balance` type; we have this item to allow us to
 		/// constrain it to `From<u64>`.
 		type AssetsBalance: sp_runtime::traits::AtLeast32BitUnsigned
-			+ codec::FullCodec
+			+ parity_scale_codec::FullCodec
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ sp_std::fmt::Debug
