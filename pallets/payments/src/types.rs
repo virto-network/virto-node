@@ -1,5 +1,6 @@
 #![allow(unused_qualifications)]
 use crate::*;
+
 use frame_system::pallet_prelude::BlockNumberFor;
 use parity_scale_codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -13,8 +14,12 @@ pub type MaxFeesOf<T> = <T as Config>::MaxFees;
 pub type BalanceOf<T> = <<T as Config>::Assets as FunsInspect<<T as frame_system::Config>::AccountId>>::Balance;
 pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type BoundedDataOf<T> = BoundedVec<u8, <T as Config>::MaxRemarkLength>;
-pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>);
+pub type ChargableOnDisputes = bool;
+pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>, ChargableOnDisputes);
+pub type FeeDetailsPerRole<T> = (Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>);
 pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
+pub type CallOf<T> = <T as Config>::RuntimeCall;
+pub type BoundedCallOf<T> = Bounded<CallOf<T>>;
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to
@@ -71,8 +76,8 @@ pub trait FeeHandler<T: pallet::Config> {
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
 pub enum SubTypes<T: pallet::Config> {
-	Fixed(T::AccountId, BalanceOf<T>),
-	Percentage(T::AccountId, Percent),
+	Fixed(T::AccountId, BalanceOf<T>, ChargableOnDisputes),
+	Percentage(T::AccountId, Percent, ChargableOnDisputes),
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, Default, MaxEncodedLen, TypeInfo, Debug)]
@@ -84,26 +89,46 @@ pub struct Fees<T: pallet::Config> {
 }
 
 impl<T: pallet::Config> Fees<T> {
-	pub fn get_fees_details_for_sender(&self) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
-		Self::get_fees_details_per_role(&self.sender_pays)
+	pub fn get_fees_details(&self, is_sender: bool, is_dispute: bool) -> Result<FeeDetailsPerRole<T>, DispatchError> {
+		let fees = if is_sender {
+			&self.sender_pays
+		} else {
+			&self.beneficiary_pays
+		};
+		Self::get_fees_details_per_role(fees, is_dispute)
 	}
 
-	pub fn get_fees_details_for_beneficiary(&self) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
-		Self::get_fees_details_per_role(&self.beneficiary_pays)
-	}
+	pub fn get_fees_details_per_role(
+		fees: &FeeDetails<T>,
+		is_dispute: bool,
+	) -> Result<FeeDetailsPerRole<T>, DispatchError> {
+		let mut fees_per_account: BTreeMap<AccountIdOf<T>, Fee<T>> = BTreeMap::new();
+		let mut total_to_discount: BalanceOf<T> = Zero::zero();
+		let mut total_to_return: BalanceOf<T> = Zero::zero();
 
-	pub fn get_fees_details_per_role(fees: &FeeDetails<T>) -> Result<(Vec<Fee<T>>, BalanceOf<T>), DispatchError> {
-		// Use BTreeMap to aggregate fees per account and track total fees
-		let mut fees_per_account: BTreeMap<AccountIdOf<T>, BalanceOf<T>> = BTreeMap::new();
-		let mut total_fees: BalanceOf<T> = Zero::zero();
+		for (account, fee, charged_dispute) in fees.iter() {
+			if is_dispute {
+				if *charged_dispute {
+					total_to_discount = total_to_discount.saturating_add(*fee);
+				} else {
+					total_to_return = total_to_return.saturating_add(*fee);
+				}
+			} else {
+				total_to_discount = total_to_discount.saturating_add(*fee);
+			}
 
-		for (account, fee) in fees.iter() {
-			let current_fee = fees_per_account.entry(account.clone()).or_insert(Zero::zero());
-			*current_fee = current_fee.saturating_add(*fee);
-			total_fees = total_fees.saturating_add(*fee);
+			let current_fee = fees_per_account
+				.entry(account.clone())
+				.or_insert_with(|| (account.clone(), Zero::zero(), *charged_dispute));
+			let (_, current_balance, _) = current_fee;
+			*current_balance = current_balance.saturating_add(*fee);
 		}
 
-		Ok((fees_per_account.into_iter().collect(), total_fees))
+		Ok((
+			fees_per_account.into_values().collect(),
+			total_to_discount,
+			total_to_return,
+		))
 	}
 }
 
@@ -112,13 +137,25 @@ impl<T: pallet::Config> Fees<T> {
 pub enum Task {
 	// payment `from` to `to` has to be cancelled
 	Cancel,
+	Dispute,
 }
 
-/// The details of a scheduled task
+/// Types of Tasks that can be scheduled in the pallet
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
-pub struct ScheduledTask<Time: HasCompact> {
-	/// the type of scheduled task
-	pub task: Task,
-	/// the 'time' at which the task should be executed
-	pub when: Time,
+pub enum Role {
+	// payment `from` to `to` has to be cancelled
+	Sender,
+	Beneficiary,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub struct DisputeResult {
+	pub percent_beneficiary: Percent,
+	pub in_favor_of: Role,
+}
+
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, TypeInfo, MaxEncodedLen)]
+pub struct DisputeResultWithResolver<DisputeResult, AccountId> {
+	pub dispute_result: DisputeResult,
+	pub dispute_resolver: AccountId,
 }

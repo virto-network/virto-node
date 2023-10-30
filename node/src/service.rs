@@ -91,7 +91,21 @@ type Partial<Api> = PartialComponents<
 pub fn new_partial<RuntimeApi, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
-) -> Result<Partial<RuntimeApi>, sc_service::Error>
+) -> Result<
+	PartialComponents<
+		ParachainClient<RuntimeApi>,
+		ParachainBackend,
+		(),
+		sc_consensus::DefaultImportQueue<Block>,
+		sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>,
+		(
+			ParachainBlockImport<RuntimeApi>,
+			Option<Telemetry>,
+			Option<TelemetryWorkerHandle>,
+		),
+	>,
+	sc_service::Error,
+>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
