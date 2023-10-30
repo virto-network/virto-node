@@ -7,16 +7,9 @@ use super::*;
 ///
 /// [1]: `frame_system::Config::AccountId`
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen)]
-#[scale_info(skip_type_params(T))]
-pub struct CommunityInfo<T: crate::Config> {
-	/// The [`AccountId`][1] of the current community administrator.
-	///
-	/// [1]: `frame_system::Config::AccountId`
-	pub admin: AccountIdOf<T>,
+pub struct CommunityInfo {
 	/// The current state of the community.
 	pub state: CommunityState,
-	/// The ID of the asset marked by the community as sufficient.
-	pub sufficient_asset_id: Option<AssetIdOf<T>>,
 }
 
 /// The current state of the community. It represents whether a community

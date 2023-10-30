@@ -15,13 +15,12 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Info::<T>::insert(
-			community_id.clone(),
+			community_id,
 			CommunityInfo {
-				admin: who.clone(),
 				state: Default::default(),
-				sufficient_asset_id: None,
 			},
 		);
+		GovernanceStrategy::<T>::insert(community_id, CommunityGovernanceStrategy::AdminBased(who.clone()));
 
 		Self::do_insert_member(community_id, who)?;
 

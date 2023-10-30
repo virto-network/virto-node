@@ -5,11 +5,14 @@ use sp_runtime::{ArithmeticError, DispatchError};
 mod mock;
 pub use mock::*;
 
+mod helpers;
+
 type Error = crate::Error<Test>;
 
 const COMMUNITY: CommunityId = 1;
 const COMMUNITY_ADMIN: AccountId = 42;
 
+mod governance;
 mod membership;
 mod registry;
 mod treasury;

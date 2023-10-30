@@ -1,4 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![feature(let_chains)]
+#![feature(trait_alias)]
 
 //! # Communities Pallet
 //!
@@ -193,6 +195,7 @@
 //! [g02]: `crate::Pallet::membership`
 //! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
+pub use types::RawOrigin;
 
 #[cfg(test)]
 mod tests;
@@ -202,6 +205,7 @@ mod benchmarking;
 
 mod functions;
 
+pub mod traits;
 pub mod types;
 pub mod weights;
 pub use weights::*;
@@ -210,12 +214,18 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::*,
-		traits::tokens::{fungible, fungibles},
+		pallet_prelude::{DispatchResult, ValueQuery, *},
+		traits::{
+			schedule::v3::Anon as AnonV3,
+			tokens::{fungible, fungibles},
+			CallerTrait, QueryPreimage, StorePreimage,
+		},
 		Parameter,
 	};
-	use frame_system::pallet_prelude::{OriginFor, *};
-	use sp_runtime::traits::StaticLookup;
+	use frame_system::pallet_prelude::{BlockNumberFor, OriginFor, *};
+	use scale_info::prelude::boxed::Box;
+	use sp_runtime::traits::{AtLeast32BitUnsigned, Saturating, StaticLookup};
+	use traits::rank::MemberRank;
 	use types::*;
 
 	#[pallet::pallet]
@@ -226,10 +236,13 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// This type represents an unique ID for the community
-		type CommunityId: Parameter + MaxEncodedLen;
+		type CommunityId: Default + Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
-		type MembershipPassport: Default + Parameter + MaxEncodedLen;
+		type MembershipRank: Default + AtLeast32BitUnsigned + Parameter + MaxEncodedLen + PartialOrd;
+
+		/// This type represents a rank for a member in a community
+		type MembershipPassport: Default + Parameter + MaxEncodedLen + MemberRank<Self::MembershipRank>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId>
@@ -249,6 +262,31 @@ pub mod pallet {
 
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
+
+		/// Type represents the actions for storing call preimages
+		type Preimage: QueryPreimage + StorePreimage;
+
+		/// Type represents interactions with the dispatch scheduler
+		type Scheduler: AnonV3<BlockNumberFor<Self>, RuntimeCallOf<Self>, Self::PalletsOrigin>;
+
+		/// The caller origin, overarching type of all pallets origins.
+		type PalletsOrigin: From<frame_system::Origin<Self>>
+			+ From<Origin<Self>>
+			+ TryInto<frame_system::Origin<Self>>
+			+ TryInto<Origin<Self>>
+			+ CallerTrait<Self::AccountId>
+			+ MaxEncodedLen;
+
+		/// Type represents a vote unit
+		type VoteWeight: AtLeast32BitUnsigned
+			+ Parameter
+			+ Default
+			+ Copy
+			+ Saturating
+			+ PartialOrd
+			+ MaxEncodedLen
+			+ From<BalanceOf<Self>>
+			+ From<Self::MembershipRank>;
 
 		/// The Communities' pallet id, used for deriving its sovereign account
 		/// ID.
@@ -271,14 +309,22 @@ pub mod pallet {
 		/// Max amount of locations a community can hold on its metadata.
 		#[pallet::constant]
 		type MaxLocations: Get<u32> + Clone + PartialEq + core::fmt::Debug;
+
+		/// Max amount of proposals a community can have enqueued
+		#[pallet::constant]
+		type MaxProposals: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 	}
+
+	/// The origin of the pallet
+	#[pallet::origin]
+	pub type Origin<T> = types::RawOrigin<CommunityIdOf<T>, VoteWeightFor<T>>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
 	/// community exists.
 	#[pallet::storage]
 	#[pallet::getter(fn community)]
-	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo<T>>;
+	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo>;
 
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
@@ -305,6 +351,37 @@ pub mod pallet {
 	#[pallet::getter(fn members_count)]
 	pub(super) type MembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
 
+	/// Stores the governance strategy for the community.
+	#[pallet::storage]
+	#[pallet::getter(fn governance_strategy)]
+	pub(super) type GovernanceStrategy<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		CommunityIdOf<T>,
+		CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>, VoteWeightFor<T>>,
+	>;
+
+	/// Stores a queue of the proposals.
+	#[pallet::storage]
+	#[pallet::getter(fn proposals)]
+	pub(super) type Proposals<T> = StorageMap<
+		_,
+		Blake2_128Concat,
+		CommunityIdOf<T>,
+		BoundedVec<CommunityProposal<T>, <T as Config>::MaxProposals>,
+		ValueQuery,
+	>;
+
+	/// Stores a poll representing the current proposal.
+	#[pallet::storage]
+	#[pallet::getter(fn poll)]
+	pub(super) type Poll<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityPoll<T>>;
+
+	/// Stores the list of votes for a community.
+	#[pallet::storage]
+	pub(super) type VoteOf<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, ()>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -320,6 +397,13 @@ pub mod pallet {
 			description: Option<ConstSizedField<256>>,
 			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
 			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
+		},
+		/// A proposal has been enqueued and is ready to be
+		/// decided whenever it comes to the head of the comomunity
+		/// proposals queue
+		ProposalEnqueued {
+			community_id: CommunityIdOf<T>,
+			proposer: AccountIdOf<T>,
 		},
 	}
 
@@ -344,6 +428,26 @@ pub mod pallet {
 		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
 		/// only member remaining. Please consider changing the admin first.
 		CannotRemoveAdmin,
+		/// The origin specified to propose the call execution is invalid.
+		InvalidProposalOrigin,
+		/// It is not possible to encode the call into a preimage.
+		CannotEncodeCall,
+		/// It is not possible to enqueue a proposal for a community
+		CannotEnqueueProposal,
+		/// The community has exceeded the max amount of enqueded proposals at
+		/// this moment.
+		ExceededMaxProposals,
+		/// It is not possible to dequeue a proposal
+		CannotDequeueProposal,
+		/// A call for the spciefied [Hash][`frame_system::Config::Hash`] is not
+		/// found
+		CannotFindCall,
+		/// The poll the caller is trying to open is already opened.
+		PollAlreadyOpened,
+		/// The poll the caller is trying to close is already closed.
+		PollAlreadyClosed,
+		/// The criteria needed to close the poll is not met
+		CannotClosePoll,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -496,6 +600,64 @@ pub mod pallet {
 				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
 				amount,
 			)?;
+
+			Ok(())
+		}
+
+		/// Schedules a call on behalf of the treasury account. It should be
+		/// exectued within the following block
+		#[pallet::call_index(6)]
+		pub fn open_proposal(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			call_origin: Box<PalletsOriginOf<T>>,
+			call: Box<RuntimeCallOf<T>>,
+		) -> DispatchResult {
+			let caller = Self::ensure_origin_member(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			Self::do_create_proposal(&caller, &community_id, *call_origin, *call)?;
+
+			Self::deposit_event(Event::ProposalEnqueued {
+				community_id,
+				proposer: caller,
+			});
+
+			Ok(())
+		}
+
+		/// Creates a proposal, and immediately closes a poll, effectively
+		/// executing a call (to be dispatched by the runtime scheduler). Called
+		/// by the community admin when the current governance strategy for the
+		/// community is
+		/// [`AdminBased`][`CommunityGovernanceStrategy::AdminBased`].
+
+		#[pallet::call_index(9)]
+		pub fn execute(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			call_origin: Box<PalletsOriginOf<T>>,
+			call: Box<RuntimeCallOf<T>>,
+		) -> DispatchResult {
+			let Some(caller) = Self::ensure_origin_privileged(origin, &community_id)? else {
+				Err(DispatchError::BadOrigin)?
+			};
+			Self::ensure_active(&community_id)?;
+
+			Self::do_create_proposal(&caller, &community_id, *call_origin, *call)?;
+			Self::deposit_event(Event::ProposalEnqueued {
+				community_id: community_id.clone(),
+				proposer: caller.clone(),
+			});
+
+			Self::do_initiate_poll(&community_id)?;
+			// Deposit event for Poll Initiated
+
+			Self::do_vote_in_poll(&caller, &community_id, CommunityPollVote::Aye(1u32.into()))?;
+			// Deposit event for Poll Voted
+
+			Self::do_close_poll(&community_id)?;
+			// Deposit event for Poll Closed
 
 			Ok(())
 		}
