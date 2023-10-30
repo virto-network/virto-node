@@ -5,10 +5,13 @@ pub(self) use frame_support::traits::tokens::{
 	fungibles::Mutate as MutateFuns,
 };
 pub(self) use frame_system::pallet_prelude::*;
+pub(self) use sp_runtime::Saturating;
 pub(self) use types::*;
 
 mod challenges;
 mod getters;
+mod governance;
 mod membership;
+mod origin;
 mod registry;
 mod treasury;

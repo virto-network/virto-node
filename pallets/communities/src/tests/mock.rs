@@ -1,6 +1,7 @@
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64},
+	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EqualPrivilegeOnly},
+	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
@@ -12,11 +13,23 @@ use sp_runtime::{
 
 use crate as pallet_communities;
 
-pub type Block = frame_system::mocking::MockBlock<Test>;
-pub type Balance = u128;
+type Block = frame_system::mocking::MockBlock<Test>;
+type WeightInfo = ();
+
 pub type AccountId = u64;
+pub type Balance = u128;
 pub type AssetId = u32;
 pub type CommunityId = u128;
+
+pub type MembershipRank = u32;
+pub type MembershipPassport = ();
+pub type VoteWeight = u128;
+
+impl pallet_communities::traits::rank::MemberRank<MembershipRank> for MembershipPassport {
+	fn rank(&self) -> u32 {
+		0
+	}
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -24,8 +37,10 @@ frame_support::construct_runtime!(
 	{
 		Assets: pallet_assets,
 		Balances: pallet_balances,
-		System: frame_system,
 		Communities: pallet_communities,
+		Preimage: pallet_preimage,
+		Scheduler: pallet_scheduler,
+		System: frame_system,
 	}
 );
 
@@ -72,7 +87,7 @@ impl pallet_assets::Config for Test {
 	type Freezer = ();
 	type Extra = ();
 	type CallbackHandle = ();
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo;
 	type RemoveItemsLimit = ConstU32<1000>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
@@ -84,7 +99,7 @@ impl pallet_balances::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo;
 	type MaxLocks = ConstU32<10>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
@@ -95,28 +110,66 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Weight::from_parts(1_000_000_000, 1_048_576);
+	pub const MaxScheduledPerBlock: u32 = 512;
+	pub const PreimageBaseDeposit: u64 = 2;
+	pub const PreimageByteDeposit: u64 = 1;
+}
+
+impl pallet_preimage::Config for Test {
+	type WeightInfo = ();
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureSigned<AccountId>;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+}
+
+impl pallet_scheduler::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Self>;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
-	pub const CommunitiesFreezeIdentifier: () = ();
 	#[derive(Debug, Clone, PartialEq)]
-	pub const MetadataUrlSize: u32 = 32;
+	pub const CommunitiesMetadataUrlSize: u32 = 32;
 	#[derive(Debug, Clone, PartialEq)]
-	pub const MaxUrls: u32 = 5;
+	pub const CommunitiesMaxUrls: u32 = 5;
 	#[derive(Debug, Clone, PartialEq)]
-	pub const MaxLocations: u32 = 2;
+	pub const CommunitiesMaxLocations: u32 = 2;
+	#[derive(Debug, Clone, PartialEq)]
+	pub const CommunitiesMaxProposals: u32 = 2;
 }
 
 impl pallet_communities::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = WeightInfo;
 	type Assets = Assets;
 	type Balances = Balances;
 	type CommunityId = CommunityId;
-	type MembershipPassport = ();
+
+	type MembershipRank = MembershipRank;
+	type MembershipPassport = MembershipPassport;
+	type VoteWeight = VoteWeight;
+
 	type PalletId = CommunitiesPalletId;
-	type FreezeIdentifier = CommunitiesFreezeIdentifier;
-	type MetadataUrlSize = MetadataUrlSize;
-	type MaxUrls = MaxUrls;
-	type MaxLocations = MaxLocations;
+	type FreezeIdentifier = <Test as pallet_balances::Config>::FreezeIdentifier;
+	type MetadataUrlSize = CommunitiesMetadataUrlSize;
+	type MaxUrls = CommunitiesMaxUrls;
+	type MaxLocations = CommunitiesMaxLocations;
+	type Preimage = Preimage;
+	type Scheduler = Scheduler;
+	type PalletsOrigin = OriginCaller;
+	type MaxProposals = CommunitiesMaxProposals;
 }
 
 // Build genesis storage according to the mock runtime.

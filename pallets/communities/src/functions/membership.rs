@@ -4,27 +4,35 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_origin_member(
 		origin: OriginFor<T>,
 		community_id: &CommunityIdOf<T>,
-	) -> Result<(), DispatchError> {
+	) -> Result<AccountIdOf<T>, DispatchError> {
 		let caller = ensure_signed(origin)?;
 
-		if Self::membership(community_id, caller).is_none() {
-			return Err(DispatchError::BadOrigin);
-		}
+		Self::membership(community_id, &caller)
+			.ok_or(DispatchError::BadOrigin)
+			.map(|_| caller)
+	}
 
-		Ok(())
+	#[allow(dead_code)]
+	pub(crate) fn ensure_member(
+		community_id: &CommunityIdOf<T>,
+		who: &AccountIdOf<T>,
+	) -> Result<MembershipPassportOf<T>, DispatchError> {
+		Self::membership(community_id, who).ok_or(Error::<T>::NotAMember.into())
 	}
 
 	pub(crate) fn ensure_origin_privileged(
 		origin: OriginFor<T>,
 		community_id: &CommunityIdOf<T>,
-	) -> Result<(), DispatchError> {
+	) -> Result<Option<AccountIdOf<T>>, DispatchError> {
 		if let Some(caller) = ensure_signed_or_root(origin)? {
-			if caller != Self::get_community_admin(community_id)? {
-				return Err(DispatchError::BadOrigin);
+			if let Some(admin) = Self::get_community_admin(community_id) && admin == caller {
+				return Ok(Some(admin))
+			} else {
+				return Err(DispatchError::BadOrigin)
 			}
 		}
 
-		Ok(())
+		Ok(None)
 	}
 
 	pub(crate) fn do_insert_member(community_id: &CommunityIdOf<T>, who: &AccountIdOf<T>) -> DispatchResult {
@@ -50,11 +58,7 @@ impl<T: Config> Pallet<T> {
 				return Err(Error::<T>::NotAMember.into());
 			}
 
-			let Some(community_info) = Self::community(community_id) else {
-				return Err(Error::<T>::CommunityDoesNotExist.into());
-			};
-
-			if community_info.admin == *who {
+			if let Some(community_admin) = Self::get_community_admin(community_id) && community_admin == *who {
 				return Err(Error::<T>::CannotRemoveAdmin.into());
 			}
 

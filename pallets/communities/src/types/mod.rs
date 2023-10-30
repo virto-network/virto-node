@@ -6,12 +6,16 @@ use scale_info::{prelude::vec::Vec, TypeInfo};
 use sp_runtime::traits::StaticLookup;
 
 use crate::Config;
-use frame_system::Config as SystemConfig;
+pub(crate) use frame_system::Config as SystemConfig;
 
+pub use governance::*;
+pub use origin::*;
 pub use parameters::*;
 pub use primitives::*;
 pub use registry::*;
 
+mod governance;
+mod origin;
 mod parameters;
 mod primitives;
 mod registry;
