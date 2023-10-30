@@ -14,6 +14,8 @@ parity-scale-codec = { workspace = true, features = [ "derive" ] }
 scale-info = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -25,8 +27,6 @@ log = { workspace = true }
 xcm = { workspace = true }
 
 [dev-dependencies]
-sp-core = { workspace = true }
-sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 pallet-remark = { workspace = true }
 sp-keystore = { workspace = true }

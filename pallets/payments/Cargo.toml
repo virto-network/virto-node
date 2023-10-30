@@ -13,26 +13,22 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 scale-info = { workspace = true }
-log = { workspace = true }
-
-# Substrate
-frame-benchmarking = { workspace = true }
-frame-support = { workspace = true }
-frame-system = { workspace = true }
-sp-runtime = { workspace = true }
-sp-std = { workspace = true }
+sp-runtime = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+sp-std = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+sp-core = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+sp-io = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+frame-benchmarking = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+frame-support = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+frame-system = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
 
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
-pallet-balances = { workspace = true }
-pallet-sudo = { workspace = true }
+pallet-balances = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
+pallet-sudo = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
 pallet-assets = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
-sp-keystore = { workspace = true }
+sp-keystore = { git = "https://github.com/virto-network/polkadot-sdk", default-features = false, branch = "feat-add-hold-traits-pallet-asset" }
 
-# Substrate
-sp-core = { workspace = true }
-sp-io = { workspace = true }
 
 
 [features]
