@@ -100,10 +100,10 @@ pub mod pallet {
 			+ One
 			+ Zero;
 
-		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin>;
+		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin, Hasher = Self::Hashing>;
 		/// The preimage provider with which we look up call hashes to get the
 		/// call.
-		type Preimages: QueryPreimage + StorePreimage;
+		type Preimages: QueryPreimage<H = Self::Hashing> + StorePreimage;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;

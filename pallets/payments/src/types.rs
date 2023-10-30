@@ -1,8 +1,10 @@
 #![allow(unused_qualifications)]
 use crate::*;
 
-use frame_system::pallet_prelude::BlockNumberFor;
-use parity_scale_codec::{Decode, Encode, HasCompact, MaxEncodedLen};
+use frame_support::traits::schedule::v3::Named;
+use frame_system::pallet_prelude::OriginFor;
+use frame_system::{pallet_prelude::BlockNumberFor, Origin, RawOrigin};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, BoundedVec, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
@@ -19,7 +21,8 @@ pub type Fee<T> = (AccountIdOf<T>, BalanceOf<T>, ChargableOnDisputes);
 pub type FeeDetailsPerRole<T> = (Vec<Fee<T>>, BalanceOf<T>, BalanceOf<T>);
 pub type FeeDetails<T> = BoundedVec<Fee<T>, MaxFeesOf<T>>;
 pub type CallOf<T> = <T as Config>::RuntimeCall;
-pub type BoundedCallOf<T> = Bounded<CallOf<T>>;
+pub type PreimagesOf<T> = <T as Config>::Preimages;
+pub type BoundedCallOf<T> = Bounded<CallOf<T>, <T as frame_system::Config>::Hashing>;
 
 /// The PaymentDetail struct stores information about the payment/escrow
 /// A "payment" in virto network is similar to an escrow, it is used to
