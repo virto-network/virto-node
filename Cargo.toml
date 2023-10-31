@@ -54,7 +54,7 @@ pallet-payments = { default-features = false, path = "pallets/payments" }
 pallet-communities = { default-features = false, path = "pallets/communities" }
 
 # Virto common
-virto-common =  { default-features = false, path = "runtime/common" }
+virto-common = { default-features = false, path = "runtime/common" }
 
 # Substrate std
 try-runtime-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
@@ -67,7 +67,7 @@ sc-consensus = { git = "https://github.com/virto-network/polkadot-sdk", branch =
 sc-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 sc-client-api = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 sc-executor = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-sc-service = {git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+sc-service = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 sc-telemetry = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 sc-transaction-pool = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 sc-network = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
@@ -105,56 +105,56 @@ sp-version = { default-features = false, git = "https://github.com/virto-network
 sp-weights = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 # Build Dependencies
-substrate-build-script-utils = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+substrate-build-script-utils = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 substrate-wasm-builder = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 ## Substrate FRAME Dependencies
 frame-try-runtime = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-frame-executive = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-frame-support = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-frame-system = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-frame-system-benchmarking = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-frame-system-rpc-runtime-api = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+frame-executive = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+frame-support = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+frame-system = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+frame-system-benchmarking = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 ## Substrate Pallet Dependencies
-pallet-assets = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-asset-tx-payment = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-aura = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-authorship = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-balances = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-collective = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-contracts = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-contracts-primitives = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-democracy = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-identity = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-insecure-randomness-collective-flip = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-multisig = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-proxy = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-preimage = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-assets = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-asset-tx-payment = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-aura = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-authorship = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-balances = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-collective = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-contracts = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-contracts-primitives = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-democracy = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-identity = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-insecure-randomness-collective-flip = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-multisig = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-proxy = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-preimage = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-referenda = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-referenda-tracks = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-remark = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-session = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-scheduler = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-sudo = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-timestamp = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-transaction-payment = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-treasury = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-uniques = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-utility = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-session = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-scheduler = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-sudo = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-timestamp = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-treasury = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-uniques = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-utility = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 # Cumulus client dependencies
-cumulus-client-cli = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-collator = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-consensus-aura = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-consensus-relay-chain = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-consensus-common = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-consensus-proposer = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-service = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-client-network = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-primitives-parachain-inherent = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-cumulus-relay-chain-interface = {  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-collator = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-consensus-aura = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-consensus-relay-chain = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-consensus-common = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-consensus-proposer = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-service = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-client-network = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+cumulus-relay-chain-interface = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 # Cumulus runtime dependencies
 assets-common = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
@@ -168,12 +168,14 @@ cumulus-primitives-core = { default-features = false, git = "https://github.com/
 cumulus-primitives-timestamp = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 cumulus-primitives-utility = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-collator-selection = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-parachains-common = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+parachains-common = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 parachain-info = { package = "staging-parachain-info", default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 cumulus-pallet-session-benchmarking = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 # Polkadot
-polkadot-cli = { features = ["rococo-native"], git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+polkadot-cli = { features = [
+	"rococo-native",
+], git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 polkadot-primitives = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 polkadot-service = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 polkadot-runtime-parachains = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }

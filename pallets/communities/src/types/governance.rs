@@ -1,8 +1,7 @@
 use frame_support::traits::VoteTally;
 
-use super::*;
+pub type VoteWeight = sp_runtime::Perbill;
 
-pub type VoteWeight = u32;
 /// This structure holds a governance strategy. This defines how to behave
 /// when ensuring privileged calls and deciding executing
 /// calls

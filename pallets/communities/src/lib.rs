@@ -213,7 +213,7 @@ pub mod pallet {
 		/// This type represents a rank for a member in a community
 		type Membership: Default + Parameter + MaxEncodedLen;
 
-		/// The asset used for governance
+		///
 		type Assets: fungibles::Inspect<Self::AccountId>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
