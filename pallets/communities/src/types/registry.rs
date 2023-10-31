@@ -38,26 +38,12 @@ pub enum CommunityState {
 
 /// The CommunityMetadata struct stores some descriptive information about
 /// the community.
-#[derive(TypeInfo, Eq, PartialEq, Debug, Clone, Encode, Decode, MaxEncodedLen)]
-#[scale_info(skip_type_params(T))]
-pub struct CommunityMetadata<T: Config> {
+#[derive(TypeInfo, Eq, PartialEq, Default, Debug, Clone, Encode, Decode, MaxEncodedLen)]
+pub struct CommunityMetadata {
 	/// The name of the community
 	pub name: ConstSizedField<64>,
 	/// A short description of the community
 	pub description: ConstSizedField<256>,
-	/// A list of URLs that can lead to information about the community
-	pub urls: BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>,
-	/// A list of physical locations where the community operates.
-	pub locations: BoundedVec<Cell, T::MaxLocations>,
-}
-
-impl<T: Config> Default for CommunityMetadata<T> {
-	fn default() -> Self {
-		Self {
-			name: Default::default(),
-			description: Default::default(),
-			urls: Default::default(),
-			locations: Default::default(),
-		}
-	}
+	/// The main URL that can lead to information about the community
+	pub main_url: ConstSizedField<256>,
 }

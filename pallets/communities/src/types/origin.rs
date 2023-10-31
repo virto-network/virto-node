@@ -3,29 +3,28 @@ use super::*;
 /// The origin of the comnunity governance, as well as the origin
 /// sent to emit on behalf of the pallet
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-pub struct RawOrigin<CommunityId, VoteWeight>
+pub struct RawOrigin<CommunityId>
 where
 	CommunityId: TypeInfo + MaxEncodedLen,
-	VoteWeight: TypeInfo + MaxEncodedLen,
 {
 	/// The community id. Used to get the account of the
 	/// community for certain origin conversions
 	pub community_id: CommunityId,
 	///
-	pub body_part: BodyPart<VoteWeight>,
+	pub body_part: BodyPart,
 }
 
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-pub enum BodyPart<VotesCount: TypeInfo + MaxEncodedLen> {
+pub enum BodyPart {
 	Voice,
 	Members {
 		#[codec(compact)]
-		min: VotesCount,
+		min: VoteWeight,
 	},
 	Fraction {
 		#[codec(compact)]
-		num: VotesCount,
+		num: u16,
 		#[codec(compact)]
-		denum: VotesCount,
+		denum: u16,
 	},
 }

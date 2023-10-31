@@ -21,7 +21,7 @@ mod apply {
 
 			// Should fail adding the community
 			assert_noop!(
-				Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY),
+				Communities::apply_for(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY),
 				Error::CommunityAlreadyExists
 			);
 		});
@@ -31,7 +31,7 @@ mod apply {
 	fn fails_if_not_enough_funds_to_take_deposit() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY),
+				Communities::apply_for(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY),
 				DispatchError::Arithmetic(ArithmeticError::Underflow)
 			);
 		});
@@ -63,19 +63,12 @@ mod set_metadata {
 
 			// Fail if trying to call from unsigned origin
 			assert_noop!(
-				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None, None),
+				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None),
 				DispatchError::BadOrigin
 			);
 			// Fail if trying to call from non-admin
 			assert_noop!(
-				Communities::set_metadata(
-					RuntimeOrigin::signed(COMMUNITY_ADMIN + 1),
-					COMMUNITY,
-					None,
-					None,
-					None,
-					None
-				),
+				Communities::set_metadata(RuntimeOrigin::signed(COMMUNITY_ADMIN + 1), COMMUNITY, None, None, None),
 				DispatchError::BadOrigin
 			);
 		});
@@ -93,7 +86,6 @@ mod set_metadata {
 				Some(BoundedVec::truncate_from(b"Virto Network".to_vec())),
 				None,
 				None,
-				None
 			));
 
 			let community_metadata =
@@ -104,8 +96,7 @@ mod set_metadata {
 				crate::types::CommunityMetadata {
 					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
 					description: BoundedVec::new(),
-					urls: BoundedVec::new(),
-					locations: BoundedVec::new()
+					main_url: BoundedVec::new(),
 				}
 			);
 
@@ -116,7 +107,6 @@ mod set_metadata {
 				None,
 				Some(BoundedVec::truncate_from(b"A community of awesome builders".to_vec())),
 				None,
-				None
 			));
 
 			let community_metadata =
@@ -127,8 +117,7 @@ mod set_metadata {
 				types::CommunityMetadata {
 					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
 					description: BoundedVec::truncate_from(b"A community of awesome builders".to_vec()),
-					urls: BoundedVec::new(),
-					locations: BoundedVec::new()
+					main_url: BoundedVec::new(),
 				}
 			);
 		});

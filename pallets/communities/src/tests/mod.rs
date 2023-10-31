@@ -15,7 +15,6 @@ const COMMUNITY_ADMIN: AccountId = 42;
 mod governance;
 mod membership;
 mod registry;
-mod treasury;
 
 fn setup() {
 	System::set_block_number(1);
@@ -27,5 +26,8 @@ fn setup() {
 		COMMUNITY_ADMIN,
 		2 * minimum_balance,
 	));
-	assert_ok!(Communities::apply(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY));
+	assert_ok!(Communities::apply_for(
+		RuntimeOrigin::signed(COMMUNITY_ADMIN),
+		COMMUNITY
+	));
 }

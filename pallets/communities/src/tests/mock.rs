@@ -20,13 +20,10 @@ pub type AccountId = u64;
 pub type Balance = u128;
 pub type AssetId = u32;
 pub type CommunityId = u128;
-
-pub type MembershipRank = u32;
 pub type MembershipPassport = ();
-pub type VoteWeight = u128;
 
-impl pallet_communities::traits::rank::MemberRank<MembershipRank> for MembershipPassport {
-	fn rank(&self) -> u32 {
+impl pallet_communities::traits::rank::MemberRank<u8> for MembershipPassport {
+	fn rank(&self) -> u8 {
 		0
 	}
 }
@@ -141,12 +138,6 @@ impl pallet_scheduler::Config for Test {
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	#[derive(Debug, Clone, PartialEq)]
-	pub const CommunitiesMetadataUrlSize: u32 = 32;
-	#[derive(Debug, Clone, PartialEq)]
-	pub const CommunitiesMaxUrls: u32 = 5;
-	#[derive(Debug, Clone, PartialEq)]
-	pub const CommunitiesMaxLocations: u32 = 2;
-	#[derive(Debug, Clone, PartialEq)]
 	pub const CommunitiesMaxProposals: u32 = 2;
 }
 
@@ -156,16 +147,8 @@ impl pallet_communities::Config for Test {
 	type Assets = Assets;
 	type Balances = Balances;
 	type CommunityId = CommunityId;
-
-	type MembershipRank = MembershipRank;
-	type MembershipPassport = MembershipPassport;
-	type VoteWeight = VoteWeight;
-
+	type Membership = MembershipPassport;
 	type PalletId = CommunitiesPalletId;
-	type FreezeIdentifier = <Test as pallet_balances::Config>::FreezeIdentifier;
-	type MetadataUrlSize = CommunitiesMetadataUrlSize;
-	type MaxUrls = CommunitiesMaxUrls;
-	type MaxLocations = CommunitiesMaxLocations;
 	type Preimage = Preimage;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;

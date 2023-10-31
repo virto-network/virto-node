@@ -1,12 +1,14 @@
 use super::*;
 use frame_support::traits::Bounded;
 
+pub type VoteWeight = sp_runtime::Perbill;
+
 /// This structure holds a governance strategy. This defines how to behave
 /// when ensuring privileged calls and deciding executing
 /// calls
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
 #[scale_info(skip_type_params(AccountId, AssetId))]
-pub enum CommunityGovernanceStrategy<AccountId, AssetId, VoteWeight> {
+pub enum CommunityGovernanceStrategy<AccountId, AssetId> {
 	/// The community governance lies in the shoulders of the admin of it.
 	///
 	/// This is equivalent to `RawOrigin::Member` on collectives-pallet, or
@@ -25,22 +27,14 @@ pub enum CommunityGovernanceStrategy<AccountId, AssetId, VoteWeight> {
 	/// `BodyPart::Fraction` on XCM.
 	AssetWeighedPoll {
 		asset_id: AssetId,
-		#[codec(compact)]
-		num: VoteWeight,
-		#[codec(compact)]
-		denum: VoteWeight,
+		min_approval: VoteWeight,
 	},
 	/// The community governance relies on an ranked-weighed (one member vote,
 	/// the number of votes corresponding to the rank of member) poll,
 	///
 	/// This is equivalent to `RawOrigin::Members` on collectives-pallet, or
 	/// `BodyPart::Fraction` on XCM.
-	RankedWeighedPoll {
-		#[codec(compact)]
-		num: VoteWeight,
-		#[codec(compact)]
-		denum: VoteWeight,
-	},
+	RankedWeighedPoll { min_approval: VoteWeight },
 }
 
 /// This structure holds the basic definition of a proposal.
@@ -59,14 +53,14 @@ pub struct CommunityProposal<T: Config> {
 /// votes
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone)]
 #[scale_info(skip_type_params(T))]
-pub struct CommunityPoll<T: Config> {
+pub struct CommunityPoll {
 	#[codec(compact)]
-	pub(crate) ayes: VoteWeightFor<T>,
+	pub(crate) ayes: VoteWeight,
 	#[codec(compact)]
-	pub(crate) nays: VoteWeightFor<T>,
+	pub(crate) nays: VoteWeight,
 }
 
-impl<T: Config> Default for CommunityPoll<T> {
+impl Default for CommunityPoll {
 	fn default() -> Self {
 		Self {
 			ayes: Default::default(),
@@ -77,9 +71,9 @@ impl<T: Config> Default for CommunityPoll<T> {
 
 /// This enum defines a vote in a community poll
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone)]
-pub enum CommunityPollVote<T: Config> {
-	Aye(VoteWeightFor<T>),
-	Nay(VoteWeightFor<T>),
+pub enum CommunityPollVote {
+	Aye(VoteWeight),
+	Nay(VoteWeight),
 }
 
 /// This enum describes the outcome of a closed poll
