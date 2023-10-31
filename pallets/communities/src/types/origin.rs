@@ -3,10 +3,7 @@ use super::*;
 /// The origin of the comnunity governance, as well as the origin
 /// sent to emit on behalf of the pallet
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-pub struct RawOrigin<CommunityId>
-where
-	CommunityId: TypeInfo + MaxEncodedLen,
-{
+pub struct RawOrigin<CommunityId> {
 	/// The community id. Used to get the account of the
 	/// community for certain origin conversions
 	pub community_id: CommunityId,

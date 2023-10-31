@@ -4552,7 +4552,6 @@ dependencies = [
  "pallet-balances",
  "pallet-burner",
  "pallet-collator-selection",
- "pallet-communities",
  "pallet-lockdown-mode",
  "pallet-multisig",
  "pallet-payments",
@@ -6377,24 +6376,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-communities"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "pallet-assets 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "pallet-balances 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "pallet-preimage",
- "pallet-scheduler",
- "parity-scale-codec",
- "scale-info",
- "sp-core 21.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "sp-io 23.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
- "sp-runtime 24.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v1.0.0)",
 ]
 
 [[package]]

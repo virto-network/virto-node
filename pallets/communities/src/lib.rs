@@ -185,18 +185,19 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::{DispatchResult, ValueQuery, *},
+		pallet_prelude::{DispatchResult, *},
 		traits::{
 			fungible::{Inspect, Mutate},
 			fungibles,
-			schedule::v3::Anon as AnonV3,
 			tokens::Preservation,
-			CallerTrait, QueryPreimage, StorePreimage,
+			Polling,
 		},
 		Parameter,
 	};
-	use frame_system::pallet_prelude::{BlockNumberFor, OriginFor, *};
-	use scale_info::prelude::boxed::Box;
+	use frame_system::{
+		ensure_signed,
+		pallet_prelude::{OriginFor, *},
+	};
 	use sp_runtime::traits::StaticLookup;
 	use traits::rank::MemberRank;
 	use types::*;
@@ -214,7 +215,7 @@ pub mod pallet {
 		/// This type represents a rank for a member in a community
 		type Membership: Default + Parameter + MaxEncodedLen + MemberRank<u8>;
 
-		///
+		/// The asset used for governance
 		type Assets: fungibles::Inspect<Self::AccountId>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
@@ -227,28 +228,11 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
-		/// Type represents the actions for storing call preimages
-		type Preimage: QueryPreimage + StorePreimage;
+		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
 
-		/// Type represents interactions with the dispatch scheduler
-		type Scheduler: AnonV3<BlockNumberFor<Self>, RuntimeCallOf<Self>, Self::PalletsOrigin>;
-
-		/// The caller origin, overarching type of all pallets origins.
-		type PalletsOrigin: From<frame_system::Origin<Self>>
-			+ From<Origin<Self>>
-			+ TryInto<frame_system::Origin<Self>>
-			+ TryInto<Origin<Self>>
-			+ CallerTrait<Self::AccountId>
-			+ MaxEncodedLen;
-
-		/// The Communities' pallet id, used for deriving its sovereign account
-		/// ID.
+		/// The pallet id used for deriving sovereign account IDs.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
-
-		/// Max amount of proposals a community can have enqueued
-		#[pallet::constant]
-		type MaxProposals: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 	}
 
 	/// The origin of the pallet
@@ -287,25 +271,9 @@ pub mod pallet {
 	pub(super) type GovernanceStrategy<T> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>>>;
 
-	/// Stores a queue of the proposals.
-	#[pallet::storage]
-	#[pallet::getter(fn proposals)]
-	pub(super) type Proposals<T> = StorageMap<
-		_,
-		Blake2_128Concat,
-		CommunityIdOf<T>,
-		BoundedVec<CommunityProposal<T>, <T as Config>::MaxProposals>,
-		ValueQuery,
-	>;
-
-	/// Stores a poll representing the current proposal.
-	#[pallet::storage]
-	#[pallet::getter(fn poll)]
-	pub(super) type Poll<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityPoll>;
-
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
-	pub(super) type VoteOf<T> =
+	pub(super) type CommunityVotes<T> =
 		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, ()>;
 
 	// Pallets use events to inform users when important changes are made.
@@ -478,61 +446,17 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Schedules a call on behalf of the treasury account. It should be
-		/// exectued within the following block
-		#[pallet::call_index(6)]
-		pub fn open_proposal(
+		// === Governance ===
+
+		///
+		#[pallet::call_index(4)]
+		pub fn vote(
 			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			call_origin: Box<PalletsOriginOf<T>>,
-			call: Box<RuntimeCallOf<T>>,
+			#[pallet::compact] poll_index: PollIndexOf<T>,
+			_vote: VoteOf<T>,
 		) -> DispatchResult {
-			let caller = Self::ensure_origin_member(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
-
-			Self::do_create_proposal(&caller, &community_id, *call_origin, *call)?;
-
-			Self::deposit_event(Event::ProposalEnqueued {
-				community_id,
-				proposer: caller,
-			});
-
-			Ok(())
-		}
-
-		/// Creates a proposal, and immediately closes a poll, effectively
-		/// executing a call (to be dispatched by the runtime scheduler). Called
-		/// by the community admin when the current governance strategy for the
-		/// community is
-		/// [`AdminBased`][`CommunityGovernanceStrategy::AdminBased`].
-
-		#[pallet::call_index(9)]
-		pub fn execute(
-			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			call_origin: Box<PalletsOriginOf<T>>,
-			call: Box<RuntimeCallOf<T>>,
-		) -> DispatchResult {
-			let Some(caller) = Self::ensure_origin_privileged(origin, &community_id)? else {
-				Err(DispatchError::BadOrigin)?
-			};
-			Self::ensure_active(&community_id)?;
-
-			Self::do_create_proposal(&caller, &community_id, *call_origin, *call)?;
-			Self::deposit_event(Event::ProposalEnqueued {
-				community_id: community_id.clone(),
-				proposer: caller.clone(),
-			});
-
-			Self::do_initiate_poll(&community_id)?;
-			// Deposit event for Poll Initiated
-
-			Self::do_vote_in_poll(&caller, &community_id, CommunityPollVote::Aye(VoteWeight::one()))?;
-			// Deposit event for Poll Voted
-
-			Self::do_close_poll(&community_id)?;
-			// Deposit event for Poll Closed
-
+			let _ = ensure_signed(origin)?;
+			// TODO
 			Ok(())
 		}
 	}

@@ -1,8 +1,8 @@
 [package]
 name = "pallet-communities"
 version = "0.1.0"
-description = "This pallet enables people to unite and create local communities that share a common interest or economic activity. In simpler terms, it can be considered a DAO Factory."
-authors = ["Pablo Dorado<hola@pablodorado.com>"]
+description = "This pallet enables the creation of communities that are soverign entities with diverse forms of governance. In simpler terms, it can be considered a DAO Factory."
+authors = ["Virto Team<contact@virto.team>"]
 edition = "2021"
 license = "MIT-0"
 publish = false
@@ -12,35 +12,38 @@ repository = "https://github.com/virto-network/virto-node/"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = [
-	"derive",
-] }
-scale-info = { version = "2.5.0", default-features = false, features = [
-	"derive",
-] }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+
+frame-benchmarking = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks", optional = true }
+frame-support =  { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+frame-system = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+sp-runtime = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+sp-std = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+
+pallet-referenda = { default-features = false, git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks", optional = true }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-sp-io = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+sp-core = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+sp-io = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
 
-pallet-assets = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-preimage = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
-pallet-scheduler = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v1.0.0" }
+pallet-assets = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+pallet-balances = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+pallet-preimage = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+pallet-scheduler = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
 
 [features]
-default = ["std"]
+default = ["std", "referenda"]
+referenda = ["dep:pallet-referenda"]
 std = [
-	"codec/std",
+	"parity-scale-codec/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-referenda?/std",
 	"scale-info/std",
 	"sp-runtime/std",
+	"sp-std/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
