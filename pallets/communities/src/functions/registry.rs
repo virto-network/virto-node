@@ -27,7 +27,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn do_set_metadata(community_id: &CommunityIdOf<T>, value: CommunityMetadata<T>) -> DispatchResult {
+	pub(crate) fn do_set_metadata(community_id: &CommunityIdOf<T>, value: CommunityMetadata) -> DispatchResult {
 		Metadata::<T>::try_mutate(community_id, |metadata| {
 			*metadata = Some(value);
 

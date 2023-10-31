@@ -16,7 +16,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_member(
 		community_id: &CommunityIdOf<T>,
 		who: &AccountIdOf<T>,
-	) -> Result<MembershipPassportOf<T>, DispatchError> {
+	) -> Result<MembershipOf<T>, DispatchError> {
 		Self::membership(community_id, who).ok_or(Error::<T>::NotAMember.into())
 	}
 

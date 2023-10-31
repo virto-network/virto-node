@@ -1,5 +1,4 @@
 use super::*;
-use sp_runtime::Permill;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_initiate_poll(community_id: &CommunityIdOf<T>) -> DispatchResult {
@@ -11,7 +10,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn do_vote_in_poll(
 		who: &AccountIdOf<T>,
 		community_id: &CommunityIdOf<T>,
-		vote: CommunityPollVote<T>,
+		vote: CommunityPollVote,
 	) -> DispatchResult {
 		Poll::<T>::try_mutate(community_id, |value| {
 			let Some(mut poll) = value.clone() else {
@@ -57,25 +56,21 @@ impl<T: Config> Pallet<T> {
 	fn get_vote_weight(
 		who: &AccountIdOf<T>,
 		community_id: &CommunityIdOf<T>,
-		_input_weight: VoteWeightFor<T>,
-	) -> Result<VoteWeightFor<T>, DispatchError> {
+		_input_weight: VoteWeight,
+	) -> Result<VoteWeight, DispatchError> {
 		let governance_strategy = Self::governance_strategy(community_id).ok_or(Error::<T>::CommunityDoesNotExist)?;
 
 		match governance_strategy {
 			CommunityGovernanceStrategy::AdminBased(admin) => {
 				if *who == admin {
-					Ok(1u32.into())
+					Ok(VoteWeight::one())
 				} else {
-					Ok(0u32.into())
+					Ok(VoteWeight::zero())
 				}
 			}
-			CommunityGovernanceStrategy::MemberCountPoll { min: _ } => Ok(1u32.into()),
-			CommunityGovernanceStrategy::AssetWeighedPoll {
-				asset_id: _,
-				num: _,
-				denum: _,
-			} => todo!(),
-			CommunityGovernanceStrategy::RankedWeighedPoll { num: _, denum: _ } => {
+			CommunityGovernanceStrategy::MemberCountPoll { .. } => Ok(VoteWeight::one()),
+			CommunityGovernanceStrategy::AssetWeighedPoll { .. } => todo!(),
+			CommunityGovernanceStrategy::RankedWeighedPoll { .. } => {
 				// use crate::traits::rank::GetRank;
 
 				// let membership = Self::ensure_member(community_id, who)?;
@@ -109,23 +104,11 @@ impl<T: Config> Pallet<T> {
 			}
 			CommunityGovernanceStrategy::AssetWeighedPoll {
 				asset_id: _,
-				num,
-				denum,
-			} => {
-				let criteria_fraction = Permill::from_rational(num, denum);
-				let poll_fraction = Permill::from_rational(ayes, ayes.saturating_add(nays));
-
-				if poll_fraction >= criteria_fraction {
-					Ok(PollOutcome::Approved)
-				} else {
-					Ok(PollOutcome::Rejected)
-				}
+				min_approval,
 			}
-			CommunityGovernanceStrategy::RankedWeighedPoll { num, denum } => {
-				let criteria_fraction = Permill::from_rational(num, denum);
-				let poll_fraction = Permill::from_rational(ayes, ayes.saturating_add(nays));
-
-				if poll_fraction >= criteria_fraction {
+			| CommunityGovernanceStrategy::RankedWeighedPoll { min_approval } => {
+				let approval = ayes / ayes.saturating_add(nays);
+				if approval >= min_approval {
 					Ok(PollOutcome::Approved)
 				} else {
 					Ok(PollOutcome::Rejected)

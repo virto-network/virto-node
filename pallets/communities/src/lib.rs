@@ -15,36 +15,31 @@
 //!
 //! The Communities pallet provides functionality for managing communities,
 //! facilitating its participants to have governance over the community entity
-//! (and its associated account), and running economic activities:
+//! (and its associated account) which can interect with other systems:
 //!
 //! - Community registration and removal.
 //! - Validating a community challenge.
-//! - Handling a community-governed treasury account.
 //! - Enrolling/removing members from a community.
 //! - Promoting/demoting members within the community.
-//! - Running proposals to enable community governance.
-//! - Issue governance tokens.
-//! - Issue economic (sufficient) tokens.
+//! - Voting on proposals to enable community governance.
 //!
 //! ## Terminology
 //!
 //! - **Community:** An entity comprised of _members_ —each one defined by their
 //!   [`AccountId`][1]— with a given _description_ who can vote on _proposals_
 //!   and actively take decisions on behalf of it. Communities are given a
-//!   _treasury account_ and can issue tokens. It is required that a community
-//!   contributes to the network to be active and operate within it.
+//!   _treasury account_ and can issue tokens. Communities can be challenged to
+//!   decide if they should stay active.
 //! - **Community Description:** A set of metadata used to identify a community
-//!   distinctively. Typically, a name, a list of locations (given as a list of
-//!   one or more [`H3Index`][2]), and a list of URL links.
+//!   distinctively. Typically, a name, a description and a URL.
 //! - **Community Status:** A community can be either `awaiting`, `active`, or
 //!   `frozen` depending on whether the community has proven via a challenge
 //!   it's actively contributing to the network with infrastructure provisioning
 //!   (i.e. a [collator][3] node) or by depositing funds.
 //! - **Validity Challenge:** A proof that a community is actively contributing
-//!   to the network. The mechanisms for challenge verification are usually
-//!   checked via an off-chain worker. Still, it's possible for a trusted origin
-//!   to manually mark a community challenge as passed, effectively changing the
-//!   status of the community to `active`.
+//!   to the network. It's possible for a trusted origin to manually mark a
+//!   community challenge as passed, effectively changing the status of the
+//!   community to `active`.
 //! - **Admin:** An [`AccountId`][1] registered into the community that is set
 //!   as such. Can call [privileged functions](#privileged-functions) within the
 //!   community.
@@ -58,42 +53,24 @@
 //!   the community. Can receive [payments][5], transfers, or payment [fees][6].
 //!   It can transfer funds via a privileged call executed by the community
 //!   _admin_ or a call dispatched from a proposal.
-//! - **Community Token:** A Community might create and manage tokens by
-//!   dispatching the respective call from the corresponding origin. These
-//!   tokens also might be used to vote if set via Voting Mechanism.
 //! - **Voting Method:** Can be either rank weighed, member-counted, or
 //!   asset-weighed and determines how the votes of proposals will be tallied.
-//!
-//! ## Goals
-//!
-//! The _"communities"_ are designed to facilitate the following use cases:
-//!
-//! - Enable entities (i.e. DAOs) or local-bound groups of people (physical
-//!   communities) that share common interests to create markets.
-//! - Allow _communities_ can receive taxes (as in [payment fees][5]) and be
-//!   self-sustainable.
-//! - Let such _communities_ to sovereignly decide how to spend those gathered
-//!   funds by running and voting on proposals.
 //!
 //! ## Lifecycle
 //!
 //! ```ignore
 //! [       ] --> [Awaiting]              --> [Active]            --> [Frozen]      --> [Blocked]
-//! apply         set_metadata                set_metadata            set_metadata      unblock
+//! apply_for     set_metadata                set_metadata            set_metadata      unblock
 //!               fulfill_challenge           block                   block
 //!               force_complete_challenge    add_member              thaw
 //!                                           remove_member
 //!                                           promote_member
 //!                                           demote_member
-//!                                           issue_token
 //!                                           open_proposal
 //!                                           vote_proposal
 //!                                           close_proposal
-//!                                           assets_transfer
-//!                                           balance_transfer
 //!                                           set_admin
 //!                                           set_voting_mechanism
-//!                                           set_sufficient_asset
 //!                                           freeze
 //! ```
 //!
@@ -105,7 +82,7 @@
 //!
 //! ### Permissionless Functions
 //!
-//! - [`apply`][c00]: Registers an appliation as a new community, taking an
+//! - [`apply_for`][c00]: Registers an appliation as a new community, taking an
 //!   [existential deposit][8] used to create the community account.
 //!
 //! ### Permissioned Functions
@@ -141,10 +118,6 @@
 //!   _"free"_," further ones would be subject to network-wide referenda.
 //! - `close_proposal`: Forcefully closes a proposal, dispatching the call when
 //!   approved.
-//! - [`assets_transfer`][c04]: Transfers an amount of a given asset from the
-//!   treasury account to a beneficiary.
-//! - [`balance_transfer`][c05]: Transfers funds from the treasury account to a
-//!   beneficiary.
 //! - `set_sufficient_asset`: Marks an [asset][7] issued by the community as
 //!   sufficient. Only one asset at a time can be marked as such.
 //! - `set_admin`: Sets an [`AccountId`][1] of the _admin_ of the community.
@@ -187,8 +160,6 @@
 //! [c01]: `crate::Pallet::set_metadata`
 //! [c02]: `crate::Pallet::add_member`
 //! [c03]: `crate::Pallet::remove_member`
-//! [c04]: `crate::Pallet::assets_transfer`
-//! [c05]: `crate::Pallet::balance_transfer`
 //!
 //! [g00]: `crate::Pallet::community`
 //! [g01]: `crate::Pallet::metadata`
@@ -216,15 +187,17 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::{DispatchResult, ValueQuery, *},
 		traits::{
+			fungible::{Inspect, Mutate},
+			fungibles,
 			schedule::v3::Anon as AnonV3,
-			tokens::{fungible, fungibles},
+			tokens::Preservation,
 			CallerTrait, QueryPreimage, StorePreimage,
 		},
 		Parameter,
 	};
 	use frame_system::pallet_prelude::{BlockNumberFor, OriginFor, *};
 	use scale_info::prelude::boxed::Box;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, Saturating, StaticLookup};
+	use sp_runtime::traits::StaticLookup;
 	use traits::rank::MemberRank;
 	use types::*;
 
@@ -239,22 +212,13 @@ pub mod pallet {
 		type CommunityId: Default + Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
-		type MembershipRank: Default + AtLeast32BitUnsigned + Parameter + MaxEncodedLen + PartialOrd;
+		type Membership: Default + Parameter + MaxEncodedLen + MemberRank<u8>;
 
-		/// This type represents a rank for a member in a community
-		type MembershipPassport: Default + Parameter + MaxEncodedLen + MemberRank<Self::MembershipRank>;
-
-		/// Type represents interactions between fungibles (i.e. assets)
-		type Assets: fungibles::Inspect<Self::AccountId>
-			+ fungibles::Mutate<Self::AccountId>
-			+ fungibles::Create<Self::AccountId>
-			+ fungibles::Destroy<Self::AccountId>;
+		///
+		type Assets: fungibles::Inspect<Self::AccountId>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
-		type Balances: fungible::Inspect<Self::AccountId>
-			+ fungible::Mutate<Self::AccountId>
-			+ fungible::InspectFreeze<Self::AccountId>
-			+ fungible::MutateFreeze<Self::AccountId>;
+		type Balances: Inspect<Self::AccountId> + Mutate<Self::AccountId>;
 
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
@@ -277,38 +241,10 @@ pub mod pallet {
 			+ CallerTrait<Self::AccountId>
 			+ MaxEncodedLen;
 
-		/// Type represents a vote unit
-		type VoteWeight: AtLeast32BitUnsigned
-			+ Parameter
-			+ Default
-			+ Copy
-			+ Saturating
-			+ PartialOrd
-			+ MaxEncodedLen
-			+ From<BalanceOf<Self>>
-			+ From<Self::MembershipRank>;
-
 		/// The Communities' pallet id, used for deriving its sovereign account
 		/// ID.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
-
-		/// The Communities' freeze identifier, used for identifying freezes
-		/// created by the pallet.
-		#[pallet::constant]
-		type FreezeIdentifier: Get<<Self::Balances as fungible::InspectFreeze<Self::AccountId>>::Id>;
-
-		/// Max amount of URLs a community can hold on its metadata.
-		#[pallet::constant]
-		type MetadataUrlSize: Get<u32> + Clone + PartialEq + core::fmt::Debug;
-
-		/// Max amount of URLs a community can hold on its metadata.
-		#[pallet::constant]
-		type MaxUrls: Get<u32> + Clone + PartialEq + core::fmt::Debug;
-
-		/// Max amount of locations a community can hold on its metadata.
-		#[pallet::constant]
-		type MaxLocations: Get<u32> + Clone + PartialEq + core::fmt::Debug;
 
 		/// Max amount of proposals a community can have enqueued
 		#[pallet::constant]
@@ -317,7 +253,7 @@ pub mod pallet {
 
 	/// The origin of the pallet
 	#[pallet::origin]
-	pub type Origin<T> = types::RawOrigin<CommunityIdOf<T>, VoteWeightFor<T>>;
+	pub type Origin<T> = types::RawOrigin<CommunityIdOf<T>>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
@@ -329,21 +265,15 @@ pub mod pallet {
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
 	#[pallet::getter(fn metadata)]
-	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata<T>>;
+	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata>;
 
 	/// Stores the information of a community (specified by its
 	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
 	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
 	#[pallet::getter(fn membership)]
-	pub(super) type Members<T> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		CommunityIdOf<T>,
-		Blake2_128Concat,
-		AccountIdOf<T>,
-		MembershipPassportOf<T>,
-	>;
+	pub(super) type Members<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MembershipOf<T>>;
 
 	/// Stores the count of community members. This simplifies the process of
 	/// keeping track of members' count.
@@ -354,12 +284,8 @@ pub mod pallet {
 	/// Stores the governance strategy for the community.
 	#[pallet::storage]
 	#[pallet::getter(fn governance_strategy)]
-	pub(super) type GovernanceStrategy<T> = StorageMap<
-		_,
-		Blake2_128Concat,
-		CommunityIdOf<T>,
-		CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>, VoteWeightFor<T>>,
-	>;
+	pub(super) type GovernanceStrategy<T> =
+		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>>>;
 
 	/// Stores a queue of the proposals.
 	#[pallet::storage]
@@ -375,7 +301,7 @@ pub mod pallet {
 	/// Stores a poll representing the current proposal.
 	#[pallet::storage]
 	#[pallet::getter(fn poll)]
-	pub(super) type Poll<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityPoll<T>>;
+	pub(super) type Poll<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityPoll>;
 
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
@@ -395,8 +321,7 @@ pub mod pallet {
 			id: T::CommunityId,
 			name: Option<ConstSizedField<64>>,
 			description: Option<ConstSizedField<256>>,
-			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
-			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
+			main_url: Option<ConstSizedField<256>>,
 		},
 		/// A proposal has been enqueued and is ready to be
 		/// decided whenever it comes to the head of the comomunity
@@ -456,23 +381,20 @@ pub mod pallet {
 	// weight and must return a DispatchResult.
 	#[pallet::call(weight(<T as Config>::WeightInfo))]
 	impl<T: Config> Pallet<T> {
-		// === Registry management ===
-
 		/// Registers an appliation as a new community, taking an
 		/// [existential deposit][8] used to create the community account.
 		///
 		/// [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
 		#[pallet::call_index(0)]
-		pub fn apply(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
+		pub fn apply_for(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 
 			Self::do_register_community(&who, &community_id)?;
-			Self::do_create_community_account(&who, &community_id)?;
+			let community_account_id = Self::get_community_account_id(&community_id);
+			let minimum_balance = T::Balances::minimum_balance();
+			T::Balances::transfer(&who, &community_account_id, minimum_balance, Preservation::Preserve)?;
 
-			// Emit an event.
 			Self::deposit_event(Event::CommunityCreated { id: community_id, who });
-
-			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
 
@@ -486,8 +408,7 @@ pub mod pallet {
 			community_id: T::CommunityId,
 			name: Option<ConstSizedField<64>>,
 			description: Option<ConstSizedField<256>>,
-			urls: Option<BoundedVec<SizedField<T::MetadataUrlSize>, T::MaxUrls>>,
-			locations: Option<BoundedVec<Cell, T::MaxLocations>>,
+			url: Option<ConstSizedField<256>>,
 		) -> DispatchResult {
 			// Ensures caller is a privileged origin
 			Self::ensure_origin_privileged(origin, &community_id)?;
@@ -500,8 +421,7 @@ pub mod pallet {
 				CommunityMetadata {
 					name: name.clone().unwrap_or(metadata.name),
 					description: description.clone().unwrap_or(metadata.description),
-					urls: urls.clone().unwrap_or(metadata.urls),
-					locations: locations.clone().unwrap_or(metadata.locations),
+					main_url: url.clone().unwrap_or(metadata.main_url),
 				},
 			)?;
 
@@ -510,8 +430,7 @@ pub mod pallet {
 				id: community_id,
 				name,
 				description,
-				urls,
-				locations,
+				main_url: url,
 			});
 
 			// Return a successful DispatchResultWithPostInfo
@@ -555,51 +474,6 @@ pub mod pallet {
 
 			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
 			Self::do_remove_member(&community_id, &who)?;
-
-			Ok(())
-		}
-
-		// === Treasury management ===
-
-		/// Transfers an amount of a given asset from the treasury account to a
-		/// beneficiary.
-		#[pallet::call_index(4)]
-		pub fn assets_transfer(
-			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			asset_id: AssetIdOf<T>,
-			dest: AccountIdLookupOf<T>,
-			amount: BalanceOf<T>,
-		) -> DispatchResult {
-			Self::ensure_origin_privileged(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
-
-			Self::do_assets_transfer(
-				&community_id,
-				asset_id,
-				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
-				amount,
-			)?;
-
-			Ok(())
-		}
-
-		/// Transfers funds from the treasury account to a beneficiary
-		#[pallet::call_index(5)]
-		pub fn balance_transfer(
-			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			dest: AccountIdLookupOf<T>,
-			amount: NativeBalanceOf<T>,
-		) -> DispatchResult {
-			Self::ensure_origin_privileged(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
-
-			Self::do_balance_transfer(
-				&community_id,
-				&<<T as frame_system::Config>::Lookup as StaticLookup>::lookup(dest)?,
-				amount,
-			)?;
 
 			Ok(())
 		}
@@ -653,7 +527,7 @@ pub mod pallet {
 			Self::do_initiate_poll(&community_id)?;
 			// Deposit event for Poll Initiated
 
-			Self::do_vote_in_poll(&caller, &community_id, CommunityPollVote::Aye(1u32.into()))?;
+			Self::do_vote_in_poll(&caller, &community_id, CommunityPollVote::Aye(VoteWeight::one()))?;
 			// Deposit event for Poll Voted
 
 			Self::do_close_poll(&community_id)?;
