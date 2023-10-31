@@ -1,6 +1,7 @@
-use frame_support::traits::VoteTally;
+use super::*;
 
-pub type VoteWeight = sp_runtime::Perbill;
+use frame_support::traits::VoteTally;
+pub type VoteWeight = u32;
 
 /// This structure holds a governance strategy. This defines how to behave
 /// when ensuring privileged calls and deciding executing
@@ -53,22 +54,21 @@ impl<A, B> From<Vote<A, B>> for VoteWeight {
 #[derive(Debug, Clone, Eq, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound(T: Config))]
-pub struct Tally<T>(core::marker::PhantomData<T>);
 
-impl<T: Config> VoteTally<VoteWeight, T::CommunityId> for Tally<T> {
-	fn new(_: T::CommunityId) -> Self {
+impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
+	fn new(_: CommunityIdOf<T>) -> Self {
 		todo!()
 	}
 
-	fn ayes(&self, _cid: T::CommunityId) -> VoteWeight {
+	fn ayes(&self, _cid: CommunityIdOf<T>) -> VoteWeight {
 		todo!()
 	}
 
-	fn support(&self, _cid: T::CommunityId) -> sp_runtime::Perbill {
+	fn support(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
 		todo!()
 	}
 
-	fn approval(&self, _cid: T::CommunityId) -> sp_runtime::Perbill {
+	fn approval(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
 		todo!()
 	}
 }
