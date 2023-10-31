@@ -1,17 +1,23 @@
 use frame_support::{
 	parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EqualPrivilegeOnly},
+	traits::{
+		fungible::HoldConsideration, AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64,
+		EqualPrivilegeOnly, Footprint,
+	},
 	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
+use parity_scale_codec::Compact;
 use sp_core::H256;
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, Convert, IdentityLookup},
 	BuildStorage,
 };
 
 use crate as pallet_communities;
+
+use super::mock_poll::TestPolls;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type WeightInfo = ();
@@ -71,7 +77,7 @@ impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = AssetId;
-	type AssetIdParameter = codec::Compact<u32>;
+	type AssetIdParameter = Compact<u32>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
@@ -104,13 +110,19 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<10>;
 	type MaxFreezes = ConstU32<10>;
+	type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Weight::from_parts(1_000_000_000, 1_048_576);
 	pub const MaxScheduledPerBlock: u32 = 512;
-	pub const PreimageBaseDeposit: u64 = 2;
-	pub const PreimageByteDeposit: u64 = 1;
+}
+
+pub struct ConvertDeposit;
+impl Convert<Footprint, u128> for ConvertDeposit {
+	fn convert(a: Footprint) -> u128 {
+		(a.count * 2 + a.size).into()
+	}
 }
 
 impl pallet_preimage::Config for Test {
@@ -118,8 +130,7 @@ impl pallet_preimage::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureSigned<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
+	type Consideration = HoldConsideration<u64, Balances, (), ConvertDeposit>;
 }
 
 impl pallet_scheduler::Config for Test {
@@ -149,10 +160,7 @@ impl pallet_communities::Config for Test {
 	type CommunityId = CommunityId;
 	type Membership = MembershipPassport;
 	type PalletId = CommunitiesPalletId;
-	type Preimage = Preimage;
-	type Scheduler = Scheduler;
-	type PalletsOrigin = OriginCaller;
-	type MaxProposals = CommunitiesMaxProposals;
+	type Polls = TestPolls;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -1,5 +1,11 @@
+use core::marker::PhantomData;
+
+use frame_support::traits::VoteTally;
+use frame_system::pallet_prelude::BlockNumberFor;
+use pallet_referenda::{Track, TracksInfo};
+use sp_std::borrow::Cow;
+
 use super::*;
-use frame_support::traits::Bounded;
 
 pub type VoteWeight = sp_runtime::Perbill;
 
@@ -37,47 +43,57 @@ pub enum CommunityGovernanceStrategy<AccountId, AssetId> {
 	RankedWeighedPoll { min_approval: VoteWeight },
 }
 
-/// This structure holds the basic definition of a proposal.
-/// It includes the information about the proposer,
-/// the hash of the call to be executed if approved,
-/// and the information of the
-#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, Debug)]
-#[scale_info(skip_type_params(T))]
-pub struct CommunityProposal<T: Config> {
-	pub(crate) proposer: AccountIdOf<T>,
-	pub(crate) call: Bounded<RuntimeCallOf<T>>,
-	pub(crate) origin: PalletsOriginOf<T>,
+///
+#[derive(TypeInfo, Encode, Decode, Debug, PartialEq, Clone)]
+pub enum Vote<AssetId, AssetBalance> {
+	AssetBalance(bool, AssetId, AssetBalance),
+	Standard(bool),
 }
 
-/// This structure holds a poll and the methods to increase/decrease
-/// votes
-#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone)]
-#[scale_info(skip_type_params(T))]
-pub struct CommunityPoll {
-	#[codec(compact)]
-	pub(crate) ayes: VoteWeight,
-	#[codec(compact)]
-	pub(crate) nays: VoteWeight,
-}
-
-impl Default for CommunityPoll {
-	fn default() -> Self {
-		Self {
-			ayes: Default::default(),
-			nays: Default::default(),
-		}
+impl<A, B> From<Vote<A, B>> for VoteWeight {
+	fn from(value: Vote<A, B>) -> Self {
+		todo!()
 	}
 }
 
-/// This enum defines a vote in a community poll
-#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone)]
-pub enum CommunityPollVote {
-	Aye(VoteWeight),
-	Nay(VoteWeight),
+///
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Tally<T> {
+	_dummy: PhantomData<T>,
 }
 
-/// This enum describes the outcome of a closed poll
-pub enum PollOutcome {
-	Approved,
-	Rejected,
+impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
+	fn new(_: CommunityIdOf<T>) -> Self {
+		todo!()
+	}
+
+	fn ayes(&self, _cid: CommunityIdOf<T>) -> VoteWeight {
+		todo!()
+	}
+
+	fn support(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
+		todo!()
+	}
+
+	fn approval(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
+		todo!()
+	}
+}
+
+///
+// #[cfg(feature = "referenda")]
+pub struct CommunityTracks<T>(PhantomData<T>);
+
+// #[cfg(feature = "referenda")]
+impl<T: Config> TracksInfo<VoteWeight, BlockNumberFor<T>> for CommunityTracks<T> {
+	type Id = u16;
+	type RuntimeOrigin = RuntimeOriginOf<T>;
+
+	fn tracks() -> impl Iterator<Item = Cow<'static, Track<Self::Id, VoteWeight, BlockNumberFor<T>>>> {
+		todo!()
+	}
+
+	fn track_for(origin: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
+		todo!()
+	}
 }
