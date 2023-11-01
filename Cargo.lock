@@ -1531,9 +1531,9 @@ checksum = "28c122c3980598d243d63d9a704629a2d748d101f278052ff068be5a4423ab6f"
 
 [[package]]
 name = "const-random"
-version = "0.1.16"
+version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11df32a13d7892ec42d51d3d175faba5211ffe13ed25d4fb348ac9e9ce835593"
+checksum = "5aaf16c9c2c612020bcfd042e170f6e32de9b9d75adb5277cdbbd2e2c8c8299a"
 dependencies = [
  "const-random-macro",
 ]
@@ -1729,9 +1729,9 @@ dependencies = [
 
 [[package]]
 name = "crc-catalog"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9cace84e55f07e7301bae1c519df89cdad8cc3cd868413d3fdbdeca9ff3db484"
+checksum = "4939f9ed1444bd8c896d37f3090012fa6e7834fe84ef8c9daa166109515732f9"
 
 [[package]]
 name = "crc32fast"
@@ -2506,9 +2506,9 @@ dependencies = [
 
 [[package]]
 name = "curve25519-dalek-derive"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fdaf97f4804dcebfa5862639bc9ce4121e82140bec2a987ac5140294865b5b"
+checksum = "f46882e17999c6cc590af592290432be3bce0428cb0d5f8b6715e4dc7b383eb3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3435,7 +3435,7 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "frame-support 4.0.0-dev",
  "frame-support-procedural 4.0.0-dev",
@@ -3619,7 +3619,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "aquamarine",
  "bitflags 1.3.2",
@@ -3700,7 +3700,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -3738,7 +3738,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "frame-support-procedural-tools-derive 3.0.0",
  "proc-macro-crate",
@@ -3763,7 +3763,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3784,7 +3784,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "cfg-if",
  "frame-support 4.0.0-dev",
@@ -4564,9 +4564,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.0.2"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8adf3ddd720272c6ea8bf59463c04e0f93d0bbf7c5439b691bca2987e0270897"
+checksum = "d530e1a18b1cb4c484e6e34556a0d948706958449fca0cab753d649f2bce3d1f"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.2",
@@ -6540,7 +6540,7 @@ dependencies = [
 [[package]]
 name = "pallet-assets"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "frame-benchmarking 4.0.0-dev",
  "frame-support 4.0.0-dev",
@@ -6671,7 +6671,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "frame-benchmarking 4.0.0-dev",
  "frame-support 4.0.0-dev",
@@ -7284,7 +7284,7 @@ dependencies = [
 [[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "frame-benchmarking 4.0.0-dev",
  "frame-support 4.0.0-dev",
@@ -7406,7 +7406,7 @@ dependencies = [
 [[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "docify",
  "frame-benchmarking 4.0.0-dev",
@@ -7577,7 +7577,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "docify",
  "frame-benchmarking 4.0.0-dev",
@@ -8073,7 +8073,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1d3afd2628e69da2be385eb6f2fd57c8ac7977ceeff6dc166ff1657b0e386a9"
 dependencies = [
  "fixedbitset",
- "indexmap 2.0.2",
+ "indexmap 2.1.0",
 ]
 
 [[package]]
@@ -11907,9 +11907,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.107"
+version = "1.0.108"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
+checksum = "3d1c7e3eac408d115102c4c24ad393e0821bb3a5df4d506a80f85f7a742a526b"
 dependencies = [
  "itoa",
  "ryu",
@@ -12271,7 +12271,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "hash-db",
  "log",
@@ -12314,7 +12314,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "Inflector",
  "blake2",
@@ -12343,7 +12343,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "23.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12370,7 +12370,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "16.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "integer-sqrt",
  "num-traits",
@@ -12550,7 +12550,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "21.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "array-bytes",
  "bandersnatch_vrfs",
@@ -12643,7 +12643,7 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing"
 version = "9.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -12670,7 +12670,7 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing-proc-macro"
 version = "9.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "quote",
  "sp-core-hashing 9.0.0",
@@ -12701,7 +12701,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "8.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12722,7 +12722,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.19.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -12745,7 +12745,7 @@ dependencies = [
 [[package]]
 name = "sp-genesis-builder"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "serde_json",
  "sp-api 4.0.0-dev",
@@ -12768,7 +12768,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -12797,7 +12797,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "23.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "bytes",
  "ed25519-dalek",
@@ -12858,7 +12858,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.27.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -12893,7 +12893,7 @@ dependencies = [
 [[package]]
 name = "sp-metadata-ir"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -12961,7 +12961,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "8.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -12993,7 +12993,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "24.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -13038,7 +13038,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "17.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -13075,7 +13075,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "Inflector",
  "proc-macro-crate",
@@ -13116,7 +13116,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -13145,7 +13145,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.28.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "hash-db",
  "log",
@@ -13213,7 +13213,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "8.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 
 [[package]]
 name = "sp-std"
@@ -13224,7 +13224,7 @@ checksum = "3ed09ef1760e8be9b64b7f739f1cf9a94528130be475d8e4f2d1be1e690c9f9c"
 [[package]]
 name = "sp-storage"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -13265,7 +13265,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "10.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "parity-scale-codec",
  "sp-std 8.0.0",
@@ -13316,7 +13316,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "22.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "ahash 0.8.6",
  "hash-db",
@@ -13363,7 +13363,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "22.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -13398,7 +13398,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "8.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -13421,7 +13421,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "14.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
@@ -13448,7 +13448,7 @@ dependencies = [
 [[package]]
 name = "sp-weights"
 version = "20.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#fe650fa67c9e085a0d89b9e93c39664bb3f70f2d"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=feat-add-hold-traits-pallet-asset#2668be8088bfb2bdc26b0f3866fb9583cc194767"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -13826,9 +13826,9 @@ dependencies = [
 
 [[package]]
 name = "substrate-bip39"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49eee6965196b32f882dd2ee85a92b1dbead41b04e53907f269de3b0dc04733c"
+checksum = "e620c7098893ba667438b47169c00aacdd9e7c10e042250ce2b60b087ec97328"
 dependencies = [
  "hmac 0.11.0",
  "pbkdf2 0.8.0",
@@ -14338,7 +14338,7 @@ version = "0.19.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
- "indexmap 2.0.2",
+ "indexmap 2.1.0",
  "serde",
  "serde_spanned",
  "toml_datetime",
@@ -16030,9 +16030,9 @@ checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
 
 [[package]]
 name = "winnow"
-version = "0.5.17"
+version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3b801d0e0a6726477cc207f60162da452f3a95adb368399bef20a946e06f65c"
+checksum = "176b6138793677221d420fd2f0aeeced263f197688b36484660da767bca2fa32"
 dependencies = [
  "memchr",
 ]
@@ -16172,18 +16172,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.7.20"
+version = "0.7.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd66a62464e3ffd4e37bd09950c2b9dd6c4f8767380fabba0d523f9a775bc85a"
+checksum = "686b7e407015242119c33dab17b8f61ba6843534de936d94368856528eae4dcc"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.20"
+version = "0.7.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "255c4596d41e6916ced49cfafea18727b24d67878fa180ddfd69b9df34fd1726"
+checksum = "020f3dfe25dfc38dfea49ce62d5d45ecdd7f0d8a724fa63eb36b6eba4ec76806"
 dependencies = [
  "proc-macro2",
  "quote",

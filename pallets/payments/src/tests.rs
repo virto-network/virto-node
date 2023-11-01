@@ -2,7 +2,7 @@ use super::*;
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	HoldReason, Payment as PaymentStore,
+	Payment as PaymentStore,
 };
 use frame_support::{assert_ok, traits::fungibles};
 
