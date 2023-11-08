@@ -25,6 +25,7 @@ smallvec = { workspace = true }
 pallet-asset-registry ={ workspace = true }
 pallet-lockdown-mode = { workspace = true }
 pallet-burner = { workspace = true }
+pallet-payments = { workspace = true }
 virto-common = { workspace = true }
 
 # Substrate
@@ -128,6 +129,7 @@ std = [
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
 	"pallet-utility/std",
+	"pallet-payments/std",
 	"pallet-xcm/std",
 	"pallet-lockdown-mode/std",
 	"parachain-info/std",

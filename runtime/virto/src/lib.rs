@@ -526,6 +526,8 @@ impl pallet_assets::Config<VirtoAssetsInstance> for Runtime {
 	type CallbackHandle = ();
 	type AssetAccountDeposit = AssetAccountDeposit;
 	type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
+	type MaxHolds = frame_support::traits::ConstU32<50>;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
