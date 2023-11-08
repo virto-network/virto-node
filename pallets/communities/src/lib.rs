@@ -219,6 +219,10 @@ pub mod pallet {
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Balances: Inspect<Self::AccountId> + Mutate<Self::AccountId>;
 
+		/// Type that represents the ID of the registrar for a challenge against
+		/// a community
+		type ChallengeRegistrarId: Parameter + MaxEncodedLen;
+
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -277,11 +281,11 @@ pub mod pallet {
 	pub(super) type GovernanceStrategy<T> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>>>;
 
-	/// Stores the list of votes for a community.
+	/// Stores the challenge claims registered on behalf of a community
 	#[pallet::storage]
-	pub(super) type CommunityVotes<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, ()>;
-
+	#[pallet::getter(fn challenge_for)]
+	pub(super) type Challenges<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, ChallengeRegistrarIdOf<T>, ()>;
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]

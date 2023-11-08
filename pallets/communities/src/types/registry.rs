@@ -18,22 +18,23 @@ pub struct CommunityInfo {
 /// it's being frozen by the community administrators.
 #[derive(Default, TypeInfo, PartialEq, Encode, Decode, MaxEncodedLen)]
 pub enum CommunityState {
-	/// The community is currently awaiting to prove they are contributing
-	/// to the network.
+	/// The community is currently applying to be an active community
 	#[default]
-	Awaiting,
+	Applying,
 	/// The community has proven the required contributions to the network
 	/// and can operate.
 	Active,
-	/// The community is frozen, and is temporality unable to operate. This
-	/// state can be changed by thawing the community via a privileged call.
-	Frozen,
-	/// The community is blocked, typically as a result of a restriction imposed
-	/// by violating the norms of the network. In practice, this is an
+	/// The community has failed to comply a challenge. This counts as not
+	/// active. Communities with failed challenges can be registered to new
+	/// challenges and regain active status, or can be activated through
+	/// [Pallet::force_unsuspend()]
+	FailedChallenge,
+	/// The community is suspended, typically as a result of a restriction
+	/// imposed by violating the norms of the network. In practice, this is an
 	/// equivalent to being `frozen`, howerver the state cannot be changed by
 	/// the community administrators, but by submitting a proposal to the
 	/// network for it to be changed.
-	Blocked,
+	Suspended,
 }
 
 /// The CommunityMetadata struct stores some descriptive information about

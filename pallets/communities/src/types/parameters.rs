@@ -13,3 +13,4 @@ pub type MembershipOf<T> = <T as Config>::Membership;
 pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>>;
 pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type RuntimeOriginOf<T> = <<T as SystemConfig>::RuntimeOrigin as OriginTrait>::PalletsOrigin;
+pub type ChallengeRegistrarIdOf<T> = <T as Config>::ChallengeRegistrarId;
