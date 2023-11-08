@@ -23,7 +23,7 @@ mod add_member {
 	fn fails_when_caller_not_a_member() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
 
 			assert_noop!(
 				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
@@ -45,7 +45,7 @@ mod add_member {
 	fn adds_members() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
 
 			assert_noop!(
 				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
@@ -76,7 +76,7 @@ mod add_member {
 	fn cannot_add_member_twice() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
 
 			// Successfully adds a member
 			assert_ok!(Communities::add_member(
@@ -113,7 +113,8 @@ mod remove_member {
 	fn fails_when_caller_not_a_privleged_origin() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
+
 			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
 
 			assert_noop!(
@@ -132,7 +133,8 @@ mod remove_member {
 	fn fails_when_not_a_community_member() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
+
 			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
 
 			assert_noop!(
@@ -151,7 +153,8 @@ mod remove_member {
 	fn cannot_remove_admin() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
+
 			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
 
 			assert_noop!(
@@ -165,7 +168,8 @@ mod remove_member {
 	fn it_works() {
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
+
 			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
 
 			assert_ok!(Communities::remove_member(
@@ -180,7 +184,8 @@ mod remove_member {
 
 		new_test_ext().execute_with(|| {
 			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+			activate_community(COMMUNITY);
+
 			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
 
 			assert_ok!(Communities::remove_member(

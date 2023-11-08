@@ -12,7 +12,7 @@ mod apply {
 			Info::<Test>::insert(
 				COMMUNITY,
 				CommunityInfo {
-					state: CommunityState::Awaiting,
+					state: CommunityState::Applying,
 				},
 			);
 			GovernanceStrategy::<Test>::insert(COMMUNITY, CommunityGovernanceStrategy::AdminBased(COMMUNITY_ADMIN));

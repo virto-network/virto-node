@@ -29,3 +29,8 @@ fn setup() {
 		COMMUNITY
 	));
 }
+
+fn activate_community(entity_id: CommunityId) {
+	assert_ok!(Challenger::<Test>::register(entity_id.clone()));
+	assert_ok!(Challenger::<Test>::validate(entity_id.clone(), true));
+}
