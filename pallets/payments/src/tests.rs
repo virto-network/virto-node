@@ -43,7 +43,7 @@ fn build_payment() -> Fees<Test> {
 			amount: PAYMENT_AMOUNT,
 			incentive_amount: INCENTIVE_AMOUNT,
 			state: PaymentState::Created,
-			fees_details: fees_details.clone(),
+			fees: fees_details.clone(),
 		}
 	);
 
@@ -104,7 +104,7 @@ fn check_balance_cancellation() {
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
-		let fees_details: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment();
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -124,7 +124,7 @@ fn test_pay_and_release_works() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Finished,
-				fees_details,
+				fees,
 			}
 		);
 
@@ -199,7 +199,7 @@ fn test_pay_and_cancel_works() {
 #[test]
 fn payment_refunded_request() {
 	new_test_ext().execute_with(|| {
-		let fees_details: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment();
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -214,7 +214,7 @@ fn payment_refunded_request() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::RefundRequested { cancel_block: 11 },
-				fees_details,
+				fees,
 			}
 		);
 
@@ -283,7 +283,7 @@ fn payment_disputed_beneficiary_wins() {
 			10,
 		);
 
-		let fees_details: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment();
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -304,7 +304,7 @@ fn payment_disputed_beneficiary_wins() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::NeedsReview,
-				fees_details,
+				fees,
 			}
 		);
 
@@ -401,7 +401,7 @@ fn payment_disputed_sender_wins() {
 			10,
 		);
 
-		let fees_details: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment();
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -422,7 +422,7 @@ fn payment_disputed_sender_wins() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::NeedsReview,
-				fees_details,
+				fees,
 			}
 		);
 
@@ -484,7 +484,7 @@ fn request_payment() {
 			beneficiary: PAYMENT_BENEFICIARY,
 		}));
 
-		let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
+		let fees: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 			&ASSET_ID,
 			&SENDER_ACCOUNT,
 			&PAYMENT_BENEFICIARY,
@@ -499,7 +499,7 @@ fn request_payment() {
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::PaymentRequested,
-				fees_details,
+				fees,
 			}
 		);
 

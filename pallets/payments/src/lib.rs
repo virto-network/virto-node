@@ -101,18 +101,18 @@ pub mod pallet {
 			+ Zero;
 
 		type Scheduler: ScheduleNamed<BlockNumberFor<Self>, CallOf<Self>, Self::PalletsOrigin, Hasher = Self::Hashing>;
-		/// The preimage provider with which we look up call hashes to get the
-		/// call.
+
+		/// The preimage provider used to look up call hashes to get the call.
 		type Preimages: QueryPreimage<H = Self::Hashing> + StorePreimage;
+
+		/// The overarching hold reason.
+		type RuntimeHoldReason: From<HoldReason>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
 		#[pallet::constant]
 		type IncentivePercentage: Get<Percent>;
-
-		/// The overarching hold reason.
-		type RuntimeHoldReason: From<HoldReason>;
 
 		#[pallet::constant]
 		type MaxRemarkLength: Get<u32>;
@@ -361,11 +361,11 @@ pub mod pallet {
 			payment_id: T::PaymentId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			let beneficiary_account = T::Lookup::lookup(beneficiary)?;
+			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
-			Payment::<T>::try_mutate(
-				(sender.clone(), beneficiary_account.clone(), payment_id),
-				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
+			let expiry = Payment::<T>::try_mutate(
+				(&sender, &beneficiary, payment_id),
+				|maybe_payment| -> Result<_, DispatchError> {
 					// ensure the payment exists
 					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
 					// refunds only possible for payments in created state
@@ -384,27 +384,26 @@ pub mod pallet {
 						payment_id,
 					});
 
-					let _ = T::Scheduler::schedule_named(
+					T::Scheduler::schedule_named(
 						("payment", payment_id).using_encoded(blake2_256),
 						DispatchTime::At(cancel_block),
 						None,
 						63,
-						frame_system::RawOrigin::Signed(beneficiary_account.clone()).into(),
+						frame_system::RawOrigin::Signed(beneficiary.clone()).into(),
 						T::Preimages::bound(cancel_call)?,
-					)
-					.is_ok();
+					)?;
 
 					payment.state = PaymentState::RefundRequested { cancel_block };
 
-					Self::deposit_event(Event::PaymentCreatorRequestedRefund {
-						sender,
-						beneficiary: beneficiary_account,
-						expiry: cancel_block,
-					});
-
-					Ok(())
+					Ok(cancel_block)
 				},
 			)?;
+
+			Self::deposit_event(Event::PaymentCreatorRequestedRefund {
+				sender,
+				beneficiary,
+				expiry,
+			});
 
 			Ok(().into())
 		}
@@ -425,37 +424,32 @@ pub mod pallet {
 			let sender = T::Lookup::lookup(sender)?;
 
 			Payment::<T>::try_mutate(
-				(sender.clone(), beneficiary.clone(), payment_id),
-				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
+				(&sender, &beneficiary, payment_id),
+				|maybe_payment| -> Result<_, DispatchError> {
 					// ensure the payment exists
 					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
+
 					// ensure the payment is in Requested Refund state
-					match payment.state {
-						RefundRequested { cancel_block } => {
-							ensure!(
-								cancel_block > frame_system::Pallet::<T>::block_number(),
-								Error::<T>::InvalidAction
-							);
+					let RefundRequested {cancel_block} = payment.state else {
+						fail!(Error::<T>::InvalidAction);
+					};
+					ensure!(
+						cancel_block > frame_system::Pallet::<T>::block_number(),
+						Error::<T>::InvalidAction
+					);
 
-							// Hold beneficiary incentive amount to balance the incentives at the time to
-							// resolve the dispute
-							let reason = &HoldReason::TransferPayment.into();
-							T::Assets::hold(payment.asset.clone(), reason, &beneficiary, payment.incentive_amount)?;
+					// Hold beneficiary incentive amount to balance the incentives at the time to
+					// resolve the dispute
+					let reason = &HoldReason::TransferPayment.into();
+					T::Assets::hold(payment.asset.clone(), reason, &beneficiary, payment.incentive_amount)?;
 
-							payment.state = PaymentState::NeedsReview;
+					payment.state = PaymentState::NeedsReview;
 
-							let _ =
-								T::Scheduler::cancel_named(("payment", payment_id).using_encoded(blake2_256)).is_ok();
-
-							Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
-						}
-						_ => fail!(Error::<T>::InvalidAction),
-					}
-
-					Ok(())
+					T::Scheduler::cancel_named(("payment", payment_id).using_encoded(blake2_256))
 				},
 			)?;
 
+			Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
 			Ok(().into())
 		}
 
@@ -469,36 +463,17 @@ pub mod pallet {
 			dispute_result: DisputeResult,
 		) -> DispatchResultWithPostInfo {
 			let dispute_resolver = T::DisputeResolver::ensure_origin(origin)?;
-
 			let sender = T::Lookup::lookup(sender)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
-			Payment::<T>::try_mutate(
-				(sender.clone(), beneficiary.clone(), payment_id),
-				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
-					// ensure the payment exists
-					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
-					// ensure the payment is in Requested Refund state
-					match payment.state {
-						PaymentState::NeedsReview => {
-							payment.state = PaymentState::Finished;
+			let payment =
+				Payment::<T>::get((&sender, &beneficiary, &payment_id)).map_err(|_| Error::<T>::InvalidPayment)?;
+			ensure!(payment.state == PaymentState::NeedsReview, Error::<T>::InvalidAction);
 
-							let dispute = DisputeResultWithResolver {
-								dispute_result,
-								dispute_resolver,
-							};
+			let dispute = Some((dispute_result, dispute_resolver));
+			Self::settle_payment(&sender, &beneficiary, &payment_id, dispute)?;
 
-							Self::settle_payment(&sender, &beneficiary, &payment_id, Some(dispute))?;
-
-							Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
-						}
-						_ => fail!(Error::<T>::InvalidAction),
-					}
-
-					Ok(())
-				},
-			)?;
-
+			Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
 			Ok(().into())
 		}
 
@@ -544,37 +519,34 @@ pub mod pallet {
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
 			Payment::<T>::try_mutate(
-				(sender.clone(), beneficiary.clone(), payment_id),
-				|maybe_payment| -> Result<(), sp_runtime::DispatchError> {
+				(&sender, &beneficiary, payment_id),
+				|maybe_payment| -> Result<_, DispatchError> {
 					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
-					let is_dispute = false;
+					const IS_DISPUTE: bool = false;
 
 					// Release sender fees recipients
 					let (fee_sender_recipients, _total_sender_fee_amount_mandatory, _total_sender_fee_amount_optional) =
-						payment.fees_details.get_fees_details(true, is_dispute)?;
+						payment.fees.summary_for(Role::Sender, IS_DISPUTE)?;
 
 					let (
 						fee_beneficiary_recipients,
 						_total_beneficiary_fee_amount_mandatory,
 						_total_beneficiary_fee_amount_optional,
-					) = payment.fees_details.get_fees_details(false, is_dispute)?;
+					) = payment.fees.summary_for(Role::Beneficiary, IS_DISPUTE)?;
 
-					Self::get_and_transfer_fees(&sender, payment, fee_sender_recipients, is_dispute)?;
+					Self::try_transfer_fees(&sender, payment, fee_sender_recipients, IS_DISPUTE)?;
 
 					T::Assets::transfer(payment.asset.clone(), &sender, &beneficiary, payment.amount, Expendable)
 						.map_err(|_| Error::<T>::TransferFailed)?;
 
-					Self::get_and_transfer_fees(&beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
-
-					Self::deposit_event(Event::PaymentRequestCreated { sender, beneficiary });
+					Self::try_transfer_fees(&beneficiary, payment, fee_beneficiary_recipients, IS_DISPUTE)?;
 
 					payment.state = PaymentState::Finished;
-					*maybe_payment = Ok(payment.clone());
-
 					Ok(())
 				},
 			)?;
 
+			Self::deposit_event(Event::PaymentRequestCreated { sender, beneficiary });
 			Ok(().into())
 		}
 	}
@@ -593,11 +565,11 @@ impl<T: Config> Pallet<T> {
 		payment_state: PaymentState<BlockNumberFor<T>>,
 		incentive_percentage: Percent,
 		remark: Option<&[u8]>,
-	) -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
-		let payment_id = Self::read_and_increase_id()?;
+	) -> Result<PaymentDetail<T>, DispatchError> {
+		let payment_id = Self::next_payment_id()?;
 		Payment::<T>::try_mutate(
 			(sender, beneficiary, payment_id),
-			|maybe_payment| -> Result<PaymentDetail<T>, sp_runtime::DispatchError> {
+			|maybe_payment| -> Result<_, DispatchError> {
 				if let Ok(payment) = maybe_payment {
 					ensure!(
 						payment.state == PaymentState::PaymentRequested,
@@ -614,7 +586,7 @@ impl<T: Config> Pallet<T> {
 					amount,
 					incentive_amount,
 					state: payment_state,
-					fees_details,
+					fees: fees_details,
 				};
 
 				*maybe_payment = Ok(new_payment.clone());
@@ -630,7 +602,7 @@ impl<T: Config> Pallet<T> {
 		payment: PaymentDetail<T>,
 	) -> DispatchResult {
 		let (_fee_recipients, total_fee_from_sender_mandatory, total_fee_from_sender_optional) =
-			payment.fees_details.get_fees_details(true, false)?;
+			payment.fees.summary_for(Role::Sender, false)?;
 
 		let total_hold_amount = total_fee_from_sender_mandatory
 			.saturating_add(payment.incentive_amount)
@@ -654,7 +626,7 @@ impl<T: Config> Pallet<T> {
 
 	fn cancel_payment(sender: &T::AccountId, beneficiary: &T::AccountId, payment: PaymentDetail<T>) -> DispatchResult {
 		let (_fee_recipients, total_fee_from_sender_mandatory, total_fee_from_sender_optional) =
-			payment.fees_details.get_fees_details(true, false)?;
+			payment.fees.summary_for(Role::Sender, false)?;
 
 		let total_hold_amount = total_fee_from_sender_mandatory
 			.saturating_add(payment.incentive_amount)
@@ -677,17 +649,17 @@ impl<T: Config> Pallet<T> {
 		sender: &T::AccountId,
 		beneficiary: &T::AccountId,
 		payment_id: &T::PaymentId,
-		dispute: Option<DisputeResultWithResolver<DisputeResult, T::AccountId>>,
+		maybe_dispute: Option<(DisputeResult, T::AccountId)>,
 	) -> DispatchResult {
 		Payment::<T>::try_mutate((sender, beneficiary, payment_id), |maybe_payment| -> DispatchResult {
 			let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
 
 			let reason = &HoldReason::TransferPayment.into();
-			let is_dispute = dispute.is_some();
+			let is_dispute = maybe_dispute.is_some();
 
 			// Release sender fees recipients
 			let (fee_sender_recipients, total_sender_fee_amount_mandatory, total_sender_fee_amount_optional) =
-				payment.fees_details.get_fees_details(true, is_dispute)?;
+				payment.fees.summary_for(Role::Sender, is_dispute)?;
 
 			let total_sender_release = total_sender_fee_amount_mandatory
 				.saturating_add(payment.incentive_amount)
@@ -700,7 +672,7 @@ impl<T: Config> Pallet<T> {
 				fee_beneficiary_recipients,
 				_total_beneficiary_fee_amount_mandatory,
 				_total_beneficiary_fee_amount_optional,
-			) = payment.fees_details.get_fees_details(false, is_dispute)?;
+			) = payment.fees.summary_for(Role::Beneficiary, is_dispute)?;
 
 			let mut beneficiary_release_amount = payment.amount;
 
@@ -717,77 +689,53 @@ impl<T: Config> Pallet<T> {
 			)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-			match dispute {
-				Some(dispute) => {
-					let dispute_result = &dispute.dispute_result;
+			Self::try_transfer_fees(sender, payment, fee_sender_recipients, is_dispute)?;
+			Self::try_transfer_fees(beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
 
-					Self::get_and_transfer_fees(sender, payment, fee_sender_recipients, is_dispute)?;
+			if let Some((dispute_result, resolver)) = maybe_dispute {
+				match dispute_result.in_favor_of {
+					Role::Sender => {
+						let amount_to_sender = dispute_result.percent_beneficiary.mul_floor(payment.amount);
 
-					Self::get_and_transfer_fees(beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
+						// Beneficiary looses the dispute and has to transfer the incentive_amount to
+						// the dispute_resolver.
+						T::Assets::transfer(
+							payment.asset.clone(),
+							beneficiary,
+							&resolver,
+							payment.incentive_amount,
+							Expendable,
+						)
+						.map_err(|_| Error::<T>::TransferFailed)?;
 
-					match dispute_result.in_favor_of {
-						Role::Sender => {
-							let amount_to_sender = dispute_result.percent_beneficiary.mul_floor(payment.amount);
-
-							// Beneficiary looses the dispute and has to transfer the incentive_amount to
-							// the dispute_resolver.
-							T::Assets::transfer(
-								payment.asset.clone(),
-								beneficiary,
-								&dispute.dispute_resolver,
-								payment.incentive_amount,
-								Expendable,
-							)
+						T::Assets::transfer(payment.asset.clone(), beneficiary, sender, amount_to_sender, Expendable)
 							.map_err(|_| Error::<T>::TransferFailed)?;
-
-							//
-							T::Assets::transfer(
-								payment.asset.clone(),
-								beneficiary,
-								sender,
-								amount_to_sender,
-								Expendable,
-							)
-							.map_err(|_| Error::<T>::TransferFailed)?;
-						}
-						Role::Beneficiary => {
-							let amount_to_beneficiary = dispute_result.percent_beneficiary.mul_floor(payment.amount);
-							let amount_to_sender = payment.amount.saturating_sub(amount_to_beneficiary);
-							T::Assets::transfer(
-								payment.asset.clone(),
-								sender,
-								&dispute.dispute_resolver,
-								payment.incentive_amount,
-								Expendable,
-							)
-							.map_err(|_| Error::<T>::TransferFailed)?;
-
-							T::Assets::transfer(
-								payment.asset.clone(),
-								beneficiary,
-								sender,
-								amount_to_sender,
-								Expendable,
-							)
-							.map_err(|_| Error::<T>::TransferFailed)?;
-						}
 					}
-				}
-				None => {
-					Self::get_and_transfer_fees(sender, payment, fee_sender_recipients, is_dispute)?;
-					Self::get_and_transfer_fees(beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
+					Role::Beneficiary => {
+						let amount_to_beneficiary = dispute_result.percent_beneficiary.mul_floor(payment.amount);
+						let amount_to_sender = payment.amount.saturating_sub(amount_to_beneficiary);
+
+						T::Assets::transfer(
+							payment.asset.clone(),
+							sender,
+							&resolver,
+							payment.incentive_amount,
+							Expendable,
+						)
+						.map_err(|_| Error::<T>::TransferFailed)?;
+
+						T::Assets::transfer(payment.asset.clone(), beneficiary, sender, amount_to_sender, Expendable)
+							.map_err(|_| Error::<T>::TransferFailed)?;
+					}
 				}
 			}
 
 			payment.state = PaymentState::Finished;
-			*maybe_payment = Ok(payment.clone());
-
 			Ok(())
-		})?;
-		Ok(())
+		})
 	}
 
-	fn get_and_transfer_fees(
+	fn try_transfer_fees(
 		account: &T::AccountId,
 		payment: &PaymentDetail<T>,
 		fee_recipients: Vec<Fee<T>>,
@@ -802,7 +750,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn read_and_increase_id() -> Result<T::PaymentId, sp_runtime::DispatchError> {
+	fn next_payment_id() -> Result<T::PaymentId, sp_runtime::DispatchError> {
 		let last_id = LastId::<T>::get().unwrap_or(Zero::zero());
 		let payment_id: T::PaymentId = last_id.saturating_add(One::one());
 		Ok(payment_id)
