@@ -1,3 +1,4 @@
+mod challenger;
 mod poll;
 
 use frame_support::{
@@ -22,6 +23,7 @@ use crate::{
 	types::{Tally, VoteWeight},
 };
 
+pub(super) use challenger::Challenger;
 use poll::TestPolls;
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -182,6 +184,13 @@ parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	#[derive(Debug, Clone, PartialEq)]
 	pub const CommunitiesMaxProposals: u32 = 2;
+	pub const ChallengerId: [u8; 8] = *b"kv/chlng";
+}
+
+impl challenger::Config for Test {
+	type EntityId = CommunityId;
+	type Challenge = Communities;
+	type RegistrarId = ChallengerId;
 }
 
 impl pallet_communities::Config for Test {
