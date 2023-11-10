@@ -208,7 +208,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// This type represents an unique ID for the community
-		type CommunityId: Default + Parameter + MaxEncodedLen;
+		type CommunityId: Default + Parameter + MaxEncodedLen + Sync + Send + Ord + Copy;
 
 		/// This type represents a rank for a member in a community
 		type Membership: Default + Parameter + MaxEncodedLen;

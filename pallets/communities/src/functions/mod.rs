@@ -5,5 +5,6 @@ use types::*;
 
 mod challenges;
 mod getters;
+mod governance;
 mod membership;
 mod registry;

@@ -7,7 +7,7 @@ use parity_scale_codec::MaxEncodedLen;
 use scale_info::{prelude::vec::Vec, TypeInfo};
 use sp_runtime::traits::StaticLookup;
 
-use crate::Config;
+use crate::*;
 pub(crate) use frame_system::Config as SystemConfig;
 
 pub use governance::*;

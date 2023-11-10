@@ -43,32 +43,3 @@ pub enum Vote<AssetId, AssetBalance> {
 	AssetBalance(bool, AssetId, AssetBalance),
 	Standard(bool),
 }
-
-impl<A, B> From<Vote<A, B>> for VoteWeight {
-	fn from(_value: Vote<A, B>) -> Self {
-		todo!()
-	}
-}
-
-///
-#[derive(Debug, Clone, Eq, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound(T: Config))]
-
-impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
-	fn new(_: CommunityIdOf<T>) -> Self {
-		todo!()
-	}
-
-	fn ayes(&self, _cid: CommunityIdOf<T>) -> VoteWeight {
-		todo!()
-	}
-
-	fn support(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
-		todo!()
-	}
-
-	fn approval(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
-		todo!()
-	}
-}
