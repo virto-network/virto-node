@@ -286,6 +286,7 @@ pub mod pallet {
 	#[pallet::getter(fn challenge_for)]
 	pub(super) type Challenges<T> =
 		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, ChallengeRegistrarIdOf<T>, ()>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
