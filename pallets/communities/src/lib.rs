@@ -387,7 +387,7 @@ pub mod pallet {
 			// Ensures caller is a privileged origin
 			Self::ensure_origin_privileged(origin, &community_id)?;
 
-			let metadata = Self::metadata(&community_id).unwrap_or_default();
+			let metadata = Self::metadata(community_id).unwrap_or_default();
 
 			// Deposits metadata
 			Self::do_set_metadata(

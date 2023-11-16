@@ -1,3 +1,5 @@
+mod poll;
+
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{
@@ -20,7 +22,7 @@ use crate::{
 	types::{Tally, VoteWeight},
 };
 
-use super::mock_poll::TestPolls;
+use poll::TestPolls;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type WeightInfo = ();
