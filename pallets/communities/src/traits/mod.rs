@@ -1,1 +1,1 @@
-pub mod rank;
+pub mod member_rank;
