@@ -192,14 +192,14 @@ pub mod pallet {
 			tokens::Preservation,
 			Polling,
 		},
-		Parameter,
+		Blake2_128Concat, Parameter,
 	};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::{OriginFor, *},
 	};
 	use sp_runtime::traits::StaticLookup;
-	use traits::rank::MemberRank;
+	use traits::member_rank;
 	use types::*;
 
 	#[pallet::pallet]
@@ -213,7 +213,9 @@ pub mod pallet {
 		type CommunityId: Default + Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
-		type Membership: Default + Parameter + MaxEncodedLen + MemberRank<u8>;
+		type Membership: Default + Parameter + MaxEncodedLen;
+
+		type MemberRank: Default + Parameter + MaxEncodedLen + member_rank::Inspect + member_rank::Mutate;
 
 		/// The asset used for governance
 		type Assets: fungibles::Inspect<Self::AccountId>;
@@ -251,13 +253,21 @@ pub mod pallet {
 	#[pallet::getter(fn metadata)]
 	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata>;
 
-	/// Stores the information of a community (specified by its
+	/// Stores the membership information of a community (specified by its
 	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
 	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
 	#[pallet::getter(fn membership)]
 	pub(super) type Members<T> =
 		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MembershipOf<T>>;
+
+	/// Stores the rank of a community (specified by its
+	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
+	/// [`AccountId`][`frame_system::Config::AccountId`]).
+	#[pallet::storage]
+	#[pallet::getter(fn member_rank)]
+	pub(super) type MemberRanks<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MemberRankOf<T>>;
 
 	/// Stores the count of community members. This simplifies the process of
 	/// keeping track of members' count.
@@ -330,6 +340,13 @@ pub mod pallet {
 		/// The community has exceeded the max amount of enqueded proposals at
 		/// this moment.
 		ExceededMaxProposals,
+		/// A member cannot be promoted since their rank is already at the upper
+		/// bound. The only option available so far is creating a higher rank.
+		ExceededPromoteBound,
+		/// A member cannot be demoted since their rank is already at the upper
+		/// bound. The options available so far are creating a lower rank, or
+		/// removing the member.
+		ExceededDemoteBound,
 		/// It is not possible to dequeue a proposal
 		CannotDequeueProposal,
 		/// A call for the spciefied [Hash][`frame_system::Config::Hash`] is not

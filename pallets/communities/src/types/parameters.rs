@@ -10,6 +10,7 @@ pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::S
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
 pub type MemberListOf<T> = Vec<AccountIdOf<T>>;
 pub type MembershipOf<T> = <T as Config>::Membership;
+pub type MemberRankOf<T> = <T as Config>::MemberRank;
 pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>>;
 pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type RuntimeOriginOf<T> = <<T as SystemConfig>::RuntimeOrigin as OriginTrait>::PalletsOrigin;
