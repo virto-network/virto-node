@@ -463,6 +463,34 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Increases the rank of a member in the community
+		#[pallet::call_index(5)]
+		pub fn promote_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			Self::do_promote_member(&community_id, &who)
+		}
+
+		/// Decreases the rank of a member in the community
+		#[pallet::call_index(6)]
+		pub fn demote_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+
+			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			Self::do_demote_member(&community_id, &who)
+		}
+
 		// === Governance ===
 
 		// ///
