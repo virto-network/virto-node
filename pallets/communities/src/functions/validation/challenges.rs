@@ -14,17 +14,17 @@ impl<T: Config> ValidationChallenge for Pallet<T> {
 		registrar_id: Self::ChallengeRegistrarId,
 		community_id: Self::EntityId,
 	) -> Result<(), ChallengeRegistrationRejectionCause> {
-		let info = Self::community(&community_id).ok_or(ChallengeRegistrationRejectionCause::EntityDoesNotExist)?;
+		let info = Self::community(community_id).ok_or(ChallengeRegistrationRejectionCause::EntityDoesNotExist)?;
 
 		if info.state == CommunityState::Suspended {
 			Err(ChallengeRegistrationRejectionCause::EntityBlocked)?;
 		}
 
-		if Challenges::<T>::contains_key(&community_id, &registrar_id) {
+		if Challenges::<T>::contains_key(community_id, &registrar_id) {
 			Err(ChallengeRegistrationRejectionCause::ChallengeAlreadyActiveForEntity)?;
 		}
 
-		Challenges::<T>::insert(&community_id, &registrar_id, ());
+		Challenges::<T>::insert(community_id, &registrar_id, ());
 
 		Ok(())
 	}
@@ -35,10 +35,10 @@ impl<T: Config> ValidationChallenge for Pallet<T> {
 		passed: bool,
 		_reason: Option<Vec<u8>>,
 	) -> Result<(), ValidationRejectionCause> {
-		Info::<T>::try_mutate(&community_id, |info| {
+		Info::<T>::try_mutate(community_id, |info| {
 			let info = info.as_mut().ok_or(ValidationRejectionCause::EntityDoesNotExist)?;
 
-			Challenges::<T>::try_mutate_exists(&community_id, registrar_id, |challenge| {
+			Challenges::<T>::try_mutate_exists(community_id, registrar_id, |challenge| {
 				if challenge.as_mut().is_none() {
 					Err(ValidationRejectionCause::ChallengeForRegistrarNotFound)?;
 				}

@@ -27,7 +27,7 @@ impl<T: Config> From<Error<T>> for DispatchError {
 				Error::FailedValidation(_) => 1u32.to_le_bytes(),
 				_ => u32::MAX.to_le_bytes(),
 			},
-			message: Some(&match error {
+			message: Some(match error {
 				Error::FailedRegistering(_) => "FailedRegistering",
 				Error::FailedValidation(_) => "FailedValidation",
 				_ => unimplemented!(),

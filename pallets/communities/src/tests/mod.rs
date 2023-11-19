@@ -31,6 +31,6 @@ fn setup() {
 }
 
 fn activate_community(entity_id: CommunityId) {
-	assert_ok!(Challenger::<Test>::register(entity_id.clone()));
-	assert_ok!(Challenger::<Test>::validate(entity_id.clone(), true));
+	assert_ok!(Challenger::<Test>::register(entity_id));
+	assert_ok!(Challenger::<Test>::validate(entity_id, true));
 }
