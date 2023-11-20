@@ -6,6 +6,9 @@ use frame_system::pallet_prelude::BlockNumberFor;
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 #[cfg(test)]
 mod mock;
 
@@ -133,6 +136,9 @@ pub mod pallet {
 		/// canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<BlockNumberFor<Self>>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type BenchmarkHelper: BenchmarkHelper<AccountIdOf<Self>, AssetIdOf<Self>, BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
