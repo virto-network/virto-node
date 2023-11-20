@@ -17,6 +17,8 @@ use sp_runtime::{
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
+#[warn(dead_code)]
+type AssetId = u32;
 
 pub const SENDER_ACCOUNT: AccountId = 10;
 pub const PAYMENT_BENEFICIARY: AccountId = 11;
@@ -210,6 +212,21 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 			sender_pays: compute_fee(&sender_fees),
 			beneficiary_pays: compute_fee(&beneficiary_fees),
 		}
+	}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct BenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl super::BenchmarkHelper<AccountId, AssetId, Balance> for BenchmarkHelper {
+	fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
+		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
+			id,
+			admin,
+			is_sufficient,
+			min_balance,
+		)
+		.unwrap();
 	}
 }
 

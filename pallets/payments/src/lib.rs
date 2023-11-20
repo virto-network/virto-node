@@ -52,6 +52,12 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	use sp_runtime::{traits::Get, Percent};
+
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BenchmarkHelper<AccountId, AssetId, Balance> {
+		fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance);
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;

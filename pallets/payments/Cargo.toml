@@ -32,7 +32,10 @@ pallet-scheduler= { workspace = true }
 
 [features]
 default = ["std"]
-runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks"
+]
 std = [
 	"parity-scale-codec/std",
 	"scale-info/std",
