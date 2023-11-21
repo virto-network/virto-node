@@ -15,32 +15,33 @@ targets = ["x86_64-unknown-linux-gnu"]
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 
-frame-benchmarking = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks", optional = true }
-frame-support =  { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-frame-system = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-sp-runtime = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-sp-std = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-
-pallet-referenda = { default-features = false, git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks", optional = true }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support =  { workspace = true }
+frame-system = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-sp-io = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
 
-pallet-assets = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-pallet-balances = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-pallet-preimage = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
-pallet-scheduler = { git = "https://github.com/olanod/polkadot-sdk.git", branch = "olanod-referenda-owned-tracks" }
+pallet-assets = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-preimage = { workspace = true }
+pallet-referenda = { workspace = true }
+pallet-referenda-tracks = { workspace = true }
+pallet-scheduler = { workspace = true }
 
 [features]
-default = ["std", "referenda"]
-referenda = ["dep:pallet-referenda"]
+default = ["std"]
 std = [
 	"parity-scale-codec/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-referenda?/std",
+	"pallet-assets/std",
+	"pallet-balances/std",
+	"pallet-referenda/std",
 	"scale-info/std",
 	"sp-runtime/std",
 	"sp-std/std",

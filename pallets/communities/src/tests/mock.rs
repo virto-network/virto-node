@@ -1,5 +1,5 @@
 use frame_support::{
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{
 		fungible::HoldConsideration, AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64,
 		EqualPrivilegeOnly, Footprint,
@@ -7,7 +7,7 @@ use frame_support::{
 	weights::Weight,
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSigned};
+use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use parity_scale_codec::Compact;
 use sp_core::H256;
 use sp_runtime::{
@@ -15,9 +15,10 @@ use sp_runtime::{
 	BuildStorage,
 };
 
-use crate as pallet_communities;
-
-use super::mock_poll::TestPolls;
+use crate::{
+	self as pallet_communities,
+	types::{Tally, VoteWeight},
+};
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type WeightInfo = ();
@@ -42,6 +43,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Communities: pallet_communities,
 		Preimage: pallet_preimage,
+		Referenda: pallet_referenda,
+		Tracks: pallet_referenda_tracks,
 		Scheduler: pallet_scheduler,
 		System: frame_system,
 	}
@@ -92,6 +95,8 @@ impl pallet_assets::Config for Test {
 	type CallbackHandle = ();
 	type WeightInfo = WeightInfo;
 	type RemoveItemsLimit = ConstU32<1000>;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type MaxHolds = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
@@ -110,21 +115,49 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<10>;
 	type MaxFreezes = ConstU32<10>;
-	type RuntimeFreezeReason = ();
+}
+
+parameter_types! {
+		pub static AlarmInterval: u64 = 1;
+}
+ord_parameter_types! {
+	   pub const One: u64 = 1;
+}
+impl pallet_referenda::Config for Test {
+	type WeightInfo = ();
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type Scheduler = Scheduler;
+	type Currency = pallet_balances::Pallet<Self>;
+	type SubmitOrigin = frame_system::EnsureSigned<u64>;
+	type CancelOrigin = EnsureSignedBy<One, u64>;
+	type KillOrigin = EnsureRoot<u64>;
+	type Slash = ();
+	type Votes = VoteWeight;
+	type Tally = Tally<Test>;
+	type SubmissionDeposit = ConstU128<2>;
+	type MaxQueued = ConstU32<3>;
+	type UndecidingTimeout = ConstU64<20>;
+	type AlarmInterval = AlarmInterval;
+	type Tracks = Tracks;
+	type Preimages = Preimage;
+}
+impl pallet_referenda_tracks::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type TrackId = CommunityId;
+	type MaxTracks = ConstU32<2>;
 }
 
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Weight::from_parts(1_000_000_000, 1_048_576);
 	pub const MaxScheduledPerBlock: u32 = 512;
 }
-
 pub struct ConvertDeposit;
 impl Convert<Footprint, u128> for ConvertDeposit {
 	fn convert(a: Footprint) -> u128 {
 		(a.count * 2 + a.size).into()
 	}
 }
-
 impl pallet_preimage::Config for Test {
 	type WeightInfo = ();
 	type RuntimeEvent = RuntimeEvent;
@@ -160,7 +193,7 @@ impl pallet_communities::Config for Test {
 	type CommunityId = CommunityId;
 	type Membership = MembershipPassport;
 	type PalletId = CommunitiesPalletId;
-	type Polls = TestPolls;
+	type Polls = Referenda;
 }
 
 // Build genesis storage according to the mock runtime.

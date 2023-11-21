@@ -11,7 +11,6 @@ const COMMUNITY: CommunityId = 1;
 const COMMUNITY_ADMIN: AccountId = 42;
 
 mod membership;
-mod mock_poll;
 mod registry;
 
 fn setup() {
