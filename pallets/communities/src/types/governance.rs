@@ -1,14 +1,8 @@
-use core::marker::PhantomData;
-
 use frame_support::traits::VoteTally;
-use frame_system::pallet_prelude::BlockNumberFor;
-use pallet_referenda::{Track, TracksInfo};
-use sp_std::borrow::Cow;
 
 use super::*;
 
-pub type VoteWeight = sp_runtime::Perbill;
-
+pub type VoteWeight = u32;
 /// This structure holds a governance strategy. This defines how to behave
 /// when ensuring privileged calls and deciding executing
 /// calls
@@ -51,49 +45,31 @@ pub enum Vote<AssetId, AssetBalance> {
 }
 
 impl<A, B> From<Vote<A, B>> for VoteWeight {
-	fn from(value: Vote<A, B>) -> Self {
+	fn from(_value: Vote<A, B>) -> Self {
 		todo!()
 	}
 }
 
 ///
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Tally<T> {
-	_dummy: PhantomData<T>,
-}
+#[derive(Debug, Clone, Eq, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: Config))]
+pub struct Tally<T>(core::marker::PhantomData<T>);
 
-impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
-	fn new(_: CommunityIdOf<T>) -> Self {
+impl<T: Config> VoteTally<VoteWeight, T::CommunityId> for Tally<T> {
+	fn new(_: T::CommunityId) -> Self {
 		todo!()
 	}
 
-	fn ayes(&self, _cid: CommunityIdOf<T>) -> VoteWeight {
+	fn ayes(&self, _cid: T::CommunityId) -> VoteWeight {
 		todo!()
 	}
 
-	fn support(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
+	fn support(&self, _cid: T::CommunityId) -> sp_runtime::Perbill {
 		todo!()
 	}
 
-	fn approval(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {
-		todo!()
-	}
-}
-
-///
-// #[cfg(feature = "referenda")]
-pub struct CommunityTracks<T>(PhantomData<T>);
-
-// #[cfg(feature = "referenda")]
-impl<T: Config> TracksInfo<VoteWeight, BlockNumberFor<T>> for CommunityTracks<T> {
-	type Id = u16;
-	type RuntimeOrigin = RuntimeOriginOf<T>;
-
-	fn tracks() -> impl Iterator<Item = Cow<'static, Track<Self::Id, VoteWeight, BlockNumberFor<T>>>> {
-		todo!()
-	}
-
-	fn track_for(origin: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
+	fn approval(&self, _cid: T::CommunityId) -> sp_runtime::Perbill {
 		todo!()
 	}
 }

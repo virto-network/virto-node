@@ -448,16 +448,16 @@ pub mod pallet {
 
 		// === Governance ===
 
-		///
-		#[pallet::call_index(4)]
-		pub fn vote(
-			origin: OriginFor<T>,
-			#[pallet::compact] poll_index: PollIndexOf<T>,
-			_vote: VoteOf<T>,
-		) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-			// TODO
-			Ok(())
-		}
+		// ///
+		// #[pallet::call_index(4)]
+		// pub fn vote(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] poll_index: PollIndexOf<T>,
+		// 	_vote: VoteOf<T>,
+		// ) -> DispatchResult {
+		// 	let _ = ensure_signed(origin)?;
+		// 	// TODO
+		// 	Ok(())
+		// }
 	}
 }
