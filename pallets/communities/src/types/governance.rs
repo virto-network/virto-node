@@ -1,6 +1,5 @@
 use super::*;
 
-use frame_support::traits::VoteTally;
 pub type VoteWeight = u32;
 
 /// This structure holds a governance strategy. This defines how to behave
@@ -43,3 +42,9 @@ pub enum Vote<AssetId, AssetBalance> {
 	AssetBalance(bool, AssetId, AssetBalance),
 	Standard(bool),
 }
+
+///
+#[derive(Debug, Clone, Eq, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[scale_info(skip_type_params(T))]
+#[codec(mel_bound(T: Config))]
+pub struct Tally<T>(core::marker::PhantomData<T>);

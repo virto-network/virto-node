@@ -202,6 +202,7 @@ impl pallet_communities::Config for Test {
 	type Membership = MembershipPassport;
 	type PalletId = CommunitiesPalletId;
 	type Polls = Referenda;
+	type ChallengeRegistrarId = [u8; 8];
 }
 
 // Build genesis storage according to the mock runtime.
