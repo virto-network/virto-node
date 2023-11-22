@@ -4,6 +4,7 @@ use frame_support::{
 };
 use parity_scale_codec::MaxEncodedLen;
 use sp_runtime::traits::Saturating;
+use sp_std::vec::Vec;
 
 #[derive(Debug, Encode, Decode)]
 pub enum ChallengeRegistrationRejectionCause {

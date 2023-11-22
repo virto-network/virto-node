@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::traits::validation::{ChallengeRegistrationRejectionCause, ValidationChallenge, ValidationRejectionCause};
+use sp_std::vec::Vec;
 
 impl<T: Config> ValidationChallenge for Pallet<T> {
 	type EntityId = T::CommunityId;

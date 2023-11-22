@@ -24,7 +24,6 @@ use crate::{
 };
 
 pub(super) use challenger::Challenger;
-use poll::TestPolls;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type WeightInfo = ();
@@ -115,7 +114,6 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<10>;
 	type MaxFreezes = ConstU32<10>;
-	type RuntimeFreezeReason = ();
 }
 
 parameter_types! {
