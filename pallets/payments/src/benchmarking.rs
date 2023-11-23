@@ -13,13 +13,6 @@ use frame_support::{
 use frame_system::RawOrigin;
 use sp_runtime::Percent;
 
-const SEED: u32 = 1;
-
-// See if `generic_event` has been emitted.
-fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
-	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
-}
-
 // Compare `generic_event` to the last emitted event.
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
