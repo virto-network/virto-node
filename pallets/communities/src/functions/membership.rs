@@ -1,4 +1,9 @@
-use super::*;
+use crate::{
+	types::{AccountIdOf, CommunityIdOf, MembershipOf},
+	Config, Error, MemberRanks, Members, MembersCount, Pallet,
+};
+use frame_system::{ensure_signed, ensure_signed_or_root, pallet_prelude::OriginFor};
+use sp_runtime::{DispatchError, DispatchResult};
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_origin_member(
@@ -56,7 +61,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn do_remove_member(community_id: &T::CommunityId, who: &T::AccountId) -> DispatchResult {
+	pub(crate) fn do_remove_member(community_id: &CommunityIdOf<T>, who: &T::AccountId) -> DispatchResult {
 		Members::<T>::try_mutate_exists(community_id, who, |value| {
 			if value.is_none() {
 				return Err(Error::<T>::NotAMember.into());

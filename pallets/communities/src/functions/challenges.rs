@@ -1,4 +1,8 @@
-use super::*;
+use crate::{
+	types::{CommunityIdOf, CommunityState},
+	Config, Error, Info, Pallet,
+};
+use sp_runtime::{DispatchError, DispatchResult};
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_active(community_id: &CommunityIdOf<T>) -> DispatchResult {

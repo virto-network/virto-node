@@ -166,7 +166,6 @@
 //! [g02]: `crate::Pallet::membership`
 //! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
-pub use types::RawOrigin;
 
 #[cfg(test)]
 mod tests;
@@ -199,6 +198,32 @@ pub mod pallet {
 	};
 	use sp_runtime::traits::StaticLookup;
 	use types::*;
+
+	/// The origin of the comnunity governance, as well as the origin
+	/// sent to emit on behalf of the pallet
+	#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
+	pub struct RawOrigin<CommunityId> {
+		/// The community id. Used to get the account of the
+		/// community for certain origin conversions
+		pub community_id: CommunityId,
+		///
+		pub body: Body,
+	}
+
+	#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
+	pub enum Body {
+		Voice,
+		Members {
+			#[codec(compact)]
+			min: VoteWeight,
+		},
+		Fraction {
+			#[codec(compact)]
+			num: u16,
+			#[codec(compact)]
+			denum: u16,
+		},
+	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -235,7 +260,7 @@ pub mod pallet {
 
 	/// The origin of the pallet
 	#[pallet::origin]
-	pub type Origin<T> = types::RawOrigin<CommunityIdOf<T>>;
+	pub type Origin<T> = RawOrigin<CommunityIdOf<T>>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
