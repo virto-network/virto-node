@@ -24,16 +24,11 @@ type Block = frame_system::mocking::MockBlock<Test>;
 type WeightInfo = ();
 
 pub type AccountId = u64;
+pub type MemberRank = u8;
 pub type Balance = u128;
 pub type AssetId = u32;
 pub type CommunityId = u128;
 pub type MembershipPassport = ();
-
-impl pallet_communities::traits::rank::MemberRank<u8> for MembershipPassport {
-	fn rank(&self) -> u8 {
-		0
-	}
-}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(

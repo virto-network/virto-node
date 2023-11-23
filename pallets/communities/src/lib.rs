@@ -176,7 +176,6 @@ mod benchmarking;
 
 mod functions;
 
-pub mod traits;
 pub mod types;
 pub mod weights;
 pub use weights::*;
@@ -185,21 +184,20 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::{DispatchResult, *},
+		pallet_prelude::{DispatchResult, ValueQuery, *},
 		traits::{
 			fungible::{Inspect, Mutate},
 			fungibles,
 			tokens::Preservation,
 			Polling,
 		},
-		Parameter,
+		Blake2_128Concat, Parameter,
 	};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::{OriginFor, *},
 	};
 	use sp_runtime::traits::StaticLookup;
-	use traits::rank::MemberRank;
 	use types::*;
 
 	#[pallet::pallet]
@@ -213,7 +211,7 @@ pub mod pallet {
 		type CommunityId: Default + Parameter + MaxEncodedLen;
 
 		/// This type represents a rank for a member in a community
-		type Membership: Default + Parameter + MaxEncodedLen + MemberRank<u8>;
+		type Membership: Default + Parameter + MaxEncodedLen;
 
 		/// The asset used for governance
 		type Assets: fungibles::Inspect<Self::AccountId>;
@@ -251,13 +249,21 @@ pub mod pallet {
 	#[pallet::getter(fn metadata)]
 	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata>;
 
-	/// Stores the information of a community (specified by its
+	/// Stores the membership information of a community (specified by its
 	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
 	/// [`AccountId`][`frame_system::Config::AccountId`]).
 	#[pallet::storage]
 	#[pallet::getter(fn membership)]
 	pub(super) type Members<T> =
 		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MembershipOf<T>>;
+
+	/// Stores the rank of a community (specified by its
+	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
+	/// [`AccountId`][`frame_system::Config::AccountId`]).
+	#[pallet::storage]
+	#[pallet::getter(fn member_rank)]
+	pub(super) type MemberRanks<T> =
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, Rank, ValueQuery>;
 
 	/// Stores the count of community members. This simplifies the process of
 	/// keeping track of members' count.
@@ -444,6 +450,32 @@ pub mod pallet {
 			Self::do_remove_member(&community_id, &who)?;
 
 			Ok(())
+		}
+
+		/// Increases the rank of a member in the community
+		#[pallet::call_index(5)]
+		pub fn promote_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+			let who = T::Lookup::lookup(who)?;
+			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.promote()))
+		}
+
+		/// Decreases the rank of a member in the community
+		#[pallet::call_index(6)]
+		pub fn demote_member(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			who: AccountIdLookupOf<T>,
+		) -> DispatchResult {
+			Self::ensure_origin_privileged(origin, &community_id)?;
+			Self::ensure_active(&community_id)?;
+			let who = T::Lookup::lookup(who)?;
+			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.demote()))
 		}
 
 		// === Governance ===

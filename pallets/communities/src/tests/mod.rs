@@ -1,9 +1,10 @@
 use crate::types::{self, *};
 use frame_support::{assert_noop, assert_ok, traits::fungible};
+use sp_runtime::traits::BadOrigin;
 use sp_runtime::{ArithmeticError, DispatchError};
 
 mod mock;
-pub use mock::*;
+use mock::*;
 
 type Error = crate::Error<Test>;
 
