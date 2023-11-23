@@ -25,16 +25,19 @@ impl<T: Config> Pallet<T> {
 		community_id: &CommunityIdOf<T>,
 	) -> Result<Option<AccountIdOf<T>>, DispatchError> {
 		if let Some(caller) = ensure_signed_or_root(origin)? {
-			if let Some(admin) = Self::get_community_admin(community_id) && admin == caller {
-				return Ok(Some(admin))
+			if let Some(admin) = Self::get_community_admin(community_id)
+				&& admin == caller
+			{
+				return Ok(Some(admin));
 			} else {
-				return Err(DispatchError::BadOrigin)
+				return Err(DispatchError::BadOrigin);
 			}
 		}
 
 		Ok(None)
 	}
 
+	/// Inserts `who` into the community
 	pub(crate) fn do_insert_member(community_id: &CommunityIdOf<T>, who: &AccountIdOf<T>) -> DispatchResult {
 		Members::<T>::try_mutate_exists(community_id, who, |value| {
 			if value.is_some() {
@@ -43,6 +46,7 @@ impl<T: Config> Pallet<T> {
 
 			// Inserts the member
 			*value = Some(Default::default());
+			MemberRanks::<T>::set(community_id, who, Default::default());
 
 			// Increases member count
 			let members_count = Self::members_count(community_id).unwrap_or_default();
@@ -58,7 +62,9 @@ impl<T: Config> Pallet<T> {
 				return Err(Error::<T>::NotAMember.into());
 			}
 
-			if let Some(community_admin) = Self::get_community_admin(community_id) && community_admin == *who {
+			if let Some(community_admin) = Self::get_community_admin(community_id)
+				&& community_admin == *who
+			{
 				return Err(Error::<T>::CannotRemoveAdmin.into());
 			}
 
