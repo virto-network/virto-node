@@ -220,6 +220,11 @@ pub mod pallet {
 			sender: T::AccountId,
 			beneficiary: T::AccountId,
 		},
+		/// Payment disputed resolved
+		PaymentDisputeResolved {
+			sender: T::AccountId,
+			beneficiary: T::AccountId,
+		},
 	}
 
 	#[pallet::error]
@@ -485,7 +490,7 @@ pub mod pallet {
 			let dispute = Some((dispute_result, dispute_resolver));
 			Self::settle_payment(&sender, &beneficiary, &payment_id, dispute)?;
 
-			Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
+			Self::deposit_event(Event::PaymentDisputeResolved { sender, beneficiary });
 			Ok(().into())
 		}
 
