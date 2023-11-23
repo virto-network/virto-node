@@ -1,5 +1,8 @@
-use super::*;
-use frame_support::sp_runtime::traits::AccountIdConversion;
+use crate::{
+	types::{AccountIdOf, CommunityGovernanceStrategy, CommunityIdOf},
+	Config, GovernanceStrategy, Pallet,
+};
+use frame_support::sp_runtime::traits::{AccountIdConversion, Get};
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn get_community_account_id(community_id: &CommunityIdOf<T>) -> AccountIdOf<T> {

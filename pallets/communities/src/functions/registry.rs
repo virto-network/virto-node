@@ -1,4 +1,8 @@
-use super::*;
+use crate::{
+	types::{AccountIdOf, CommunityGovernanceStrategy, CommunityIdOf, CommunityInfo, CommunityMetadata},
+	Config, Error, GovernanceStrategy, Info, Metadata, Pallet,
+};
+use sp_runtime::DispatchResult;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn community_exists(community_id: &CommunityIdOf<T>) -> bool {
