@@ -176,7 +176,6 @@ mod benchmarking;
 
 mod functions;
 
-pub mod traits;
 pub mod types;
 pub mod weights;
 pub use weights::*;
@@ -185,7 +184,7 @@ pub use weights::*;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::{DispatchResult, *},
+		pallet_prelude::{DispatchResult, ValueQuery, *},
 		traits::{
 			fungible::{Inspect, Mutate},
 			fungibles,
@@ -199,7 +198,6 @@ pub mod pallet {
 		pallet_prelude::{OriginFor, *},
 	};
 	use sp_runtime::traits::StaticLookup;
-	use traits::member_rank;
 	use types::*;
 
 	#[pallet::pallet]
@@ -214,8 +212,6 @@ pub mod pallet {
 
 		/// This type represents a rank for a member in a community
 		type Membership: Default + Parameter + MaxEncodedLen;
-
-		type MemberRank: Default + Parameter + MaxEncodedLen + member_rank::Inspect + member_rank::Mutate;
 
 		/// The asset used for governance
 		type Assets: fungibles::Inspect<Self::AccountId>;
@@ -267,7 +263,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn member_rank)]
 	pub(super) type MemberRanks<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MemberRankOf<T>>;
+		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, Rank, ValueQuery>;
 
 	/// Stores the count of community members. This simplifies the process of
 	/// keeping track of members' count.
@@ -340,13 +336,6 @@ pub mod pallet {
 		/// The community has exceeded the max amount of enqueded proposals at
 		/// this moment.
 		ExceededMaxProposals,
-		/// A member cannot be promoted since their rank is already at the upper
-		/// bound. The only option available so far is creating a higher rank.
-		ExceededPromoteBound,
-		/// A member cannot be demoted since their rank is already at the upper
-		/// bound. The options available so far are creating a lower rank, or
-		/// removing the member.
-		ExceededDemoteBound,
 		/// It is not possible to dequeue a proposal
 		CannotDequeueProposal,
 		/// A call for the spciefied [Hash][`frame_system::Config::Hash`] is not
@@ -472,9 +461,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
-
-			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
-			Self::do_promote_member(&community_id, &who)
+			let who = T::Lookup::lookup(who)?;
+			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.promote()))
 		}
 
 		/// Decreases the rank of a member in the community
@@ -486,9 +474,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
-
-			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
-			Self::do_demote_member(&community_id, &who)
+			let who = T::Lookup::lookup(who)?;
+			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.demote()))
 		}
 
 		// === Governance ===

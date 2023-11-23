@@ -210,6 +210,8 @@ mod member_rank {
 	}
 
 	mod promote_member {
+		use crate::MemberRanks;
+
 		use super::*;
 
 		#[test]
@@ -254,27 +256,23 @@ mod member_rank {
 					COMMUNITY,
 					COMMUNITY_MEMBER_1
 				));
-				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), Some(1));
+				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), 1.into());
 			});
 		}
 
 		#[test]
-		fn should_fail_when_exceeding_rank_upper_bound() {
+		fn should_stay_at_max_rank() {
 			new_test_ext().execute_with(|| {
 				setup();
 
-				while Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1) < Some(u8::MAX) {
-					assert_ok!(Communities::promote_member(
-						RuntimeOrigin::signed(COMMUNITY_ADMIN),
-						COMMUNITY,
-						COMMUNITY_MEMBER_1
-					));
-				}
+				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, Rank::MAX);
+				assert_ok!(Communities::promote_member(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					COMMUNITY_MEMBER_1
+				));
 
-				assert_noop!(
-					Communities::promote_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
-					Error::ExceededPromoteBound,
-				);
+				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), Rank::MAX);
 			});
 		}
 	}
@@ -317,26 +315,29 @@ mod member_rank {
 			new_test_ext().execute_with(|| {
 				setup();
 
-				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, Some(2));
+				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, 2.into());
 
 				assert_ok!(Communities::demote_member(
 					RuntimeOrigin::signed(COMMUNITY_ADMIN),
 					COMMUNITY,
 					COMMUNITY_MEMBER_1
 				));
-				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), Some(1));
+				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), 1.into());
 			});
 		}
 
 		#[test]
-		fn should_fail_when_exceeding_rank_upper_bound() {
+		fn should_remain_at_min_rank() {
 			new_test_ext().execute_with(|| {
 				setup();
 
-				assert_noop!(
-					Communities::demote_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
-					Error::ExceededDemoteBound,
-				);
+				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, 0.into());
+				assert_ok!(Communities::demote_member(
+					RuntimeOrigin::signed(COMMUNITY_ADMIN),
+					COMMUNITY,
+					COMMUNITY_MEMBER_1
+				));
+				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), Rank::MIN);
 			});
 		}
 	}

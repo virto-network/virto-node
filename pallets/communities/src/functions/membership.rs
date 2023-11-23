@@ -1,5 +1,4 @@
 use super::*;
-use crate::traits::member_rank::Mutate;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn ensure_origin_member(
@@ -26,10 +25,12 @@ impl<T: Config> Pallet<T> {
 		community_id: &CommunityIdOf<T>,
 	) -> Result<Option<AccountIdOf<T>>, DispatchError> {
 		if let Some(caller) = ensure_signed_or_root(origin)? {
-			if let Some(admin) = Self::get_community_admin(community_id) && admin == caller {
-				return Ok(Some(admin))
+			if let Some(admin) = Self::get_community_admin(community_id)
+				&& admin == caller
+			{
+				return Ok(Some(admin));
 			} else {
-				return Err(DispatchError::BadOrigin)
+				return Err(DispatchError::BadOrigin);
 			}
 		}
 
@@ -45,43 +46,11 @@ impl<T: Config> Pallet<T> {
 
 			// Inserts the member
 			*value = Some(Default::default());
-			MemberRanks::<T>::set(community_id, who, Some(Default::default()));
+			MemberRanks::<T>::set(community_id, who, Default::default());
 
 			// Increases member count
 			let members_count = Self::members_count(community_id).unwrap_or_default();
 			MembersCount::<T>::set(community_id, members_count.checked_add(1));
-
-			Ok(())
-		})
-	}
-
-	pub(crate) fn do_promote_member(community_id: &CommunityIdOf<T>, who: &AccountIdOf<T>) -> DispatchResult {
-		MemberRanks::<T>::try_mutate(community_id, who, |maybe_rank| {
-			let Some(rank) = maybe_rank else {
-				return Err(Error::<T>::NotAMember)?;
-			};
-
-			*maybe_rank = rank.promote();
-
-			if maybe_rank.is_none() {
-				return Err(Error::<T>::ExceededPromoteBound)?;
-			}
-
-			Ok(())
-		})
-	}
-
-	pub(crate) fn do_demote_member(community_id: &CommunityIdOf<T>, who: &AccountIdOf<T>) -> DispatchResult {
-		MemberRanks::<T>::try_mutate(community_id, who, |maybe_rank| {
-			let Some(rank) = maybe_rank else {
-				return Err(Error::<T>::NotAMember)?;
-			};
-
-			*maybe_rank = rank.demote();
-
-			if maybe_rank.is_none() {
-				return Err(Error::<T>::ExceededDemoteBound)?;
-			}
 
 			Ok(())
 		})
@@ -93,7 +62,9 @@ impl<T: Config> Pallet<T> {
 				return Err(Error::<T>::NotAMember.into());
 			}
 
-			if let Some(community_admin) = Self::get_community_admin(community_id) && community_admin == *who {
+			if let Some(community_admin) = Self::get_community_admin(community_id)
+				&& community_admin == *who
+			{
 				return Err(Error::<T>::CannotRemoveAdmin.into());
 			}
 

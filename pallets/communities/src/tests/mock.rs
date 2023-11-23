@@ -187,7 +187,6 @@ impl pallet_communities::Config for Test {
 	type Balances = Balances;
 	type CommunityId = CommunityId;
 	type Membership = MembershipPassport;
-	type MemberRank = MemberRank;
 	type PalletId = CommunitiesPalletId;
 	type Polls = Referenda;
 }
