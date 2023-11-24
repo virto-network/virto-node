@@ -17,6 +17,8 @@ use sp_runtime::{
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
+#[allow(unused)]
+type AssetId = u32;
 
 pub const SENDER_ACCOUNT: AccountId = 10;
 pub const PAYMENT_BENEFICIARY: AccountId = 11;
@@ -213,8 +215,23 @@ impl crate::types::FeeHandler<Test> for MockFeeHandler {
 	}
 }
 
+#[cfg(feature = "runtime-benchmarks")]
+pub struct BenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl super::BenchmarkHelper<AccountId, AssetId, Balance> for BenchmarkHelper {
+	fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
+		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
+			id,
+			admin,
+			is_sufficient,
+			min_balance,
+		)
+		.unwrap();
+	}
+}
+
 parameter_types! {
-	pub const MaxRemarkLength: u32 = 50;
+	pub const MaxRemarkLength: u8 = 50;
 	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
 	pub const PaymentPalletId: PalletId = PalletId(*b"payments");
 }
@@ -237,6 +254,8 @@ impl pallet_payments::Config for Test {
 	type Preimages = ();
 	type CancelBufferBlockLength = ConstU64<10>;
 	type PalletsOrigin = OriginCaller;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = BenchmarkHelper;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -170,6 +170,7 @@ runtime-benchmarks = [
 	"pallet-burner/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
+	"pallet-payments/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",

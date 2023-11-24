@@ -6,6 +6,9 @@ use frame_system::pallet_prelude::BlockNumberFor;
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 #[cfg(test)]
 mod mock;
 
@@ -52,6 +55,12 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	use sp_runtime::{traits::Get, Percent};
+
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BenchmarkHelper<AccountId, AssetId, Balance> {
+		fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance);
+	}
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -127,6 +136,9 @@ pub mod pallet {
 		/// canceled payment
 		#[pallet::constant]
 		type CancelBufferBlockLength: Get<BlockNumberFor<Self>>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type BenchmarkHelper: BenchmarkHelper<AccountIdOf<Self>, AssetIdOf<Self>, BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -205,6 +217,11 @@ pub mod pallet {
 		},
 		/// Payment request was completed by sender
 		PaymentRequestCompleted {
+			sender: T::AccountId,
+			beneficiary: T::AccountId,
+		},
+		/// Payment disputed resolved
+		PaymentDisputeResolved {
 			sender: T::AccountId,
 			beneficiary: T::AccountId,
 		},
@@ -473,7 +490,7 @@ pub mod pallet {
 			let dispute = Some((dispute_result, dispute_resolver));
 			Self::settle_payment(&sender, &beneficiary, &payment_id, dispute)?;
 
-			Self::deposit_event(Event::PaymentRefundDisputed { sender, beneficiary });
+			Self::deposit_event(Event::PaymentDisputeResolved { sender, beneficiary });
 			Ok(().into())
 		}
 
