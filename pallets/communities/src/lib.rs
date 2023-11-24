@@ -176,6 +176,7 @@ mod benchmarking;
 
 mod functions;
 
+pub mod traits;
 pub mod types;
 pub mod weights;
 pub use weights::*;
