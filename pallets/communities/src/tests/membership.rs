@@ -205,7 +205,7 @@ mod member_rank {
 
 	fn setup() {
 		super::setup();
-		assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+		activate_community(COMMUNITY);
 
 		assert_ok!(Communities::add_member(
 			RuntimeOrigin::signed(COMMUNITY_ADMIN),

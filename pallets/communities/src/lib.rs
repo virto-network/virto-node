@@ -467,8 +467,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
+
 			let who = T::Lookup::lookup(who)?;
-			MemberRanks::<T>::try_mutate(community_id, who, |rank| {
+			MemberRanks::<T>::try_mutate(community_id, &who, |rank| {
+				Self::ensure_member(&community_id, &who)?;
 				rank.promote();
 				Ok(())
 			})
@@ -484,7 +486,8 @@ pub mod pallet {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 			let who = T::Lookup::lookup(who)?;
-			MemberRanks::<T>::try_mutate(community_id, who, |rank| {
+			MemberRanks::<T>::try_mutate(community_id, &who, |rank| {
+				Self::ensure_member(&community_id, &who)?;
 				rank.demote();
 				Ok(())
 			})
