@@ -1,7 +1,7 @@
-pub(self) use crate::*;
-pub(self) use frame_support::pallet_prelude::*;
-pub(self) use frame_system::pallet_prelude::*;
-pub(self) use types::*;
+use crate::*;
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
+use types::*;
 
 mod challenges;
 mod getters;

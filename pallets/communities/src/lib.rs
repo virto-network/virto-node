@@ -425,7 +425,7 @@ pub mod pallet {
 			Self::ensure_origin_member(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 
-			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			let who = T::Lookup::lookup(who)?;
 			Self::do_insert_member(&community_id, &who)?;
 
 			Ok(())
@@ -446,7 +446,7 @@ pub mod pallet {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 
-			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
+			let who = T::Lookup::lookup(who)?;
 			Self::do_remove_member(&community_id, &who)?;
 
 			Ok(())
@@ -462,7 +462,10 @@ pub mod pallet {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 			let who = T::Lookup::lookup(who)?;
-			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.promote()))
+			MemberRanks::<T>::try_mutate(community_id, who, |rank| {
+				rank.promote();
+				Ok(())
+			})
 		}
 
 		/// Decreases the rank of a member in the community
@@ -475,7 +478,10 @@ pub mod pallet {
 			Self::ensure_origin_privileged(origin, &community_id)?;
 			Self::ensure_active(&community_id)?;
 			let who = T::Lookup::lookup(who)?;
-			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.demote()))
+			MemberRanks::<T>::try_mutate(community_id, who, |rank| {
+				rank.demote();
+				Ok(())
+			})
 		}
 
 		// === Governance ===
