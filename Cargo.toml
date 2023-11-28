@@ -2,7 +2,7 @@
 members = [
 	"node",
 	"runtime/kreivo",
-	"common"
+	"common",
 ]
 
 exclude = ["xcm-emulator"]
@@ -48,10 +48,10 @@ smallvec = "1.11"
 kreivo-runtime = { path = "runtime/kreivo" }
 jsonrpsee = { version = "0.16.2"}
 
-
 # Virto Pallets
 pallet-asset-registry = { default-features = false, path = "pallets/asset-registry" }
 pallet-burner = { default-features = false, path = "pallets/burner" }
+pallet-payments = { default-features = false, path = "pallets/payments" }
 
 runtime-common =  { default-features = false, path = "runtime/common" }
 kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }

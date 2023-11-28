@@ -24,6 +24,8 @@ smallvec = { workspace = true }
 # Local
 pallet-asset-registry ={ workspace = true }
 pallet-burner = { workspace = true }
+pallet-payments = { workspace = true }
+
 runtime-common = { workspace = true }
 
 # Substrate
@@ -42,7 +44,9 @@ pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-multisig = { workspace = true }
 pallet-utility = { workspace = true }
+pallet-preimage = { workspace = true }
 pallet-proxy = { workspace = true }
+pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
@@ -94,9 +98,6 @@ default = [
 	"std",
 ]
 std = [
-	"parity-scale-codec/std",
-	"log/std",
-	"scale-info/std",
 	"assets-common/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-parachain-system/std",
@@ -105,21 +106,24 @@ std = [
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-timestamp/std",
 	"cumulus-primitives-utility/std",
-	"parachains-common/std",
 	"frame-executive/std",
 	"frame-support/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
-	"pallet-assets/std",
-	"pallet-asset-tx-payment/std",
+	"log/std",
 	"pallet-asset-registry/std",
+	"pallet-asset-tx-payment/std",
+	"pallet-assets/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
 	"pallet-burner/std",
 	"pallet-collator-selection/std",
+	"pallet-message-queue/std",
 	"pallet-multisig/std",
+	"pallet-preimage/std",
 	"pallet-proxy/std",
+	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
 	"pallet-timestamp/std",
@@ -129,10 +133,12 @@ std = [
 	"pallet-utility/std",
 	"pallet-xcm/std",
 	"parachain-info/std",
+	"parachains-common/std",
+	"parity-scale-codec/std",
 	"polkadot-parachain-primitives/std",
 	"polkadot-runtime-common/std",
-	"pallet-message-queue/std",
 	"runtime-common/std",
+	"scale-info/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",
@@ -152,28 +158,31 @@ std = [
 ]
 
 runtime-benchmarks = [
-	"hex-literal",
+	"assets-common/runtime-benchmarks",
+	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
+	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-assets/runtime-benchmarks",
+	"hex-literal",
 	"pallet-asset-registry/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-burner/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
+	"pallet-multisig/runtime-benchmarks",
+	"pallet-payments/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks",
+	"pallet-proxy/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
-	"pallet-xcm/runtime-benchmarks",
-	"pallet-burner/runtime-benchmarks",
-	"pallet-multisig/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
-	"pallet-proxy/runtime-benchmarks",
+	"pallet-xcm-benchmarks/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
-	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
-	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
-	"assets-common/runtime-benchmarks",
-	"pallet-xcm-benchmarks/runtime-benchmarks",
 ]
 
 try-runtime = [
@@ -184,20 +193,21 @@ try-runtime = [
 	"frame-executive/try-runtime",
 	"frame-system/try-runtime",
 	"frame-try-runtime/try-runtime",
-	"pallet-assets/try-runtime",
 	"pallet-asset-registry/try-runtime",
+	"pallet-assets/try-runtime",
 	"pallet-aura/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-multisig/try-runtime",
-	"pallet-utility/try-runtime",
+	"pallet-payments/try-runtime",
+	"pallet-proxy/try-runtime",
 	"pallet-session/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
+	"pallet-utility/try-runtime",
 	"pallet-xcm/try-runtime",
-	"pallet-proxy/try-runtime",
 	"parachain-info/try-runtime",
 ]

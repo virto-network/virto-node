@@ -4643,7 +4643,10 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-payments",
+ "pallet-preimage",
  "pallet-proxy",
+ "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
@@ -6845,6 +6848,29 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-staking",
+ "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+]
+
+[[package]]
+name = "pallet-payments"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-preimage",
+ "pallet-scheduler",
+ "pallet-sudo",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
  "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
 ]
 

@@ -22,7 +22,7 @@ pub use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, MultiAddress, Perbill, Percent, Permill,
+	AccountId32, ApplyExtrinsicResult, MultiAddress, Perbill, Percent, Permill,
 };
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -33,13 +33,15 @@ use frame_support::{
 	construct_runtime, derive_impl,
 	dispatch::DispatchClass,
 	genesis_builder_helper::{build_config, create_default_config},
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{
+		fungible::HoldConsideration,
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
-		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, TransformOrigin,
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, LinearStoragePrice,
+		TransformOrigin,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
-	PalletId,
+	BoundedVec, PalletId,
 };
 
 pub use frame_system::Call as SystemCall;
@@ -60,11 +62,17 @@ pub use polkadot_runtime_common::{prod_or_fast, BlockHashCount, SlowAdjustingFee
 
 pub use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
+pub mod payments;
+
 // XCM Imports
 use xcm::latest::prelude::BodyId;
 
 pub use constants::{currency::*, fee::WeightToFee};
-pub use impls::ProxyType;
+
+use pallet_payments::types::*;
+
+pub use impls::{EqualOrGreatestRootCmp, ProxyType, RuntimeBlackListedCalls};
+
 pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Nonce, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -172,9 +180,14 @@ construct_runtime!(
 		Multisig: pallet_multisig = 42,
 		Utility: pallet_utility = 43,
 		Proxy: pallet_proxy = 44,
+		Scheduler: pallet_scheduler = 45,
+		Preimage: pallet_preimage = 46,
 
 		// Governance
 		Treasury: pallet_treasury = 50,
+
+		// Virto Tooling
+		Payments: pallet_payments = 60,
 	}
 );
 
@@ -267,7 +280,7 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 	type MaxReserves = ConstU32<50>;
 	type ReserveIdentifier = [u8; 8];
-	type RuntimeHoldReason = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<0>;
 	type MaxFreezes = ConstU32<0>;
@@ -566,6 +579,119 @@ impl pallet_proxy::Config for Runtime {
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
 }
 
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * RuntimeBlockWeights::get().max_block;
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+parameter_types! {
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub const MaxScheduledPerBlock: u32 = 200;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeEvent = RuntimeEvent;
+	type PalletsOrigin = OriginCaller;
+	type RuntimeCall = RuntimeCall;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
+	type OriginPrivilegeCmp = EqualOrGreatestRootCmp;
+	type Preimages = Preimage;
+}
+
+parameter_types! {
+	pub const PreimageBaseDeposit: Balance = deposit(2, 64);
+	pub const PreimageByteDeposit: Balance = deposit(0, 1);
+	pub const PreimageHoldReason: RuntimeHoldReason = RuntimeHoldReason::Preimage(pallet_preimage::HoldReason::Preimage);
+}
+
+impl pallet_preimage::Config for Runtime {
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type Consideration = HoldConsideration<
+		AccountId,
+		Balances,
+		PreimageHoldReason,
+		LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
+	>;
+}
+
+parameter_types! {
+	pub const MaxRemarkLength: u8 = 50;
+	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
+	pub const PaymentPalletId: PalletId = PalletId(*b"payments");
+
+}
+
+ord_parameter_types! {
+	pub const RootAccount: AccountId32 = AccountId32::new(
+		[
+			123,149,48,25,6,91,67,66,164,241,252,246,43,232,243,232,60,141,21,48,59,103,79,215,25,30,89,143,105,158,118,79
+		]);
+}
+
+pub type PaymentId = u32;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct BenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl super::BenchmarkHelper<AccountId, AssetId, Balance> for BenchmarkHelper {
+	fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
+		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
+			id,
+			admin,
+			is_sufficient,
+			min_balance,
+		)
+		.unwrap();
+	}
+}
+
+pub struct KreivoFeeHandler;
+
+const MANDATORY_FEE: bool = true;
+pub const SYSTEM_FEE: u8 = 1;
+pub const SYSTEM_FEE_PERCENTAGE: Percent = Percent::from_percent(SYSTEM_FEE);
+pub const INCENTIVE_PERCENTAGE: u8 = 10;
+
+impl FeeHandler<Runtime> for KreivoFeeHandler {
+	fn apply_fees(
+		_asset: &AssetIdOf<Runtime>,
+		_sender: &AccountId,
+		_beneficiary: &AccountId,
+		amount: &Balance,
+		_remark: Option<&[u8]>,
+	) -> Fees<Runtime> {
+		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
+			RootAccount::get(),
+			SYSTEM_FEE_PERCENTAGE.mul_floor(*amount),
+			MANDATORY_FEE,
+		)];
+		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
+			RootAccount::get(),
+			SYSTEM_FEE_PERCENTAGE.mul_floor(*amount),
+			MANDATORY_FEE,
+		)];
+
+		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(sender_fee).unwrap();
+		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(beneficiary_fee).unwrap();
+
+		Fees {
+			sender_pays,
+			beneficiary_pays,
+		}
+	}
+}
+
 #[cfg(feature = "runtime-benchmarks")]
 pub struct AssetRegistryBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
@@ -618,6 +744,7 @@ mod benches {
 		[pallet_assets, Assets]
 		[pallet_proxy, Proxy]
 		[pallet_asset_registry, AssetRegistry]
+		[pallet_payments, Payments]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.
 		[pallet_xcm_benchmarks::fungible, XcmBalances]

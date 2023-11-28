@@ -17,7 +17,8 @@
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for parachains.
 
 use super::*;
-use frame_support::traits::{Contains, Currency, InstanceFilter};
+use core::cmp::Ordering;
+use frame_support::traits::{Contains, Currency, InstanceFilter, PrivilegeCmp};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use sp_runtime::RuntimeDebug;
 
@@ -131,6 +132,22 @@ impl InstanceFilter<RuntimeCall> for ProxyType {
 			(ProxyType::Assets, ProxyType::AssetManager) => true,
 			(ProxyType::NonTransfer, ProxyType::Collator) => true,
 			_ => false,
+		}
+	}
+}
+
+/// Used to compare the privilege of an origin inside the scheduler.
+pub struct EqualOrGreatestRootCmp;
+
+impl PrivilegeCmp<OriginCaller> for EqualOrGreatestRootCmp {
+	fn cmp_privilege(left: &OriginCaller, right: &OriginCaller) -> Option<Ordering> {
+		if left == right {
+			return Some(Ordering::Equal);
+		}
+		match (left, right) {
+			// Root is greater than anything.
+			(OriginCaller::system(frame_system::RawOrigin::Root), _) => Some(Ordering::Greater),
+			_ => None,
 		}
 	}
 }

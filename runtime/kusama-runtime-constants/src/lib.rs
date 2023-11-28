@@ -24,7 +24,6 @@ pub mod currency {
 
 	/// The existential deposit.
 	pub const EXISTENTIAL_DEPOSIT: Balance = CENTS;
-
 	pub const UNITS: Balance = 1_000_000_000_000;
 	pub const QUID: Balance = UNITS / 30;
 	pub const CENTS: Balance = QUID / 100;
@@ -43,7 +42,6 @@ pub mod time {
 	pub const MILLISECS_PER_BLOCK: Moment = 6000;
 	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
 	pub const EPOCH_DURATION_IN_SLOTS: BlockNumber = prod_or_fast!(HOURS, MINUTES);
-
 	// These time units are defined in number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;

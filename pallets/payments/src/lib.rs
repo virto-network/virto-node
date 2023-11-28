@@ -91,7 +91,6 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ sp_std::fmt::Debug
 			+ Default
-			+ From<u64>
 			+ TypeInfo
 			+ MaxEncodedLen;
 
@@ -116,6 +115,9 @@ pub mod pallet {
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -270,7 +272,7 @@ pub mod pallet {
 		/// custom logic and trigger alternate payment flows. the specified
 		/// amount.
 		#[pallet::call_index(0)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::pay(remark.as_ref().map(|x| x.len() as u32).unwrap_or(0)))]
 		pub fn pay(
 			origin: OriginFor<T>,
 			beneficiary: AccountIdLookupOf<T>,
@@ -308,7 +310,7 @@ pub mod pallet {
 		/// Release any created payment, this will transfer the reserved amount
 		/// from the creator of the payment to the assigned recipient
 		#[pallet::call_index(1)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::release())]
 		pub fn release(
 			origin: OriginFor<T>,
 			beneficiary: AccountIdLookupOf<T>,
@@ -332,7 +334,7 @@ pub mod pallet {
 		/// back to creator of the payment. This extrinsic can only be called by
 		/// the recipient of the payment
 		#[pallet::call_index(2)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::cancel())]
 		pub fn cancel(
 			origin: OriginFor<T>,
 			sender: AccountIdLookupOf<T>,
@@ -371,7 +373,7 @@ pub mod pallet {
 		/// the funds after a configured amount of time that the reveiver has to
 		/// react and opose the request
 		#[pallet::call_index(3)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::request_refund())]
 		pub fn request_refund(
 			origin: OriginFor<T>,
 			beneficiary: AccountIdLookupOf<T>,
@@ -430,7 +432,7 @@ pub mod pallet {
 		/// payment to a NeedsReview state The assigned resolver account can
 		/// then change the state of the payment after review.
 		#[pallet::call_index(4)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::dispute_refund())]
 		pub fn dispute_refund(
 			origin: OriginFor<T>,
 			sender: AccountIdLookupOf<T>,
@@ -471,7 +473,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::resolve_dispute())]
 		pub fn resolve_dispute(
 			origin: OriginFor<T>,
 			sender: AccountIdLookupOf<T>,
@@ -500,7 +502,7 @@ pub mod pallet {
 		// PaymentRequested State and can only be modified by the `accept_and_pay`
 		// extrinsic.
 		#[pallet::call_index(6)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::request_payment())]
 		pub fn request_payment(
 			origin: OriginFor<T>,
 			sender: AccountIdLookupOf<T>,
@@ -526,7 +528,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(Weight::from_parts(10_000, 0) + T::DbWeight::get().writes(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::accept_and_pay())]
 		pub fn accept_and_pay(
 			origin: OriginFor<T>,
 			beneficiary: AccountIdLookupOf<T>,
@@ -707,6 +709,7 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
 			Self::try_transfer_fees(sender, payment, fee_sender_recipients, is_dispute)?;
+
 			Self::try_transfer_fees(beneficiary, payment, fee_beneficiary_recipients, is_dispute)?;
 
 			if let Some((dispute_result, resolver)) = maybe_dispute {
