@@ -107,6 +107,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = ();
 	type MaxHolds = ();
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 impl pallet_assets::Config for Test {
@@ -254,6 +255,7 @@ impl pallet_payments::Config for Test {
 	type Preimages = ();
 	type CancelBufferBlockLength = ConstU64<10>;
 	type PalletsOrigin = OriginCaller;
+	type WeightInfo = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = BenchmarkHelper;
 }

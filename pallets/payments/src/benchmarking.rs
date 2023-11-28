@@ -11,7 +11,9 @@ use frame_support::{
 };
 
 use frame_system::RawOrigin;
+use log;
 use sp_runtime::Percent;
+use sp_std::vec;
 
 // Compare `generic_event` to the last emitted event.
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
@@ -31,11 +33,10 @@ fn create_and_mint_asset<T: Config>(
 	sender: &T::AccountId,
 	beneficiary: &T::AccountId,
 	asset: &AssetIdOf<T>,
-	amount: &BalanceOf<T>,
 ) -> Result<(), BenchmarkError> {
 	T::BenchmarkHelper::create_asset(asset.clone(), sender.clone(), true, <BalanceOf<T>>::from(1u32));
-	T::Assets::mint_into(asset.clone(), &sender, <BalanceOf<T>>::from(100000u32))?;
-	T::Assets::mint_into(asset.clone(), &beneficiary, <BalanceOf<T>>::from(100000u32))?;
+	T::Assets::mint_into(asset.clone(), &sender, <BalanceOf<T>>::from(10000000u32))?;
+	T::Assets::mint_into(asset.clone(), &beneficiary, <BalanceOf<T>>::from(10000000u32))?;
 
 	Ok(())
 }
@@ -55,9 +56,10 @@ fn create_payment<T: Config>(
 	BenchmarkError,
 > {
 	let (sender, beneficiary, sender_lookup, beneficiary_lookup) = create_accounts::<T>();
-	create_and_mint_asset::<T>(&sender, &beneficiary, &asset, &<BalanceOf<T>>::from(100000u32))?;
+	create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 
 	let payment_id: T::PaymentId = Payments::<T>::next_payment_id()?;
+	log::info!("payment_id: {:?}", payment_id);
 
 	let payment_detail = Payments::<T>::create_payment(
 		&sender,
@@ -71,6 +73,8 @@ fn create_payment<T: Config>(
 
 	// reserve funds for payment
 	Payments::<T>::reserve_payment_amount(&sender, &beneficiary, payment_detail)?;
+
+	log::info!("reserve_payment_amount executed");
 
 	// TODO: check storage items
 
@@ -88,8 +92,8 @@ mod benchmarks {
 	fn pay(q: Linear<1, { T::MaxRemarkLength::get() }>) -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, _, beneficiary_lookup) = create_accounts::<T>();
 		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
-		create_and_mint_asset::<T>(&sender, &beneficiary, &asset, &<BalanceOf<T>>::from(100000u32))?;
-		let amount = <BalanceOf<T>>::from(50_u32);
+		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
+		let amount = <BalanceOf<T>>::from(100000_u32);
 
 		let remark: Option<BoundedDataOf<T>> = if q == 0 {
 			None
@@ -121,9 +125,11 @@ mod benchmarks {
 
 	#[benchmark]
 	fn release() -> Result<(), BenchmarkError> {
-		let amount = <BalanceOf<T>>::from(50_u32);
+		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
 		let (payment_id, sender, beneficiary, _, beneficiary_lookup) = create_payment::<T>(&amount, &asset, None)?;
+
+		log::info!("beneficiary_lookup: {:?}", beneficiary_lookup);
 
 		#[extrinsic_call]
 		_(RawOrigin::Signed(sender.clone()), beneficiary_lookup, payment_id);
@@ -134,7 +140,7 @@ mod benchmarks {
 
 	#[benchmark]
 	fn cancel() -> Result<(), BenchmarkError> {
-		let amount = <BalanceOf<T>>::from(50_u32);
+		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
 		let (payment_id, sender, beneficiary, sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
@@ -148,7 +154,7 @@ mod benchmarks {
 
 	#[benchmark]
 	fn request_refund() -> Result<(), BenchmarkError> {
-		let amount = <BalanceOf<T>>::from(50_u32);
+		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
 		let (payment_id, sender, beneficiary, _sender_lookup, beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
@@ -172,7 +178,7 @@ mod benchmarks {
 
 	#[benchmark]
 	fn dispute_refund() -> Result<(), BenchmarkError> {
-		let amount = <BalanceOf<T>>::from(50_u32);
+		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
 		let (payment_id, sender, beneficiary, sender_lookup, beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
@@ -193,7 +199,7 @@ mod benchmarks {
 
 	#[benchmark]
 	fn resolve_dispute() -> Result<(), BenchmarkError> {
-		let amount = <BalanceOf<T>>::from(50_u32);
+		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
 		let (payment_id, sender, beneficiary, sender_lookup, beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
@@ -234,8 +240,8 @@ mod benchmarks {
 	fn request_payment() -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, sender_lookup, _beneficiary_lookup) = create_accounts::<T>();
 		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
-		create_and_mint_asset::<T>(&sender, &beneficiary, &asset, &<BalanceOf<T>>::from(100000u32))?;
-		let amount = <BalanceOf<T>>::from(50_u32);
+		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
+		let amount = <BalanceOf<T>>::from(100000_u32);
 
 		#[extrinsic_call]
 		_(RawOrigin::Signed(beneficiary.clone()), sender_lookup, asset, amount);
@@ -248,8 +254,8 @@ mod benchmarks {
 	fn accept_and_pay() -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, sender_lookup, beneficiary_lookup) = create_accounts::<T>();
 		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
-		create_and_mint_asset::<T>(&sender, &beneficiary, &asset, &<BalanceOf<T>>::from(100000u32))?;
-		let amount = <BalanceOf<T>>::from(50_u32);
+		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
+		let amount = <BalanceOf<T>>::from(100000_u32);
 		let payment_id: T::PaymentId = Payments::<T>::next_payment_id()?;
 
 		assert!(Payments::<T>::request_payment(
