@@ -1,33 +1,45 @@
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{
-		fungible::HoldConsideration, AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64,
-		EqualPrivilegeOnly, Footprint,
+		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16,
+		ConstU32, ConstU64, EqualPrivilegeOnly, Footprint,
 	},
 	weights::Weight,
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
-use parity_scale_codec::Compact;
+use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
+use parity_scale_codec::{Compact, Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_core::H256;
+use sp_io::TestExternalities;
 use sp_runtime::{
-	traits::{BlakeTwo256, Convert, IdentityLookup},
-	BuildStorage,
+	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
+	BuildStorage, MultiSignature,
 };
 
 use crate::{
 	self as pallet_communities,
-	types::{Tally, VoteWeight},
+	origin::EnsureCommunity,
+	types::{MembershipId, Tally, VoteWeight},
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type WeightInfo = ();
 
-pub type AccountId = u64;
+pub type AccountPublic = <MultiSignature as Verify>::Signer;
+pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 pub type Balance = u128;
 pub type AssetId = u32;
-pub type CommunityId = u128;
-pub type MembershipPassport = ();
+pub type CollectionId = u32;
+
+#[derive(Clone, Copy, Debug, Decode, Encode, Eq, MaxEncodedLen, Ord, PartialEq, PartialOrd, TypeInfo)]
+pub struct CommunityId(pub u16);
+
+impl From<u16> for CommunityId {
+	fn from(value: u16) -> Self {
+		CommunityId(value)
+	}
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -36,11 +48,12 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets,
 		Balances: pallet_balances,
 		Communities: pallet_communities,
+		Nfts: pallet_nfts,
 		Preimage: pallet_preimage,
 		Referenda: pallet_referenda,
-		Tracks: pallet_referenda_tracks,
 		Scheduler: pallet_scheduler,
 		System: frame_system,
+		Tracks: pallet_referenda_tracks,
 	}
 );
 
@@ -112,10 +125,37 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-		pub static AlarmInterval: u64 = 1;
+	pub const RootAccount: AccountId = AccountId::new([0xff; 32]);
 }
-ord_parameter_types! {
-	   pub const One: u64 = 1;
+impl pallet_nfts::Config for Test {
+	type ApprovalsLimit = ();
+	type AttributeDepositBase = ();
+	type CollectionDeposit = ();
+	type CollectionId = CollectionId;
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureRootWithSuccess<AccountId, RootAccount>>;
+	type Currency = ();
+	type DepositPerByte = ();
+	type Features = ();
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type ItemAttributesApprovalsLimit = ();
+	type ItemDeposit = ();
+	type ItemId = MembershipId<CommunityId>;
+	type KeyLimit = ConstU32<10>;
+	type Locker = ();
+	type MaxAttributesPerCall = ();
+	type MaxDeadlineDuration = ();
+	type MaxTips = ();
+	type MetadataDepositBase = ();
+	type OffchainPublic = AccountPublic;
+	type OffchainSignature = MultiSignature;
+	type RuntimeEvent = RuntimeEvent;
+	type StringLimit = ();
+	type ValueLimit = ConstU32<10>;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+		pub static AlarmInterval: u64 = 1;
 }
 impl pallet_referenda::Config for Test {
 	type WeightInfo = ();
@@ -123,9 +163,9 @@ impl pallet_referenda::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Scheduler = Scheduler;
 	type Currency = pallet_balances::Pallet<Self>;
-	type SubmitOrigin = frame_system::EnsureSigned<u64>;
-	type CancelOrigin = EnsureSignedBy<One, u64>;
-	type KillOrigin = EnsureRoot<u64>;
+	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
+	type CancelOrigin = EnsureRoot<AccountId>;
+	type KillOrigin = EnsureRoot<AccountId>;
 	type Slash = ();
 	type Votes = VoteWeight;
 	type Tally = Tally<Test>;
@@ -157,7 +197,7 @@ impl pallet_preimage::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureSigned<AccountId>;
-	type Consideration = HoldConsideration<u64, Balances, (), ConvertDeposit>;
+	type Consideration = HoldConsideration<AccountId, Balances, (), ConvertDeposit>;
 }
 
 impl pallet_scheduler::Config for Test {
@@ -175,25 +215,58 @@ impl pallet_scheduler::Config for Test {
 
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
-	#[derive(Debug, Clone, PartialEq)]
-	pub const CommunitiesMaxProposals: u32 = 2;
+	pub const MembershipsCollectionId: CollectionId = 1;
 }
+type Memberships = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 
 impl pallet_communities::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = WeightInfo;
 	type Assets = Assets;
 	type Balances = Balances;
 	type CommunityId = CommunityId;
-	type Membership = MembershipPassport;
+	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
+	type MemberMgmtOrigin = EnsureCommunity<Test>;
+	type Memberships = Memberships;
 	type PalletId = CommunitiesPalletId;
 	type Polls = Referenda;
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = WeightInfo;
 }
 
+fn create_memberships(memberships: &[MembershipId<CommunityId>]) {
+	use frame_support::traits::tokens::nonfungible_v2::Mutate;
+	let account = Communities::community_account(&COMMUNITY);
+	let collection = MembershipsCollectionId::get();
+	Nfts::do_create_collection(
+		collection,
+		account.clone(),
+		account.clone(),
+		Default::default(),
+		0,
+		pallet_nfts::Event::ForceCreated {
+			collection,
+			owner: account.clone(),
+		},
+	)
+	.expect("creates collection");
+	for m in memberships {
+		Memberships::mint_into(m, &account, &Default::default(), true).expect("can mint");
+	}
+}
+
+pub const COMMUNITY: CommunityId = CommunityId(1);
+pub const COMMUNITY_ORG: OriginCaller = OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
+
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::<Test>::default()
-		.build_storage()
-		.unwrap()
-		.into()
+pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId<CommunityId>]) -> sp_io::TestExternalities {
+	let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
+	let mut ext = TestExternalities::new(t);
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		Communities::create(frame_system::RawOrigin::Root.into(), COMMUNITY_ORG, COMMUNITY).expect("Adds community");
+		create_memberships(memberships);
+		for m in members {
+			Communities::add_member(COMMUNITY_ORG.into(), m.clone()).expect("Adds member");
+		}
+	});
+	ext
 }

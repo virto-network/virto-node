@@ -1,27 +1,18 @@
-use core::ops::Deref;
-
-use frame_support::pallet_prelude::{Decode, Encode};
-use frame_support::traits::fungible::Inspect;
-use frame_support::traits::{fungibles, OriginTrait, Polling, VoteTally};
-use frame_support::{sp_runtime::BoundedVec, traits::ConstU32};
-use parity_scale_codec::MaxEncodedLen;
-use scale_info::{prelude::vec::Vec, TypeInfo};
-use sp_runtime::traits::StaticLookup;
-
 use crate::Config;
-pub(crate) use frame_system::Config as SystemConfig;
+use frame_support::pallet_prelude::*;
+use frame_support::traits::{fungible, fungibles, GenericRank, Membership, Polling, RankedMembership, VoteTally};
+use sp_runtime::traits::StaticLookup;
 
 pub type AssetIdOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::AssetId;
 pub type AssetBalanceOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::Balance;
-pub type NativeBalanceOf<T> = <<T as Config>::Balances as Inspect<AccountIdOf<T>>>::Balance;
-pub type AccountIdOf<T> = <T as SystemConfig>::AccountId;
-pub type AccountIdLookupOf<T> = <<T as SystemConfig>::Lookup as StaticLookup>::Source;
+pub type NativeBalanceOf<T> = <<T as Config>::Balances as fungible::Inspect<AccountIdOf<T>>>::Balance;
+pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
-pub type MemberListOf<T> = Vec<AccountIdOf<T>>;
-pub type MembershipOf<T> = <T as Config>::Membership;
 pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>>;
 pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
-pub type RuntimeOriginOf<T> = <<T as SystemConfig>::RuntimeOrigin as OriginTrait>::PalletsOrigin;
+pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
+pub type PalletsOriginOf<T> =
+	<<T as frame_system::Config>::RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
 
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
@@ -32,7 +23,7 @@ pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
 /// marked to be sufficient.
 ///
 /// [1]: `frame_system::Config::AccountId`
-#[derive(TypeInfo, Encode, Decode, MaxEncodedLen)]
+#[derive(Decode, Default, Encode, MaxEncodedLen, TypeInfo)]
 pub struct CommunityInfo {
 	/// The current state of the community.
 	pub state: CommunityState,
@@ -42,29 +33,19 @@ pub struct CommunityInfo {
 /// is awaiting to prove their contribution to the network, is active
 /// and can operate, blocked due to a violation of network norms, or
 /// it's being frozen by the community administrators.
-#[derive(Default, TypeInfo, PartialEq, Encode, Decode, MaxEncodedLen)]
+#[derive(Decode, Default, Encode, MaxEncodedLen, PartialEq, TypeInfo)]
 pub enum CommunityState {
-	/// The community is currently awaiting to prove they are contributing
-	/// to the network.
+	/// The community is opperating normally.
 	#[default]
-	Awaiting,
-	/// The community has proven the required contributions to the network
-	/// and can operate.
 	Active,
-	/// The community is frozen, and is temporality unable to operate. This
-	/// state can be changed by thawing the community via a privileged call.
-	Frozen,
 	/// The community is blocked, typically as a result of a restriction imposed
-	/// by violating the norms of the network. In practice, this is an
-	/// equivalent to being `frozen`, howerver the state cannot be changed by
-	/// the community administrators, but by submitting a proposal to the
-	/// network for it to be changed.
+	/// by violating the norms of the network.
 	Blocked,
 }
 
 /// The CommunityMetadata struct stores some descriptive information about
 /// the community.
-#[derive(TypeInfo, Eq, PartialEq, Default, Debug, Clone, Encode, Decode, MaxEncodedLen)]
+#[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
 pub struct CommunityMetadata {
 	/// The name of the community
 	pub name: ConstSizedField<64>,
@@ -74,76 +55,62 @@ pub struct CommunityMetadata {
 	pub main_url: ConstSizedField<256>,
 }
 
-/// A general purpose rank in the range 0-100
-#[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub struct Rank(u8);
+pub(crate) type MembershipIdPart = u32;
 
-impl Rank {
-	pub const MAX: Self = Rank(100);
-	pub const MIN: Self = Rank(0);
+#[derive(Clone, Copy, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
+pub struct MembershipId<CommunityId>(pub(crate) CommunityId, pub(crate) MembershipIdPart);
 
-	#[inline]
-	pub fn promote(&mut self) {
-		*self = self.0.saturating_add(1).min(Self::MAX.0).into()
-	}
-
-	#[inline]
-	pub fn demote(&mut self) {
-		*self = self.0.saturating_sub(1).max(Self::MIN.0).into()
+impl<CommunityId> From<(CommunityId, MembershipIdPart)> for MembershipId<CommunityId> {
+	fn from(value: (CommunityId, MembershipIdPart)) -> Self {
+		MembershipId(value.0, value.1)
 	}
 }
 
-impl From<u8> for Rank {
-	fn from(rank: u8) -> Self {
-		Rank(rank)
+#[derive(Decode, Encode, TypeInfo)]
+pub struct MembershipInfo<CommunityId> {
+	id: MembershipId<CommunityId>,
+	rank: GenericRank,
+}
+
+impl<CommunityId> MembershipInfo<CommunityId> {
+	pub fn new(id: MembershipId<CommunityId>) -> Self {
+		Self {
+			id,
+			rank: GenericRank::default(),
+		}
+	}
+	pub fn community(&self) -> &CommunityId {
+		&self.id.0
 	}
 }
-impl Deref for Rank {
-	type Target = u8;
-	fn deref(&self) -> &Self::Target {
-		&(self.0)
+
+impl<CommunityId> Membership for MembershipInfo<CommunityId>
+where
+	CommunityId: Decode + Encode,
+{
+	type Id = MembershipId<CommunityId>;
+	fn id(&self) -> &Self::Id {
+		&self.id
+	}
+}
+impl<CommunityId> RankedMembership for MembershipInfo<CommunityId>
+where
+	CommunityId: Decode + Encode,
+{
+	fn rank(&self) -> &GenericRank {
+		&self.rank
+	}
+	fn rank_mut(&mut self) -> &mut GenericRank {
+		&mut self.rank
 	}
 }
 
 // Governance
 
 pub type VoteWeight = u32;
-/// This structure holds a governance strategy. This defines how to behave
-/// when ensuring privileged calls and deciding executing
-/// calls
-#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-#[scale_info(skip_type_params(AccountId, AssetId))]
-pub enum CommunityGovernanceStrategy<AccountId, AssetId> {
-	/// The community governance lies in the shoulders of the admin of it.
-	///
-	/// This is equivalent to `RawOrigin::Member` on collectives-pallet, or
-	/// `BodyPart::Voice` on XCM.
-	AdminBased(AccountId),
-	/// The community governance relies on a member count-based (one member,
-	/// one vote) poll.
-	///
-	/// This is equivalent to `RawOrigin::Members` on collectives-pallet, or
-	/// `BodyPart::Members` on XCM.
-	MemberCountPoll { min: VoteWeight },
-	/// The community governance relies on an asset-weighed (one token,
-	/// one vote) poll.
-	///
-	/// This is equivalent to `RawOrigin::Members` on collectives-pallet, or
-	/// `BodyPart::Fraction` on XCM.
-	AssetWeighedPoll {
-		asset_id: AssetId,
-		min_approval: VoteWeight,
-	},
-	/// The community governance relies on an ranked-weighed (one member vote,
-	/// the number of votes corresponding to the rank of member) poll,
-	///
-	/// This is equivalent to `RawOrigin::Members` on collectives-pallet, or
-	/// `BodyPart::Fraction` on XCM.
-	RankedWeighedPoll { min_approval: VoteWeight },
-}
 
 ///
-#[derive(TypeInfo, Encode, Decode, Debug, PartialEq, Clone)]
+#[derive(Clone, Debug, Decode, Encode, PartialEq, TypeInfo)]
 pub enum Vote<AssetId, AssetBalance> {
 	AssetBalance(bool, AssetId, AssetBalance),
 	Standard(bool),
@@ -156,7 +123,7 @@ impl<A, B> From<Vote<A, B>> for VoteWeight {
 }
 
 ///
-#[derive(Debug, Clone, Eq, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound(T: Config))]
 pub struct Tally<T>(core::marker::PhantomData<T>);

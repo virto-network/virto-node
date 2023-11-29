@@ -447,7 +447,7 @@ pub mod pallet {
 					let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
 
 					// ensure the payment is in Requested Refund state
-					let RefundRequested {cancel_block} = payment.state else {
+					let RefundRequested { cancel_block } = payment.state else {
 						fail!(Error::<T>::InvalidAction);
 					};
 					ensure!(

@@ -1,41 +1,38 @@
 use super::*;
+use crate::types::{CommunityState::Blocked, MembershipId};
+use frame_support::assert_noop;
+use frame_system::RawOrigin::Root;
+use sp_runtime::{traits::BadOrigin, DispatchError};
 
-const COMMUNITY_MEMBER_1: u64 = 43;
-const COMMUNITY_MEMBER_2: u64 = 44;
-const COMMUNITY_NON_MEMBER: u64 = 45;
+const COMMUNITY_NON_MEMBER: AccountId = AccountId::new([0; 32]);
+const COMMUNITY_MEMBER_1: AccountId = AccountId::new([1; 32]);
+const COMMUNITY_MEMBER_2: AccountId = AccountId::new([2; 32]);
+const MEMBERSHIP_1: MembershipId<CommunityId> = MembershipId(COMMUNITY, 1);
+const MEMBERSHIP_2: MembershipId<CommunityId> = MembershipId(COMMUNITY, 2);
 
 mod add_member {
 	use super::*;
 
 	#[test]
 	fn fails_when_community_is_not_active() {
-		new_test_ext().execute_with(|| {
-			setup();
-
+		new_test_ext(&[], &[MEMBERSHIP_1]).execute_with(|| {
+			Communities::force_state(&COMMUNITY, Blocked);
 			assert_noop!(
-				Communities::add_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
-				Error::CommunityNotActive
+				Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1),
+				DispatchError::BadOrigin
 			);
 		});
 	}
 
 	#[test]
-	fn fails_when_caller_not_a_member() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-
+	fn fails_when_caller_not_a_valid_origin() {
+		new_test_ext(&[], &[MEMBERSHIP_1]).execute_with(|| {
 			assert_noop!(
-				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
+				Communities::add_member(RuntimeOrigin::none(), COMMUNITY_MEMBER_1),
 				DispatchError::BadOrigin
 			);
-
 			assert_noop!(
-				Communities::add_member(
-					RuntimeOrigin::signed(COMMUNITY_NON_MEMBER),
-					COMMUNITY,
-					COMMUNITY_MEMBER_1
-				),
+				Communities::add_member(Root.into(), COMMUNITY_MEMBER_1),
 				DispatchError::BadOrigin
 			);
 		});
@@ -43,52 +40,26 @@ mod add_member {
 
 	#[test]
 	fn adds_members() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
+		new_test_ext(&[], &[MEMBERSHIP_1, MEMBERSHIP_2]).execute_with(|| {
+			// Successfully adds members
+			assert_ok!(Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1));
+			assert_ok!(Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_2));
 
-			assert_noop!(
-				Communities::add_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
-				DispatchError::BadOrigin
-			);
-
-			// Successfully adds a member
-			assert_ok!(Communities::add_member(
-				RuntimeOrigin::signed(COMMUNITY_ADMIN),
-				COMMUNITY,
-				COMMUNITY_MEMBER_1
-			));
-
-			// Once a member, can add other members
-			assert_ok!(Communities::add_member(
-				RuntimeOrigin::signed(COMMUNITY_MEMBER_1),
-				COMMUNITY,
-				COMMUNITY_MEMBER_2
-			));
-
-			assert_eq!(Communities::members_count(COMMUNITY), Some(3));
-			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_1), Some(()));
-			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_2), Some(()));
+			assert!(Communities::has_membership(&COMMUNITY_MEMBER_1, MEMBERSHIP_1));
+			assert!(Communities::has_membership(&COMMUNITY_MEMBER_2, MEMBERSHIP_2));
 		});
 	}
 
 	#[test]
-	fn cannot_add_member_twice() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-
-			// Successfully adds a member
-			assert_ok!(Communities::add_member(
-				RuntimeOrigin::signed(COMMUNITY_ADMIN),
-				COMMUNITY,
-				COMMUNITY_MEMBER_1
-			));
-
+	fn can_add_member_twice() {
+		// As memberships could be transfered there is no use in restricting adding the
+		// same member twice
+		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1, MEMBERSHIP_2]).execute_with(|| {
 			// Fails to add a member twice
-			assert_noop!(
-				Communities::add_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
-				Error::AlreadyAMember
+			assert_ok!(Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1));
+			assert_eq!(
+				Communities::get_memberships(&COMMUNITY_MEMBER_1, &COMMUNITY),
+				vec![MEMBERSHIP_1, MEMBERSHIP_2]
 			);
 		});
 	}
@@ -99,30 +70,24 @@ mod remove_member {
 
 	#[test]
 	fn fails_when_community_is_not_active() {
-		new_test_ext().execute_with(|| {
-			setup();
-
+		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
+			Communities::force_state(&COMMUNITY, Blocked);
 			assert_noop!(
-				Communities::remove_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_1),
-				Error::CommunityNotActive
+				Communities::remove_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
+				DispatchError::BadOrigin
 			);
 		});
 	}
 
 	#[test]
-	fn fails_when_caller_not_a_privleged_origin() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
-
+	fn fails_when_caller_not_a_privileged_origin() {
+		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 			assert_noop!(
-				Communities::remove_member(RuntimeOrigin::none(), COMMUNITY, COMMUNITY_MEMBER_1),
+				Communities::remove_member(RuntimeOrigin::none(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
 				DispatchError::BadOrigin
 			);
-
 			assert_noop!(
-				Communities::remove_member(RuntimeOrigin::signed(COMMUNITY_MEMBER_1), COMMUNITY, COMMUNITY_MEMBER_2),
+				Communities::remove_member(Root.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
 				DispatchError::BadOrigin
 			);
 		});
@@ -130,67 +95,22 @@ mod remove_member {
 
 	#[test]
 	fn fails_when_not_a_community_member() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
-
+		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 			assert_noop!(
-				Communities::remove_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_MEMBER_2),
+				Communities::remove_member(COMMUNITY_ORG.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
 				Error::NotAMember
-			);
-
-			assert_noop!(
-				Communities::remove_member(RuntimeOrigin::root(), COMMUNITY, COMMUNITY_NON_MEMBER),
-				Error::NotAMember
-			);
-		});
-	}
-
-	#[test]
-	fn cannot_remove_admin() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
-
-			assert_noop!(
-				Communities::remove_member(RuntimeOrigin::root(), COMMUNITY, COMMUNITY_ADMIN),
-				Error::CannotRemoveAdmin
 			);
 		});
 	}
 
 	#[test]
 	fn it_works() {
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
-
+		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 			assert_ok!(Communities::remove_member(
-				RuntimeOrigin::signed(COMMUNITY_ADMIN),
-				COMMUNITY,
-				COMMUNITY_MEMBER_1
+				COMMUNITY_ORG.into(),
+				COMMUNITY_MEMBER_1,
+				MEMBERSHIP_1
 			));
-
-			assert_eq!(Communities::members_count(COMMUNITY), Some(1));
-			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_1), None);
-		});
-
-		new_test_ext().execute_with(|| {
-			setup();
-			assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
-
-			assert_ok!(Communities::remove_member(
-				RuntimeOrigin::root(),
-				COMMUNITY,
-				COMMUNITY_MEMBER_1
-			));
-
-			assert_eq!(Communities::members_count(COMMUNITY), Some(1));
-			assert_eq!(Communities::membership(COMMUNITY, COMMUNITY_MEMBER_1), None);
 		});
 	}
 }
@@ -198,33 +118,14 @@ mod remove_member {
 mod member_rank {
 	use super::*;
 
-	fn setup() {
-		super::setup();
-		assert_ok!(Communities::do_force_complete_challenge(&COMMUNITY));
-
-		assert_ok!(Communities::add_member(
-			RuntimeOrigin::signed(COMMUNITY_ADMIN),
-			COMMUNITY,
-			COMMUNITY_MEMBER_1
-		));
-	}
-
 	mod promote_member {
-		use crate::MemberRanks;
-
 		use super::*;
 
 		#[test]
-		fn fails_when_caller_not_a_privleged_origin() {
-			new_test_ext().execute_with(|| {
-				setup();
-
+		fn fails_when_caller_not_admin_origin() {
+			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::promote_member(
-						RuntimeOrigin::signed(COMMUNITY_MEMBER_1),
-						COMMUNITY,
-						COMMUNITY_MEMBER_1
-					),
+					Communities::promote_member(Root.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
 					BadOrigin
 				);
 			});
@@ -232,15 +133,9 @@ mod member_rank {
 
 		#[test]
 		fn fails_when_not_a_community_member() {
-			new_test_ext().execute_with(|| {
-				setup();
-
+			new_test_ext(&[], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::promote_member(
-						RuntimeOrigin::signed(COMMUNITY_ADMIN),
-						COMMUNITY,
-						COMMUNITY_NON_MEMBER
-					),
+					Communities::promote_member(COMMUNITY_ORG.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
 					Error::NotAMember,
 				);
 			});
@@ -248,51 +143,28 @@ mod member_rank {
 
 		#[test]
 		fn it_works() {
-			new_test_ext().execute_with(|| {
-				setup();
-
+			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_ok!(Communities::promote_member(
-					RuntimeOrigin::signed(COMMUNITY_ADMIN),
-					COMMUNITY,
-					COMMUNITY_MEMBER_1
+					COMMUNITY_ORG.into(),
+					COMMUNITY_MEMBER_1,
+					MEMBERSHIP_1
 				));
-				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), 1.into());
-			});
-		}
-
-		#[test]
-		fn should_stay_at_max_rank() {
-			new_test_ext().execute_with(|| {
-				setup();
-
-				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, Rank::MAX);
-				assert_ok!(Communities::promote_member(
-					RuntimeOrigin::signed(COMMUNITY_ADMIN),
-					COMMUNITY,
-					COMMUNITY_MEMBER_1
-				));
-
-				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), Rank::MAX);
+				assert_eq!(
+					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
+					Some(1.into())
+				);
 			});
 		}
 	}
 
 	mod demote_member {
-		use crate::MemberRanks;
-
 		use super::*;
 
 		#[test]
 		fn fails_when_caller_not_a_privleged_origin() {
-			new_test_ext().execute_with(|| {
-				setup();
-
+			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::demote_member(
-						RuntimeOrigin::signed(COMMUNITY_MEMBER_1),
-						COMMUNITY,
-						COMMUNITY_MEMBER_1
-					),
+					Communities::demote_member(Root.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
 					BadOrigin
 				);
 			});
@@ -300,11 +172,9 @@ mod member_rank {
 
 		#[test]
 		fn fails_when_not_a_community_member() {
-			new_test_ext().execute_with(|| {
-				setup();
-
+			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::demote_member(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY, COMMUNITY_NON_MEMBER),
+					Communities::demote_member(COMMUNITY_ORG.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
 					Error::NotAMember,
 				);
 			});
@@ -312,32 +182,39 @@ mod member_rank {
 
 		#[test]
 		fn it_works() {
-			new_test_ext().execute_with(|| {
-				setup();
-
-				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, 2.into());
-
+			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
+				Communities::promote_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
+					.expect("can promote");
+				Communities::promote_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
+					.expect("can promote");
 				assert_ok!(Communities::demote_member(
-					RuntimeOrigin::signed(COMMUNITY_ADMIN),
-					COMMUNITY,
-					COMMUNITY_MEMBER_1
+					COMMUNITY_ORG.into(),
+					COMMUNITY_MEMBER_1,
+					MEMBERSHIP_1
 				));
-				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), 1.into());
+				assert_eq!(
+					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
+					Some(1.into())
+				);
 			});
 		}
 
 		#[test]
 		fn should_remain_at_min_rank() {
-			new_test_ext().execute_with(|| {
-				setup();
-
-				MemberRanks::<Test>::set(COMMUNITY, COMMUNITY_MEMBER_1, 0.into());
+			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
+				assert_eq!(
+					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
+					Some(0.into())
+				);
 				assert_ok!(Communities::demote_member(
-					RuntimeOrigin::signed(COMMUNITY_ADMIN),
-					COMMUNITY,
-					COMMUNITY_MEMBER_1
+					COMMUNITY_ORG.into(),
+					COMMUNITY_MEMBER_1,
+					MEMBERSHIP_1,
 				));
-				assert_eq!(Communities::member_rank(COMMUNITY, COMMUNITY_MEMBER_1), Rank::MIN);
+				assert_eq!(
+					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
+					Some(0.into())
+				);
 			});
 		}
 	}

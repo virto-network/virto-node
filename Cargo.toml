@@ -117,8 +117,8 @@ frame-system-benchmarking = { default-features = false,  git = "https://github.c
 frame-system-rpc-runtime-api = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 
 ## Substrate Pallet Dependencies
-pallet-assets = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-asset-tx-payment = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-assets = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-aura = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-authorship = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-balances = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
@@ -129,13 +129,14 @@ pallet-democracy = { default-features = false,  git = "https://github.com/virto-
 pallet-identity = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-insecure-randomness-collective-flip = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-multisig = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-proxy = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-nfts = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-preimage = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-proxy = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-referenda = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-referenda-tracks = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-remark = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
-pallet-session = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-scheduler = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
+pallet-session = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-sudo = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-timestamp = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
 pallet-transaction-payment = { default-features = false,  git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }
