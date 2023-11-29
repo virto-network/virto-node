@@ -1,51 +1,36 @@
 use super::*;
-use crate::{Event, GovernanceStrategy, Info};
-use sp_runtime::BoundedVec;
+use crate::{
+	types::{CommunityInfo, CommunityMetadata},
+	Event, Info,
+};
+use frame_support::assert_noop;
+use frame_system::RawOrigin::Root;
+use sp_runtime::{BoundedVec, DispatchError};
 
-mod apply {
+mod create {
 	use super::*;
 
 	#[test]
 	fn fails_if_community_already_exists() {
-		new_test_ext().execute_with(|| {
+		new_test_ext(&[], &[]).execute_with(|| {
 			// Simulate a pre-existing community
-			Info::<Test>::insert(
-				COMMUNITY,
-				CommunityInfo {
-					state: CommunityState::Awaiting,
-				},
-			);
-			GovernanceStrategy::<Test>::insert(COMMUNITY, CommunityGovernanceStrategy::AdminBased(COMMUNITY_ADMIN));
-
-			assert_ok!(Communities::do_insert_member(&COMMUNITY, &COMMUNITY_ADMIN));
+			Info::<Test>::insert(COMMUNITY, CommunityInfo::default());
 
 			// Should fail adding the community
 			assert_noop!(
-				Communities::apply_for(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY),
+				Communities::create(Root.into(), COMMUNITY_ORG, COMMUNITY),
 				Error::CommunityAlreadyExists
 			);
 		});
 	}
 
 	#[test]
-	fn fails_if_not_enough_funds_to_take_deposit() {
-		new_test_ext().execute_with(|| {
-			assert_noop!(
-				Communities::apply_for(RuntimeOrigin::signed(COMMUNITY_ADMIN), COMMUNITY),
-				DispatchError::Arithmetic(ArithmeticError::Underflow)
-			);
-		});
-	}
-
-	#[test]
 	fn it_works() {
-		new_test_ext().execute_with(|| {
-			setup();
-
-			System::assert_last_event(
+		new_test_ext(&[], &[]).execute_with(|| {
+			System::assert_has_event(
 				Event::CommunityCreated {
 					id: COMMUNITY,
-					who: COMMUNITY_ADMIN,
+					origin: COMMUNITY_ORG,
 				}
 				.into(),
 			);
@@ -58,17 +43,17 @@ mod set_metadata {
 
 	#[test]
 	fn fails_if_bad_origin() {
-		new_test_ext().execute_with(|| {
-			setup();
-
+		new_test_ext(&[], &[]).execute_with(|| {
 			// Fail if trying to call from unsigned origin
 			assert_noop!(
 				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None),
 				DispatchError::BadOrigin
 			);
+
 			// Fail if trying to call from non-admin
+			const NON_ADMIN: AccountId = AccountId::new([0; 32]);
 			assert_noop!(
-				Communities::set_metadata(RuntimeOrigin::signed(COMMUNITY_ADMIN + 1), COMMUNITY, None, None, None),
+				Communities::set_metadata(RuntimeOrigin::signed(NON_ADMIN), COMMUNITY, None, None, None),
 				DispatchError::BadOrigin
 			);
 		});
@@ -76,20 +61,16 @@ mod set_metadata {
 
 	#[test]
 	fn works_inserts_default_metadata() {
-		new_test_ext().execute_with(|| {
-			setup();
-
-			// Receives metadata information from admin
+		new_test_ext(&[], &[]).execute_with(|| {
 			assert_ok!(Communities::set_metadata(
-				RuntimeOrigin::signed(COMMUNITY_ADMIN),
+				Root.into(),
 				COMMUNITY,
 				Some(BoundedVec::truncate_from(b"Virto Network".to_vec())),
 				None,
 				None,
 			));
 
-			let community_metadata =
-				Communities::metadata(COMMUNITY).expect("We've already asserted that the insertion is succesful; qed");
+			let community_metadata = Communities::metadata(COMMUNITY);
 
 			assert_eq!(
 				community_metadata,
@@ -100,21 +81,19 @@ mod set_metadata {
 				}
 			);
 
-			// Receives metadata information from root
 			assert_ok!(Communities::set_metadata(
-				RuntimeOrigin::root(),
+				Root.into(),
 				COMMUNITY,
 				None,
 				Some(BoundedVec::truncate_from(b"A community of awesome builders".to_vec())),
 				None,
 			));
 
-			let community_metadata =
-				Communities::metadata(COMMUNITY).expect("We've already asserted that the insertion is succesful; qed");
+			let community_metadata = Communities::metadata(COMMUNITY);
 
 			assert_eq!(
 				community_metadata,
-				types::CommunityMetadata {
+				CommunityMetadata {
 					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
 					description: BoundedVec::truncate_from(b"A community of awesome builders".to_vec()),
 					main_url: BoundedVec::new(),

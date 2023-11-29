@@ -34,7 +34,7 @@ use core::marker::PhantomData;
 
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
-	fn apply_for() -> Weight;
+	fn create() -> Weight;
 	fn set_metadata() -> Weight;
 	fn add_member() -> Weight;
 	fn promote_member() -> Weight;
@@ -48,7 +48,7 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn apply_for() -> Weight {
+	fn create() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
@@ -128,7 +128,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 impl WeightInfo for () {
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn apply_for() -> Weight {
+	fn create() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`

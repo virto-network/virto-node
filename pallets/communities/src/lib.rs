@@ -1,7 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![feature(let_chains)]
-#![feature(trait_alias)]
-
 //! # Communities Pallet
 //!
 //! Part of the People Local Interactions Protocol, this pallet enables people
@@ -167,63 +164,32 @@
 //! [g03]: `crate::Pallet::members_count`
 pub use pallet::*;
 
-#[cfg(test)]
-mod tests;
-
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(test)]
+mod tests;
 
 mod functions;
 
 pub mod types;
 pub mod weights;
 pub use weights::*;
+pub mod origin;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::{DispatchResult, ValueQuery, *},
+		pallet_prelude::{ValueQuery, *},
 		traits::{
 			fungible::{Inspect, Mutate},
-			fungibles,
-			tokens::Preservation,
-			Polling,
+			fungibles, EnsureOrigin, GenericRank, MembershipInspect, MembershipMutate, Polling, RankedMembership,
 		},
 		Blake2_128Concat, Parameter,
 	};
-	use frame_system::{
-		ensure_signed,
-		pallet_prelude::{OriginFor, *},
-	};
+	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
 	use types::*;
-
-	/// The origin of the comnunity governance, as well as the origin
-	/// sent to emit on behalf of the pallet
-	#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-	pub struct RawOrigin<CommunityId> {
-		/// The community id. Used to get the account of the
-		/// community for certain origin conversions
-		pub community_id: CommunityId,
-		///
-		pub body: Body,
-	}
-
-	#[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-	pub enum Body {
-		Voice,
-		Members {
-			#[codec(compact)]
-			min: VoteWeight,
-		},
-		Fraction {
-			#[codec(compact)]
-			num: u16,
-			#[codec(compact)]
-			denum: u16,
-		},
-	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -233,10 +199,19 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// This type represents an unique ID for the community
-		type CommunityId: Default + Parameter + MaxEncodedLen;
+		type CommunityId: Parameter + MaxEncodedLen + Copy;
 
 		/// This type represents a rank for a member in a community
-		type Membership: Default + Parameter + MaxEncodedLen;
+		type Memberships: MembershipInspect<MembershipInfo<Self::CommunityId>, Self::AccountId, MembershipId<Self::CommunityId>>
+			+ MembershipMutate<MembershipInfo<Self::CommunityId>, Self::AccountId, MembershipId<Self::CommunityId>>;
+
+		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
+
+		/// Origin authorized to manage memeberships of an active community
+		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
+		/// Origin authorized to manage memeberships of an active community
+		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
 
 		/// The asset used for governance
 		type Assets: fungibles::Inspect<Self::AccountId>;
@@ -251,8 +226,6 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
-		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
-
 		/// The pallet id used for deriving sovereign account IDs.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
@@ -260,7 +233,7 @@ pub mod pallet {
 
 	/// The origin of the pallet
 	#[pallet::origin]
-	pub type Origin<T> = RawOrigin<CommunityIdOf<T>>;
+	pub type Origin<T> = origin::RawOrigin<CommunityIdOf<T>>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
@@ -269,38 +242,14 @@ pub mod pallet {
 	#[pallet::getter(fn community)]
 	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo>;
 
+	#[pallet::storage]
+	pub(super) type CommunityIdFor<T> = StorageMap<_, Blake2_128Concat, PalletsOriginOf<T>, CommunityIdOf<T>>;
+
 	/// Stores the metadata regarding a community.
 	#[pallet::storage]
 	#[pallet::getter(fn metadata)]
-	pub(super) type Metadata<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata>;
-
-	/// Stores the membership information of a community (specified by its
-	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
-	/// [`AccountId`][`frame_system::Config::AccountId`]).
-	#[pallet::storage]
-	#[pallet::getter(fn membership)]
-	pub(super) type Members<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, MembershipOf<T>>;
-
-	/// Stores the rank of a community (specified by its
-	/// [`CommunityId`][`Config::CommunityId`]) member (specified by it's
-	/// [`AccountId`][`frame_system::Config::AccountId`]).
-	#[pallet::storage]
-	#[pallet::getter(fn member_rank)]
-	pub(super) type MemberRanks<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, Rank, ValueQuery>;
-
-	/// Stores the count of community members. This simplifies the process of
-	/// keeping track of members' count.
-	#[pallet::storage]
-	#[pallet::getter(fn members_count)]
-	pub(super) type MembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u128>;
-
-	/// Stores the governance strategy for the community.
-	#[pallet::storage]
-	#[pallet::getter(fn governance_strategy)]
-	pub(super) type GovernanceStrategy<T> =
-		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityGovernanceStrategy<AccountIdOf<T>, AssetIdOf<T>>>;
+	pub(super) type Metadata<T: Config> =
+		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
 
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
@@ -313,7 +262,10 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A [`Commmunity`][`types::Community`] has been created.
-		CommunityCreated { id: T::CommunityId, who: T::AccountId },
+		CommunityCreated {
+			id: T::CommunityId,
+			origin: PalletsOriginOf<T>,
+		},
 		/// Some [`CommmuniMetadata`][`types::CommunityMetadata`] has been set
 		/// for a community.
 		MetadataSet {
@@ -322,12 +274,17 @@ pub mod pallet {
 			description: Option<ConstSizedField<256>>,
 			main_url: Option<ConstSizedField<256>>,
 		},
-		/// A proposal has been enqueued and is ready to be
-		/// decided whenever it comes to the head of the comomunity
-		/// proposals queue
-		ProposalEnqueued {
-			community_id: CommunityIdOf<T>,
-			proposer: AccountIdOf<T>,
+		MemberAdded {
+			who: AccountIdOf<T>,
+			membership_id: MembershipId<T::CommunityId>,
+		},
+		MemberRemoved {
+			who: AccountIdOf<T>,
+			membership_id: MembershipId<T::CommunityId>,
+		},
+		MembershipRankUpdated {
+			membership_id: MembershipId<T::CommunityId>,
+			rank: GenericRank,
 		},
 	}
 
@@ -339,39 +296,11 @@ pub mod pallet {
 		/// A community with the same [`CommunityId`][`Config::CommunityId`]
 		/// already exists, therefore cannot be applied for.
 		CommunityAlreadyExists,
-		/// The specified [`CommunityId`][`Config::CommunityId`] is not
-		/// currently active
-		CommunityNotActive,
+		/// The community can't introduce new members at the moment
+		CommunityAtCapacity,
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// not a member of the community
 		NotAMember,
-		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
-		/// already a member of the community
-		AlreadyAMember,
-		/// It is not possible to remove the sole admin for a specified
-		/// [`CommunityId`][`Config::CommunityId`], especially if it's the
-		/// only member remaining. Please consider changing the admin first.
-		CannotRemoveAdmin,
-		/// The origin specified to propose the call execution is invalid.
-		InvalidProposalOrigin,
-		/// It is not possible to encode the call into a preimage.
-		CannotEncodeCall,
-		/// It is not possible to enqueue a proposal for a community
-		CannotEnqueueProposal,
-		/// The community has exceeded the max amount of enqueded proposals at
-		/// this moment.
-		ExceededMaxProposals,
-		/// It is not possible to dequeue a proposal
-		CannotDequeueProposal,
-		/// A call for the spciefied [Hash][`frame_system::Config::Hash`] is not
-		/// found
-		CannotFindCall,
-		/// The poll the caller is trying to open is already opened.
-		PollAlreadyOpened,
-		/// The poll the caller is trying to close is already closed.
-		PollAlreadyClosed,
-		/// The criteria needed to close the poll is not met
-		CannotClosePoll,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -380,20 +309,20 @@ pub mod pallet {
 	// weight and must return a DispatchResult.
 	#[pallet::call(weight(<T as Config>::WeightInfo))]
 	impl<T: Config> Pallet<T> {
-		/// Registers an appliation as a new community, taking an
-		/// [existential deposit][8] used to create the community account.
-		///
-		/// [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
+		/// Creates a new community managed by the given origin
 		#[pallet::call_index(0)]
-		pub fn apply_for(origin: OriginFor<T>, community_id: T::CommunityId) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+		pub fn create(
+			origin: OriginFor<T>,
+			admin_origin: PalletsOriginOf<T>,
+			community_id: T::CommunityId,
+		) -> DispatchResult {
+			T::CommunityMgmtOrigin::ensure_origin(origin)?;
 
-			Self::do_register_community(&who, &community_id)?;
-			let community_account_id = Self::get_community_account_id(&community_id);
-			let minimum_balance = T::Balances::minimum_balance();
-			T::Balances::transfer(&who, &community_account_id, minimum_balance, Preservation::Preserve)?;
-
-			Self::deposit_event(Event::CommunityCreated { id: community_id, who });
+			Self::do_register_community(&admin_origin, &community_id)?;
+			Self::deposit_event(Event::CommunityCreated {
+				id: community_id,
+				origin: admin_origin,
+			});
 			Ok(())
 		}
 
@@ -409,22 +338,9 @@ pub mod pallet {
 			description: Option<ConstSizedField<256>>,
 			url: Option<ConstSizedField<256>>,
 		) -> DispatchResult {
-			// Ensures caller is a privileged origin
-			Self::ensure_origin_privileged(origin, &community_id)?;
+			T::CommunityMgmtOrigin::ensure_origin(origin)?;
 
-			let metadata = Self::metadata(&community_id).unwrap_or_default();
-
-			// Deposits metadata
-			Self::do_set_metadata(
-				&community_id,
-				CommunityMetadata {
-					name: name.clone().unwrap_or(metadata.name),
-					description: description.clone().unwrap_or(metadata.description),
-					main_url: url.clone().unwrap_or(metadata.main_url),
-				},
-			)?;
-
-			// Emit an event.
+			Self::do_set_metadata(&community_id, &name, &description, &url);
 			Self::deposit_event(Event::MetadataSet {
 				id: community_id,
 				name,
@@ -432,27 +348,25 @@ pub mod pallet {
 				main_url: url,
 			});
 
-			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
 
 		// === Memberships management ===
 
-		/// Enroll an account as a community member. In theory,
-		/// any community member should be able to add a member. However, this
-		/// can be changed to ensure it is a privileged function.
+		/// Enroll an account as a community member that receives a membership
+		/// from the available pool of memberships of the community.
 		#[pallet::call_index(2)]
-		pub fn add_member(
-			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			who: AccountIdLookupOf<T>,
-		) -> DispatchResult {
-			Self::ensure_origin_member(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
+		pub fn add_member(origin: OriginFor<T>, who: AccountIdLookupOf<T>) -> DispatchResult {
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let who = T::Lookup::lookup(who)?;
+			let account = Self::community_account(&community_id);
+			// assume the community has memberships to give out to the new member
+			let membership_id = T::Memberships::account_memberships(&account)
+				.next()
+				.ok_or(Error::<T>::CommunityAtCapacity)?;
+			T::Memberships::update(membership_id, MembershipInfo::new(membership_id), Some(who.clone()))?;
 
-			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
-			Self::do_insert_member(&community_id, &who)?;
-
+			Self::deposit_event(Event::MemberAdded { who, membership_id });
 			Ok(())
 		}
 
@@ -465,15 +379,19 @@ pub mod pallet {
 		#[pallet::call_index(3)]
 		pub fn remove_member(
 			origin: OriginFor<T>,
-			community_id: T::CommunityId,
 			who: AccountIdLookupOf<T>,
+			membership_id: MembershipId<T::CommunityId>,
 		) -> DispatchResult {
-			Self::ensure_origin_privileged(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let who = T::Lookup::lookup(who)?;
+			let info = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
+			ensure!(info.community() == &community_id, Error::<T>::CommunityDoesNotExist);
 
-			let who = <<T as frame_system::Config>::Lookup as StaticLookup>::lookup(who)?;
-			Self::do_remove_member(&community_id, &who)?;
+			let account = Self::community_account(&community_id);
+			// Move the membership back to the community resetting any previous stored info
+			T::Memberships::update(membership_id, MembershipInfo::new(membership_id), Some(account))?;
 
+			Self::deposit_event(Event::MemberRemoved { who, membership_id });
 			Ok(())
 		}
 
@@ -481,26 +399,38 @@ pub mod pallet {
 		#[pallet::call_index(5)]
 		pub fn promote_member(
 			origin: OriginFor<T>,
-			community_id: T::CommunityId,
 			who: AccountIdLookupOf<T>,
+			membership_id: MembershipId<T::CommunityId>,
 		) -> DispatchResult {
-			Self::ensure_origin_privileged(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
+			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
-			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.promote()))
+
+			let mut m = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
+			m.rank_mut().promote_by(1.try_into().expect("can promote by 1"));
+			let rank = *m.rank();
+			T::Memberships::update(membership_id, m, None)?;
+
+			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+			Ok(())
 		}
 
 		/// Decreases the rank of a member in the community
 		#[pallet::call_index(6)]
 		pub fn demote_member(
 			origin: OriginFor<T>,
-			community_id: T::CommunityId,
 			who: AccountIdLookupOf<T>,
+			membership_id: MembershipId<T::CommunityId>,
 		) -> DispatchResult {
-			Self::ensure_origin_privileged(origin, &community_id)?;
-			Self::ensure_active(&community_id)?;
+			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
-			Ok(MemberRanks::<T>::mutate(community_id, who, |rank| rank.demote()))
+
+			let mut m = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
+			m.rank_mut().demote_by(1.try_into().expect("can demote by 1"));
+			let rank = *m.rank();
+			T::Memberships::update(membership_id, m, None)?;
+
+			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+			Ok(())
 		}
 
 		// === Governance ===
