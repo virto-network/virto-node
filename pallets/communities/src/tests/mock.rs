@@ -1,26 +1,26 @@
 use frame_support::{
 	parameter_types,
 	traits::{
-		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16,
-		ConstU32, ConstU64, EqualPrivilegeOnly, Footprint,
+		fungible::HoldConsideration, membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf,
+		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EqualPrivilegeOnly, Footprint,
 	},
 	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
-use parity_scale_codec::{Compact, Decode, Encode, MaxEncodedLen};
-use scale_info::TypeInfo;
+use parity_scale_codec::Compact;
 use sp_core::H256;
 use sp_io::TestExternalities;
 use sp_runtime::{
 	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage, MultiSignature,
 };
+use virto_common::{CommunityId, MembershipId, MembershipInfo};
 
 use crate::{
 	self as pallet_communities,
 	origin::EnsureCommunity,
-	types::{MembershipId, Tally, VoteWeight},
+	types::{Tally, VoteWeight},
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -31,15 +31,6 @@ pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 pub type Balance = u128;
 pub type AssetId = u32;
 pub type CollectionId = u32;
-
-#[derive(Clone, Copy, Debug, Decode, Encode, Eq, MaxEncodedLen, Ord, PartialEq, PartialOrd, TypeInfo)]
-pub struct CommunityId(pub u16);
-
-impl From<u16> for CommunityId {
-	fn from(value: u16) -> Self {
-		CommunityId(value)
-	}
-}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -139,7 +130,7 @@ impl pallet_nfts::Config for Test {
 	type ForceOrigin = EnsureRoot<AccountId>;
 	type ItemAttributesApprovalsLimit = ();
 	type ItemDeposit = ();
-	type ItemId = MembershipId<CommunityId>;
+	type ItemId = MembershipId;
 	type KeyLimit = ConstU32<10>;
 	type Locker = ();
 	type MaxAttributesPerCall = ();
@@ -216,8 +207,11 @@ impl pallet_scheduler::Config for Test {
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	pub const MembershipsCollectionId: CollectionId = 1;
+	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
+	pub const TestCommunity: CommunityId = COMMUNITY;
 }
-type Memberships = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
+type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
+type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
 impl pallet_communities::Config for Test {
 	type Assets = Assets;
@@ -225,14 +219,15 @@ impl pallet_communities::Config for Test {
 	type CommunityId = CommunityId;
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
 	type MemberMgmtOrigin = EnsureCommunity<Test>;
-	type Memberships = Memberships;
+	type MemberMgmt = Memberships;
+	type Membership = MembershipInfo;
 	type PalletId = CommunitiesPalletId;
 	type Polls = Referenda;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = WeightInfo;
 }
 
-fn create_memberships(memberships: &[MembershipId<CommunityId>]) {
+fn create_memberships(memberships: &[MembershipId]) {
 	use frame_support::traits::tokens::nonfungible_v2::Mutate;
 	let account = Communities::community_account(&COMMUNITY);
 	let collection = MembershipsCollectionId::get();
@@ -249,23 +244,23 @@ fn create_memberships(memberships: &[MembershipId<CommunityId>]) {
 	)
 	.expect("creates collection");
 	for m in memberships {
-		Memberships::mint_into(m, &account, &Default::default(), true).expect("can mint");
+		MembershipCollection::mint_into(m, &account, &Default::default(), true).expect("can mint");
 	}
 }
 
-pub const COMMUNITY: CommunityId = CommunityId(1);
-pub const COMMUNITY_ORG: OriginCaller = OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
+pub const COMMUNITY: CommunityId = CommunityId::new(1);
+pub const COMMUNITY_ORGIN: OriginCaller = OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
 
 // Build genesis storage according to the mock runtime.
-pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId<CommunityId>]) -> sp_io::TestExternalities {
+pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
 	let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
 	let mut ext = TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		Communities::create(frame_system::RawOrigin::Root.into(), COMMUNITY_ORG, COMMUNITY).expect("Adds community");
+		Communities::create(frame_system::RawOrigin::Root.into(), COMMUNITY_ORGIN, COMMUNITY).expect("Adds community");
 		create_memberships(memberships);
 		for m in members {
-			Communities::add_member(COMMUNITY_ORG.into(), m.clone()).expect("Adds member");
+			Communities::add_member(COMMUNITY_ORGIN.into(), m.clone()).expect("Adds member");
 		}
 	});
 	ext

@@ -33,6 +33,7 @@ pallet-preimage = { workspace = true }
 pallet-referenda = { workspace = true }
 pallet-referenda-tracks = { workspace = true }
 pallet-scheduler = { workspace = true }
+virto-common = { workspace = true }
 
 [features]
 default = ["std", "xcm"]

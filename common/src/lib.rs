@@ -3,7 +3,6 @@
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-extern crate sp_io;
 
 #[cfg(feature = "runtime")]
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
@@ -16,3 +15,9 @@ pub use payment_id::PaymentId;
 #[cfg_attr(feature = "runtime", derive(Decode, Encode, MaxEncodedLen, TypeInfo))]
 #[derive(Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]
 pub struct CommunityId(u16);
+
+impl CommunityId {
+	pub const fn new(id: u16) -> Self {
+		Self(id)
+	}
+}

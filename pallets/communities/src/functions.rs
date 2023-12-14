@@ -1,13 +1,13 @@
 use crate::{
 	types::{
-		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityMetadata, CommunityState, ConstSizedField, MembershipId,
+		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityMetadata, CommunityState, ConstSizedField, MembershipIdOf,
 		PalletsOriginOf,
 	},
 	CommunityIdFor, Config, Error, Info, Metadata, Pallet,
 };
 use frame_support::{
 	pallet_prelude::*,
-	traits::{GenericRank, MembershipInspect, RankedMembership},
+	traits::membership::{GenericRank, Inspect, WithRank},
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec::Vec;
@@ -22,17 +22,17 @@ impl<T: Config> Pallet<T> {
 		Self::community(community_id).is_some()
 	}
 
-	pub fn has_membership(who: &AccountIdOf<T>, m: MembershipId<T::CommunityId>) -> bool {
-		T::Memberships::has_membership(m, who)
+	pub fn has_membership(who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> bool {
+		T::MemberMgmt::has_membership(m, who)
 	}
 
-	pub fn member_rank(who: &AccountIdOf<T>, m: MembershipId<T::CommunityId>) -> Option<GenericRank> {
-		T::Memberships::get_membership(m, who).map(|m| *m.rank())
+	pub fn member_rank(who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> Option<GenericRank> {
+		T::MemberMgmt::get_membership(m, who).map(|m| m.rank())
 	}
 
-	pub fn get_memberships(who: &AccountIdOf<T>, community_id: &T::CommunityId) -> Vec<MembershipId<T::CommunityId>> {
-		T::Memberships::account_memberships(who)
-			.filter(|m| &m.0 == community_id)
+	pub fn get_memberships(who: &AccountIdOf<T>, community_id: T::CommunityId) -> Vec<MembershipIdOf<T>> {
+		T::MemberMgmt::account_memberships(who)
+			.filter(|id| CommunityIdOf::<T>::from(id.clone()) == community_id)
 			.collect()
 	}
 

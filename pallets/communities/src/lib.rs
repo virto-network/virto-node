@@ -182,14 +182,15 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::{ValueQuery, *},
 		traits::{
-			fungible::{Inspect, Mutate},
-			fungibles, EnsureOrigin, GenericRank, MembershipInspect, MembershipMutate, Polling, RankedMembership,
+			fungible, fungibles,
+			membership::{self, Inspect, Membership, Mutate, WithRank},
+			EnsureOrigin, Polling,
 		},
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
-	use types::*;
+	use types::{MembershipIdOf, *};
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -199,25 +200,28 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// This type represents an unique ID for the community
-		type CommunityId: Parameter + MaxEncodedLen + Copy;
+		type CommunityId: Parameter + MaxEncodedLen + Copy + From<MembershipIdOf<Self>>;
 
-		/// This type represents a rank for a member in a community
-		type Memberships: MembershipInspect<MembershipInfo<Self::CommunityId>, Self::AccountId, MembershipId<Self::CommunityId>>
-			+ MembershipMutate<MembershipInfo<Self::CommunityId>, Self::AccountId, MembershipId<Self::CommunityId>>;
+		/// The type holding relevant information of a membership
+		type Membership: Membership + membership::WithRank;
 
-		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
+		/// Means to manage memberships of a community
+		type MemberMgmt: membership::Inspect<Self::AccountId, MembershipInfo = Self::Membership, MembershipId = MembershipIdOf<Self>>
+			+ membership::Mutate<Self::AccountId>;
+
+		/// Origin authorized to manage memeberships of an active community
+		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
 
 		/// Origin authorized to manage memeberships of an active community
 		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// Origin authorized to manage memeberships of an active community
-		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
+		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
 
 		/// The asset used for governance
 		type Assets: fungibles::Inspect<Self::AccountId>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
-		type Balances: Inspect<Self::AccountId> + Mutate<Self::AccountId>;
+		type Balances: fungible::Inspect<Self::AccountId> + fungible::Mutate<Self::AccountId>;
 
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
@@ -233,7 +237,7 @@ pub mod pallet {
 
 	/// The origin of the pallet
 	#[pallet::origin]
-	pub type Origin<T> = origin::RawOrigin<CommunityIdOf<T>>;
+	pub type Origin<T> = origin::RawOrigin<T>;
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
@@ -276,15 +280,15 @@ pub mod pallet {
 		},
 		MemberAdded {
 			who: AccountIdOf<T>,
-			membership_id: MembershipId<T::CommunityId>,
+			membership_id: MembershipIdOf<T>,
 		},
 		MemberRemoved {
 			who: AccountIdOf<T>,
-			membership_id: MembershipId<T::CommunityId>,
+			membership_id: MembershipIdOf<T>,
 		},
 		MembershipRankUpdated {
-			membership_id: MembershipId<T::CommunityId>,
-			rank: GenericRank,
+			membership_id: MembershipIdOf<T>,
+			rank: membership::GenericRank,
 		},
 	}
 
@@ -361,10 +365,14 @@ pub mod pallet {
 			let who = T::Lookup::lookup(who)?;
 			let account = Self::community_account(&community_id);
 			// assume the community has memberships to give out to the new member
-			let membership_id = T::Memberships::account_memberships(&account)
+			let membership_id = T::MemberMgmt::account_memberships(&account)
 				.next()
 				.ok_or(Error::<T>::CommunityAtCapacity)?;
-			T::Memberships::update(membership_id, MembershipInfo::new(membership_id), Some(who.clone()))?;
+			T::MemberMgmt::update(
+				membership_id.clone(),
+				T::Membership::new(membership_id.clone()),
+				Some(who.clone()),
+			)?;
 
 			Self::deposit_event(Event::MemberAdded { who, membership_id });
 			Ok(())
@@ -380,16 +388,23 @@ pub mod pallet {
 		pub fn remove_member(
 			origin: OriginFor<T>,
 			who: AccountIdLookupOf<T>,
-			membership_id: MembershipId<T::CommunityId>,
+			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
-			let info = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
-			ensure!(info.community() == &community_id, Error::<T>::CommunityDoesNotExist);
+			let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+			ensure!(
+				CommunityIdOf::<T>::from(info.id()) == community_id,
+				Error::<T>::CommunityDoesNotExist
+			);
 
 			let account = Self::community_account(&community_id);
 			// Move the membership back to the community resetting any previous stored info
-			T::Memberships::update(membership_id, MembershipInfo::new(membership_id), Some(account))?;
+			T::MemberMgmt::update(
+				membership_id.clone(),
+				T::Membership::new(membership_id.clone()),
+				Some(account),
+			)?;
 
 			Self::deposit_event(Event::MemberRemoved { who, membership_id });
 			Ok(())
@@ -400,15 +415,15 @@ pub mod pallet {
 		pub fn promote_member(
 			origin: OriginFor<T>,
 			who: AccountIdLookupOf<T>,
-			membership_id: MembershipId<T::CommunityId>,
+			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
 			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
-			m.rank_mut().promote_by(1.try_into().expect("can promote by 1"));
-			let rank = *m.rank();
-			T::Memberships::update(membership_id, m, None)?;
+			let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+			let rank = m.rank();
+			m.set_rank(rank.promote_by(1.try_into().expect("can promote by 1")));
+			T::MemberMgmt::update(membership_id.clone(), m, None)?;
 
 			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
 			Ok(())
@@ -419,15 +434,15 @@ pub mod pallet {
 		pub fn demote_member(
 			origin: OriginFor<T>,
 			who: AccountIdLookupOf<T>,
-			membership_id: MembershipId<T::CommunityId>,
+			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
 			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
-			m.rank_mut().demote_by(1.try_into().expect("can demote by 1"));
-			let rank = *m.rank();
-			T::Memberships::update(membership_id, m, None)?;
+			let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+			let rank = m.rank();
+			m.set_rank(rank.demote_by(1.try_into().expect("can promote by 1")));
+			T::MemberMgmt::update(membership_id.clone(), m, None)?;
 
 			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
 			Ok(())

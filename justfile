@@ -32,7 +32,7 @@ _task-selector:
 	rustup component add clippy
 
 check: _check_deps
-	cargo clippy -p kreivo-runtime -p virto-node -- --deny warnings
+	cargo clippy --all-targets -- --deny warnings
 	cargo +nightly fmt --all -- --check
 
 @test crate="" *rest="":
