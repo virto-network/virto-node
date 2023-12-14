@@ -1,11 +1,11 @@
 use crate::{
-	types::{CommunityState::Active, MembershipIdPart},
+	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf},
 	CommunityIdFor, Config, Info,
 };
 use core::marker::PhantomData;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{GenericRank, OriginTrait},
+	traits::{membership::GenericRank, OriginTrait},
 };
 use sp_runtime::Permill;
 
@@ -13,8 +13,7 @@ pub struct EnsureCommunity<T>(PhantomData<T>);
 
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureCommunity<T>
 where
-	T::RuntimeOrigin:
-		OriginTrait + Into<Result<RawOrigin<T::CommunityId>, T::RuntimeOrigin>> + From<RawOrigin<T::CommunityId>>,
+	T::RuntimeOrigin: OriginTrait + Into<Result<RawOrigin<T>, T::RuntimeOrigin>> + From<RawOrigin<T>>,
 	T: Config,
 {
 	type Success = T::CommunityId;
@@ -40,14 +39,14 @@ where
 /// Origin to represent the voice of a community or a subset of its members
 /// as well as the voting preference of said group.
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-pub struct RawOrigin<CommunityId> {
-	community_id: CommunityId,
+pub struct RawOrigin<T: Config> {
+	community_id: CommunityIdOf<T>,
 	method: DecisionMethod,
-	subset: Option<Subset>,
+	subset: Option<Subset<T>>,
 }
 
-impl<CommunityId: Clone> RawOrigin<CommunityId> {
-	pub const fn new(community_id: CommunityId) -> Self {
+impl<T: Config> RawOrigin<T> {
+	pub const fn new(community_id: CommunityIdOf<T>) -> Self {
 		RawOrigin {
 			community_id,
 			method: DecisionMethod::Membership,
@@ -55,12 +54,12 @@ impl<CommunityId: Clone> RawOrigin<CommunityId> {
 		}
 	}
 
-	pub fn with_subset(&mut self, s: Subset) {
+	pub fn with_subset(&mut self, s: Subset<T>) {
 		self.subset = Some(s);
 	}
 
-	pub fn id(&self) -> CommunityId {
-		self.community_id.clone()
+	pub fn id(&self) -> CommunityIdOf<T> {
+		self.community_id
 	}
 	pub fn decision_method(&self) -> DecisionMethod {
 		self.method.clone()
@@ -69,8 +68,8 @@ impl<CommunityId: Clone> RawOrigin<CommunityId> {
 
 /// Subsets of the community can also have a voice
 #[derive(Clone, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub enum Subset {
-	Member(MembershipIdPart),
+pub enum Subset<T: Config> {
+	Member(MembershipIdOf<T>),
 	Members { count: u32 },
 	Fraction(Permill),
 	AtLeastRank(GenericRank),
@@ -87,10 +86,14 @@ pub enum DecisionMethod {
 }
 
 #[cfg(feature = "xcm")]
-impl<Id: Into<u32>> TryFrom<RawOrigin<Id>> for xcm::v3::Junction {
+impl<T> TryFrom<RawOrigin<T>> for xcm::v3::Junction
+where
+	T: Config,
+	u32: From<CommunityIdOf<T>>,
+{
 	type Error = ();
 
-	fn try_from(o: RawOrigin<Id>) -> Result<Self, Self::Error> {
+	fn try_from(o: RawOrigin<T>) -> Result<Self, Self::Error> {
 		use xcm::v3::{BodyId, BodyPart, Junction::Plurality};
 		let part = match o.subset {
 			None => BodyPart::Voice,
@@ -110,7 +113,11 @@ impl<Id: Into<u32>> TryFrom<RawOrigin<Id>> for xcm::v3::Junction {
 }
 
 #[cfg(feature = "xcm")]
-impl<Id: From<u32> + Clone> TryFrom<xcm::v3::Junction> for RawOrigin<Id> {
+impl<T: Config> TryFrom<xcm::v3::Junction> for RawOrigin<T>
+where
+	T: Config,
+	T::CommunityId: From<u32> + From<u64>,
+{
 	type Error = ();
 
 	fn try_from(value: xcm::v3::Junction) -> Result<Self, Self::Error> {

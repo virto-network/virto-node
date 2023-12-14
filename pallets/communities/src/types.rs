@@ -1,6 +1,6 @@
 use crate::Config;
 use frame_support::pallet_prelude::*;
-use frame_support::traits::{fungible, fungibles, GenericRank, Membership, Polling, RankedMembership, VoteTally};
+use frame_support::traits::{fungible, fungibles, membership, Polling, VoteTally};
 use sp_runtime::traits::StaticLookup;
 
 pub type AssetIdOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::AssetId;
@@ -13,6 +13,7 @@ pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type PalletsOriginOf<T> =
 	<<T as frame_system::Config>::RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
+pub type MembershipIdOf<T> = <<T as Config>::Membership as membership::Membership>::Id;
 
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
@@ -53,56 +54,6 @@ pub struct CommunityMetadata {
 	pub description: ConstSizedField<256>,
 	/// The main URL that can lead to information about the community
 	pub main_url: ConstSizedField<256>,
-}
-
-pub(crate) type MembershipIdPart = u32;
-
-#[derive(Clone, Copy, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub struct MembershipId<CommunityId>(pub(crate) CommunityId, pub(crate) MembershipIdPart);
-
-impl<CommunityId> From<(CommunityId, MembershipIdPart)> for MembershipId<CommunityId> {
-	fn from(value: (CommunityId, MembershipIdPart)) -> Self {
-		MembershipId(value.0, value.1)
-	}
-}
-
-#[derive(Decode, Encode, TypeInfo)]
-pub struct MembershipInfo<CommunityId> {
-	id: MembershipId<CommunityId>,
-	rank: GenericRank,
-}
-
-impl<CommunityId> MembershipInfo<CommunityId> {
-	pub fn new(id: MembershipId<CommunityId>) -> Self {
-		Self {
-			id,
-			rank: GenericRank::default(),
-		}
-	}
-	pub fn community(&self) -> &CommunityId {
-		&self.id.0
-	}
-}
-
-impl<CommunityId> Membership for MembershipInfo<CommunityId>
-where
-	CommunityId: Decode + Encode,
-{
-	type Id = MembershipId<CommunityId>;
-	fn id(&self) -> &Self::Id {
-		&self.id
-	}
-}
-impl<CommunityId> RankedMembership for MembershipInfo<CommunityId>
-where
-	CommunityId: Decode + Encode,
-{
-	fn rank(&self) -> &GenericRank {
-		&self.rank
-	}
-	fn rank_mut(&mut self) -> &mut GenericRank {
-		&mut self.rank
-	}
 }
 
 // Governance

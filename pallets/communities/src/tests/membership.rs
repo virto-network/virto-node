@@ -1,14 +1,15 @@
 use super::*;
-use crate::types::{CommunityState::Blocked, MembershipId};
+use crate::types::CommunityState::Blocked;
 use frame_support::assert_noop;
 use frame_system::RawOrigin::Root;
 use sp_runtime::{traits::BadOrigin, DispatchError};
+use virto_common::MembershipId;
 
 const COMMUNITY_NON_MEMBER: AccountId = AccountId::new([0; 32]);
 const COMMUNITY_MEMBER_1: AccountId = AccountId::new([1; 32]);
 const COMMUNITY_MEMBER_2: AccountId = AccountId::new([2; 32]);
-const MEMBERSHIP_1: MembershipId<CommunityId> = MembershipId(COMMUNITY, 1);
-const MEMBERSHIP_2: MembershipId<CommunityId> = MembershipId(COMMUNITY, 2);
+const MEMBERSHIP_1: MembershipId = MembershipId(COMMUNITY, 1);
+const MEMBERSHIP_2: MembershipId = MembershipId(COMMUNITY, 2);
 
 mod add_member {
 	use super::*;
@@ -18,7 +19,7 @@ mod add_member {
 		new_test_ext(&[], &[MEMBERSHIP_1]).execute_with(|| {
 			Communities::force_state(&COMMUNITY, Blocked);
 			assert_noop!(
-				Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1),
+				Communities::add_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_1),
 				DispatchError::BadOrigin
 			);
 		});
@@ -42,8 +43,8 @@ mod add_member {
 	fn adds_members() {
 		new_test_ext(&[], &[MEMBERSHIP_1, MEMBERSHIP_2]).execute_with(|| {
 			// Successfully adds members
-			assert_ok!(Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1));
-			assert_ok!(Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_2));
+			assert_ok!(Communities::add_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_1));
+			assert_ok!(Communities::add_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_2));
 
 			assert!(Communities::has_membership(&COMMUNITY_MEMBER_1, MEMBERSHIP_1));
 			assert!(Communities::has_membership(&COMMUNITY_MEMBER_2, MEMBERSHIP_2));
@@ -56,9 +57,9 @@ mod add_member {
 		// same member twice
 		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1, MEMBERSHIP_2]).execute_with(|| {
 			// Fails to add a member twice
-			assert_ok!(Communities::add_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1));
+			assert_ok!(Communities::add_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_1));
 			assert_eq!(
-				Communities::get_memberships(&COMMUNITY_MEMBER_1, &COMMUNITY),
+				Communities::get_memberships(&COMMUNITY_MEMBER_1, COMMUNITY),
 				vec![MEMBERSHIP_1, MEMBERSHIP_2]
 			);
 		});
@@ -73,7 +74,7 @@ mod remove_member {
 		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 			Communities::force_state(&COMMUNITY, Blocked);
 			assert_noop!(
-				Communities::remove_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
+				Communities::remove_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
 				DispatchError::BadOrigin
 			);
 		});
@@ -97,7 +98,7 @@ mod remove_member {
 	fn fails_when_not_a_community_member() {
 		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 			assert_noop!(
-				Communities::remove_member(COMMUNITY_ORG.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
+				Communities::remove_member(COMMUNITY_ORGIN.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
 				Error::NotAMember
 			);
 		});
@@ -107,7 +108,7 @@ mod remove_member {
 	fn it_works() {
 		new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 			assert_ok!(Communities::remove_member(
-				COMMUNITY_ORG.into(),
+				COMMUNITY_ORGIN.into(),
 				COMMUNITY_MEMBER_1,
 				MEMBERSHIP_1
 			));
@@ -135,7 +136,7 @@ mod member_rank {
 		fn fails_when_not_a_community_member() {
 			new_test_ext(&[], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::promote_member(COMMUNITY_ORG.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
+					Communities::promote_member(COMMUNITY_ORGIN.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
 					Error::NotAMember,
 				);
 			});
@@ -145,7 +146,7 @@ mod member_rank {
 		fn it_works() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_ok!(Communities::promote_member(
-					COMMUNITY_ORG.into(),
+					COMMUNITY_ORGIN.into(),
 					COMMUNITY_MEMBER_1,
 					MEMBERSHIP_1
 				));
@@ -174,7 +175,7 @@ mod member_rank {
 		fn fails_when_not_a_community_member() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::demote_member(COMMUNITY_ORG.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
+					Communities::demote_member(COMMUNITY_ORGIN.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
 					Error::NotAMember,
 				);
 			});
@@ -183,12 +184,12 @@ mod member_rank {
 		#[test]
 		fn it_works() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				Communities::promote_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
+				Communities::promote_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
 					.expect("can promote");
-				Communities::promote_member(COMMUNITY_ORG.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
+				Communities::promote_member(COMMUNITY_ORGIN.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
 					.expect("can promote");
 				assert_ok!(Communities::demote_member(
-					COMMUNITY_ORG.into(),
+					COMMUNITY_ORGIN.into(),
 					COMMUNITY_MEMBER_1,
 					MEMBERSHIP_1
 				));
@@ -207,7 +208,7 @@ mod member_rank {
 					Some(0.into())
 				);
 				assert_ok!(Communities::demote_member(
-					COMMUNITY_ORG.into(),
+					COMMUNITY_ORGIN.into(),
 					COMMUNITY_MEMBER_1,
 					MEMBERSHIP_1,
 				));
