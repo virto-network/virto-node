@@ -155,7 +155,6 @@ fn testnet_genesis(
 			balances: endowed_accounts
 				.iter()
 				.cloned()
-				.chain(std::iter::once(root_key.clone()))
 				.map(|k| (k, 2_000_000_000_000_000))
 				.collect(),
 		},

@@ -27,7 +27,7 @@ default_command = "./bin/polkadot"
   extra_args = [ "-lparachain=debug" ]
 
 [[parachains]]
-id = 2000
+id = 2281
 add_to_genesis = true
 cumulus_based = true
 chain = "kreivo-rococo-local"
