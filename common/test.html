@@ -37,19 +37,15 @@
     }
 
     output {
-      flex: 1;
       background: whitesmoke;
-      padding: 0 0.5rem;
-      line-height: 2.5rem;
       color: gray;
       font-family: monospace;
+      line-height: 2.5rem;
+      min-width: fit-content;
       overflow: hidden;
+      padding: 0 0.5rem;
       text-overflow: ellipsis;
       white-space: nowrap;
-    }
-
-    output[name=id]:before {
-      content: '🆔 ';
     }
   </style>
 </head>
@@ -63,7 +59,7 @@
 </body>
 
 <script type="module">
-  import init, {PaymentId} from '../target/wasm32-unknown-unknown/release/virto_shared.js'
+  import init, {PaymentId} from './out/virto_common.js'
   init().then(() => console.info('wasm ready'))
 
   const form = document.idConvert

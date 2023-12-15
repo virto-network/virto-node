@@ -1,0 +1,7 @@
+build-web:
+	@mkdir -p out
+	RUSTFLAGS="--cfg nightly" cargo +nightly build --release --target wasm32-unknown-unknown --features js --out-dir out -Z unstable-options
+	wasm-bindgen --out-dir out --target web --no-typescript --remove-name-section out/virto_common.wasm
+
+test:
+	RUSTFLAGS="--cfg nightly" cargo +nightly test --lib test

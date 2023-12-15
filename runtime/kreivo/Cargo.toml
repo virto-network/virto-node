@@ -27,7 +27,7 @@ pallet-lockdown-mode = { workspace = true }
 pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
 pallet-communities = { workspace = true }
-virto-common = { workspace = true }
+runtime-common = { workspace = true }
 
 # Substrate
 frame-benchmarking = { workspace = true, optional = true}
@@ -136,7 +136,7 @@ std = [
 	"parachain-info/std",
 	"polkadot-parachain-primitives/std",
 	"polkadot-runtime-common/std",
-	"virto-common/std",
+	"runtime-common/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",

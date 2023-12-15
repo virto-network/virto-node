@@ -24,8 +24,7 @@ pallet-balances = { workspace = true }
 xcm = { workspace = true }
 pallet-xcm = { workspace = true }
 
-
-virto-common = { workspace = true }
+runtime-common = { workspace = true }
 
 [dev-dependencies]
 sp-core  = { workspace = true }
@@ -44,7 +43,7 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"scale-info/std",
-	"virto-common/std",
+	"runtime-common/std",
 	"xcm/std",
 	"pallet-xcm/std",
 ]

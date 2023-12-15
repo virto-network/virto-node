@@ -1,7 +1,10 @@
 [package]
-name = "virto-shared"
+name = "virto-common"
 version = "0.1.0"
 edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bs58 = { version = "0.5.0", default-features = false }

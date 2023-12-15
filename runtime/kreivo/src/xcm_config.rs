@@ -14,9 +14,9 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::xcm_config::AssetFeeAsExistentialDepositMultiplier;
 use polkadot_parachain_primitives::primitives::Sibling;
+use runtime_common::impls::{AsAssetMultiLocation, DealWithFees};
 use sp_runtime::traits::ConvertInto;
 use sp_std::marker::PhantomData;
-use virto_common::impls::{AsAssetMultiLocation, DealWithFees};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, ConvertedConcreteId,

@@ -1,7 +1,7 @@
-use core::{fmt, str::FromStr};
 #[cfg(feature = "js")]
 use wasm_bindgen::prelude::*;
 
+/// A compact identifier for payment
 #[cfg_attr(feature = "js", wasm_bindgen)]
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 #[repr(C)]
@@ -14,6 +14,7 @@ pub struct PaymentId {
 #[cfg_attr(feature = "js", wasm_bindgen)]
 impl PaymentId {
 	#[cfg_attr(feature = "js", wasm_bindgen(constructor))]
+	#[cfg(nightly)]
 	pub fn new(id: &str) -> PaymentId {
 		id.parse().unwrap_or(Default::default())
 	}
@@ -33,7 +34,7 @@ impl PaymentId {
 		self.index as u32
 	}
 
-	#[cfg(feature = "alloc")]
+	#[cfg(all(nightly, feature = "alloc"))]
 	pub fn encode(&self, pretty: bool) -> alloc::string::String {
 		if pretty {
 			alloc::format!("{self:#}")
@@ -90,7 +91,8 @@ impl AsRef<[u8]> for PaymentId {
 	}
 }
 
-impl FromStr for PaymentId {
+#[cfg(nightly)]
+impl core::str::FromStr for PaymentId {
 	type Err = ();
 
 	fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -109,11 +111,13 @@ impl FromStr for PaymentId {
 	}
 }
 
-impl fmt::Display for PaymentId {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[cfg(nightly)]
+impl core::fmt::Display for PaymentId {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		use core::fmt::Error;
 		let mut out = [0u8; 12];
-		let n = bs58::encode(self).onto(&mut out[..]).map_err(|_| fmt::Error)?;
-		let out = out[..n].as_ascii().ok_or(fmt::Error)?.as_str();
+		let n = bs58::encode(self).onto(&mut out[..]).map_err(|_| Error)?;
+		let out = out[..n].as_ascii().ok_or(Error)?.as_str();
 		write!(f, "{}", &out[..5])?;
 		if f.alternate() {
 			write!(f, "-")?;
@@ -122,7 +126,7 @@ impl fmt::Display for PaymentId {
 	}
 }
 
-#[cfg(test)]
+#[cfg(all(test, nightly))]
 mod tests {
 	extern crate alloc;
 	use super::*;

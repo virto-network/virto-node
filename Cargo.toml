@@ -2,8 +2,8 @@
 members = [
 	"node",
 	"runtime/kreivo",
-	"runtime/virto"
-	"shared",
+	"runtime/virto",
+	"common",
 ]
 
 exclude = ["xcm-emulator"]
@@ -58,8 +58,7 @@ pallet-lockdown-mode = { default-features = false, path = "pallets/lockdown-mode
 pallet-payments = { default-features = false, path = "pallets/payments" }
 pallet-communities = { default-features = false, path = "pallets/communities" }
 
-# Virto common
-virto-common =  { default-features = false, path = "runtime/common" }
+runtime-common =  { default-features = false, path = "runtime/common" }
 
 # Substrate std
 try-runtime-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "virto-crates-io-v1.2.0" }

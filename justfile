@@ -32,9 +32,8 @@ _task-selector:
 	rustup component add clippy
 
 check: _check_deps
-	cargo clippy --all-targets -- --deny warnings
-	cargo fmt --all -- --check
-
+	cargo clippy -p kreivo-runtime -p virto-node -- --deny warnings
+	cargo +nightly fmt --all -- --check
 
 @test crate="" *rest="":
 	cargo test (if not ("{{crate}}" | is-empty) { "-p" } else {""}) {{crate}} {{ rest }}

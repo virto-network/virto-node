@@ -1,5 +1,5 @@
 [package]
-name = "virto-common"
+name = "runtime-common"
 description = "Common logic for all virto runtimes"
 version = "0.1.0"
 authors = ['Virto Team <contact@virto.team>']

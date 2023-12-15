@@ -14,7 +14,7 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
-pub use virto_common::impls::AssetMultiLocationGetter;
+pub use runtime_common::impls::AssetMultiLocationGetter;
 pub use weights::*;
 
 #[frame_support::pallet]
