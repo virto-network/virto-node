@@ -14,7 +14,7 @@ pub struct PaymentId {
 #[cfg_attr(feature = "js", wasm_bindgen)]
 impl PaymentId {
 	#[cfg_attr(feature = "js", wasm_bindgen(constructor))]
-	#[cfg(nightly)]
+	#[cfg(feature = "nightly")]
 	pub fn new(id: &str) -> PaymentId {
 		id.parse().unwrap_or(Default::default())
 	}
@@ -34,7 +34,7 @@ impl PaymentId {
 		self.index as u32
 	}
 
-	#[cfg(all(nightly, feature = "alloc"))]
+	#[cfg(all(feature = "nightly", feature = "alloc"))]
 	pub fn encode(&self, pretty: bool) -> alloc::string::String {
 		if pretty {
 			alloc::format!("{self:#}")
@@ -91,7 +91,7 @@ impl AsRef<[u8]> for PaymentId {
 	}
 }
 
-#[cfg(nightly)]
+#[cfg(feature = "nightly")]
 impl core::str::FromStr for PaymentId {
 	type Err = ();
 
@@ -111,7 +111,7 @@ impl core::str::FromStr for PaymentId {
 	}
 }
 
-#[cfg(nightly)]
+#[cfg(feature = "nightly")]
 impl core::fmt::Display for PaymentId {
 	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
 		use core::fmt::Error;
@@ -126,7 +126,7 @@ impl core::fmt::Display for PaymentId {
 	}
 }
 
-#[cfg(all(test, nightly))]
+#[cfg(all(test, feature = "nightly"))]
 mod tests {
 	extern crate alloc;
 	use super::*;
