@@ -1,6 +1,6 @@
 build-web:
 	@mkdir -p out
-	cargo +nightly rustc --release --target wasm32-unknown-unknown --features js,nightly --crate-type cdylib
+	cargo +nightly rustc --release --target wasm32-unknown-unknown --no-default-features --features js,nightly --crate-type cdylib
 	@cp ../target/wasm32-unknown-unknown/release/virto_common.wasm out/
 	wasm-bindgen --out-dir out --target web --no-typescript --remove-name-section out/virto_common.wasm
 
