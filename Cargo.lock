@@ -2126,24 +2126,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cumulus-pallet-dmp-queue"
-version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#99f888c66ccb54608ae761b22485e815aee18fa5"
-dependencies = [
- "cumulus-primitives-core",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "staging-xcm",
-]
-
-[[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#99f888c66ccb54608ae761b22485e815aee18fa5"
@@ -4647,7 +4629,6 @@ version = "0.5.2"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
@@ -9628,7 +9609,6 @@ name = "runtime-common"
 version = "0.1.0"
 dependencies = [
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
@@ -13699,7 +13679,6 @@ version = "0.5.2"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
- "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-session-benchmarking",
  "cumulus-pallet-xcm",
