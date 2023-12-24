@@ -163,7 +163,6 @@ cumulus-relay-chain-interface = {  git = "https://github.com/virto-network/polka
 # Cumulus runtime dependencies
 assets-common = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 cumulus-pallet-aura-ext = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
-cumulus-pallet-dmp-queue = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 cumulus-pallet-parachain-system = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 cumulus-pallet-xcm = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 cumulus-pallet-xcmp-queue = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
