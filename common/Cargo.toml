@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 bs58 = { version = "0.5.0", default-features = false }
 wasm-bindgen = { version = "0.2.87", optional = true }
+sp-io = { workspace = true }
 
 [features]
 alloc = []

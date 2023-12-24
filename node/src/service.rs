@@ -550,6 +550,7 @@ where
 				collator_service,
 				// Very limited proposal time.
 				authoring_duration: Duration::from_millis(500),
+				collation_request_receiver: None,
 			};
 
 			let fut = basic_aura::run::<Block, <AuraId as AppCrypto>::Pair, _, _, _, _, _, _, _>(params);
