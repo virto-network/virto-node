@@ -17,16 +17,9 @@
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for parachains.
 
 use super::*;
-use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler};
-use frame_support::{
-	traits::{Contains, Currency, InstanceFilter},
-	weights::Weight,
-};
+use frame_support::traits::{Currency, InstanceFilter};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use sp_runtime::RuntimeDebug;
-
-use pallet_lockdown_mode::impls::PauseXcmExecution;
-use sp_runtime::DispatchResult;
 
 /// Type alias to conveniently refer to the `Currency::NegativeImbalance`
 /// associated type.
@@ -35,37 +28,6 @@ pub type NegativeImbalance<T> =
 
 /// Type alias to conveniently refer to `frame_system`'s `Config::AccountId`.
 pub type AccountIdOf<R> = <R as frame_system::Config>::AccountId;
-
-pub struct RuntimeBlackListedCalls;
-impl Contains<RuntimeCall> for RuntimeBlackListedCalls {
-	fn contains(call: &RuntimeCall) -> bool {
-		!matches!(
-			call,
-			RuntimeCall::Balances(_)
-				| RuntimeCall::Treasury(_)
-				| RuntimeCall::Utility(_)
-				| RuntimeCall::Assets(_)
-				| RuntimeCall::Multisig(_)
-		)
-	}
-}
-
-pub struct LockdownDmpHandler;
-impl DmpMessageHandler for LockdownDmpHandler {
-	fn handle_dmp_messages(_iter: impl Iterator<Item = (RelayBlockNumber, Vec<u8>)>, limit: Weight) -> Weight {
-		DmpQueue::handle_dmp_messages(_iter, limit)
-	}
-}
-
-pub struct XcmExecutionManager {}
-impl PauseXcmExecution for XcmExecutionManager {
-	fn suspend_xcm_execution() -> DispatchResult {
-		XcmpQueue::suspend_xcm_execution(RuntimeOrigin::root())
-	}
-	fn resume_xcm_execution() -> DispatchResult {
-		XcmpQueue::resume_xcm_execution(RuntimeOrigin::root())
-	}
-}
 
 /// The type used to represent the kinds of proxying allowed.
 #[derive(

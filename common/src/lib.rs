@@ -1,5 +1,6 @@
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
 #![cfg_attr(nightly, feature(ascii_char))]
+extern crate sp_io;
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

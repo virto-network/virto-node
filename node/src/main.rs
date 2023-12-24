@@ -19,13 +19,12 @@
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
 
-mod chain_spec;
-#[macro_use]
-mod service;
 mod benchmarking;
+mod chain_spec;
 mod cli;
 mod command;
 mod rpc;
+mod service;
 
 fn main() -> sc_cli::Result<()> {
 	command::run()
