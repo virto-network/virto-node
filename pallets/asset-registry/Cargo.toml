@@ -37,6 +37,7 @@ std = [
 	"parity-scale-codec/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"sp-core/std",
 	"pallet-assets/std",
 	"pallet-balances/std",
 	"frame-benchmarking/std",

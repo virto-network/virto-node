@@ -24,7 +24,6 @@ smallvec = { workspace = true }
 # Local
 pallet-asset-registry ={ workspace = true }
 pallet-burner = { workspace = true }
-pallet-payments = { workspace = true }
 runtime-common = { workspace = true }
 
 # Substrate
@@ -127,7 +126,6 @@ std = [
 	"pallet-transaction-payment/std",
 	"pallet-treasury/std",
 	"pallet-utility/std",
-	"pallet-payments/std",
 	"pallet-xcm/std",
 	"parachain-info/std",
 	"polkadot-parachain-primitives/std",
@@ -167,7 +165,6 @@ runtime-benchmarks = [
 	"pallet-burner/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
-	"pallet-payments/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
