@@ -3,6 +3,7 @@
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
+extern crate sp_io;
 
 mod payment_id;
 pub use payment_id::PaymentId;
