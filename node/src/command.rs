@@ -98,7 +98,7 @@ impl Default for Runtime {
 enum Runtime {
 	#[cfg(feature = "kreivo-runtime")]
 	#[default]
-	Kreivo
+	Kreivo,
 }
 
 impl From<&str> for Runtime {

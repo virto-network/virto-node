@@ -50,10 +50,10 @@ pub mod time {
 	pub const DAYS: BlockNumber = HOURS * 24;
 	pub const WEEKS: BlockNumber = DAYS * 7;
 
-	// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
-	// The choice of is done in accordance to the slot duration and expected target
-	// block time, for safely resisting network delays of maximum two seconds.
-	// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
+	// 1 in 4 blocks (on average, not counting collisions) will be primary babe
+	// blocks. The choice of is done in accordance to the slot duration and expected
+	// target block time, for safely resisting network delays of maximum two
+	// seconds. <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 }
 
@@ -68,21 +68,24 @@ pub mod fee {
 	/// The block saturation level. Fees will be updates based on this value.
 	pub const TARGET_BLOCK_FULLNESS: Perbill = Perbill::from_percent(25);
 
-	/// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
-	/// node's balance type.
+	/// Handles converting a weight scalar to a fee value, based on the scale
+	/// and granularity of the node's balance type.
 	///
 	/// This should typically create a mapping between the following ranges:
 	///   - [0, `MAXIMUM_BLOCK_WEIGHT`]
 	///   - [Balance::min, Balance::max]
 	///
-	/// Yet, it can be used for any other sort of change to weight-fee. Some examples being:
+	/// Yet, it can be used for any other sort of change to weight-fee. Some
+	/// examples being:
 	///   - Setting it to `0` will essentially disable the weight fee.
-	///   - Setting it to `1` will cause the literal `#[weight = x]` values to be charged.
+	///   - Setting it to `1` will cause the literal `#[weight = x]` values to
+	///     be charged.
 	pub struct WeightToFee;
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = Balance;
 		fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-			// in Kusama, extrinsic base weight (smallest non-zero weight) is mapped to 1/10 CENT:
+			// in Kusama, extrinsic base weight (smallest non-zero weight) is mapped to 1/10
+			// CENT:
 			let p = super::currency::CENTS;
 			let q = 10 * Balance::from(ExtrinsicBaseWeight::get().ref_time());
 			smallvec![WeightToFeeCoefficient {
@@ -144,7 +147,8 @@ mod tests {
 	}
 
 	#[test]
-	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is correct
+	// This function tests that the fee for `ExtrinsicBaseWeight` of weight is
+	// correct
 	fn extrinsic_base_fee_is_correct() {
 		// `ExtrinsicBaseWeight` should cost 1/10 of a CENT
 		println!("Base: {}", ExtrinsicBaseWeight::get());
