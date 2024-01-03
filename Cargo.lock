@@ -2354,7 +2354,7 @@ dependencies = [
  "async-trait",
  "cumulus-primitives-core",
  "futures",
- "jsonrpsee-core 0.16.3",
+ "jsonrpsee-core",
  "parity-scale-codec",
  "polkadot-overseer",
  "sc-client-api",
@@ -2416,7 +2416,7 @@ dependencies = [
  "either",
  "futures",
  "futures-timer",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "parity-scale-codec",
  "pin-project",
  "polkadot-overseer",
@@ -3429,7 +3429,7 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 dependencies = [
  "futures",
  "indicatif",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "serde",
@@ -4451,25 +4451,13 @@ version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "367a292944c07385839818bb71c8d76611138e2dedb0677d035b8da21d29c78b"
 dependencies = [
- "jsonrpsee-core 0.16.3",
+ "jsonrpsee-core",
  "jsonrpsee-http-client",
  "jsonrpsee-proc-macros",
- "jsonrpsee-server 0.16.3",
- "jsonrpsee-types 0.16.3",
+ "jsonrpsee-server",
+ "jsonrpsee-types",
  "jsonrpsee-ws-client",
  "tracing",
-]
-
-[[package]]
-name = "jsonrpsee"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9579d0ca9fb30da026bac2f0f7d9576ec93489aeb7cd4971dd5b4617d82c79b2"
-dependencies = [
- "jsonrpsee-core 0.21.0",
- "jsonrpsee-server 0.21.0",
- "jsonrpsee-types 0.21.0",
- "tokio",
 ]
 
 [[package]]
@@ -4480,8 +4468,8 @@ checksum = "c8b3815d9f5d5de348e5f162b316dc9cdf4548305ebb15b4eb9328e66cf27d7a"
 dependencies = [
  "futures-util",
  "http",
- "jsonrpsee-core 0.16.3",
- "jsonrpsee-types 0.16.3",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
  "pin-project",
  "rustls-native-certs",
  "soketto",
@@ -4509,35 +4497,13 @@ dependencies = [
  "futures-util",
  "globset",
  "hyper",
- "jsonrpsee-types 0.16.3",
+ "jsonrpsee-types",
  "parking_lot 0.12.1",
  "rand 0.8.5",
  "rustc-hash",
  "serde",
  "serde_json",
  "soketto",
- "thiserror",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "jsonrpsee-core"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "776d009e2f591b78c038e0d053a796f94575d66ca4e77dd84bfc5e81419e436c"
-dependencies = [
- "anyhow",
- "async-trait",
- "beef",
- "futures-util",
- "hyper",
- "jsonrpsee-types 0.21.0",
- "parking_lot 0.12.1",
- "rand 0.8.5",
- "rustc-hash",
- "serde",
- "serde_json",
  "thiserror",
  "tokio",
  "tracing",
@@ -4552,8 +4518,8 @@ dependencies = [
  "async-trait",
  "hyper",
  "hyper-rustls",
- "jsonrpsee-core 0.16.3",
- "jsonrpsee-types 0.16.3",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -4585,35 +4551,11 @@ dependencies = [
  "futures-util",
  "http",
  "hyper",
- "jsonrpsee-core 0.16.3",
- "jsonrpsee-types 0.16.3",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
  "serde",
  "serde_json",
  "soketto",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tower",
- "tracing",
-]
-
-[[package]]
-name = "jsonrpsee-server"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cc7c6d1a2c58f6135810284a390d9f823d0f508db74cd914d8237802de80f98"
-dependencies = [
- "futures-util",
- "http",
- "hyper",
- "jsonrpsee-core 0.21.0",
- "jsonrpsee-types 0.21.0",
- "pin-project",
- "route-recognizer",
- "serde",
- "serde_json",
- "soketto",
- "thiserror",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -4636,19 +4578,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jsonrpsee-types"
-version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3266dfb045c9174b24c77c2dfe0084914bb23a6b2597d70c9dc6018392e1cd1b"
-dependencies = [
- "anyhow",
- "beef",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "jsonrpsee-ws-client"
 version = "0.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4656,8 +4585,8 @@ checksum = "4e1b3975ed5d73f456478681a417128597acd6a2487855fdb7b4a3d4d195bf5e"
 dependencies = [
  "http",
  "jsonrpsee-client-transport",
- "jsonrpsee-core 0.16.3",
- "jsonrpsee-types 0.16.3",
+ "jsonrpsee-core",
+ "jsonrpsee-types",
 ]
 
 [[package]]
@@ -4743,6 +4672,7 @@ dependencies = [
  "sp-block-builder",
  "sp-consensus-aura",
  "sp-core",
+ "sp-genesis-builder",
  "sp-inherents",
  "sp-offchain",
  "sp-runtime",
@@ -5698,7 +5628,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
  "anyhow",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -7245,7 +7175,7 @@ name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "sp-api",
@@ -8471,7 +8401,7 @@ name = "polkadot-rpc"
 version = "1.0.0"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "mmr-rpc",
  "pallet-transaction-payment-rpc",
  "polkadot-primitives",
@@ -9600,12 +9530,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "route-recognizer"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afab94fb28594581f62d981211a9a4d53cc8130bbcbbb89a0440d9b8e81a7746"
-
-[[package]]
 name = "rpassword"
 version = "7.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10186,7 +10110,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
  "futures",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "sc-consensus-babe",
  "sc-consensus-epochs",
  "sc-rpc-api",
@@ -10242,7 +10166,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
  "futures",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -10317,7 +10241,7 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 dependencies = [
  "finality-grandpa",
  "futures",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "sc-client-api",
@@ -10689,7 +10613,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
  "futures",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -10720,7 +10644,7 @@ name = "sc-rpc-api"
 version = "0.10.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "parity-scale-codec",
  "sc-chain-spec",
  "sc-mixnet",
@@ -10741,7 +10665,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
  "http",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "serde_json",
  "substrate-prometheus-endpoint",
@@ -10759,7 +10683,7 @@ dependencies = [
  "futures",
  "futures-util",
  "hex",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -10789,7 +10713,7 @@ dependencies = [
  "exit-future",
  "futures",
  "futures-timer",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -10872,7 +10796,7 @@ name = "sc-sync-state-rpc"
 version = "0.10.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "parity-scale-codec",
  "sc-chain-spec",
  "sc-client-api",
@@ -12726,7 +12650,7 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "parity-scale-codec",
  "sc-rpc-api",
@@ -12756,7 +12680,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
  "async-trait",
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "log",
  "sc-rpc-api",
  "serde",
@@ -12768,7 +12692,7 @@ name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#2fb9e66d1d21b1316e00924c7a4c6a2128faa316"
 dependencies = [
- "jsonrpsee 0.16.3",
+ "jsonrpsee",
  "parity-scale-codec",
  "sc-client-api",
  "sc-rpc-api",
@@ -13646,7 +13570,7 @@ dependencies = [
  "frame-system",
  "futures",
  "hex-literal",
- "jsonrpsee 0.21.0",
+ "jsonrpsee",
  "kreivo-runtime",
  "log",
  "nix 0.27.1",
@@ -13697,78 +13621,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "try-runtime-cli",
- "virto-runtime",
  "wait-timeout",
-]
-
-[[package]]
-name = "virto-runtime"
-version = "0.5.2"
-dependencies = [
- "assets-common",
- "cumulus-pallet-aura-ext",
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-session-benchmarking",
- "cumulus-pallet-xcm",
- "cumulus-pallet-xcmp-queue",
- "cumulus-primitives-core",
- "cumulus-primitives-timestamp",
- "cumulus-primitives-utility",
- "frame-benchmarking",
- "frame-executive",
- "frame-support",
- "frame-system",
- "frame-system-benchmarking",
- "frame-system-rpc-runtime-api",
- "frame-try-runtime",
- "hex-literal",
- "kusama-runtime-constants",
- "log",
- "pallet-asset-registry",
- "pallet-asset-tx-payment",
- "pallet-assets",
- "pallet-aura",
- "pallet-authorship",
- "pallet-balances",
- "pallet-burner",
- "pallet-collator-selection",
- "pallet-message-queue",
- "pallet-multisig",
- "pallet-proxy",
- "pallet-session",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "pallet-transaction-payment-rpc-runtime-api",
- "pallet-treasury",
- "pallet-utility",
- "pallet-xcm",
- "pallet-xcm-benchmarks",
- "parachains-common",
- "parity-scale-codec",
- "polkadot-core-primitives",
- "polkadot-parachain-primitives",
- "polkadot-runtime-common",
- "runtime-common",
- "scale-info",
- "smallvec",
- "sp-api",
- "sp-block-builder",
- "sp-consensus-aura",
- "sp-core",
- "sp-inherents",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-transaction-pool",
- "sp-version",
- "sp-weights",
- "staging-parachain-info",
- "staging-xcm",
- "staging-xcm-builder",
- "staging-xcm-executor",
- "substrate-wasm-builder",
 ]
 
 [[package]]

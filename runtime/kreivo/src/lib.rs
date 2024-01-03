@@ -12,6 +12,7 @@ pub mod impls;
 mod weights;
 pub mod xcm_config;
 
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
@@ -19,7 +20,7 @@ use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiAddress, Perbill, Percent, Permill,
 };
@@ -31,8 +32,10 @@ use sp_version::RuntimeVersion;
 use frame_support::{
 	construct_runtime, derive_impl,
 	dispatch::DispatchClass,
+	genesis_builder_helper::{build_config, create_default_config},
 	parameter_types,
 	traits::{
+		tokens::{PayFromAccount, UnityAssetBalanceConversion},
 		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, TransformOrigin,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
@@ -268,6 +271,7 @@ impl pallet_balances::Config for Runtime {
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<0>;
 	type MaxFreezes = ConstU32<0>;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 parameter_types! {
@@ -436,6 +440,8 @@ parameter_types! {
 	pub const MaxKeys: u32 = 10_000;
 	pub const MaxPeerInHeartbeats: u32 = 10_000;
 	pub const MaxPeerDataEncodingSize: u32 = 1_000;
+	pub TreasuryAccount: AccountId = Treasury::account_id();
+	pub const PayoutSpendPeriod: BlockNumber = 30 * DAYS;
 
 }
 
@@ -456,6 +462,13 @@ impl pallet_treasury::Config for Runtime {
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type SpendFunds = ();
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
+	type AssetKind = ();
+	type Beneficiary = Self::AccountId;
+
+	type BeneficiaryLookup = IdentityLookup<Self::Beneficiary>;
+	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	type PayoutPeriod = PayoutSpendPeriod;
 }
 
 parameter_types! {
@@ -958,6 +971,16 @@ impl_runtime_apis! {
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
 			Ok(batches)
+		}
+	}
+
+	impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
+		fn create_default_config() -> Vec<u8> {
+			create_default_config::<RuntimeGenesisConfig>()
+		}
+
+		fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
+			build_config::<RuntimeGenesisConfig>(config)
 		}
 	}
 }

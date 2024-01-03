@@ -45,13 +45,6 @@ macro_rules! dispatch_runtime {
 
 				$code
 			}
-			#[cfg(feature = "virto-runtime")]
-			Runtime::Virto => {
-				#[allow(unused_imports)]
-				use virto_runtime as $alias;
-
-				$code
-			}
 		}
 	};
 	($runtime:expr, $code:expr) => {
@@ -94,7 +87,7 @@ macro_rules! construct_async_run {
 #[cfg(all(feature = "virto-runtime", not(feature = "kreivo-runtime")))]
 impl Default for Runtime {
 	fn default() -> Self {
-		Runtime::Virto
+		Runtime::Kreivo
 	}
 }
 
@@ -105,9 +98,7 @@ impl Default for Runtime {
 enum Runtime {
 	#[cfg(feature = "kreivo-runtime")]
 	#[default]
-	Kreivo,
-	#[cfg(feature = "virto-runtime")]
-	Virto,
+	Kreivo
 }
 
 impl From<&str> for Runtime {
@@ -115,10 +106,6 @@ impl From<&str> for Runtime {
 		#[cfg(feature = "kreivo-runtime")]
 		if value.starts_with("kreivo") {
 			return Runtime::Kreivo;
-		}
-		#[cfg(feature = "virto-runtime")]
-		if value.starts_with("virto") {
-			return Runtime::Virto;
 		}
 
 		let fallback = Runtime::default();
@@ -163,18 +150,12 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 		"kreivo-local" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec_local()),
 		#[cfg(feature = "kreivo-runtime")]
 		"kreivo-rococo-local" => Box::new(chain_spec::kreivo::kreivo_rococo_chain_spec_local()),
-		#[cfg(feature = "virto-runtime")]
-		"virto" => Box::new(chain_spec::virto::virto_polkadot_chain_spec()),
-		#[cfg(feature = "virto-runtime")]
-		"virto-local" => Box::new(chain_spec::virto::virto_polkadot_chain_spec_local()),
 		// -- Loading a specific spec from disk
 		path => {
 			let path: PathBuf = path.into();
 			match path.runtime() {
 				#[cfg(feature = "kreivo-runtime")]
 				Runtime::Kreivo => Box::new(chain_spec::kreivo::ChainSpec::from_json_file(path)?),
-				#[cfg(feature = "virto-runtime")]
-				Runtime::Virto => Box::new(chain_spec::virto::ChainSpec::from_json_file(path)?),
 			}
 		}
 	})
@@ -366,18 +347,7 @@ pub fn run() -> Result<()> {
 			})
 		}
 
-		#[cfg(feature = "try-runtime")]
-		Some(Subcommand::TryRuntime(cmd)) => {
-			type HostFunctions = (
-				sp_io::SubstrateHostFunctions,
-				frame_benchmarking::benchmarking::HostFunctions,
-			);
-			construct_async_run!(|components, cli, cmd, _config, runtime| { Ok(cmd.run::<Block, ()>()) })
-		}
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => Err("Try-runtime was not enabled when building the node. \
-			You can enable it with `--features try-runtime`."
-			.into()),
+		Some(Subcommand::TryRuntime) => Err("The `try-runtime` subcommand has been migrated to a standalone CLI (https://github.com/paritytech/try-runtime-cli). It is no longer being maintained here and will be removed entirely some time after January 2024. Please remove this subcommand from your runtime and use the standalone CLI.".into()),
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
