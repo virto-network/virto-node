@@ -22,7 +22,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Local
-virto-runtime = { workspace = true, optional = true }
 kreivo-runtime = { workspace = true, optional = true }
 jsonrpsee = { workspace = true, features = ["server"] }
 
@@ -101,13 +100,11 @@ wait-timeout = { workspace = true }
 polkadot-cli = { workspace = true }
 
 [features]
-default = ["virto-runtime", "kreivo-runtime"]
+default = ["kreivo-runtime"]
 runtime-benchmarks = [
-	"virto-runtime?/runtime-benchmarks",
 	"kreivo-runtime?/runtime-benchmarks",
 	"polkadot-cli/runtime-benchmarks"
 ]
 try-runtime = [
-	"virto-runtime?/try-runtime",
 	"kreivo-runtime?/try-runtime"
 ]

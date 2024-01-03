@@ -1,8 +1,7 @@
 [workspace]
 members = [
 	"node",
-	"runtime/kreivo",
-	"runtime/virto"
+	"runtime/kreivo"
 ]
 
 exclude = ["xcm-emulator",	"common"]
@@ -46,8 +45,7 @@ smallvec = "1.11"
 
 # Local dependencies
 kreivo-runtime = { path = "runtime/kreivo" }
-virto-runtime = { path = "runtime/virto" }
-jsonrpsee = { version = "0.21.0" }
+jsonrpsee = { version = "0.16.2"}
 
 
 # Virto Pallets
@@ -101,6 +99,7 @@ sc-transaction-pool-api = { default-features = false, git = "https://github.com/
 sp-runtime = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 sp-inherents = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 sp-arithmetic = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
+sp-genesis-builder = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 sp-std = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 sp-version = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 sp-weights = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
@@ -176,7 +175,7 @@ pallet-message-queue = { default-features = false, git = "https://github.com/vir
 
 # Polkadot
 polkadot-cli = { features = ["rococo-native"], git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
-polkadot-primitives = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
+polkadot-primitives = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0", default-features = false }
 polkadot-service = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 polkadot-runtime-parachains = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 

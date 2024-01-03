@@ -17,11 +17,11 @@
 //! Parachain-specific RPCs implementation.
 
 #![warn(missing_docs)]
-
 use std::sync::Arc;
 
 use parachains_common::{AccountId, Balance, Block, Nonce};
-pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
+use sc_client_api::AuxStore;
+pub use sc_rpc::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -48,6 +48,7 @@ pub fn create_full<C, P, B>(
 where
 	C: ProvideRuntimeApi<Block>
 		+ HeaderBackend<Block>
+		+ AuxStore
 		+ HeaderMetadata<Block, Error = BlockChainError>
 		+ Send
 		+ Sync
@@ -61,7 +62,6 @@ where
 {
 	use frame_rpc_system::{System, SystemApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
-	use substrate_state_trie_migration_rpc::{StateMigration, StateMigrationApiServer};
 
 	let mut module = RpcExtension::new(());
 	let FullDeps {
@@ -72,7 +72,6 @@ where
 
 	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
 	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-	module.merge(StateMigration::new(client, backend, deny_unsafe).into_rpc())?;
 
 	Ok(module)
 }
