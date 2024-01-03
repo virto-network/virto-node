@@ -70,6 +70,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = ();
 	type MaxHolds = ();
+	type RuntimeFreezeReason = ();
 }
 
 impl pallet_sudo::Config for Test {
