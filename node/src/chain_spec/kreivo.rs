@@ -2,15 +2,9 @@ use crate::chain_spec::{get_account_id_from_seed, get_collator_keys_from_seed, E
 use cumulus_primitives_core::ParaId;
 
 use hex_literal::hex;
-use kreivo_runtime::{
-	constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId, BalancesConfig, RuntimeGenesisConfig, SessionConfig,
-	SessionKeys, SudoConfig, SystemConfig,
-};
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
+use kreivo_runtime::{constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId, SessionKeys};
 use sc_service::ChainType;
-use serde::{Deserialize, Serialize};
-use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_core::{crypto::UncheckedInto, sr25519};
 
 const DEFAULT_PROTOCOL_ID: &str = "kreivo";
 
@@ -130,7 +124,7 @@ pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 pub fn local_testnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "UNIT".into());
+	properties.insert("tokenSymbol".into(), "KSM".into());
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("ss58Format".into(), 42.into());
 

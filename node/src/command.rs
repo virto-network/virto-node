@@ -84,13 +84,6 @@ macro_rules! construct_async_run {
 	}};
 }
 
-#[cfg(all(feature = "virto-runtime", not(feature = "kreivo-runtime")))]
-impl Default for Runtime {
-	fn default() -> Self {
-		Runtime::Kreivo
-	}
-}
-
 /// Helper enum that is used for better distinction of different
 /// parachain/runtime configuration (it is based/calculated on ChainSpec's ID
 /// attribute)
@@ -346,8 +339,6 @@ pub fn run() -> Result<()> {
 				}
 			})
 		}
-
-		Some(Subcommand::TryRuntime) => Err("The `try-runtime` subcommand has been migrated to a standalone CLI (https://github.com/paritytech/try-runtime-cli). It is no longer being maintained here and will be removed entirely some time after January 2024. Please remove this subcommand from your runtime and use the standalone CLI.".into()),
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
