@@ -1,10 +1,11 @@
 [workspace]
 members = [
 	"node",
-	"runtime/kreivo"
+	"runtime/kreivo",
+	"common"
 ]
 
-exclude = ["xcm-emulator",	"common"]
+exclude = ["xcm-emulator"]
 resolver = "2"
 
 [profile.release]
