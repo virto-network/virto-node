@@ -33,7 +33,7 @@ pub fn kreivo_rococo_chain_spec_local() -> ChainSpec {
 		Extensions {
 			relay_chain: "rococo-local".into(),
 			// You MUST set this to the correct network!
-			para_id: KREIVO_PARA_ID.into(),
+			para_id: KREIVO_PARA_ID,
 		},
 	)
 	.with_name("Kreivo Local-Rococo Local")
@@ -83,7 +83,7 @@ pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 		Extensions {
 			relay_chain: "rococo-local".into(),
 			// You MUST set this to the correct network!
-			para_id: KREIVO_PARA_ID.into(),
+			para_id: KREIVO_PARA_ID,
 		},
 	)
 	.with_name("Kreivo Local-Rococo Local")
@@ -121,6 +121,7 @@ pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 	.build()
 }
 
+#[allow(dead_code)]
 pub fn local_testnet_config() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
@@ -187,7 +188,7 @@ pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 		Extensions {
 			relay_chain: "kusama".into(),
 			// You MUST set this to the correct network!
-			para_id: KREIVO_PARA_ID.into(),
+			para_id: KREIVO_PARA_ID,
 		},
 	)
 	.with_name("Kreivo")
@@ -255,6 +256,7 @@ fn testnet_genesis(
 	})
 }
 
+#[allow(dead_code)]
 fn genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
