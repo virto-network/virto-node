@@ -2,12 +2,13 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16,
-		ConstU32, ConstU64, EqualPrivilegeOnly, Footprint,
+		ConstU32, ConstU64, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint,
 	},
 	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
+use pallet_referenda::{TrackIdOf, TracksInfo as _};
 use parity_scale_codec::{Compact, Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::H256;
@@ -119,6 +120,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type RuntimeHoldReason = ();
+	type RuntimeFreezeReason = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<10>;
 	type MaxFreezes = ConstU32<10>;
@@ -176,10 +178,26 @@ impl pallet_referenda::Config for Test {
 	type Tracks = Tracks;
 	type Preimages = Preimage;
 }
+
+pub struct EnsureOriginToTrack;
+impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToTrack {
+	type Success = ();
+
+	fn try_origin(o: RuntimeOrigin, id: &TrackIdOf<Test, ()>) -> Result<Self::Success, RuntimeOrigin> {
+		let track_id_for_origin: TrackIdOf<Test, ()> = Tracks::track_for(&o.clone().caller).map_err(|_| o.clone())?;
+		frame_support::ensure!(&track_id_for_origin == id, o);
+
+		Ok(())
+	}
+}
+
 impl pallet_referenda_tracks::Config for Test {
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureOriginToTrack;
 	type RuntimeEvent = RuntimeEvent;
 	type TrackId = CommunityId;
 	type MaxTracks = ConstU32<2>;
+	type WeightInfo = ();
 }
 
 parameter_types! {

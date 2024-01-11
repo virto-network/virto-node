@@ -183,7 +183,9 @@ pub mod pallet {
 		pallet_prelude::{ValueQuery, *},
 		traits::{
 			fungible::{Inspect, Mutate},
-			fungibles, EnsureOrigin, GenericRank, MembershipInspect, MembershipMutate, Polling, RankedMembership,
+			fungibles,
+			membership::{GenericRank, Inspect as MembershipInspect, Membership, Mutate as MembershipMutate},
+			EnsureOrigin, Polling,
 		},
 		Blake2_128Concat, Parameter,
 	};
@@ -202,8 +204,8 @@ pub mod pallet {
 		type CommunityId: Parameter + MaxEncodedLen + Copy;
 
 		/// This type represents a rank for a member in a community
-		type Memberships: MembershipInspect<MembershipInfo<Self::CommunityId>, Self::AccountId, MembershipId<Self::CommunityId>>
-			+ MembershipMutate<MembershipInfo<Self::CommunityId>, Self::AccountId, MembershipId<Self::CommunityId>>;
+		type Memberships: MembershipInspect<Self::AccountId, MembershipId<Self::CommunityId>>
+			+ MembershipMutate<Self::AccountId, MembershipId<Self::CommunityId>>;
 
 		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
 
@@ -385,7 +387,10 @@ pub mod pallet {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 			let info = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
-			ensure!(info.community() == &community_id, Error::<T>::CommunityDoesNotExist);
+			ensure!(
+				MembershipInfo::community(&info) == &community_id,
+				Error::<T>::CommunityDoesNotExist
+			);
 
 			let account = Self::community_account(&community_id);
 			// Move the membership back to the community resetting any previous stored info
@@ -405,9 +410,14 @@ pub mod pallet {
 			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
-			m.rank_mut().promote_by(1.try_into().expect("can promote by 1"));
-			let rank = *m.rank();
+			let mut m: MembershipInfo<T::CommunityId> =
+				T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
+
+			let mut rank = m.rank();
+			rank.promote_by(1.try_into().expect("can promote by 1"));
+			m.set_rank(rank);
+
+			let rank = m.rank();
 			T::Memberships::update(membership_id, m, None)?;
 
 			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
@@ -424,9 +434,14 @@ pub mod pallet {
 			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
-			m.rank_mut().demote_by(1.try_into().expect("can demote by 1"));
-			let rank = *m.rank();
+			let mut m: MembershipInfo<T::CommunityId> =
+				T::Memberships::get_membership(membership_id, &who).ok_or(Error::<T>::NotAMember)?;
+
+			let mut rank = m.rank();
+			rank.demote_by(1.try_into().expect("can promote by 1"));
+			m.set_rank(rank);
+
+			let rank = m.rank();
 			T::Memberships::update(membership_id, m, None)?;
 
 			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });

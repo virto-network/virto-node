@@ -5,7 +5,7 @@ use crate::{
 use core::marker::PhantomData;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{GenericRank, OriginTrait},
+	traits::{membership::GenericRank, OriginTrait},
 };
 use sp_runtime::Permill;
 

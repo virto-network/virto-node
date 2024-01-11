@@ -1,6 +1,10 @@
 use crate::Config;
 use frame_support::pallet_prelude::*;
-use frame_support::traits::{fungible, fungibles, GenericRank, Membership, Polling, RankedMembership, VoteTally};
+use frame_support::traits::{
+	fungible, fungibles,
+	membership::{GenericRank, Membership, WithRank},
+	Polling, VoteTally,
+};
 use sp_runtime::traits::StaticLookup;
 
 pub type AssetIdOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::AssetId;
@@ -73,12 +77,6 @@ pub struct MembershipInfo<CommunityId> {
 }
 
 impl<CommunityId> MembershipInfo<CommunityId> {
-	pub fn new(id: MembershipId<CommunityId>) -> Self {
-		Self {
-			id,
-			rank: GenericRank::default(),
-		}
-	}
 	pub fn community(&self) -> &CommunityId {
 		&self.id.0
 	}
@@ -86,22 +84,32 @@ impl<CommunityId> MembershipInfo<CommunityId> {
 
 impl<CommunityId> Membership for MembershipInfo<CommunityId>
 where
-	CommunityId: Decode + Encode,
+	CommunityId: Parameter + 'static,
 {
 	type Id = MembershipId<CommunityId>;
-	fn id(&self) -> &Self::Id {
-		&self.id
+
+	fn new(id: Self::Id) -> Self {
+		Self {
+			id,
+			rank: Default::default(),
+		}
+	}
+
+	fn id(&self) -> Self::Id {
+		self.id
 	}
 }
-impl<CommunityId> RankedMembership for MembershipInfo<CommunityId>
+
+impl<CommunityId> WithRank for MembershipInfo<CommunityId>
 where
-	CommunityId: Decode + Encode,
+	CommunityId: Parameter + 'static,
 {
-	fn rank(&self) -> &GenericRank {
-		&self.rank
+	fn rank(&self) -> GenericRank {
+		self.rank
 	}
-	fn rank_mut(&mut self) -> &mut GenericRank {
-		&mut self.rank
+
+	fn set_rank(&mut self, rank: impl Into<GenericRank>) {
+		self.rank = rank.into();
 	}
 }
 
