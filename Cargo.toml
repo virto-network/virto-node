@@ -193,7 +193,7 @@ pallet-xcm-benchmarks = { default-features = false, git = "https://github.com/vi
 
 # Dev dependencies
 assert_cmd = "2.0"
-nix = "0.27.1"
+nix = { version = "0.27.1", features = ["signal"] }
 tempfile = "3.7"
 tokio = { version = "1.32.0", features = ["macros", "time", "parking_lot"] }
 wait-timeout = "0.2"
