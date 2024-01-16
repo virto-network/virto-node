@@ -282,7 +282,7 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type FreezeIdentifier = ();
-	type MaxHolds = ConstU32<0>;
+	type MaxHolds = ConstU32<2>;
 	type MaxFreezes = ConstU32<0>;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
