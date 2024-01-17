@@ -38,7 +38,7 @@ use frame_support::{
 		fungible::HoldConsideration,
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
 		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, LinearStoragePrice,
-		TransformOrigin,
+		NeverEnsureOrigin, TransformOrigin,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	BoundedVec, PalletId,
@@ -533,7 +533,7 @@ impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type AssetIdParameter = parity_scale_codec::Compact<AssetIdForTrustBackedAssets>;
 	type Currency = Balances;
 	/// Only root can create assets and force state changes.
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
+	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
 	type ForceOrigin = AssetsForceOrigin;
 	type AssetDeposit = AssetDeposit;
 	type MetadataDepositBase = MetadataDepositBase;
