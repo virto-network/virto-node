@@ -178,9 +178,9 @@ pub fn local_testnet_config() -> ChainSpec {
 pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "UNIT".into());
+	properties.insert("tokenSymbol".into(), "KSM".into());
 	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 42.into());
+	properties.insert("ss58Format".into(), 2.into());
 
 	#[allow(deprecated)]
 	ChainSpec::builder(
@@ -193,8 +193,8 @@ pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 	)
 	.with_name("Kreivo")
 	.with_id("kreivo")
-	.with_chain_type(ChainType::Local)
-	.with_genesis_config_patch(testnet_genesis(
+	.with_chain_type(ChainType::Live)
+	.with_genesis_config_patch(genesis(
 		// initial collators.
 		vec![
 			(
@@ -207,7 +207,6 @@ pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 			),
 		],
 		vec![
-			// This account will have root origin
 			hex!("68170716ab7c6735dd0a1012045d9ea33891b5f6596cf97eb217d0962d86a518").into(),
 			hex!("556d3b25d068997f358622cc0f9531e4175d0d10d8ae8511c091d61efc21f65c").into(),
 			hex!("8a0b6ddc780dbeb1c943caeadc7d09d85b2dc5b74026153f7931e068390d4441").into(),
@@ -256,7 +255,6 @@ fn testnet_genesis(
 	})
 }
 
-#[allow(dead_code)]
 fn genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
