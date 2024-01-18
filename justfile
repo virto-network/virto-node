@@ -91,7 +91,7 @@ _chain_artifacts:
 	{{ node }} export-genesis-wasm --chain {{ chain }} | save -f release/{{ chain }}_genesis.wasm
 	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
 
-release-artifacts: build-local create-container _chain_artifacts
+release-artifacts: build-local create-container
 
 release-tag:
 	git tag {{ ver }}

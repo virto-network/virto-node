@@ -20,8 +20,10 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Build parachain artifacts
+      - name: Build collator artifacts
         run: just release-artifacts
+      - name: Build full-node artifacts
+        run: just rol=full release-artifacts
       - name: Release
         uses: softprops/action-gh-release@v1
         env:
