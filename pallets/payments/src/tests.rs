@@ -2,14 +2,16 @@ use super::*;
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	Payment as PaymentStore,
+	Payment as PaymentStore, LastId
 };
 use frame_support::{assert_ok, traits::fungibles, weights::constants::WEIGHT_REF_TIME_PER_NANOS};
 use weights::SubstrateWeight;
 
 use sp_runtime::{BoundedVec, Perbill};
 
-fn build_payment() -> Fees<Test> {
+
+
+fn build_payment(assertion: bool) -> Fees<Test> {
 	let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 	let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
 
@@ -21,14 +23,6 @@ fn build_payment() -> Fees<Test> {
 		Some(remark.clone()),
 	));
 
-	System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-		sender: SENDER_ACCOUNT,
-		beneficiary: PAYMENT_BENEFICIARY,
-		asset: ASSET_ID,
-		amount: PAYMENT_AMOUNT,
-		remark: Some(remark.clone()),
-	}));
-
 	let fees_details: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
 		&ASSET_ID,
 		&SENDER_ACCOUNT,
@@ -37,25 +31,35 @@ fn build_payment() -> Fees<Test> {
 		Some(remark.as_slice()),
 	);
 
-	assert_eq!(
-		PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
-		PaymentDetail {
+	if assertion == true {
+		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
+			sender: SENDER_ACCOUNT,
+			beneficiary: PAYMENT_BENEFICIARY,
 			asset: ASSET_ID,
 			amount: PAYMENT_AMOUNT,
-			incentive_amount: INCENTIVE_AMOUNT,
-			state: PaymentState::Created,
-			fees: fees_details.clone(),
-		}
-	);
-
-	assert_eq!(
-		<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
-		PAYMENT_AMOUNT
-	);
-	assert_eq!(
-		<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
-		INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + EXPECTED_SYSTEM_SENDER_FEE
-	);
+			remark: Some(remark.clone()),
+		}));
+	
+		assert_eq!(
+			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentDetail {
+				asset: ASSET_ID,
+				amount: PAYMENT_AMOUNT,
+				incentive_amount: INCENTIVE_AMOUNT,
+				state: PaymentState::Created,
+				fees: fees_details.clone(),
+			}
+		);
+	
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
+			PAYMENT_AMOUNT
+		);
+		assert_eq!(
+			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
+			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + EXPECTED_SYSTEM_SENDER_FEE
+		); 
+	}
 
 	fees_details
 }
@@ -105,7 +109,7 @@ fn check_balance_cancellation() {
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
-		let fees: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment(true);
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -157,7 +161,7 @@ fn test_pay_and_release_works() {
 #[test]
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
-		build_payment();
+		build_payment(true);
 		assert_ok!(Payments::cancel(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
@@ -200,7 +204,7 @@ fn test_pay_and_cancel_works() {
 #[test]
 fn payment_refunded_request() {
 	new_test_ext().execute_with(|| {
-		let fees: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment(true);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -284,7 +288,7 @@ fn payment_disputed_beneficiary_wins() {
 			10,
 		);
 
-		let fees: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment(true);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -402,7 +406,7 @@ fn payment_disputed_sender_wins() {
 			10,
 		);
 
-		let fees: Fees<Test> = build_payment();
+		let fees: Fees<Test> = build_payment(true);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -533,6 +537,35 @@ fn request_payment() {
 			INITIAL_BALANCE - PAYMENT_AMOUNT - FEE_SENDER_AMOUNT - SYSTEM_FEE
 		);
 	})
+}
+
+#[test]
+fn next_id_works(){
+	new_test_ext().execute_with(|| { 
+		build_payment(false);
+
+  	assert_eq!(
+		LastId::<Test>::get().unwrap(),
+		1
+	);  
+	build_payment(false);
+ 	assert_eq!(
+		LastId::<Test>::get().unwrap(),
+		2
+	);  
+
+	assert_ok!(Payments::request_payment(
+		RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
+		SENDER_ACCOUNT,
+		ASSET_ID,
+		PAYMENT_AMOUNT
+	));
+	
+	assert_eq!(
+		LastId::<Test>::get().unwrap(),
+		3
+	);  
+});
 }
 
 #[test]
