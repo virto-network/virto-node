@@ -774,7 +774,6 @@ impl<T: Config> Pallet<T> {
 	fn next_payment_id() -> Result<T::PaymentId, sp_runtime::DispatchError> {
 		let last_id = LastId::<T>::get().unwrap_or(Zero::zero());
 		let payment_id: T::PaymentId = last_id.saturating_add(One::one());
-
 		Ok(payment_id)
 	}
 }
