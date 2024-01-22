@@ -9,7 +9,9 @@ use weights::SubstrateWeight;
 
 use sp_runtime::{BoundedVec, Perbill};
 
-fn build_payment(assertion: bool) -> Fees<Test> {
+const ASSERT_PAYMENT_ASSERTION: bool = true;
+
+fn build_payment(assert_payment_creation: bool) -> Fees<Test> {
 	let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
 	let reason: &<Test as Config>::RuntimeHoldReason = &HoldReason::TransferPayment.into();
 
@@ -29,7 +31,7 @@ fn build_payment(assertion: bool) -> Fees<Test> {
 		Some(remark.as_slice()),
 	);
 
-	if assertion == true {
+	if assert_payment_creation {
 		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
 			sender: SENDER_ACCOUNT,
 			beneficiary: PAYMENT_BENEFICIARY,
@@ -107,7 +109,7 @@ fn check_balance_cancellation() {
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
-		let fees: Fees<Test> = build_payment(true);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -159,7 +161,7 @@ fn test_pay_and_release_works() {
 #[test]
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
-		build_payment(true);
+		build_payment(ASSERT_PAYMENT_ASSERTION);
 		assert_ok!(Payments::cancel(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
@@ -202,7 +204,7 @@ fn test_pay_and_cancel_works() {
 #[test]
 fn payment_refunded_request() {
 	new_test_ext().execute_with(|| {
-		let fees: Fees<Test> = build_payment(true);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -286,7 +288,7 @@ fn payment_disputed_beneficiary_wins() {
 			10,
 		);
 
-		let fees: Fees<Test> = build_payment(true);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -404,7 +406,7 @@ fn payment_disputed_sender_wins() {
 			10,
 		);
 
-		let fees: Fees<Test> = build_payment(true);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -540,10 +542,10 @@ fn request_payment() {
 #[test]
 fn next_id_works() {
 	new_test_ext().execute_with(|| {
-		build_payment(false);
+		build_payment(!ASSERT_PAYMENT_ASSERTION);
 
 		assert_eq!(LastId::<Test>::get().unwrap(), 1);
-		build_payment(false);
+		build_payment(!ASSERT_PAYMENT_ASSERTION);
 		assert_eq!(LastId::<Test>::get().unwrap(), 2);
 
 		assert_ok!(Payments::request_payment(
