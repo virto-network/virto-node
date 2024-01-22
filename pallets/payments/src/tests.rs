@@ -2,14 +2,12 @@ use super::*;
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	Payment as PaymentStore, LastId
+	LastId, Payment as PaymentStore,
 };
 use frame_support::{assert_ok, traits::fungibles, weights::constants::WEIGHT_REF_TIME_PER_NANOS};
 use weights::SubstrateWeight;
 
 use sp_runtime::{BoundedVec, Perbill};
-
-
 
 fn build_payment(assertion: bool) -> Fees<Test> {
 	let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
@@ -39,7 +37,7 @@ fn build_payment(assertion: bool) -> Fees<Test> {
 			amount: PAYMENT_AMOUNT,
 			remark: Some(remark.clone()),
 		}));
-	
+
 		assert_eq!(
 			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
 			PaymentDetail {
@@ -50,7 +48,7 @@ fn build_payment(assertion: bool) -> Fees<Test> {
 				fees: fees_details.clone(),
 			}
 		);
-	
+
 		assert_eq!(
 			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &PAYMENT_BENEFICIARY),
 			PAYMENT_AMOUNT
@@ -58,7 +56,7 @@ fn build_payment(assertion: bool) -> Fees<Test> {
 		assert_eq!(
 			<Assets as fungibles::InspectHold<_>>::balance_on_hold(ASSET_ID, reason, &SENDER_ACCOUNT),
 			INCENTIVE_AMOUNT + FEE_SENDER_AMOUNT + EXPECTED_SYSTEM_SENDER_FEE
-		); 
+		);
 	}
 
 	fees_details
@@ -540,32 +538,23 @@ fn request_payment() {
 }
 
 #[test]
-fn next_id_works(){
-	new_test_ext().execute_with(|| { 
+fn next_id_works() {
+	new_test_ext().execute_with(|| {
 		build_payment(false);
 
-  	assert_eq!(
-		LastId::<Test>::get().unwrap(),
-		1
-	);  
-	build_payment(false);
- 	assert_eq!(
-		LastId::<Test>::get().unwrap(),
-		2
-	);  
+		assert_eq!(LastId::<Test>::get().unwrap(), 1);
+		build_payment(false);
+		assert_eq!(LastId::<Test>::get().unwrap(), 2);
 
-	assert_ok!(Payments::request_payment(
-		RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
-		SENDER_ACCOUNT,
-		ASSET_ID,
-		PAYMENT_AMOUNT
-	));
-	
-	assert_eq!(
-		LastId::<Test>::get().unwrap(),
-		3
-	);  
-});
+		assert_ok!(Payments::request_payment(
+			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
+			SENDER_ACCOUNT,
+			ASSET_ID,
+			PAYMENT_AMOUNT
+		));
+
+		assert_eq!(LastId::<Test>::get().unwrap(), 3);
+	});
 }
 
 #[test]

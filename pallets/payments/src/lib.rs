@@ -30,7 +30,7 @@ use frame_support::{
 			fungibles::Inspect as FunsInspect,
 			Fortitude::Polite,
 			Precision::Exact,
-			Preservation::{Expendable, Preserve}, 
+			Preservation::{Expendable, Preserve},
 		},
 		Bounded, CallerTrait, QueryPreimage, StorePreimage,
 	},
