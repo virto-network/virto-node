@@ -609,6 +609,7 @@ impl<T: Config> Pallet<T> {
 				};
 
 				*maybe_payment = Ok(new_payment.clone());
+				LastId::<T>::put(payment_id);
 
 				Ok(new_payment)
 			},
