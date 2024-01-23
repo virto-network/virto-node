@@ -9,7 +9,7 @@ use weights::SubstrateWeight;
 
 use sp_runtime::{BoundedVec, Perbill};
 
-const ASSERT_PAYMENT_ASSERTION: bool = true;
+const ASSERT_PAYMENT_CREATION: bool = true;
 
 fn build_payment(assert_payment_creation: bool) -> Fees<Test> {
 	let remark: BoundedVec<u8, MaxRemarkLength> = BoundedVec::truncate_from(b"remark".to_vec());
@@ -109,7 +109,7 @@ fn check_balance_cancellation() {
 #[test]
 fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
-		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_CREATION);
 
 		assert_ok!(Payments::release(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -161,7 +161,7 @@ fn test_pay_and_release_works() {
 #[test]
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
-		build_payment(ASSERT_PAYMENT_ASSERTION);
+		build_payment(ASSERT_PAYMENT_CREATION);
 		assert_ok!(Payments::cancel(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
 			SENDER_ACCOUNT,
@@ -204,7 +204,7 @@ fn test_pay_and_cancel_works() {
 #[test]
 fn payment_refunded_request() {
 	new_test_ext().execute_with(|| {
-		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_CREATION);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -288,7 +288,7 @@ fn payment_disputed_beneficiary_wins() {
 			10,
 		);
 
-		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_CREATION);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -406,7 +406,7 @@ fn payment_disputed_sender_wins() {
 			10,
 		);
 
-		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_ASSERTION);
+		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_CREATION);
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
@@ -542,10 +542,10 @@ fn request_payment() {
 #[test]
 fn next_id_works() {
 	new_test_ext().execute_with(|| {
-		build_payment(!ASSERT_PAYMENT_ASSERTION);
+		build_payment(!ASSERT_PAYMENT_CREATION);
 
 		assert_eq!(LastId::<Test>::get().unwrap(), 1);
-		build_payment(!ASSERT_PAYMENT_ASSERTION);
+		build_payment(!ASSERT_PAYMENT_CREATION);
 		assert_eq!(LastId::<Test>::get().unwrap(), 2);
 
 		assert_ok!(Payments::request_payment(
