@@ -70,7 +70,7 @@ build-container-local: build-local
 node_args := "--base-path /data '$NODE_ARGS' " + if rol == "collator" {
 	"--collator"
 } else { "--rpc-external --rpc-cors=all" }
-container_args := node_args + " -- '$RELAY_ARGS' --sync=warp --no-telemetry --chain " + relay + if rol == "full" {
+container_args := node_args + " -- '$RELAY_ARGS' --sync=warp --state-pruning=200 --blocks-pruning=200 --no-telemetry --chain " + relay + if rol == "full" {
 	" --rpc-external --rpc-cors=all"
 } else { "" }
 container_name := chain + "-" + rol
