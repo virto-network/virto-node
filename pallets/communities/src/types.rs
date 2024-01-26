@@ -1,14 +1,21 @@
-use crate::Config;
+use crate::origin::DecisionMethod;
+use crate::{CommunityDecisionMethod, CommunityMembersCount, Config};
 use frame_support::pallet_prelude::*;
-use frame_support::traits::{fungible, fungibles, membership, Polling, VoteTally};
-use sp_runtime::traits::StaticLookup;
+use frame_support::traits::{
+	fungible::{self, Inspect as FunInspect},
+	fungibles::{self, Inspect as FunsInspect},
+	membership, Polling,
+};
+use sp_runtime::traits::{StaticLookup, UniqueSaturatedInto};
+use sp_runtime::SaturatedConversion;
 
 pub type AssetIdOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::AssetId;
 pub type AssetBalanceOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::Balance;
 pub type NativeBalanceOf<T> = <<T as Config>::Balances as fungible::Inspect<AccountIdOf<T>>>::Balance;
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
-pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>>;
+pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>, NativeBalanceOf<T>>;
+pub type DecisionMethodFor<T> = DecisionMethod<AssetIdOf<T>>;
 pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type PalletsOriginOf<T> =
@@ -61,15 +68,35 @@ pub struct CommunityMetadata {
 pub type VoteWeight = u32;
 
 ///
-#[derive(Clone, Debug, Decode, Encode, PartialEq, TypeInfo)]
-pub enum Vote<AssetId, AssetBalance> {
+#[derive(Clone, Debug, Decode, Encode, PartialEq, MaxEncodedLen, TypeInfo)]
+#[scale_info(skip_type_params(AssetId, AssetBalance, NativeBalance))]
+pub enum Vote<AssetId, AssetBalance, NativeBalance> {
 	AssetBalance(bool, AssetId, AssetBalance),
+	NativeBalance(bool, NativeBalance),
 	Standard(bool),
 }
 
-impl<A, B> From<Vote<A, B>> for VoteWeight {
-	fn from(_value: Vote<A, B>) -> Self {
-		todo!()
+impl<A, B, N> From<Vote<A, B, N>> for VoteWeight
+where
+	B: UniqueSaturatedInto<VoteWeight>,
+	N: UniqueSaturatedInto<VoteWeight>,
+{
+	fn from(value: Vote<A, B, N>) -> Self {
+		match value {
+			Vote::AssetBalance(_, _, balance) => balance.saturated_into(),
+			Vote::NativeBalance(_, balance) => balance.saturated_into(),
+			Vote::Standard(_) => 1,
+		}
+	}
+}
+
+impl<A, B, N> Into<bool> for Vote<A, B, N> {
+	fn into(self) -> bool {
+		match self {
+			Vote::AssetBalance(say, _, _) => say,
+			Vote::NativeBalance(say, _) => say,
+			Vote::Standard(say) => say,
+		}
 	}
 }
 
@@ -77,22 +104,35 @@ impl<A, B> From<Vote<A, B>> for VoteWeight {
 #[derive(Clone, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound(T: Config))]
-pub struct Tally<T>(core::marker::PhantomData<T>);
+pub struct Tally<T> {
+	pub(crate) _phantom: PhantomData<T>,
+	pub(crate) ayes: VoteWeight,
+	pub(crate) nays: VoteWeight,
+	pub(crate) bare_ayes: VoteWeight,
+}
 
-impl<T: Config> VoteTally<VoteWeight, T::CommunityId> for Tally<T> {
-	fn new(_: T::CommunityId) -> Self {
-		todo!()
+impl<T> Default for Tally<T> {
+	fn default() -> Self {
+		Self {
+			_phantom: Default::default(),
+			ayes: Default::default(),
+			nays: Default::default(),
+			bare_ayes: Default::default(),
+		}
 	}
+}
 
-	fn ayes(&self, _cid: T::CommunityId) -> VoteWeight {
-		todo!()
-	}
+impl<T: Config> Tally<T> {
+	pub(crate) fn max_ayes(community_id: T::CommunityId) -> VoteWeight {
+		let decision_method = CommunityDecisionMethod::<T>::get(community_id);
 
-	fn support(&self, _cid: T::CommunityId) -> sp_runtime::Perbill {
-		todo!()
-	}
-
-	fn approval(&self, _cid: T::CommunityId) -> sp_runtime::Perbill {
-		todo!()
+		match decision_method {
+			DecisionMethod::Membership => CommunityMembersCount::<T>::get(community_id),
+			DecisionMethod::Rank => todo!("max_ayes is the sum of each rank of each membership"),
+			DecisionMethod::NativeToken => T::Balances::total_issuance().saturated_into::<VoteWeight>(),
+			DecisionMethod::CommunityAsset(asset_id) => {
+				T::Assets::total_issuance(asset_id).saturated_into::<VoteWeight>()
+			}
+		}
 	}
 }
