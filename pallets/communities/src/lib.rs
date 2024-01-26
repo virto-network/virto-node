@@ -170,6 +170,7 @@ mod benchmarking;
 mod tests;
 
 mod functions;
+mod impls;
 
 pub mod types;
 pub mod weights;
@@ -180,7 +181,7 @@ pub mod origin;
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		pallet_prelude::{ValueQuery, *},
+		pallet_prelude::*,
 		traits::{
 			fungible, fungibles,
 			membership::{self, Inspect, Membership, Mutate, WithRank},
@@ -190,7 +191,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
-	use types::{MembershipIdOf, *};
+	use types::{CommunityIdOf, MembershipIdOf, PollIndexOf, *};
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -255,10 +256,20 @@ pub mod pallet {
 	pub(super) type Metadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
 
+	/// Stores the count of members, managed by add_member and removefly_member
+	#[pallet::storage]
+	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
+
+	/// Stores the decision method for a community
+	#[pallet::storage]
+	pub(super) type CommunityDecisionMethod<T> =
+		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, DecisionMethodFor<T>, ValueQuery>;
+
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
+	#[pallet::getter(fn community_vote_of)]
 	pub(super) type CommunityVotes<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, ()>;
+		StorageDoubleMap<_, Blake2_128Concat, AccountIdOf<T>, Blake2_128Concat, PollIndexOf<T>, VoteOf<T>>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
