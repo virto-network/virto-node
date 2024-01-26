@@ -48,7 +48,7 @@ pub use frame_system::Call as SystemCall;
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSigned,
+	EnsureRoot,
 };
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
