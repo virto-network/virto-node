@@ -291,17 +291,17 @@ impl TestEnvBuilder {
 	) -> Self {
 		self.assets_config
 			.assets
-			.push((id.clone(), owner.clone(), is_sufficient, min_balance));
+			.push((*id, owner.clone(), is_sufficient, min_balance));
 
 		if let Some((name, symbol, decimals)) = maybe_metadata {
-			self.assets_config.metadata.push((id.clone(), name, symbol, decimals));
+			self.assets_config.metadata.push((*id, name, symbol, decimals));
 		}
 
 		self.assets_config.accounts.append(
 			&mut maybe_accounts
 				.unwrap_or_default()
 				.into_iter()
-				.map(|(account_id, balance)| (id.clone(), account_id, balance))
+				.map(|(account_id, balance)| (*id, account_id, balance))
 				.collect(),
 		);
 
