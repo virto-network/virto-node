@@ -1,7 +1,7 @@
 use crate::{
 	types::{
 		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityMetadata, CommunityState, ConstSizedField, MembershipIdOf,
-		PalletsOriginOf,
+		PalletsOriginOf, Tally, VoteWeight,
 	},
 	CommunityIdFor, Config, Error, Info, Metadata, Pallet,
 };
@@ -68,5 +68,31 @@ impl<T: Config> Pallet<T> {
 				main_url: url.as_ref().unwrap_or(&metadata.main_url).clone(),
 			};
 		})
+	}
+}
+
+impl<T: Config> Tally<T> {
+	pub(self) fn add_vote(&mut self, say: bool, weight: VoteWeight) {
+		match say {
+			true => {
+				self.ayes = self.ayes.saturating_add(weight);
+				self.bare_ayes = self.bare_ayes.saturating_add(weight);
+			}
+			false => {
+				self.nays = self.nays.saturating_add(weight);
+			}
+		}
+	}
+
+	pub(self) fn remove_vote(&mut self, say: bool, weight: VoteWeight) {
+		match say {
+			true => {
+				self.ayes = self.ayes.saturating_sub(weight);
+				self.bare_ayes = self.bare_ayes.saturating_sub(weight);
+			}
+			false => {
+				self.nays = self.nays.saturating_sub(weight);
+			}
+		}
 	}
 }

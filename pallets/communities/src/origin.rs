@@ -1,5 +1,5 @@
 use crate::{
-	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf},
+	types::{AssetIdOf, CommunityIdOf, CommunityState::Active, MembershipIdOf},
 	CommunityIdFor, Config, Info,
 };
 use core::marker::PhantomData;
@@ -41,7 +41,7 @@ where
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
 pub struct RawOrigin<T: Config> {
 	community_id: CommunityIdOf<T>,
-	method: DecisionMethod,
+	method: DecisionMethod<AssetIdOf<T>>,
 	subset: Option<Subset<T>>,
 }
 
@@ -61,7 +61,8 @@ impl<T: Config> RawOrigin<T> {
 	pub fn id(&self) -> CommunityIdOf<T> {
 		self.community_id
 	}
-	pub fn decision_method(&self) -> DecisionMethod {
+
+	pub fn decision_method(&self) -> DecisionMethod<AssetIdOf<T>> {
 		self.method.clone()
 	}
 }
@@ -77,11 +78,11 @@ pub enum Subset<T: Config> {
 
 /// The mechanism used by the community or one of its subsets to make decisions
 #[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub enum DecisionMethod {
+pub enum DecisionMethod<AssetId> {
 	#[default]
 	Membership,
 	NativeToken,
-	CommunityAsset,
+	CommunityAsset(AssetId),
 	Rank,
 }
 
