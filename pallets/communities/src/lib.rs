@@ -335,7 +335,8 @@ pub mod pallet {
 		NotAMember,
 		/// The indicated index corresponds to a poll that is not ongoing
 		NotOngoing,
-		/// The track for the poll voted for does not correspond to the community ID
+		/// The track for the poll voted for does not correspond to the
+		/// community ID
 		InvalidTrack,
 		/// The vote type does not correspond with the community's selected
 		/// [`DecisionMethod`][`origin::DecisionMethod`]
@@ -495,9 +496,7 @@ pub mod pallet {
 			T::CommunityMgmtOrigin::ensure_origin(origin)?;
 			CommunityDecisionMethod::<T>::set(community_id, decision_method);
 
-			Self::deposit_event(Event::DecisionMethodSet {
-				id: community_id.clone(),
-			});
+			Self::deposit_event(Event::DecisionMethodSet { id: community_id });
 			Ok(())
 		}
 
