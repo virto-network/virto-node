@@ -219,10 +219,17 @@ pub mod pallet {
 		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
 
 		/// The asset used for governance
-		type Assets: fungibles::Inspect<Self::AccountId>;
+		type Assets: fungibles::Inspect<Self::AccountId> + fungibles::hold::Mutate<Self::AccountId>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
-		type Balances: fungible::Inspect<Self::AccountId> + fungible::Mutate<Self::AccountId>;
+		type Balances: fungible::Inspect<Self::AccountId>
+			+ fungible::Mutate<Self::AccountId>
+			+ fungible::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
+
+		/// The overarching hold reason.
+		type RuntimeHoldReason: From<HoldReason>;
+
+		type VoteHoldReason: Get<<Self::Assets as fungibles::hold::Inspect<Self::AccountId>>::Reason>;
 
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
@@ -239,6 +246,13 @@ pub mod pallet {
 	/// The origin of the pallet
 	#[pallet::origin]
 	pub type Origin<T> = origin::RawOrigin<T>;
+
+	/// A reason for the pallet communities placing a hold on funds.
+	#[pallet::composite_enum]
+	pub enum HoldReason {
+		// A vote has been casted on a poll
+		VoteCasted(u32),
+	}
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
@@ -319,6 +333,13 @@ pub mod pallet {
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// not a member of the community
 		NotAMember,
+		/// The indicated index corresponds to a poll that is not ongoing
+		NotOngoing,
+		/// The track for the poll voted for does not correspond to the community ID
+		InvalidTrack,
+		/// The vote type does not correspond with the community's selected
+		/// [`DecisionMethod`][`origin::DecisionMethod`]
+		InvalidVoteType,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -480,16 +501,19 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// ///
-		// #[pallet::call_index(4)]
-		// pub fn vote(
-		// 	origin: OriginFor<T>,
-		// 	#[pallet::compact] poll_index: PollIndexOf<T>,
-		// 	_vote: VoteOf<T>,
-		// ) -> DispatchResult {
-		// 	let _ = ensure_signed(origin)?;
-		// 	// TODO
-		// 	Ok(())
-		// }
+		///
+		#[pallet::call_index(4)]
+		pub fn vote(
+			origin: OriginFor<T>,
+			membership_id: MembershipIdOf<T>,
+			#[pallet::compact] poll_index: PollIndexOf<T>,
+			vote: VoteOf<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+			let community_id = CommunityIdOf::<T>::from(membership_id);
+
+			Self::do_vote(&who, &community_id, poll_index, vote)
+		}
 	}
 }

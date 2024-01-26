@@ -1,13 +1,19 @@
 use crate::{
+	origin::DecisionMethod,
 	types::{
 		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityMetadata, CommunityState, ConstSizedField, MembershipIdOf,
-		PalletsOriginOf, Tally, VoteWeight,
+		PalletsOriginOf, PollIndexOf, Tally, Vote, VoteOf, VoteWeight,
 	},
-	CommunityIdFor, Config, Error, Info, Metadata, Pallet,
+	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Metadata, Pallet,
 };
 use frame_support::{
 	pallet_prelude::*,
-	traits::membership::{GenericRank, Inspect, WithRank},
+	traits::{
+		fungible::MutateHold as FunMutateHold,
+		fungibles::MutateHold as FunsMutateHold,
+		membership::{GenericRank, Inspect, WithRank},
+		Polling,
+	},
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec::Vec;
@@ -67,6 +73,69 @@ impl<T: Config> Pallet<T> {
 				description: description.as_ref().unwrap_or(&metadata.description).clone(),
 				main_url: url.as_ref().unwrap_or(&metadata.main_url).clone(),
 			};
+		})
+	}
+
+	pub(crate) fn do_vote(
+		who: &AccountIdOf<T>,
+		community_id: &CommunityIdOf<T>,
+		poll_index: PollIndexOf<T>,
+		vote: VoteOf<T>,
+	) -> DispatchResult {
+		T::Polls::try_access_poll(poll_index, |poll_status| {
+			let (tally, _class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
+			// ensure!(community_id == class, Error::<T>::InvalidTrack);
+
+			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
+
+			let maybe_vote = Self::community_vote_of(&who, poll_index);
+			if let Some(vote) = maybe_vote {
+				tally.remove_vote(vote.clone().into(), vote.into());
+			}
+
+			let say = match vote.clone() {
+				Vote::AssetBalance(say, asset_id, asset_balance) => {
+					ensure!(
+						decision_method == DecisionMethod::CommunityAsset(asset_id.clone()),
+						Error::<T>::InvalidVoteType
+					);
+
+					T::Assets::hold(asset_id, &T::VoteHoldReason::get(), &who, asset_balance)?;
+
+					say
+				}
+				Vote::NativeBalance(say, balance) => {
+					ensure!(
+						decision_method == DecisionMethod::NativeToken,
+						Error::<T>::InvalidVoteType
+					);
+
+					let poll_index = {
+						let encoded = poll_index.encode();
+						let bytes = encoded[..].try_into().expect(
+							"poll_index is defined on referenda as u32, therefore encoding it should be [u8; 4]; qed",
+						);
+						u32::from_le_bytes(bytes)
+					};
+
+					T::Balances::hold(&HoldReason::VoteCasted(poll_index).into(), &who, balance)?;
+
+					say
+				}
+				Vote::Standard(say) => {
+					ensure!(
+						decision_method == DecisionMethod::Membership || decision_method == DecisionMethod::Rank,
+						Error::<T>::InvalidVoteType
+					);
+
+					say
+				}
+			};
+
+			tally.add_vote(say, vote.clone().into());
+			CommunityVotes::<T>::insert(&who, &poll_index, vote);
+
+			Ok(())
 		})
 	}
 }
