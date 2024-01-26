@@ -289,6 +289,9 @@ pub mod pallet {
 			description: Option<ConstSizedField<256>>,
 			main_url: Option<ConstSizedField<256>>,
 		},
+		DecisionMethodSet {
+			id: T::CommunityId,
+		},
 		MemberAdded {
 			who: AccountIdOf<T>,
 			membership_id: MembershipIdOf<T>,
@@ -460,6 +463,22 @@ pub mod pallet {
 		}
 
 		// === Governance ===
+
+		///
+		#[pallet::call_index(7)]
+		pub fn set_decision_method(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			decision_method: DecisionMethodFor<T>,
+		) -> DispatchResult {
+			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+			CommunityDecisionMethod::<T>::set(community_id, decision_method);
+
+			Self::deposit_event(Event::DecisionMethodSet {
+				id: community_id.clone(),
+			});
+			Ok(())
+		}
 
 		// ///
 		// #[pallet::call_index(4)]
