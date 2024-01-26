@@ -2,12 +2,14 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		fungible::HoldConsideration, membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf,
-		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EqualPrivilegeOnly, Footprint,
+		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EnsureOriginWithArg, EqualPrivilegeOnly,
+		Footprint,
 	},
 	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
+use pallet_referenda::{TrackIdOf, TracksInfo};
 use parity_scale_codec::Compact;
 use sp_core::H256;
 use sp_io::TestExternalities;
@@ -109,8 +111,8 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ConstU32<10>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type RuntimeHoldReason = ();
-	type RuntimeFreezeReason = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = ();
 	type MaxHolds = ConstU32<10>;
 	type MaxFreezes = ConstU32<10>;
@@ -168,10 +170,26 @@ impl pallet_referenda::Config for Test {
 	type Tracks = Tracks;
 	type Preimages = Preimage;
 }
+
+pub struct EnsureOriginToTrack;
+impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToTrack {
+	type Success = ();
+
+	fn try_origin(o: RuntimeOrigin, id: &TrackIdOf<Test, ()>) -> Result<Self::Success, RuntimeOrigin> {
+		let track_id_for_origin: TrackIdOf<Test, ()> = Tracks::track_for(&o.clone().caller).map_err(|_| o.clone())?;
+		frame_support::ensure!(&track_id_for_origin == id, o);
+
+		Ok(())
+	}
+}
+
 impl pallet_referenda_tracks::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type TrackId = CommunityId;
 	type MaxTracks = ConstU32<2>;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureOriginToTrack;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -184,12 +202,17 @@ impl Convert<Footprint, u128> for ConvertDeposit {
 		(a.count * 2 + a.size).into()
 	}
 }
+
+parameter_types! {
+	pub PreimageHoldReason: RuntimeHoldReason = pallet_preimage::HoldReason::Preimage.into();
+}
+
 impl pallet_preimage::Config for Test {
 	type WeightInfo = ();
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureSigned<AccountId>;
-	type Consideration = HoldConsideration<AccountId, Balances, (), ConvertDeposit>;
+	type Consideration = HoldConsideration<AccountId, Balances, PreimageHoldReason, ConvertDeposit>;
 }
 
 impl pallet_scheduler::Config for Test {
@@ -210,7 +233,9 @@ parameter_types! {
 	pub const MembershipsCollectionId: CollectionId = 1;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = COMMUNITY;
+	pub VoteHoldReason: RuntimeHoldReason = pallet_communities::HoldReason::VoteCasted(0).into();
 }
+
 type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
@@ -225,28 +250,9 @@ impl pallet_communities::Config for Test {
 	type PalletId = CommunitiesPalletId;
 	type Polls = Referenda;
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type VoteHoldReason = VoteHoldReason;
 	type WeightInfo = WeightInfo;
-}
-
-fn create_memberships(memberships: &[MembershipId]) {
-	use frame_support::traits::tokens::nonfungible_v2::Mutate;
-	let account = Communities::community_account(&COMMUNITY);
-	let collection = MembershipsCollectionId::get();
-	Nfts::do_create_collection(
-		collection,
-		account.clone(),
-		account.clone(),
-		Default::default(),
-		0,
-		pallet_nfts::Event::ForceCreated {
-			collection,
-			owner: account.clone(),
-		},
-	)
-	.expect("creates collection");
-	for m in memberships {
-		MembershipCollection::mint_into(m, &account, &Default::default(), true).expect("can mint");
-	}
 }
 
 pub const COMMUNITY: CommunityId = CommunityId::new(1);
@@ -254,15 +260,117 @@ pub const COMMUNITY_ORGIN: OriginCaller = OriginCaller::Communities(pallet_commu
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
-	let t = frame_system::GenesisConfig::<Test>::default().build_storage().unwrap();
-	let mut ext = TestExternalities::new(t);
-	ext.execute_with(|| {
-		System::set_block_number(1);
-		Communities::create(frame_system::RawOrigin::Root.into(), COMMUNITY_ORGIN, COMMUNITY).expect("Adds community");
-		create_memberships(memberships);
-		for m in members {
-			Communities::add_member(COMMUNITY_ORGIN.into(), m.clone()).expect("Adds member");
+	TestEnvBuilder::new()
+		.with_members(members)
+		.with_memberships(memberships)
+		.build()
+}
+
+#[derive(Default)]
+pub(crate) struct TestEnvBuilder {
+	assets_config: AssetsConfig,
+	balances: Vec<(AccountId, Balance)>,
+	members: Vec<AccountId>,
+	memberships: Vec<MembershipId>,
+}
+
+impl TestEnvBuilder {
+	pub(crate) fn new() -> Self {
+		Self::default()
+	}
+
+	pub(crate) fn add_asset(
+		mut self,
+		id: &AssetId,
+		owner: &AccountId,
+		is_sufficient: bool,
+		min_balance: Balance,
+		// name, symbol, decimals
+		maybe_metadata: Option<(Vec<u8>, Vec<u8>, u8)>,
+		maybe_accounts: Option<Vec<(AccountId, Balance)>>,
+	) -> Self {
+		self.assets_config
+			.assets
+			.push((id.clone(), owner.clone(), is_sufficient, min_balance));
+
+		if let Some((name, symbol, decimals)) = maybe_metadata {
+			self.assets_config.metadata.push((id.clone(), name, symbol, decimals));
 		}
-	});
-	ext
+
+		self.assets_config.accounts.append(
+			&mut maybe_accounts
+				.unwrap_or_default()
+				.into_iter()
+				.map(|(account_id, balance)| (id.clone(), account_id, balance))
+				.collect(),
+		);
+
+		self
+	}
+
+	pub(crate) fn with_balances(mut self, balances: &[(AccountId, Balance)]) -> Self {
+		self.balances = balances.to_vec();
+		self
+	}
+
+	pub(crate) fn with_members(mut self, members: &[AccountId]) -> Self {
+		self.members = members.to_vec();
+		self
+	}
+
+	pub(crate) fn with_memberships(mut self, memberships: &[MembershipId]) -> Self {
+		self.memberships = memberships.to_vec();
+		self
+	}
+
+	pub(crate) fn build(self) -> sp_io::TestExternalities {
+		let t = RuntimeGenesisConfig {
+			assets: self.assets_config,
+			balances: pallet_balances::GenesisConfig {
+				balances: self.balances,
+			},
+			system: Default::default(),
+		}
+		.build_storage()
+		.unwrap();
+
+		let mut ext = TestExternalities::new(t);
+
+		ext.execute_with(|| {
+			System::set_block_number(1);
+			Communities::create(frame_system::RawOrigin::Root.into(), COMMUNITY_ORGIN, COMMUNITY)
+				.expect("Adds community");
+
+			Self::create_memberships(&self.memberships);
+			for m in self.members {
+				Communities::add_member(COMMUNITY_ORGIN.into(), m.clone()).expect("Adds member");
+			}
+		});
+
+		ext
+	}
+
+	fn create_memberships(memberships: &[MembershipId]) {
+		use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+		let account = Communities::community_account(&COMMUNITY);
+		let collection = MembershipsCollectionId::get();
+
+		Nfts::do_create_collection(
+			collection,
+			account.clone(),
+			account.clone(),
+			Default::default(),
+			0,
+			pallet_nfts::Event::ForceCreated {
+				collection,
+				owner: account.clone(),
+			},
+		)
+		.expect("creates collection");
+
+		for m in memberships {
+			MembershipCollection::mint_into(m, &account, &Default::default(), true).expect("can mint");
+		}
+	}
 }
