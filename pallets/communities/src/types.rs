@@ -90,9 +90,9 @@ where
 	}
 }
 
-impl<A, B, N> Into<bool> for Vote<A, B, N> {
-	fn into(self) -> bool {
-		match self {
+impl<A, B, N> From<Vote<A, B, N>> for bool {
+	fn from(value: Vote<A, B, N>) -> bool {
+		match value {
 			Vote::AssetBalance(say, _, _) => say,
 			Vote::NativeBalance(say, _) => say,
 			Vote::Standard(say) => say,

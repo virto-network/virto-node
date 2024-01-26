@@ -88,7 +88,7 @@ impl<T: Config> Pallet<T> {
 
 			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
 
-			let maybe_vote = Self::community_vote_of(&who, poll_index);
+			let maybe_vote = Self::community_vote_of(who, poll_index);
 			if let Some(vote) = maybe_vote {
 				tally.remove_vote(vote.clone().into(), vote.into());
 			}
@@ -100,7 +100,7 @@ impl<T: Config> Pallet<T> {
 						Error::<T>::InvalidVoteType
 					);
 
-					T::Assets::hold(asset_id, &T::VoteHoldReason::get(), &who, asset_balance)?;
+					T::Assets::hold(asset_id, &T::VoteHoldReason::get(), who, asset_balance)?;
 
 					say
 				}
@@ -118,7 +118,7 @@ impl<T: Config> Pallet<T> {
 						u32::from_le_bytes(bytes)
 					};
 
-					T::Balances::hold(&HoldReason::VoteCasted(poll_index).into(), &who, balance)?;
+					T::Balances::hold(&HoldReason::VoteCasted(poll_index).into(), who, balance)?;
 
 					say
 				}
@@ -133,7 +133,7 @@ impl<T: Config> Pallet<T> {
 			};
 
 			tally.add_vote(say, vote.clone().into());
-			CommunityVotes::<T>::insert(&who, &poll_index, vote);
+			CommunityVotes::<T>::insert(who, poll_index, vote);
 
 			Ok(())
 		})
