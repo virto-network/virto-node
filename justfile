@@ -79,7 +79,7 @@ container_net := "podman6"
 expose_rpc := if rol == "full" { " -p 9944:9944 -p 9945:9945" } else { "" }
 
 create-container:
-	@^mkdir -p release
+	@mkdir release
 	podman rm -f {{ container_name }}
 	podman network create --ignore --ipv6 {{ container_net }}
 	podman create --name {{ container_name }}{{ expose_rpc }} -p 30333:30333 -p 30334:30334 -p 9615:9615 --network {{ container_net }} --volume {{ container_name }}-data:/data {{ image }} {{ container_args }}
@@ -87,13 +87,13 @@ create-container:
 	open release/container-{{ chain }}-{{ rol }}.service | str replace "ExecStart" "ExecStartPre=/bin/rm -f %t/%n.ctr-id\nExecStart" | save -f release/container-{{ chain }}-{{ rol }}.service
 
 _parachain_launch_artifacts:
-	@^mkdir -p release
+	@mkdir release
 	{{ node }} export-genesis-state --chain {{ chain }} | save -f release/{{ chain }}_genesis
 	{{ node }} export-genesis-wasm --chain {{ chain }} | save -f release/{{ chain }}_genesis.wasm
 	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
 
 _copy_compressed_runtime: build-local
-	@^mkdir -p release
+	@mkdir release
 	cp target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm release/
 
 release-artifacts: _copy_compressed_runtime create-container
@@ -112,11 +112,24 @@ zombienet network="": build-local
 	}
 	bin/zombienet-{{ _zufix }} -p native spawn $"zombienet/($net).toml"
 
-get-zombienet-dependencies: (_get-latest "zombienet" "zombienet-"+_zufix) (_get-latest "polkadot" "polkadot") (_get-latest "cumulus" "polkadot-parachain")
+get-zombienet-dependencies: (_get-latest "zombienet" "zombienet-"+_zufix) (_get-latest "cumulus" "polkadot-parachain") compile-polkadot-for-zombienet
+
+compile-polkadot-for-zombienet:
+	#!/usr/bin/env nu
+	mkdir bin
+	# Compile polkadot with fast-runtime feature
+	let polkadot = (open Cargo.toml | get workspace.dependencies.sp-core)
+	let dir = (mktemp -d polkadot-sdk.XXX)
+	git clone --branch $polkadot.branch --depth 1 $polkadot.git $dir
+	echo $"(ansi defb)Compiling Polkadot(ansi reset) \(($polkadot.git):($polkadot.branch)\)"
+	cargo build --manifest-path ($dir | path join Cargo.toml) --locked --profile testnet --features fast-runtime --bin polkadot --bin polkadot-prepare-worker --bin polkadot-execute-worker
+	mv -f ($dir | path join target/testnet/polkadot) bin/
+	mv -f ($dir | path join target/testnet/polkadot-prepare-worker) bin/
+	mv -f ($dir | path join target/testnet/polkadot-execute-worker) bin/
 
 _get-latest repo bin:
 	#!/usr/bin/env nu
-	^mkdir -p bin
+	mkdir bin
 	http get https://api.github.com/repos/paritytech/{{ repo }}/releases
 	# cumulus has two kinds of releases, we exclude runtimes
 	| where "tag_name" !~ "parachains" | first | get assets_url | http get $in
