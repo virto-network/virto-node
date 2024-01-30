@@ -1,3 +1,4 @@
+# NOTE: This justfile relies heavily on nushell, make sure to install it: https://www.nushell.sh
 set shell := ["nu", "-c"]
 podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
 ver := `open node/Cargo.toml | get package.version`
@@ -85,13 +86,17 @@ create-container:
 	podman generate systemd --new --no-header --env 'NODE_ARGS=' --env 'RELAY_ARGS=' --name {{ container_name }} | str replace -a '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
 	open release/container-{{ chain }}-{{ rol }}.service | str replace "ExecStart" "ExecStartPre=/bin/rm -f %t/%n.ctr-id\nExecStart" | save -f release/container-{{ chain }}-{{ rol }}.service
 
-_chain_artifacts:
+_parachain_launch_artifacts:
 	@^mkdir -p release
 	{{ node }} export-genesis-state --chain {{ chain }} | save -f release/{{ chain }}_genesis
 	{{ node }} export-genesis-wasm --chain {{ chain }} | save -f release/{{ chain }}_genesis.wasm
 	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
 
-release-artifacts: build-local create-container
+_copy_compressed_runtime: build-local
+	@^mkdir -p release
+	cp target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm release/
+
+release-artifacts: _copy_compressed_runtime create-container
 
 release-tag:
 	git tag {{ ver }}
