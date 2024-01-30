@@ -158,7 +158,7 @@ pub mod pallet {
 		_,
 		(
 			NMapKey<Blake2_128Concat, T::AccountId>,
-			NMapKey<Blake2_128Concat, T::AccountId>,
+			// NMapKey<Blake2_128Concat, T::AccountId>,
 			NMapKey<Blake2_128Concat, T::PaymentId>,
 		),
 		PaymentDetail<T>,
@@ -313,18 +313,17 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::release())]
 		pub fn release(
 			origin: OriginFor<T>,
-			beneficiary: AccountIdLookupOf<T>,
+			// beneficiary: AccountIdLookupOf<T>,
 			payment_id: T::PaymentId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let beneficiary = T::Lookup::lookup(beneficiary)?;
+			// let beneficiary = T::Lookup::lookup(beneficiary)?;
 
 			// ensure the payment is in Created state
-			let payment =
-				Payment::<T>::get((&sender, &beneficiary, &payment_id)).map_err(|_| Error::<T>::InvalidPayment)?;
+			let payment = Payment::<T>::get((&sender, &payment_id)).map_err(|_| Error::<T>::InvalidPayment)?;
 			ensure!(payment.state == PaymentState::Created, Error::<T>::InvalidAction);
 
-			Self::settle_payment(&sender, &beneficiary, &payment_id, None)?;
+			Self::settle_payment(&sender, &payment_id, None)?;
 
 			Self::deposit_event(Event::PaymentReleased { sender, beneficiary });
 			Ok(().into())
