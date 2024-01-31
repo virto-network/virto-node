@@ -4701,9 +4701,12 @@ dependencies = [
  "pallet-communities",
  "pallet-message-queue",
  "pallet-multisig",
+ "pallet-nfts",
  "pallet-payments",
  "pallet-preimage",
  "pallet-proxy",
+ "pallet-referenda",
+ "pallet-referenda-tracks",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
@@ -7113,11 +7116,13 @@ name = "pallet-referenda-tracks"
 version = "4.0.0-dev"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#849870d8e4d26d587a74f040851177872079e55a"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-referenda",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
