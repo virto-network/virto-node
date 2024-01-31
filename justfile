@@ -101,6 +101,24 @@ release-artifacts: _copy_compressed_runtime create-container
 release-tag:
 	git tag {{ ver }}
 
+bump mode="minor":
+	#!/usr/bin/env nu
+	let ver = '{{ ver }}' | inc --{{ mode }}
+	open -r runtime/kreivo/Cargo.toml | str replace -m '^version = "(.+)"$' $'version = "($ver)"' | save -f runtime/kreivo/Cargo.toml
+	open -r node/Cargo.toml | str replace -m '^version = "(.+)"$' $'version = "($ver)"' | save -f node/Cargo.toml
+	# bump spec version
+	const SRC = 'runtime/kreivo/src/lib.rs'
+	let src = open $SRC
+	let spec_ver = ($src | grep spec_version | parse -r '\s*spec_version: (?<ver>\w+),' | first | get ver | into int)
+	$src | str replace -m '(\s*spec_version:) (\w+)' $'$1 ($spec_ver | $in + 1)' | save -f $SRC
+	# assume minor and major versions channge tx version
+	let bump_tx = '{{ mode }}' == 'minor' or '{{ mode }}' == 'major'
+	if $bump_tx {
+		let src = open $SRC
+		let tx_ver = ($src | grep transaction_version | parse -r '\s*transaction_version: (?<ver>\w+),' | first | get ver | into int)
+		$src | str replace -m '(\s*transaction_version:) (\w+)' $'$1 ($tx_ver | $in + 1)' | save -f $SRC
+	}
+
 _zufix := os() + if os() == "linux" { "-x64" } else { "" }
 zombienet network="": build-local
 	#!/usr/bin/env nu
