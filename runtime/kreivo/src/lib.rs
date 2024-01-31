@@ -18,6 +18,7 @@ use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_runtime::traits::Verify;
 pub use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup},
@@ -32,14 +33,15 @@ use sp_version::RuntimeVersion;
 use frame_support::{
 	construct_runtime, derive_impl,
 	dispatch::DispatchClass,
+	ensure,
 	genesis_builder_helper::{build_config, create_default_config},
 	ord_parameter_types, parameter_types,
 	traits::{
 		fungible::HoldConsideration,
 		fungibles,
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
-		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, LinearStoragePrice,
-		NeverEnsureOrigin, TransformOrigin,
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOf, EitherOfDiverse,
+		EnsureOriginWithArg, LinearStoragePrice, NeverEnsureOrigin, TransformOrigin,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	BoundedVec, PalletId,
@@ -49,8 +51,10 @@ pub use frame_system::Call as SystemCall;
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
 };
+
+use pallet_nfts::PalletFeatures;
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use xcm_config::{RelayLocation, TrustBackedAssetsConvertedConcreteId, XcmOriginToTransactDispatchOrigin};
@@ -63,7 +67,10 @@ pub use polkadot_runtime_common::{prod_or_fast, BlockHashCount, SlowAdjustingFee
 
 pub use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
+// Virto toolchain
 pub mod payments;
+
+pub mod communities;
 
 // XCM Imports
 use xcm::latest::prelude::BodyId;
@@ -161,6 +168,7 @@ construct_runtime!(
 		Burner: pallet_burner = 12,
 		Assets: pallet_assets::<Instance1> = 13,
 		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 14,
+		Nfts: pallet_nfts::<Instance1> = 15,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship = 20,
@@ -189,6 +197,12 @@ construct_runtime!(
 
 		// Virto Tooling
 		Payments: pallet_payments = 60,
+
+		// Communities at Kreivo
+		Communities: pallet_communities = 71,
+		CommunityTracks: pallet_referenda_tracks::<Instance2> = 72,
+		CommunityReferenda: pallet_referenda::<Instance2> = 73,
+		CommunityMemberships: pallet_nfts::<Instance2> = 74,
 	}
 );
 
@@ -701,6 +715,11 @@ mod benches {
 		[pallet_proxy, Proxy]
 		[pallet_asset_registry, AssetRegistry]
 		[pallet_payments, Payments]
+		[pallet_nfts, Nfts]
+		[pallet_communities, Communities]
+		[pallet_referenda_tracks, CommunityTracks]
+		[pallet_referenda, CommunityReferenda]
+		[pallet_nfts, CommunityMemberships]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.
 		[pallet_xcm_benchmarks::fungible, XcmBalances]
