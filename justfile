@@ -67,36 +67,16 @@ build-container-local: build-local
 	CMD ["--dev"]'
 	| {{ podman }} build . -t {{ image }}:{{ ver }} -t {{ image }}:latest -f -
 
-### container set-up with base configuration ###
-node_args := "--base-path /data '$NODE_ARGS' " + if rol == "collator" {
-	"--collator"
-} else { "--rpc-external --rpc-cors=all" }
-container_args := node_args + " -- '$RELAY_ARGS' --sync=warp --state-pruning=200 --blocks-pruning=200 --no-telemetry --chain " + relay + if rol == "full" {
-	" --rpc-external --rpc-cors=all"
-} else { "" }
-container_name := chain + "-" + rol
-container_net := "podman6"
-expose_rpc := if rol == "full" { " -p 9944:9944 -p 9945:9945" } else { "" }
-
-create-container:
-	@mkdir release
-	podman rm -f {{ container_name }}
-	podman network create --ignore --ipv6 {{ container_net }}
-	podman create --name {{ container_name }}{{ expose_rpc }} -p 30333:30333 -p 30334:30334 -p 9615:9615 --network {{ container_net }} --volume {{ container_name }}-data:/data {{ image }} {{ container_args }}
-	podman generate systemd --new --no-header --env 'NODE_ARGS=' --env 'RELAY_ARGS=' --name {{ container_name }} | str replace -a '$$' '$' | save -f release/container-{{ chain }}-{{ rol }}.service
-	open release/container-{{ chain }}-{{ rol }}.service | str replace "ExecStart" "ExecStartPre=/bin/rm -f %t/%n.ctr-id\nExecStart" | save -f release/container-{{ chain }}-{{ rol }}.service
-
 _parachain_launch_artifacts:
 	@mkdir release
 	{{ node }} export-genesis-state --chain {{ chain }} | save -f release/{{ chain }}_genesis
 	{{ node }} export-genesis-wasm --chain {{ chain }} | save -f release/{{ chain }}_genesis.wasm
 	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
 
-_copy_compressed_runtime: build-local
-	@mkdir release
+release-artifacts:
+	@mkdir release; rm release/*
 	cp target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm release/
-
-release-artifacts: _copy_compressed_runtime create-container
+	cp *.container release
 
 release-tag:
 	git tag {{ ver }}
