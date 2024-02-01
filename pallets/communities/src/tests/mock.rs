@@ -2,8 +2,8 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		fungible::HoldConsideration, membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf,
-		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EnsureOriginWithArg, EqualPrivilegeOnly,
-		Footprint,
+		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EnsureOriginWithArg,
+		EqualPrivilegeOnly, Footprint,
 	},
 	weights::Weight,
 	PalletId,
@@ -126,7 +126,8 @@ impl pallet_nfts::Config for Test {
 	type AttributeDepositBase = ();
 	type CollectionDeposit = ();
 	type CollectionId = CollectionId;
-	type CreateOrigin = AsEnsureOriginWithArg<EnsureRootWithSuccess<AccountId, RootAccount>>;
+	type CreateOrigin =
+		AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, RootAccount>, EnsureSigned<AccountId>>>;
 	type Currency = ();
 	type DepositPerByte = ();
 	type Features = ();
@@ -260,8 +261,7 @@ pub const COMMUNITY_ORIGIN: OriginCaller =
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
 	TestEnvBuilder::new()
-		.with_members(members)
-		.with_memberships(memberships)
+		.add_community(COMMUNITY, members, memberships)
 		.build()
 }
 
@@ -269,8 +269,9 @@ pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_i
 pub(crate) struct TestEnvBuilder {
 	assets_config: AssetsConfig,
 	balances: Vec<(AccountId, Balance)>,
-	members: Vec<AccountId>,
-	memberships: Vec<MembershipId>,
+	communities: Vec<CommunityId>,
+	members: Vec<(CommunityId, AccountId)>,
+	memberships: Vec<(CommunityId, MembershipId)>,
 }
 
 impl TestEnvBuilder {
@@ -307,18 +308,31 @@ impl TestEnvBuilder {
 		self
 	}
 
+	pub(crate) fn add_community(
+		mut self,
+		community_id: CommunityId,
+		members: &[AccountId],
+		memberships: &[MembershipId],
+	) -> Self {
+		self.communities.push(community_id);
+		self.members.append(
+			&mut members
+				.into_iter()
+				.map(|m| (community_id, m.clone()))
+				.collect::<Vec<_>>(),
+		);
+		self.memberships.append(
+			&mut memberships
+				.into_iter()
+				.map(|m| (community_id, m.clone()))
+				.collect::<Vec<_>>(),
+		);
+
+		self
+	}
+
 	pub(crate) fn with_balances(mut self, balances: &[(AccountId, Balance)]) -> Self {
 		self.balances = balances.to_vec();
-		self
-	}
-
-	pub(crate) fn with_members(mut self, members: &[AccountId]) -> Self {
-		self.members = members.to_vec();
-		self
-	}
-
-	pub(crate) fn with_memberships(mut self, memberships: &[MembershipId]) -> Self {
-		self.memberships = memberships.to_vec();
 		self
 	}
 
@@ -337,39 +351,56 @@ impl TestEnvBuilder {
 
 		ext.execute_with(|| {
 			System::set_block_number(1);
-			Communities::create(frame_system::RawOrigin::Root.into(), COMMUNITY_ORGIN, COMMUNITY)
-				.expect("Adds community");
 
-			Self::create_memberships(&self.memberships);
-			for m in self.members {
-				Communities::add_member(COMMUNITY_ORGIN.into(), m.clone()).expect("Adds member");
+			for community_id in &self.communities {
+				Self::create_community(&community_id);
+			}
+
+			let collection = MembershipsCollectionId::get();
+
+			Nfts::do_create_collection(
+				collection,
+				RootAccount::get(),
+				RootAccount::get(),
+				Default::default(),
+				0,
+				pallet_nfts::Event::ForceCreated {
+					collection,
+					owner: RootAccount::get(),
+				},
+			)
+			.expect("creates collection");
+
+			for (community_id, membership) in &self.memberships {
+				Self::create_membership(community_id, membership);
+			}
+
+			for (community_id, who) in &self.members {
+				Communities::add_member(Self::create_community_origin_caller(community_id).into(), who.clone())
+					.expect("Adds member");
 			}
 		});
 
 		ext
 	}
 
-	fn create_memberships(memberships: &[MembershipId]) {
+	fn create_community_origin_caller(community_id: &CommunityId) -> OriginCaller {
+		OriginCaller::Communities(pallet_communities::Origin::<Test>::new(community_id.clone()))
+	}
+
+	fn create_community(community_id: &CommunityId) {
+		Communities::create(
+			frame_system::RawOrigin::Root.into(),
+			Self::create_community_origin_caller(community_id),
+			community_id.clone(),
+		)
+		.expect("Adds community");
+	}
+
+	fn create_membership(community_id: &CommunityId, membership_id: &MembershipId) {
 		use frame_support::traits::tokens::nonfungible_v2::Mutate;
 
-		let account = Communities::community_account(&COMMUNITY);
-		let collection = MembershipsCollectionId::get();
-
-		Nfts::do_create_collection(
-			collection,
-			account.clone(),
-			account.clone(),
-			Default::default(),
-			0,
-			pallet_nfts::Event::ForceCreated {
-				collection,
-				owner: account.clone(),
-			},
-		)
-		.expect("creates collection");
-
-		for m in memberships {
-			MembershipCollection::mint_into(m, &account, &Default::default(), true).expect("can mint");
-		}
+		let account = Communities::community_account(community_id);
+		MembershipCollection::mint_into(membership_id, &account, &Default::default(), true).expect("can mint");
 	}
 }
