@@ -233,7 +233,6 @@ parameter_types! {
 	pub const MembershipsCollectionId: CollectionId = 1;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = COMMUNITY;
-	pub VoteHoldReason: RuntimeHoldReason = pallet_communities::HoldReason::VoteCasted(0).into();
 }
 
 type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
@@ -251,7 +250,6 @@ impl pallet_communities::Config for Test {
 	type Polls = Referenda;
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
-	type VoteHoldReason = VoteHoldReason;
 	type WeightInfo = WeightInfo;
 }
 
