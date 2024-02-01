@@ -191,7 +191,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
-	use types::{CommunityIdOf, MembershipIdOf, PollIndexOf, *};
+	use types::*;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
