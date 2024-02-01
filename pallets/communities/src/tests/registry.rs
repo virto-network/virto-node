@@ -18,7 +18,7 @@ mod create {
 
 			// Should fail adding the community
 			assert_noop!(
-				Communities::create(Root.into(), COMMUNITY_ORGIN, COMMUNITY),
+				Communities::create(Root.into(), COMMUNITY_ORIGIN, COMMUNITY),
 				Error::CommunityAlreadyExists
 			);
 		});
@@ -30,7 +30,7 @@ mod create {
 			System::assert_has_event(
 				Event::CommunityCreated {
 					id: COMMUNITY,
-					origin: COMMUNITY_ORGIN,
+					origin: COMMUNITY_ORIGIN,
 				}
 				.into(),
 			);

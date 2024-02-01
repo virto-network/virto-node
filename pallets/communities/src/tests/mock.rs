@@ -256,7 +256,8 @@ impl pallet_communities::Config for Test {
 }
 
 pub const COMMUNITY: CommunityId = CommunityId::new(1);
-pub const COMMUNITY_ORGIN: OriginCaller = OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
+pub const COMMUNITY_ORIGIN: OriginCaller =
+	OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
