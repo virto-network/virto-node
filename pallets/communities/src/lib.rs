@@ -185,6 +185,7 @@ pub mod pallet {
 		traits::{
 			fungible, fungibles,
 			membership::{self, Inspect, Membership, Mutate, WithRank},
+			tokens::{fungible::MutateHold as FunMutateHold, fungibles::MutateHold as FunsMutateHold, Precision},
 			EnsureOrigin, Polling,
 		},
 		Blake2_128Concat, Parameter,
@@ -338,6 +339,8 @@ pub mod pallet {
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// not a member of the community
 		NotAMember,
+		/// The indicated index corresponds to a poll that is already ongoing
+		AlreadyOngoing,
 		/// The indicated index corresponds to a poll that is not ongoing
 		NotOngoing,
 		/// The track for the poll voted for does not correspond to the
@@ -346,6 +349,8 @@ pub mod pallet {
 		/// The vote type does not correspond with the community's selected
 		/// [`DecisionMethod`][`origin::DecisionMethod`]
 		InvalidVoteType,
+		/// The poll
+		NoLocksInPlace,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -518,6 +523,38 @@ pub mod pallet {
 			let community_id = CommunityIdOf::<T>::from(membership_id);
 
 			Self::do_vote(&who, &community_id, poll_index, vote)
+		}
+
+		///
+		#[pallet::call_index(8)]
+		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
+
+			match Self::community_vote_of(&who, &poll_index) {
+				Some(Vote::AssetBalance(_, asset_id, amount)) => {
+					T::Assets::release(
+						asset_id,
+						&HoldReason::VoteCasted(poll_index).into(),
+						&who,
+						amount,
+						Precision::BestEffort,
+					)?;
+				}
+				Some(Vote::NativeBalance(_, amount)) => {
+					T::Balances::release(
+						&HoldReason::VoteCasted(poll_index).into(),
+						&who,
+						amount,
+						Precision::BestEffort,
+					)?;
+				}
+				_ => Err(Error::<T>::NoLocksInPlace)?,
+			}
+
+			CommunityVotes::<T>::remove(&who, &poll_index);
+
+			Ok(())
 		}
 	}
 }
