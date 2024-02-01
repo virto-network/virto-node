@@ -55,8 +55,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			None,
 			Some(vec![(COMMUNITY_MEMBER_1, 10)]),
 		)
-		.with_memberships(&[MEMBERSHIP_1])
-		.with_members(&[COMMUNITY_MEMBER_1])
+		.add_community(COMMUNITY, &[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1, MEMBERSHIP_2])
 		.build()
 }
 
@@ -74,12 +73,12 @@ mod vote {
 					RuntimeOrigin::root(),
 					COMMUNITY,
 					CommunityTrack::get(),
-					COMMUNITY_ORGIN
+					COMMUNITY_ORIGIN
 				));
 
 				assert_ok!(Referenda::submit(
 					RuntimeOrigin::signed(COMMUNITY_MEMBER_1),
-					Box::new(COMMUNITY_ORGIN),
+					Box::new(COMMUNITY_ORIGIN),
 					Proposal::get(),
 					frame_support::traits::schedule::DispatchTime::After(1),
 				));
@@ -98,7 +97,7 @@ mod vote {
 					0
 				));
 
-				next_block();
+				tick_block();
 			});
 
 			ext
@@ -161,9 +160,14 @@ mod vote {
 					Vote::Standard(true)
 				));
 
-				next_block();
+				tick_block();
 
-				// After voting, the poll should be completed and approved
+				// After voting, the poll starts confirmation
+				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 0 }.into());
+
+				tick_block();
+
+				// After confirmation, vote should be completed and approved
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::Confirmed {
 						index: 0,
@@ -177,7 +181,7 @@ mod vote {
 					.into(),
 				);
 
-				next_block();
+				tick_block();
 
 				// Proposal is enacted and exeuted
 				System::assert_has_event(
@@ -187,7 +191,46 @@ mod vote {
 							90, 97, 76, 213, 143, 172, 44, 37, 211, 244, 120, 171, 6, 186, 7, 72, 240, 129, 154, 150,
 							114, 108, 198, 14, 114, 155, 12, 20, 109, 197, 98, 214,
 						]),
-						result: Err(Error::CommunityAtCapacity.into()),
+						result: Ok(()),
+					}
+					.into(),
+				);
+			});
+		}
+
+		#[test]
+		fn poll_rejects_on_single_nay() {
+			single_membership_setup().execute_with(|| {
+				// Before voting, the poll is ongoing
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::DecisionStarted {
+						index: 0,
+						track: COMMUNITY,
+						proposal: Proposal::get(),
+						tally: Tally::default(),
+					}
+					.into(),
+				);
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(COMMUNITY_MEMBER_1),
+					MEMBERSHIP_1,
+					0,
+					Vote::Standard(false)
+				));
+
+				tick_blocks(5);
+
+				// After voting, the poll should be completed and approved
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Rejected {
+						index: 0,
+						tally: Tally {
+							ayes: 0,
+							nays: 1,
+							bare_ayes: 0,
+							..Default::default()
+						},
 					}
 					.into(),
 				);
