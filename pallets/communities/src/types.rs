@@ -123,7 +123,7 @@ impl<T> Default for Tally<T> {
 }
 
 impl<T: Config> Tally<T> {
-	pub(crate) fn max_ayes(community_id: T::CommunityId) -> VoteWeight {
+	pub(crate) fn max_ayes(community_id: CommunityIdOf<T>) -> VoteWeight {
 		let decision_method = CommunityDecisionMethod::<T>::get(community_id);
 
 		match decision_method {
