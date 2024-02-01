@@ -156,9 +156,9 @@ dependencies = [
 
 [[package]]
 name = "anstyle"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7079075b41f533b8c61d2a4d073c4676e1f8b249ff94a393b0595db304e0dd87"
+checksum = "2faccea4cc4ab4a667ce676a30e8ec13922a692c99bb8f5b11f1502c72e04220"
 
 [[package]]
 name = "anstyle-parse"
@@ -634,7 +634,7 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
@@ -713,9 +713,9 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "2.3.0"
+version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb41eb19024a91746eba0773aa5e16036045bbf45733766661099e182ea6a744"
+checksum = "8f97ab0c5b00a7cdbe5a371b9a782ee7be1316095885c8a4ea1daf490eb0ef65"
 dependencies = [
  "async-lock 3.3.0",
  "cfg-if",
@@ -784,7 +784,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e47d90f65a225c4527103a8d747001fc56e375203592b25ad103e1ca13124c5"
 dependencies = [
- "async-io 2.3.0",
+ "async-io 2.3.1",
  "async-lock 2.8.0",
  "atomic-waker",
  "cfg-if",
@@ -2115,7 +2115,7 @@ dependencies = [
  "sp-application-crypto",
  "sp-consensus-aura",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -2140,12 +2140,12 @@ dependencies = [
  "polkadot-runtime-parachains",
  "scale-info",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-inherents",
  "sp-io",
  "sp-runtime",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
  "sp-version",
  "staging-xcm",
@@ -2174,7 +2174,7 @@ dependencies = [
  "pallet-session",
  "parity-scale-codec",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -2189,7 +2189,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
 ]
 
@@ -2213,7 +2213,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-executor",
 ]
@@ -2229,7 +2229,7 @@ dependencies = [
  "sp-api",
  "sp-consensus-aura",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -2244,7 +2244,7 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
  "staging-xcm",
 ]
@@ -2266,8 +2266,8 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
  "sp-trie",
  "tracing",
 ]
@@ -2277,8 +2277,8 @@ name = "cumulus-primitives-proof-size-hostfunction"
 version = "0.1.0"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#849870d8e4d26d587a74f040851177872079e55a"
 dependencies = [
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
+ "sp-runtime-interface 17.0.0",
  "sp-trie",
 ]
 
@@ -2291,7 +2291,7 @@ dependencies = [
  "futures",
  "parity-scale-codec",
  "sp-inherents",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-timestamp",
 ]
 
@@ -2309,7 +2309,7 @@ dependencies = [
  "polkadot-runtime-parachains",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
@@ -2428,7 +2428,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-state-machine",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-storage 13.0.0",
  "sp-version",
  "thiserror",
  "tokio",
@@ -2447,7 +2447,7 @@ dependencies = [
  "polkadot-primitives",
  "sp-runtime",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
 ]
 
@@ -2790,7 +2790,7 @@ dependencies = [
  "regex",
  "syn 2.0.48",
  "termcolor",
- "toml 0.8.8",
+ "toml 0.8.9",
  "walkdir",
 ]
 
@@ -3303,9 +3303,9 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-runtime-interface 17.0.0",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
  "static_assertions",
 ]
 
@@ -3344,15 +3344,15 @@ dependencies = [
  "sp-blockchain",
  "sp-core",
  "sp-database",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-inherents",
  "sp-io",
  "sp-keystore",
  "sp-runtime",
  "sp-state-machine",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-storage 13.0.0",
  "sp-trie",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-wasm-interface 14.0.0",
  "thiserror",
  "thousands",
 ]
@@ -3382,7 +3382,7 @@ dependencies = [
  "sp-core",
  "sp-npos-elections",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -3399,8 +3399,8 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-tracing 10.0.0",
 ]
 
 [[package]]
@@ -3462,7 +3462,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-core-hashing-proc-macro",
- "sp-debug-derive 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-debug-derive 8.0.0",
  "sp-genesis-builder",
  "sp-inherents",
  "sp-io",
@@ -3470,8 +3470,8 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-tracing 10.0.0",
  "sp-weights",
  "static_assertions",
  "tt-call",
@@ -3533,7 +3533,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-version",
  "sp-weights",
 ]
@@ -3550,7 +3550,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -3571,7 +3571,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -3884,7 +3884,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap 2.1.0",
+ "indexmap 2.2.2",
  "slab",
  "tokio",
  "tokio-util",
@@ -4207,7 +4207,7 @@ version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6b0422c86d7ce0e97169cc42e04ae643caf278874a7a3c87b8150a220dc7e1e"
 dependencies = [
- "async-io 2.3.0",
+ "async-io 2.3.1",
  "core-foundation",
  "fnv",
  "futures",
@@ -4281,9 +4281,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.1.0"
+version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d530e1a18b1cb4c484e6e34556a0d948706958449fca0cab753d649f2bce3d1f"
+checksum = "824b2ae422412366ba479e8111fd301f7b5faece8149317bb81925979a53f520"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.3",
@@ -4674,7 +4674,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-transaction-pool",
  "sp-version",
  "sp-weights",
@@ -4757,9 +4757,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.152"
+version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13e3bf6590cbc649f4d1a3eefc9d5d6eb746f5200ffb04e5e142700b8faa56e7"
+checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 
 [[package]]
 name = "libloading"
@@ -5246,9 +5246,9 @@ dependencies = [
 
 [[package]]
 name = "libz-sys"
-version = "1.1.14"
+version = "1.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "295c17e837573c8c821dbaeb3cceb3d745ad082f7572191409e69cbc1b3fd050"
+checksum = "037731f5d3aaa87a5675e895b63ddff1a87624bc29f77004ea829809654e48f6"
 dependencies = [
  "cc",
  "pkg-config",
@@ -6115,9 +6115,9 @@ checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "orchestra"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5edee0c1917703f8a28cd229cf6a5c91a7ee34be139ced16509ac5b53b9d0c51"
+checksum = "2356622ffdfe72362a45a1e5e87bb113b8327e596e39b91f11f0ef4395c8da79"
 dependencies = [
  "async-trait",
  "dyn-clonable",
@@ -6132,12 +6132,12 @@ dependencies = [
 
 [[package]]
 name = "orchestra-proc-macro"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f60e64a3808b5bb2786b9da09fc70714952aabcdd0eeba6f1718e3dbc34ad5b"
+checksum = "eedb646674596266dc9bb2b5c7eea7c36b32ecc7777eba0d510196972d72c4fd"
 dependencies = [
  "expander 2.0.0",
- "indexmap 2.1.0",
+ "indexmap 2.2.2",
  "itertools 0.11.0",
  "petgraph",
  "proc-macro-crate 1.3.1",
@@ -6170,7 +6170,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6185,7 +6185,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6205,7 +6205,7 @@ dependencies = [
  "sp-io",
  "sp-keystore",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
 ]
 
@@ -6224,7 +6224,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6240,7 +6240,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6257,7 +6257,7 @@ dependencies = [
  "sp-application-crypto",
  "sp-consensus-aura",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6273,7 +6273,7 @@ dependencies = [
  "sp-application-crypto",
  "sp-authority-discovery",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6287,7 +6287,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6311,7 +6311,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6332,8 +6332,8 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-tracing 10.0.0",
 ]
 
 [[package]]
@@ -6348,7 +6348,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6368,7 +6368,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6393,7 +6393,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6411,7 +6411,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6431,7 +6431,7 @@ dependencies = [
  "sp-io",
  "sp-keystore",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6450,7 +6450,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6469,7 +6469,7 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6486,7 +6486,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6508,7 +6508,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "virto-common",
 ]
@@ -6527,7 +6527,7 @@ dependencies = [
  "serde",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6545,7 +6545,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6567,7 +6567,7 @@ dependencies = [
  "sp-io",
  "sp-npos-elections",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "strum 0.24.1",
 ]
 
@@ -6582,7 +6582,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-npos-elections",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6601,7 +6601,7 @@ dependencies = [
  "sp-npos-elections",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6620,7 +6620,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6643,7 +6643,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6659,7 +6659,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6679,7 +6679,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6696,7 +6696,7 @@ dependencies = [
  "sp-io",
  "sp-keyring",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6713,7 +6713,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6731,7 +6731,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-weights",
 ]
 
@@ -6750,7 +6750,7 @@ dependencies = [
  "sp-io",
  "sp-mmr-primitives",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6766,7 +6766,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6784,7 +6784,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6800,7 +6800,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6818,8 +6818,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-tracing 10.0.0",
 ]
 
 [[package]]
@@ -6837,9 +6837,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-runtime-interface 17.0.0",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6850,7 +6850,7 @@ dependencies = [
  "pallet-nomination-pools",
  "parity-scale-codec",
  "sp-api",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6867,7 +6867,7 @@ dependencies = [
  "serde",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6891,7 +6891,7 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6914,7 +6914,7 @@ dependencies = [
  "sp-io",
  "sp-keystore",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6931,7 +6931,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6946,7 +6946,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6964,7 +6964,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6979,7 +6979,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -6998,7 +6998,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7014,7 +7014,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7029,7 +7029,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7046,7 +7046,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-weights",
 ]
 
@@ -7068,7 +7068,7 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
 ]
 
@@ -7086,7 +7086,7 @@ dependencies = [
  "rand 0.8.5",
  "sp-runtime",
  "sp-session",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7104,7 +7104,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7127,7 +7127,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7174,7 +7174,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7190,7 +7190,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7208,8 +7208,8 @@ dependencies = [
  "sp-inherents",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
  "sp-timestamp",
 ]
 
@@ -7229,7 +7229,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7245,7 +7245,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7292,7 +7292,7 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7308,7 +7308,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7323,7 +7323,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7338,7 +7338,7 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -7358,7 +7358,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
@@ -7377,7 +7377,7 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
@@ -7410,7 +7410,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-parachain-info",
  "staging-xcm",
  "staging-xcm-builder",
@@ -7635,7 +7635,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1d3afd2628e69da2be385eb6f2fd57c8ac7977ceeff6dc166ff1657b0e386a9"
 dependencies = [
  "fixedbitset",
- "indexmap 2.1.0",
+ "indexmap 2.2.2",
 ]
 
 [[package]]
@@ -7849,7 +7849,7 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -8189,7 +8189,7 @@ dependencies = [
  "slotmap",
  "sp-core",
  "sp-maybe-compressed-blob",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-wasm-interface 14.0.0",
  "tempfile",
  "thiserror",
  "tokio",
@@ -8230,9 +8230,9 @@ dependencies = [
  "sc-executor-wasmtime",
  "seccompiler",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-io",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-tracing 10.0.0",
  "substrate-build-script-utils",
  "thiserror",
  "tracing-gum",
@@ -8445,7 +8445,7 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-weights",
 ]
 
@@ -8472,7 +8472,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -8551,7 +8551,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-builder",
  "staging-xcm-executor",
@@ -8567,8 +8567,8 @@ dependencies = [
  "frame-benchmarking",
  "parity-scale-codec",
  "polkadot-primitives",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-tracing 10.0.0",
 ]
 
 [[package]]
@@ -8612,7 +8612,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "staging-xcm",
  "staging-xcm-executor",
  "static_assertions",
@@ -8725,7 +8725,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-state-machine",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-storage 13.0.0",
  "sp-timestamp",
  "sp-transaction-pool",
  "sp-version",
@@ -8971,7 +8971,7 @@ version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d37c51ca738a55da99dc0c4a34860fd675453b8b36209178c2249bb13651284"
 dependencies = [
- "toml_edit 0.21.0",
+ "toml_edit 0.21.1",
 ]
 
 [[package]]
@@ -9605,8 +9605,8 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
  "sp-transaction-pool",
  "sp-version",
  "staging-xcm",
@@ -9716,7 +9716,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-transaction-pool",
  "sp-version",
  "staging-parachain-info",
@@ -9917,7 +9917,7 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 dependencies = [
  "log",
  "sp-core",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-wasm-interface 14.0.0",
  "thiserror",
 ]
 
@@ -10082,11 +10082,11 @@ dependencies = [
  "sp-consensus",
  "sp-core",
  "sp-database",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-runtime",
  "sp-state-machine",
  "sp-statement-store",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-storage 13.0.0",
  "sp-trie",
  "substrate-prometheus-endpoint",
 ]
@@ -10391,13 +10391,13 @@ dependencies = [
  "schnellru",
  "sp-api",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-io",
  "sp-panic-handler",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-runtime-interface 17.0.0",
  "sp-trie",
  "sp-version",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-wasm-interface 14.0.0",
  "tracing",
 ]
 
@@ -10408,7 +10408,7 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 dependencies = [
  "sc-allocator",
  "sp-maybe-compressed-blob",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-wasm-interface 14.0.0",
  "thiserror",
  "wasm-instrument",
 ]
@@ -10426,8 +10426,8 @@ dependencies = [
  "rustix 0.36.17",
  "sc-allocator",
  "sc-executor-common",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-runtime-interface 17.0.0",
+ "sp-wasm-interface 14.0.0",
  "wasmtime",
 ]
 
@@ -10692,7 +10692,7 @@ dependencies = [
  "sc-utils",
  "sp-api",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-keystore",
  "sp-offchain",
  "sp-runtime",
@@ -10849,12 +10849,12 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-keystore",
  "sp-runtime",
  "sp-session",
  "sp-state-machine",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-storage 13.0.0",
  "sp-transaction-pool",
  "sp-transaction-storage-proof",
  "sp-trie",
@@ -10929,7 +10929,7 @@ dependencies = [
  "serde_json",
  "sp-core",
  "sp-io",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -10974,7 +10974,7 @@ dependencies = [
  "sp-core",
  "sp-rpc",
  "sp-runtime",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-tracing 10.0.0",
  "thiserror",
  "tracing",
  "tracing-log",
@@ -11012,7 +11012,7 @@ dependencies = [
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-tracing 10.0.0",
  "sp-transaction-pool",
  "substrate-prometheus-endpoint",
  "thiserror",
@@ -11176,9 +11176,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1"
-version = "0.28.1"
+version = "0.28.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f622567e3b4b38154fb8190bcf6b160d7a4301d70595a49195b48c116007a27"
+checksum = "d24b59d129cdadea20aea4fb2352fa053712e5d713eee47d700cd4b2bc002f10"
 dependencies = [
  "secp256k1-sys",
 ]
@@ -11250,18 +11250,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.195"
+version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63261df402c67811e9ac6def069e4786148c4563f4b50fd4bf30aa370d626b02"
+checksum = "870026e60fa08c69f064aa766c10f10b1d62db9ccd4d0abb206472bee0ce3b32"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.195"
+version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46fe8f8603d81ba86327b23a2e9cdf49e1255fb94a4c5f297f6ee0547178ea2c"
+checksum = "33c85360c95e7d137454dc81d9a4ed2b8efd8fbe19cee57357b32b9771fccb67"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11270,9 +11270,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.111"
+version = "1.0.113"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "176e46fa42316f18edd598015a5166857fc835ec732f5215eac6b7bdbf0a84f4"
+checksum = "69801b70b1c3dac963ecb03a364ba0ceda9cf60c71cfe475e99864759c8b8a79"
 dependencies = [
  "itoa",
  "ryu",
@@ -11440,7 +11440,7 @@ dependencies = [
  "parity-scale-codec",
  "paste",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -11636,11 +11636,11 @@ dependencies = [
  "scale-info",
  "sp-api-proc-macro",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-metadata-ir",
  "sp-runtime",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
  "sp-version",
  "thiserror",
@@ -11670,7 +11670,7 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -11683,7 +11683,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "static_assertions",
 ]
 
@@ -11715,7 +11715,7 @@ dependencies = [
  "sp-api",
  "sp-application-crypto",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -11726,7 +11726,7 @@ dependencies = [
  "sp-api",
  "sp-inherents",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -11775,7 +11775,7 @@ dependencies = [
  "sp-consensus-slots",
  "sp-inherents",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-timestamp",
 ]
 
@@ -11794,7 +11794,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-timestamp",
 ]
 
@@ -11813,7 +11813,7 @@ dependencies = [
  "sp-io",
  "sp-mmr-primitives",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "strum 0.24.1",
 ]
 
@@ -11832,7 +11832,7 @@ dependencies = [
  "sp-core",
  "sp-keystore",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -11843,7 +11843,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-timestamp",
 ]
 
@@ -11880,11 +11880,11 @@ dependencies = [
  "secrecy",
  "serde",
  "sp-core-hashing",
- "sp-debug-derive 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-debug-derive 8.0.0",
+ "sp-externalities 0.19.0",
+ "sp-runtime-interface 17.0.0",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
  "ss58-registry",
  "substrate-bip39",
  "thiserror",
@@ -11918,8 +11918,8 @@ dependencies = [
 
 [[package]]
 name = "sp-crypto-ec-utils"
-version = "0.4.1"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "0.10.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-377-ext",
@@ -11933,8 +11933,8 @@ dependencies = [
  "ark-ed-on-bls12-381-bandersnatch",
  "ark-ed-on-bls12-381-bandersnatch-ext",
  "ark-scale 0.0.12",
- "sp-runtime-interface 17.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
+ "sp-runtime-interface 24.0.0",
+ "sp-std 14.0.0",
 ]
 
 [[package]]
@@ -11958,8 +11958,8 @@ dependencies = [
 
 [[package]]
 name = "sp-debug-derive"
-version = "8.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "14.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11973,19 +11973,19 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
 ]
 
 [[package]]
 name = "sp-externalities"
-version = "0.19.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "0.25.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-storage 13.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
+ "sp-std 14.0.0",
+ "sp-storage 19.0.0",
 ]
 
 [[package]]
@@ -11996,7 +11996,7 @@ dependencies = [
  "serde_json",
  "sp-api",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12009,7 +12009,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "thiserror",
 ]
 
@@ -12026,12 +12026,12 @@ dependencies = [
  "rustversion",
  "secp256k1",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-keystore",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-runtime-interface 17.0.0",
  "sp-state-machine",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-tracing 10.0.0",
  "sp-trie",
  "tracing",
  "tracing-core",
@@ -12056,7 +12056,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "thiserror",
 ]
 
@@ -12077,7 +12077,7 @@ dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12089,7 +12089,7 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-application-crypto",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12104,9 +12104,9 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-core",
- "sp-debug-derive 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-debug-derive 8.0.0",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "thiserror",
 ]
 
@@ -12121,7 +12121,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12174,7 +12174,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-weights",
 ]
 
@@ -12187,30 +12187,30 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "primitive-types",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-runtime-interface-proc-macro 11.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-tracing 10.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
+ "sp-runtime-interface-proc-macro 11.0.0",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
+ "sp-tracing 10.0.0",
+ "sp-wasm-interface 14.0.0",
  "static_assertions",
 ]
 
 [[package]]
 name = "sp-runtime-interface"
-version = "17.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "24.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "primitive-types",
- "sp-externalities 0.19.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-runtime-interface-proc-macro 11.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-storage 13.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-tracing 10.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-wasm-interface 14.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
+ "sp-externalities 0.25.0",
+ "sp-runtime-interface-proc-macro 17.0.0",
+ "sp-std 14.0.0",
+ "sp-storage 19.0.0",
+ "sp-tracing 16.0.0",
+ "sp-wasm-interface 20.0.0",
  "static_assertions",
 ]
 
@@ -12229,8 +12229,8 @@ dependencies = [
 
 [[package]]
 name = "sp-runtime-interface-proc-macro"
-version = "11.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "17.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "Inflector",
  "expander 2.0.0",
@@ -12252,7 +12252,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12266,7 +12266,7 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12281,9 +12281,9 @@ dependencies = [
  "rand 0.8.5",
  "smallvec",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-panic-handler",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
  "thiserror",
  "tracing",
@@ -12306,10 +12306,10 @@ dependencies = [
  "sp-api",
  "sp-application-crypto",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
  "sp-runtime",
- "sp-runtime-interface 17.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-runtime-interface 17.0.0",
+ "sp-std 8.0.0",
  "thiserror",
  "x25519-dalek 2.0.0",
 ]
@@ -12321,8 +12321,8 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 
 [[package]]
 name = "sp-std"
-version = "8.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "14.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 
 [[package]]
 name = "sp-storage"
@@ -12333,21 +12333,21 @@ dependencies = [
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-debug-derive 8.0.0",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
 name = "sp-storage"
-version = "13.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "19.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
- "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
+ "sp-debug-derive 14.0.0",
+ "sp-std 14.0.0",
 ]
 
 [[package]]
@@ -12359,7 +12359,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-inherents",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "thiserror",
 ]
 
@@ -12369,7 +12369,7 @@ version = "10.0.0"
 source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#849870d8e4d26d587a74f040851177872079e55a"
 dependencies = [
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -12377,11 +12377,11 @@ dependencies = [
 
 [[package]]
 name = "sp-tracing"
-version = "10.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "16.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
+ "sp-std 14.0.0",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -12407,7 +12407,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-trie",
 ]
 
@@ -12428,8 +12428,8 @@ dependencies = [
  "scale-info",
  "schnellru",
  "sp-core",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-externalities 0.19.0",
+ "sp-std 8.0.0",
  "thiserror",
  "tracing",
  "trie-db",
@@ -12448,7 +12448,7 @@ dependencies = [
  "serde",
  "sp-core-hashing-proc-macro",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-version-proc-macro",
  "thiserror",
 ]
@@ -12473,20 +12473,20 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "wasmtime",
 ]
 
 [[package]]
 name = "sp-wasm-interface"
-version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#5c79ed37dc6485d2b3f4fc69b8cf8456b86b4e17"
+version = "20.0.0"
+source = "git+https://github.com/paritytech/polkadot-sdk#8a8f6f98775a50758123ae760bb020f833354e59"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
- "sp-std 8.0.0 (git+https://github.com/paritytech/polkadot-sdk)",
+ "sp-std 14.0.0",
  "wasmtime",
 ]
 
@@ -12501,8 +12501,8 @@ dependencies = [
  "serde",
  "smallvec",
  "sp-arithmetic",
- "sp-debug-derive 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-debug-derive 8.0.0",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12570,7 +12570,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
 ]
 
 [[package]]
@@ -12606,7 +12606,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-weights",
  "staging-xcm",
  "staging-xcm-executor",
@@ -12628,7 +12628,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
  "sp-weights",
  "staging-xcm",
 ]
@@ -13200,14 +13200,14 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.8"
+version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1a195ec8c9da26928f773888e0742ca3ca1040c6cd859c919c9f59c1954ab35"
+checksum = "c6a4b9e8023eb94392d3dca65d717c53abc5dad49c07cb65bb8fcd87115fa325"
 dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.21.0",
+ "toml_edit 0.21.1",
 ]
 
 [[package]]
@@ -13225,7 +13225,7 @@ version = "0.19.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
 dependencies = [
- "indexmap 2.1.0",
+ "indexmap 2.2.2",
  "serde",
  "serde_spanned",
  "toml_datetime",
@@ -13238,18 +13238,18 @@ version = "0.20.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70f427fce4d84c72b5b732388bf4a9f4531b53f74e2887e3ecb2481f68f66d81"
 dependencies = [
- "indexmap 2.1.0",
+ "indexmap 2.2.2",
  "toml_datetime",
  "winnow",
 ]
 
 [[package]]
 name = "toml_edit"
-version = "0.21.0"
+version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d34d383cd00a163b4a5b85053df514d45bc330f6de7737edfe0a93311d1eaa03"
+checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
 dependencies = [
- "indexmap 2.1.0",
+ "indexmap 2.2.2",
  "serde",
  "serde_spanned",
  "toml_datetime",
@@ -13500,8 +13500,8 @@ dependencies = [
  "sp-consensus-aura",
  "sp-consensus-babe",
  "sp-core",
- "sp-debug-derive 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-externalities 0.19.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-debug-derive 8.0.0",
+ "sp-externalities 0.19.0",
  "sp-inherents",
  "sp-io",
  "sp-keystore",
@@ -14329,8 +14329,8 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 8.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
- "sp-storage 13.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0)",
+ "sp-std 8.0.0",
+ "sp-storage 13.0.0",
  "sp-transaction-pool",
  "sp-version",
  "staging-xcm",
@@ -14369,9 +14369,9 @@ dependencies = [
 
 [[package]]
 name = "wide"
-version = "0.7.14"
+version = "0.7.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b31891d644eba1789fb6715f27fbc322e4bdf2ecdc412ede1993246159271613"
+checksum = "89beec544f246e679fc25490e3f8e08003bc4bf612068f325120dad4cea02c1c"
 dependencies = [
  "bytemuck",
  "safe_arch",
@@ -14642,9 +14642,9 @@ checksum = "dff9641d1cd4be8d1a070daf9e3773c5f67e78b4d9d42263020c057706765c04"
 
 [[package]]
 name = "winnow"
-version = "0.5.34"
+version = "0.5.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7cf47b659b318dccbd69cc4797a39ae128f533dce7902a1096044d1967b9c16"
+checksum = "818ce546a11a9986bc24f93d0cdf38a8a1a400f1473ea8c82e59f6e0ffab9249"
 dependencies = [
  "memchr",
 ]
