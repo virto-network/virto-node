@@ -3,13 +3,13 @@ use frame_support::{
 	traits::{
 		fungible::HoldConsideration, membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf,
 		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EnsureOriginWithArg,
-		EqualPrivilegeOnly, Footprint,
+		EqualPrivilegeOnly, Footprint, OriginTrait,
 	},
 	weights::Weight,
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
-use pallet_referenda::{TrackIdOf, TracksInfo};
+use pallet_referenda::{TrackIdOf, TrackInfoOf, TracksInfo};
 use parity_scale_codec::Compact;
 use sp_core::H256;
 use sp_io::TestExternalities;
@@ -17,11 +17,11 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage, MultiSignature,
 };
-use virto_common::{CommunityId, MembershipId, MembershipInfo};
+pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 
 use crate::{
 	self as pallet_communities,
-	origin::EnsureCommunity,
+	origin::{DecisionMethod, EnsureCommunity},
 	types::{Tally, VoteWeight},
 };
 
@@ -76,6 +76,8 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+// Monetary operations
+
 impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
@@ -118,6 +120,8 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ConstU32<10>;
 }
 
+// Memberships
+
 parameter_types! {
 	pub const RootAccount: AccountId = AccountId::new([0xff; 32]);
 }
@@ -149,49 +153,7 @@ impl pallet_nfts::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-		pub static AlarmInterval: u64 = 1;
-}
-impl pallet_referenda::Config for Test {
-	type WeightInfo = ();
-	type RuntimeCall = RuntimeCall;
-	type RuntimeEvent = RuntimeEvent;
-	type Scheduler = Scheduler;
-	type Currency = pallet_balances::Pallet<Self>;
-	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
-	type CancelOrigin = EnsureRoot<AccountId>;
-	type KillOrigin = EnsureRoot<AccountId>;
-	type Slash = ();
-	type Votes = VoteWeight;
-	type Tally = Tally<Test>;
-	type SubmissionDeposit = ConstU128<2>;
-	type MaxQueued = ConstU32<3>;
-	type UndecidingTimeout = ConstU64<20>;
-	type AlarmInterval = AlarmInterval;
-	type Tracks = Tracks;
-	type Preimages = Preimage;
-}
-
-pub struct EnsureOriginToTrack;
-impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToTrack {
-	type Success = ();
-
-	fn try_origin(o: RuntimeOrigin, id: &TrackIdOf<Test, ()>) -> Result<Self::Success, RuntimeOrigin> {
-		let track_id_for_origin: TrackIdOf<Test, ()> = Tracks::track_for(&o.clone().caller).map_err(|_| o.clone())?;
-		frame_support::ensure!(&track_id_for_origin == id, o);
-
-		Ok(())
-	}
-}
-
-impl pallet_referenda_tracks::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type TrackId = CommunityId;
-	type MaxTracks = ConstU32<2>;
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type UpdateOrigin = EnsureOriginToTrack;
-	type WeightInfo = ();
-}
+// Governance at Communities
 
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Weight::from_parts(1_000_000_000, 1_048_576);
@@ -229,6 +191,55 @@ impl pallet_scheduler::Config for Test {
 	type Preimages = Preimage;
 }
 
+pub struct EnsureOriginToTrack;
+impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToTrack {
+	type Success = ();
+
+	fn try_origin(o: RuntimeOrigin, id: &TrackIdOf<Test, ()>) -> Result<Self::Success, RuntimeOrigin> {
+		let track_id_for_origin: TrackIdOf<Test, ()> = Tracks::track_for(&o.clone().caller).map_err(|_| o.clone())?;
+		frame_support::ensure!(&track_id_for_origin == id, o);
+
+		Ok(())
+	}
+}
+
+parameter_types! {
+	pub const MaxTracks: u32 = u32::MAX;
+}
+impl pallet_referenda_tracks::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type TrackId = CommunityId;
+	type MaxTracks = MaxTracks;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureOriginToTrack;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+		pub static AlarmInterval: u64 = 1;
+}
+impl pallet_referenda::Config for Test {
+	type WeightInfo = ();
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type Scheduler = Scheduler;
+	type Currency = pallet_balances::Pallet<Self>;
+	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
+	type CancelOrigin = EnsureRoot<AccountId>;
+	type KillOrigin = EnsureRoot<AccountId>;
+	type Slash = ();
+	type Votes = VoteWeight;
+	type Tally = Tally<Test>;
+	type SubmissionDeposit = ConstU128<2>;
+	type MaxQueued = ConstU32<3>;
+	type UndecidingTimeout = ConstU64<20>;
+	type AlarmInterval = AlarmInterval;
+	type Tracks = Tracks;
+	type Preimages = Preimage;
+}
+
+// Communities
+
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	pub const MembershipsCollectionId: CollectionId = 1;
@@ -261,7 +272,7 @@ pub const COMMUNITY_ORIGIN: OriginCaller =
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
 	TestEnvBuilder::new()
-		.add_community(COMMUNITY, members, memberships)
+		.add_community(COMMUNITY, DecisionMethod::Membership, members, memberships, None)
 		.build()
 }
 
@@ -270,8 +281,10 @@ pub(crate) struct TestEnvBuilder {
 	assets_config: AssetsConfig,
 	balances: Vec<(AccountId, Balance)>,
 	communities: Vec<CommunityId>,
+	decision_methods: sp_std::collections::btree_map::BTreeMap<CommunityId, DecisionMethod<AssetId>>,
 	members: Vec<(CommunityId, AccountId)>,
 	memberships: Vec<(CommunityId, MembershipId)>,
+	tracks: Vec<(TrackIdOf<Test, ()>, TrackInfoOf<Test>)>,
 }
 
 impl TestEnvBuilder {
@@ -311,10 +324,13 @@ impl TestEnvBuilder {
 	pub(crate) fn add_community(
 		mut self,
 		community_id: CommunityId,
+		decision_method: DecisionMethod<AssetId>,
 		members: &[AccountId],
 		memberships: &[MembershipId],
+		maybe_track: Option<TrackInfoOf<Test>>,
 	) -> Self {
 		self.communities.push(community_id);
+		self.decision_methods.insert(community_id, decision_method);
 		self.members.append(
 			&mut members
 				.into_iter()
@@ -327,6 +343,9 @@ impl TestEnvBuilder {
 				.map(|m| (community_id, m.clone()))
 				.collect::<Vec<_>>(),
 		);
+		if let Some(track) = maybe_track {
+			self.tracks.push((community_id, track));
+		}
 
 		self
 	}
@@ -352,12 +371,7 @@ impl TestEnvBuilder {
 		ext.execute_with(|| {
 			System::set_block_number(1);
 
-			for community_id in &self.communities {
-				Self::create_community(&community_id);
-			}
-
 			let collection = MembershipsCollectionId::get();
-
 			Nfts::do_create_collection(
 				collection,
 				RootAccount::get(),
@@ -369,38 +383,67 @@ impl TestEnvBuilder {
 					owner: RootAccount::get(),
 				},
 			)
-			.expect("creates collection");
+			.expect("creates memberships collection");
 
-			for (community_id, membership) in &self.memberships {
-				Self::create_membership(community_id, membership);
-			}
+			for community_id in &self.communities {
+				let decision_method = self
+					.decision_methods
+					.get(community_id)
+					.expect("should include decision_method on add_community");
+				let community_origin: RuntimeOrigin = Self::create_community_origin(community_id, &decision_method);
 
-			for (community_id, who) in &self.members {
-				Communities::add_member(Self::create_community_origin_caller(community_id).into(), who.clone())
-					.expect("Adds member");
+				Communities::create(
+					RuntimeOrigin::root(),
+					community_origin.caller().clone(),
+					community_id.clone(),
+				)
+				.expect("can add community");
+
+				Communities::set_decision_method(RuntimeOrigin::root(), community_id.clone(), decision_method.clone())
+					.expect("can set decision info");
+
+				let mut members = self.members.iter().filter(|(cid, _)| cid == community_id);
+				let memberships = self.memberships.iter().filter(|(cid, _)| cid == community_id);
+
+				assert!(
+					self.memberships.len() >= self.members.len(),
+					"there should be at least as many memberships as there are members"
+				);
+
+				for (_, membership) in memberships {
+					use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+					let account = Communities::community_account(community_id);
+					MembershipCollection::mint_into(membership, &account, &Default::default(), true)
+						.expect("can mint membership");
+
+					if let Some((_, who)) = members.next() {
+						Communities::add_member(community_origin.clone(), who.clone()).expect("can add member");
+					}
+				}
+
+				for (_, track_info) in self.tracks.iter().filter(|(cid, _)| cid == community_id) {
+					Tracks::insert(
+						RuntimeOrigin::root(),
+						community_id.clone(),
+						track_info.clone(),
+						community_origin.caller().clone(),
+					)
+					.expect("can add track");
+				}
 			}
 		});
 
 		ext
 	}
 
-	fn create_community_origin_caller(community_id: &CommunityId) -> OriginCaller {
-		OriginCaller::Communities(pallet_communities::Origin::<Test>::new(community_id.clone()))
-	}
+	pub fn create_community_origin(
+		community_id: &CommunityId,
+		decision_method: &DecisionMethod<AssetId>,
+	) -> RuntimeOrigin {
+		let mut origin = pallet_communities::Origin::<Test>::new(community_id.clone());
+		origin.set_decision_method(decision_method.clone());
 
-	fn create_community(community_id: &CommunityId) {
-		Communities::create(
-			frame_system::RawOrigin::Root.into(),
-			Self::create_community_origin_caller(community_id),
-			community_id.clone(),
-		)
-		.expect("Adds community");
-	}
-
-	fn create_membership(community_id: &CommunityId, membership_id: &MembershipId) {
-		use frame_support::traits::tokens::nonfungible_v2::Mutate;
-
-		let account = Communities::community_account(community_id);
-		MembershipCollection::mint_into(membership_id, &account, &Default::default(), true).expect("can mint");
+		origin.into()
 	}
 }
