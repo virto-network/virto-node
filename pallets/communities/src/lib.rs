@@ -216,20 +216,25 @@ pub mod pallet {
 		/// Origin authorized to manage memeberships of an active community
 		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
-
-		/// The asset used for governance
-		type Assets: fungibles::Inspect<Self::AccountId> + fungibles::hold::Mutate<Self::AccountId>;
+		type Polls: Polling<
+			Tally<Self>,
+			Class = CommunityIdOf<Self>,
+			Index = u32,
+			Votes = VoteWeight,
+			Moment = BlockNumberFor<Self>,
+		>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
+		type Assets: fungibles::Inspect<Self::AccountId>
+			+ fungibles::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
+
+		/// Type represents interactions between fungible tokens (native token)
 		type Balances: fungible::Inspect<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
 			+ fungible::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
-
-		type VoteHoldReason: Get<<Self::Assets as fungibles::hold::Inspect<Self::AccountId>>::Reason>;
 
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.

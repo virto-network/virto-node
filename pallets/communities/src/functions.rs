@@ -83,8 +83,8 @@ impl<T: Config> Pallet<T> {
 		vote: VoteOf<T>,
 	) -> DispatchResult {
 		T::Polls::try_access_poll(poll_index, |poll_status| {
-			let (tally, _class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
-			// ensure!(community_id == class, Error::<T>::InvalidTrack);
+			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
+			ensure!(community_id == class, Error::<T>::InvalidTrack);
 
 			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
 
@@ -100,7 +100,7 @@ impl<T: Config> Pallet<T> {
 						Error::<T>::InvalidVoteType
 					);
 
-					T::Assets::hold(asset_id, &T::VoteHoldReason::get(), who, asset_balance)?;
+					T::Assets::hold(asset_id, &HoldReason::VoteCasted(poll_index).into(), who, asset_balance)?;
 
 					say
 				}
@@ -109,14 +109,6 @@ impl<T: Config> Pallet<T> {
 						decision_method == DecisionMethod::NativeToken,
 						Error::<T>::InvalidVoteType
 					);
-
-					let poll_index = {
-						let encoded = poll_index.encode();
-						let bytes = encoded[..].try_into().expect(
-							"poll_index is defined on referenda as u32, therefore encoding it should be [u8; 4]; qed",
-						);
-						u32::from_le_bytes(bytes)
-					};
 
 					T::Balances::hold(&HoldReason::VoteCasted(poll_index).into(), who, balance)?;
 
