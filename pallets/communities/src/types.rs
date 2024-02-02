@@ -124,9 +124,7 @@ impl<T> Default for Tally<T> {
 
 impl<T: Config> Tally<T> {
 	pub(crate) fn max_ayes(community_id: CommunityIdOf<T>) -> VoteWeight {
-		let decision_method = CommunityDecisionMethod::<T>::get(community_id);
-
-		match decision_method {
+		match CommunityDecisionMethod::<T>::get(community_id) {
 			DecisionMethod::Membership => CommunityMembersCount::<T>::get(community_id),
 			DecisionMethod::Rank => todo!("max_ayes is the sum of each rank of each membership"),
 			DecisionMethod::NativeToken => T::Balances::total_issuance().saturated_into::<VoteWeight>(),
