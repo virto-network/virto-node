@@ -80,7 +80,6 @@ parameter_types! {
 fn new_test_ext() -> sp_io::TestExternalities {
 	fn produce_memberships<const N: usize>(community_id: CommunityId) -> [MembershipId; N] {
 		(1..=N)
-			.into_iter()
 			.map(|n| MembershipId(community_id, n as u32))
 			.collect::<Vec<_>>()
 			.try_into()

@@ -424,7 +424,7 @@ pub mod pallet {
 				T::Membership::new(membership_id.clone()),
 				Some(who.clone()),
 			)?;
-			CommunityMembersCount::<T>::mutate(&community_id, |count| {
+			CommunityMembersCount::<T>::mutate(community_id, |count| {
 				*count += 1;
 			});
 
@@ -459,7 +459,7 @@ pub mod pallet {
 				T::Membership::new(membership_id.clone()),
 				Some(account),
 			)?;
-			CommunityMembersCount::<T>::mutate(&community_id, |count| {
+			CommunityMembersCount::<T>::mutate(community_id, |count| {
 				*count -= 1;
 			});
 
@@ -542,7 +542,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
 
-			match Self::community_vote_of(&who, &poll_index) {
+			match Self::community_vote_of(&who, poll_index) {
 				Some(Vote::AssetBalance(_, asset_id, amount)) => {
 					T::Assets::release(
 						asset_id,
@@ -563,7 +563,7 @@ pub mod pallet {
 				_ => Err(Error::<T>::NoLocksInPlace)?,
 			}
 
-			CommunityVotes::<T>::remove(&who, &poll_index);
+			CommunityVotes::<T>::remove(&who, poll_index);
 
 			Ok(())
 		}
