@@ -4,7 +4,7 @@ use crate::{
 		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityMetadata, CommunityState, ConstSizedField, MembershipIdOf,
 		PalletsOriginOf, PollIndexOf, Tally, Vote, VoteOf, VoteWeight,
 	},
-	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Metadata, Pallet,
+	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, Event, HoldReason, Info, Metadata, Pallet,
 };
 use frame_support::{
 	pallet_prelude::*,
@@ -84,7 +84,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
-			ensure!(community_id == class, Error::<T>::InvalidTrack);
+			ensure!(community_id == &class, Error::<T>::InvalidTrack);
 
 			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
 
@@ -125,7 +125,13 @@ impl<T: Config> Pallet<T> {
 			};
 
 			tally.add_vote(say, vote.clone().into());
-			CommunityVotes::<T>::insert(who, poll_index, vote);
+			CommunityVotes::<T>::insert(who.clone(), poll_index.clone(), vote.clone());
+
+			Self::deposit_event(Event::<T>::VoteCasted {
+				who: who.clone(),
+				poll_index,
+				vote,
+			});
 
 			Ok(())
 		})

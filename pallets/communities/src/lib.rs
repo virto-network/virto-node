@@ -192,7 +192,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
-	use types::*;
+	use types::{PollIndexOf, *};
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -211,11 +211,11 @@ pub mod pallet {
 		type MemberMgmt: membership::Inspect<Self::AccountId, MembershipInfo = Self::Membership, MembershipId = MembershipIdOf<Self>>
 			+ membership::Mutate<Self::AccountId>;
 
-		/// Origin authorized to manage memeberships of an active community
-		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
+		/// Origin authorized to manage the state of a community
+		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Origin authorized to manage memeberships of an active community
-		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
 
 		type Polls: Polling<
 			Tally<Self>,
@@ -324,6 +324,11 @@ pub mod pallet {
 			membership_id: MembershipIdOf<T>,
 			rank: membership::GenericRank,
 		},
+		VoteCasted {
+			who: AccountIdOf<T>,
+			poll_index: PollIndexOf<T>,
+			vote: VoteOf<T>,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -419,6 +424,9 @@ pub mod pallet {
 				T::Membership::new(membership_id.clone()),
 				Some(who.clone()),
 			)?;
+			CommunityMembersCount::<T>::mutate(&community_id, |count| {
+				*count += 1;
+			});
 
 			Self::deposit_event(Event::MemberAdded { who, membership_id });
 			Ok(())
@@ -451,6 +459,9 @@ pub mod pallet {
 				T::Membership::new(membership_id.clone()),
 				Some(account),
 			)?;
+			CommunityMembersCount::<T>::mutate(&community_id, |count| {
+				*count -= 1;
+			});
 
 			Self::deposit_event(Event::MemberRemoved { who, membership_id });
 			Ok(())
