@@ -331,16 +331,12 @@ impl TestEnvBuilder {
 	) -> Self {
 		self.communities.push(community_id);
 		self.decision_methods.insert(community_id, decision_method);
-		self.members.append(
-			&mut members
-				.into_iter()
-				.map(|m| (community_id, m.clone()))
-				.collect::<Vec<_>>(),
-		);
+		self.members
+			.append(&mut members.iter().map(|m| (community_id, m.to_owned())).collect::<Vec<_>>());
 		self.memberships.append(
 			&mut memberships
-				.into_iter()
-				.map(|m| (community_id, m.clone()))
+				.iter()
+				.map(|m| (community_id, m.to_owned()))
 				.collect::<Vec<_>>(),
 		);
 		if let Some(track) = maybe_track {
@@ -390,16 +386,12 @@ impl TestEnvBuilder {
 					.decision_methods
 					.get(community_id)
 					.expect("should include decision_method on add_community");
-				let community_origin: RuntimeOrigin = Self::create_community_origin(community_id, &decision_method);
+				let community_origin: RuntimeOrigin = Self::create_community_origin(community_id, decision_method);
 
-				Communities::create(
-					RuntimeOrigin::root(),
-					community_origin.caller().clone(),
-					community_id.clone(),
-				)
-				.expect("can add community");
+				Communities::create(RuntimeOrigin::root(), community_origin.caller().clone(), *community_id)
+					.expect("can add community");
 
-				Communities::set_decision_method(RuntimeOrigin::root(), community_id.clone(), decision_method.clone())
+				Communities::set_decision_method(RuntimeOrigin::root(), *community_id, decision_method.clone())
 					.expect("can set decision info");
 
 				let mut members = self.members.iter().filter(|(cid, _)| cid == community_id);
@@ -425,7 +417,7 @@ impl TestEnvBuilder {
 				for (_, track_info) in self.tracks.iter().filter(|(cid, _)| cid == community_id) {
 					Tracks::insert(
 						RuntimeOrigin::root(),
-						community_id.clone(),
+						*community_id,
 						track_info.clone(),
 						community_origin.caller().clone(),
 					)
@@ -441,7 +433,7 @@ impl TestEnvBuilder {
 		community_id: &CommunityId,
 		decision_method: &DecisionMethod<AssetId>,
 	) -> RuntimeOrigin {
-		let mut origin = pallet_communities::Origin::<Test>::new(community_id.clone());
+		let mut origin = pallet_communities::Origin::<Test>::new(*community_id);
 		origin.set_decision_method(decision_method.clone());
 
 		origin.into()
