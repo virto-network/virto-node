@@ -125,7 +125,7 @@ impl<T: Config> Pallet<T> {
 			};
 
 			tally.add_vote(say, vote.clone().into());
-			CommunityVotes::<T>::insert(who.clone(), poll_index.clone(), vote.clone());
+			CommunityVotes::<T>::insert(who.clone(), poll_index, vote.clone());
 
 			Self::deposit_event(Event::<T>::VoteCasted {
 				who: who.clone(),
