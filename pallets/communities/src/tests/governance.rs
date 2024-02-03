@@ -835,6 +835,107 @@ mod vote {
 	}
 }
 
+mod remove_vote {
+	use frame_support::traits::{fungible::Inspect, Polling};
+
+	use super::*;
+
+	#[test]
+	fn fails_if_not_a_member() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Communities::remove_vote(RuntimeOrigin::signed(BOB), MembershipId(COMMUNITY_A, 2), 0,),
+				Error::NotAMember
+			);
+		});
+	}
+
+	#[test]
+	fn fails_if_trying_to_remove_vote_from_invalid_track() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Communities::remove_vote(RuntimeOrigin::signed(ALICE), MembershipId(COMMUNITY_A, 1), 1),
+				Error::InvalidTrack
+			);
+		});
+	}
+
+	#[test]
+	fn fails_if_poll_is_no_vote_casted() {
+		new_test_ext().execute_with(|| {
+			assert_noop!(
+				Communities::remove_vote(RuntimeOrigin::signed(ALICE), MembershipId(COMMUNITY_A, 1), 0),
+				Error::NoVoteCasted
+			);
+		});
+	}
+
+	#[test]
+	fn it_works() {
+		new_test_ext().execute_with(|| {
+			assert_ok!(Communities::vote(
+				RuntimeOrigin::signed(ALICE),
+				MembershipId(COMMUNITY_A, 1),
+				0,
+				Vote::Standard(true)
+			));
+
+			tick_block();
+
+			assert_ok!(Communities::remove_vote(
+				RuntimeOrigin::signed(ALICE),
+				MembershipId(COMMUNITY_A, 1),
+				0
+			));
+
+			assert_eq!(
+				Referenda::as_ongoing(0).expect("we already created poll 0; qed").0,
+				Tally::default()
+			);
+		});
+
+		new_test_ext().execute_with(|| {
+			assert_ok!(Communities::vote(
+				RuntimeOrigin::signed(ALICE),
+				MembershipId(COMMUNITY_C, 1),
+				2,
+				Vote::NativeBalance(true, 15)
+			));
+
+			assert_eq!(
+				Balances::reducible_balance(
+					&ALICE,
+					frame_support::traits::tokens::Preservation::Expendable,
+					frame_support::traits::tokens::Fortitude::Polite
+				),
+				0
+			);
+
+			tick_block();
+
+			assert_ok!(Communities::remove_vote(
+				RuntimeOrigin::signed(ALICE),
+				MembershipId(COMMUNITY_C, 1),
+				2
+			));
+
+			assert_eq!(
+				Referenda::as_ongoing(2).expect("we already created poll 2; qed").0,
+				Tally::default()
+			);
+
+			assert_eq!(
+				Balances::reducible_balance(
+					&ALICE,
+					frame_support::traits::tokens::Preservation::Expendable,
+					frame_support::traits::tokens::Fortitude::Polite
+				),
+				7
+			);
+		});
+	}
+}
+
 mod unlock {
 	use super::*;
 
