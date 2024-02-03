@@ -5,15 +5,17 @@ use frame_system::pallet_prelude::BlockNumberFor;
 pub fn tick_block() {
 	on_finalize();
 
-	// println!(
-	// 	"Finished block {} with events:\n{}\n\n",
-	// 	System::block_number(),
-	// 	&System::events()
-	// 		.into_iter()
-	// 		.map(|ev| format!("\t{:?}", &ev))
-	// 		.collect::<Vec<_>>()
-	// 		.join("\n")
-	// );
+	// if System::block_number() > 1 {
+	// 	println!(
+	// 		"Finished block {} with events:\n{}\n\n",
+	// 		System::block_number(),
+	// 		&System::events()
+	// 			.into_iter()
+	// 			.map(|ev| format!("\t{:?}", &ev))
+	// 			.collect::<Vec<_>>()
+	// 			.join("\n")
+	// 	);
+	// }
 	System::reset_events();
 	System::set_block_number(System::block_number() + 1);
 	// println!("Starting block {}", System::block_number());
