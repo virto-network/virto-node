@@ -353,6 +353,9 @@ pub mod pallet {
 		/// The vote type does not correspond with the community's selected
 		/// [`DecisionMethod`][`origin::DecisionMethod`]
 		InvalidVoteType,
+		/// The signer tried to remove a vote from a poll they haven't
+		/// casted a vote yet, or they have already removed it from.
+		NoVoteCasted,
 		/// The poll
 		NoLocksInPlace,
 	}
@@ -537,6 +540,20 @@ pub mod pallet {
 
 		///
 		#[pallet::call_index(8)]
+		pub fn remove_vote(
+			origin: OriginFor<T>,
+			membership_id: MembershipIdOf<T>,
+			#[pallet::compact] poll_index: PollIndexOf<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+			let community_id = CommunityIdOf::<T>::from(membership_id);
+
+			Self::do_remove_vote(&who, &community_id, poll_index)
+		}
+
+		///
+		#[pallet::call_index(9)]
 		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
