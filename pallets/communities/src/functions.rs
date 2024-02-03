@@ -9,13 +9,14 @@ use crate::{
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		fungible::MutateHold as FunMutateHold,
+		fungible::MutateFreeze as FunMutateFreeze,
 		fungibles::MutateHold as FunsMutateHold,
 		membership::{GenericRank, Inspect, WithRank},
+		tokens::Precision,
 		Polling,
 	},
 };
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::{traits::AccountIdConversion, TokenError};
 use sp_std::vec::Vec;
 
 impl<T: Config> Pallet<T> {
@@ -82,6 +83,10 @@ impl<T: Config> Pallet<T> {
 		poll_index: PollIndexOf<T>,
 		vote: VoteOf<T>,
 	) -> DispatchResult {
+		if VoteWeight::from(vote.clone()) == 0 {
+			return Err(TokenError::BelowMinimum.into());
+		}
+
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
 			ensure!(community_id == &class, Error::<T>::InvalidTrack);
@@ -90,27 +95,24 @@ impl<T: Config> Pallet<T> {
 
 			let maybe_vote = Self::community_vote_of(who, poll_index);
 			if let Some(vote) = maybe_vote {
+				Self::do_unlock_for_vote(who, &poll_index, &vote)?;
 				tally.remove_vote(vote.clone().into(), vote.into());
 			}
 
 			let say = match vote.clone() {
-				Vote::AssetBalance(say, asset_id, asset_balance) => {
+				Vote::AssetBalance(say, asset_id, ..) => {
 					ensure!(
 						decision_method == DecisionMethod::CommunityAsset(asset_id.clone()),
 						Error::<T>::InvalidVoteType
 					);
 
-					T::Assets::hold(asset_id, &HoldReason::VoteCasted(poll_index).into(), who, asset_balance)?;
-
 					say
 				}
-				Vote::NativeBalance(say, balance) => {
+				Vote::NativeBalance(say, ..) => {
 					ensure!(
 						decision_method == DecisionMethod::NativeToken,
 						Error::<T>::InvalidVoteType
 					);
-
-					T::Balances::hold(&HoldReason::VoteCasted(poll_index).into(), who, balance)?;
 
 					say
 				}
@@ -124,8 +126,8 @@ impl<T: Config> Pallet<T> {
 				}
 			};
 
+			Self::do_lock_for_vote(who, &poll_index, &vote)?;
 			tally.add_vote(say, vote.clone().into());
-			CommunityVotes::<T>::insert(who.clone(), poll_index, vote.clone());
 
 			Self::deposit_event(Event::<T>::VoteCasted {
 				who: who.clone(),
@@ -135,6 +137,36 @@ impl<T: Config> Pallet<T> {
 
 			Ok(())
 		})
+	}
+
+	fn do_lock_for_vote(who: &AccountIdOf<T>, poll_index: &PollIndexOf<T>, vote: &VoteOf<T>) -> DispatchResult {
+		let reason = HoldReason::VoteCasted(*poll_index).into();
+		CommunityVotes::<T>::insert(who.clone(), poll_index, vote.clone());
+
+		match vote {
+			Vote::AssetBalance(_, asset_id, amount) => T::Assets::hold(asset_id.clone(), &reason, who, *amount),
+			Vote::NativeBalance(_, amount) => {
+				T::Balances::set_frozen(&reason, who, *amount, frame_support::traits::tokens::Fortitude::Polite)
+			}
+			_ => Ok(()),
+		}
+	}
+
+	pub(crate) fn do_unlock_for_vote(
+		who: &AccountIdOf<T>,
+		poll_index: &PollIndexOf<T>,
+		vote: &VoteOf<T>,
+	) -> DispatchResult {
+		let reason = HoldReason::VoteCasted(*poll_index).into();
+		CommunityVotes::<T>::remove(who, poll_index);
+
+		match vote {
+			Vote::AssetBalance(_, asset_id, amount) => {
+				T::Assets::release(asset_id.clone(), &reason, who, *amount, Precision::BestEffort).map(|_| ())
+			}
+			Vote::NativeBalance(..) => T::Balances::thaw(&reason, who),
+			_ => Err(Error::<T>::NoLocksInPlace.into()),
+		}
 	}
 }
 

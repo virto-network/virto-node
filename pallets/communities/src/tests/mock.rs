@@ -98,7 +98,7 @@ impl pallet_assets::Config for Test {
 	type WeightInfo = WeightInfo;
 	type RemoveItemsLimit = ConstU32<1000>;
 	type RuntimeHoldReason = RuntimeHoldReason;
-	type MaxHolds = ();
+	type MaxHolds = ConstU32<10>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
@@ -115,7 +115,7 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
-	type FreezeIdentifier = ();
+	type FreezeIdentifier = RuntimeHoldReason;
 	type MaxHolds = ConstU32<10>;
 	type MaxFreezes = ConstU32<10>;
 }
@@ -248,7 +248,7 @@ parameter_types! {
 }
 
 type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
-type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
+pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
 impl pallet_communities::Config for Test {
 	type Assets = Assets;

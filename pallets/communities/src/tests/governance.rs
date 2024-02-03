@@ -3,7 +3,7 @@ use super::*;
 use frame_support::{parameter_types, traits::OriginTrait};
 use pallet_referenda::{BoundedCallOf, Curve, TrackInfoOf};
 use parity_scale_codec::Encode;
-use sp_runtime::{str_array as s, BoundedVec};
+use sp_runtime::{str_array as s, BoundedVec, TokenError};
 
 use crate::{
 	origin::DecisionMethod,
@@ -61,8 +61,8 @@ parameter_types! {
 		BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(call.encode()))
 	};
 
-	pub ProposalCallRemoveCharlieFromB: BoundedCallOf<Test, ()> = {
-		let call: RuntimeCall = Call::<Test>::remove_member { who: CHARLIE, membership_id: MembershipId(COMMUNITY_B, 2) }.into();
+	pub ProposalCallAddAlice: BoundedCallOf<Test, ()> = {
+		let call: RuntimeCall = Call::<Test>::add_member { who: ALICE }.into();
 		BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(call.encode()))
 	};
 
@@ -86,7 +86,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			.expect("Same size in, same size out")
 	}
 
-	TestEnvBuilder::new()
+	let mut t = TestEnvBuilder::new()
 		.with_balances(&[(ALICE, 15), (BOB, 15), (CHARLIE, 15)])
 		// Membership-based
 		.add_community(
@@ -128,7 +128,61 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			&produce_memberships::<3>(COMMUNITY_D),
 			Some(CommunityTrack::get()),
 		)
-		.build()
+		.build();
+
+	t.execute_with(|| {
+		assert_ok!(Referenda::submit(
+			RuntimeOrigin::signed(ALICE),
+			OriginForCommunityA::get(),
+			ProposalCallAddBob::get(),
+			frame_support::traits::schedule::DispatchTime::After(1),
+		));
+		assert_ok!(Referenda::submit(
+			RuntimeOrigin::signed(BOB),
+			OriginForCommunityB::get(),
+			ProposalCallAddAlice::get(),
+			frame_support::traits::schedule::DispatchTime::After(1),
+		));
+		assert_ok!(Referenda::submit(
+			RuntimeOrigin::signed(BOB),
+			OriginForCommunityC::get(),
+			ProposalCallRemoveCharlieFromC::get(),
+			frame_support::traits::schedule::DispatchTime::After(1),
+		));
+
+		System::assert_has_event(
+			pallet_referenda::Event::<Test>::Submitted {
+				index: 0,
+				proposal: ProposalCallAddBob::get(),
+				track: COMMUNITY_A,
+			}
+			.into(),
+		);
+		System::assert_has_event(
+			pallet_referenda::Event::<Test>::Submitted {
+				index: 1,
+				proposal: ProposalCallAddAlice::get(),
+				track: COMMUNITY_B,
+			}
+			.into(),
+		);
+		System::assert_has_event(
+			pallet_referenda::Event::<Test>::Submitted {
+				index: 2,
+				proposal: ProposalCallRemoveCharlieFromC::get(),
+				track: COMMUNITY_C,
+			}
+			.into(),
+		);
+
+		assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(ALICE), 0));
+		assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(BOB), 1));
+		assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(BOB), 2));
+
+		tick_block();
+	});
+
+	t
 }
 
 mod vote {
@@ -137,82 +191,24 @@ mod vote {
 	mod common {
 		use super::*;
 
-		pub fn setup() -> sp_io::TestExternalities {
-			let mut ext = new_test_ext();
-
-			ext.execute_with(|| {
-				assert_ok!(Referenda::submit(
-					RuntimeOrigin::signed(ALICE),
-					OriginForCommunityA::get(),
-					ProposalCallAddBob::get(),
-					frame_support::traits::schedule::DispatchTime::After(1),
-				));
-				assert_ok!(Referenda::submit(
-					RuntimeOrigin::signed(BOB),
-					OriginForCommunityB::get(),
-					ProposalCallRemoveCharlieFromB::get(),
-					frame_support::traits::schedule::DispatchTime::After(1),
-				));
-				assert_ok!(Referenda::submit(
-					RuntimeOrigin::signed(BOB),
-					OriginForCommunityC::get(),
-					ProposalCallRemoveCharlieFromC::get(),
-					frame_support::traits::schedule::DispatchTime::After(1),
-				));
-
-				System::assert_has_event(
-					pallet_referenda::Event::<Test>::Submitted {
-						index: 0,
-						proposal: ProposalCallAddBob::get(),
-						track: COMMUNITY_A,
-					}
-					.into(),
-				);
-				System::assert_has_event(
-					pallet_referenda::Event::<Test>::Submitted {
-						index: 1,
-						proposal: ProposalCallRemoveCharlieFromB::get(),
-						track: COMMUNITY_B,
-					}
-					.into(),
-				);
-				System::assert_has_event(
-					pallet_referenda::Event::<Test>::Submitted {
-						index: 2,
-						proposal: ProposalCallRemoveCharlieFromC::get(),
-						track: COMMUNITY_C,
-					}
-					.into(),
-				);
-
-				assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(ALICE), 0));
-				assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(BOB), 1));
-				assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(BOB), 2));
-
-				tick_block();
-			});
-
-			ext
-		}
-
 		#[test]
-		fn fails_if_poll_is_not_ongoing() {
+		fn fails_if_vote_weight_is_zero() {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
 					Communities::vote(
-						RuntimeOrigin::signed(ALICE),
-						MembershipId(COMMUNITY_A, 1),
-						0,
-						Vote::Standard(true)
+						RuntimeOrigin::signed(BOB),
+						MembershipId(COMMUNITY_B, 1),
+						1,
+						Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 0)
 					),
-					Error::NotOngoing
+					TokenError::BelowMinimum
 				);
 			});
 		}
 
 		#[test]
 		fn fails_if_not_a_member() {
-			setup().execute_with(|| {
+			new_test_ext().execute_with(|| {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(BOB),
@@ -226,8 +222,23 @@ mod vote {
 		}
 
 		#[test]
+		fn fails_if_poll_is_not_ongoing() {
+			new_test_ext().execute_with(|| {
+				assert_noop!(
+					Communities::vote(
+						RuntimeOrigin::signed(ALICE),
+						MembershipId(COMMUNITY_A, 1),
+						256,
+						Vote::Standard(true)
+					),
+					Error::NotOngoing
+				);
+			});
+		}
+
+		#[test]
 		fn fails_if_voting_on_invalid_track() {
-			setup().execute_with(|| {
+			new_test_ext().execute_with(|| {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(BOB),
@@ -242,11 +253,13 @@ mod vote {
 	}
 
 	mod membership {
-		use super::{common::setup as single_membership_setup, *};
+		use frame_support::traits::membership::Inspect;
+
+		use super::*;
 
 		#[test]
-		fn poll_passes_on_single_aye() {
-			single_membership_setup().execute_with(|| {
+		fn passing_poll_executes() {
+			new_test_ext().execute_with(|| {
 				// Before voting, the poll is ongoing
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::DecisionStarted {
@@ -286,17 +299,18 @@ mod vote {
 					.into(),
 				);
 
+				let community_account = Communities::community_account(&COMMUNITY_A);
+				let membership_id = Memberships::account_memberships(&community_account)
+					.next()
+					.expect("CommunityA should still have memberships");
+
 				tick_block();
 
 				// Proposal is enacted and exeuted
 				System::assert_has_event(
-					pallet_scheduler::Event::<Test>::Dispatched {
-						task: (System::block_number(), 1),
-						id: Some([
-							90, 97, 76, 213, 143, 172, 44, 37, 211, 244, 120, 171, 6, 186, 7, 72, 240, 129, 154, 150,
-							114, 108, 198, 14, 114, 155, 12, 20, 109, 197, 98, 214,
-						]),
-						result: Ok(()),
+					crate::Event::<Test>::MemberAdded {
+						who: BOB,
+						membership_id,
 					}
 					.into(),
 				);
@@ -305,7 +319,7 @@ mod vote {
 
 		#[test]
 		fn poll_rejects_on_single_nay() {
-			single_membership_setup().execute_with(|| {
+			new_test_ext().execute_with(|| {
 				// Before voting, the poll is ongoing
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::DecisionStarted {
@@ -345,7 +359,7 @@ mod vote {
 		#[test]
 		fn tie_breaking_works() {
 			fn run_referenda() -> sp_io::TestExternalities {
-				let mut ext = single_membership_setup();
+				let mut ext = new_test_ext();
 
 				ext.execute_with(|| {
 					// For now, this community will vote membership-based
@@ -416,17 +430,6 @@ mod vote {
 					}
 					.into(),
 				);
-
-				tick_block();
-
-				// Proposal is enacted and exeuted
-				System::assert_has_event(
-					crate::Event::<Test>::MemberRemoved {
-						who: CHARLIE,
-						membership_id: MembershipId(COMMUNITY_C, 3),
-					}
-					.into(),
-				);
 			});
 
 			run_referenda().execute_with(|| {
@@ -454,5 +457,380 @@ mod vote {
 				);
 			});
 		}
+	}
+
+	mod asset_balance {
+		use super::*;
+		use frame_support::traits::fungibles::MutateHold;
+
+		#[test]
+		fn fails_if_not_enough_balance() {
+			new_test_ext().execute_with(|| {
+				// Cannot keep free funds lower than min. balance
+				assert_noop!(
+					Communities::vote(
+						RuntimeOrigin::signed(CHARLIE),
+						MembershipId(COMMUNITY_B, 2),
+						1,
+						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 10)
+					),
+					TokenError::FundsUnavailable
+				);
+			});
+		}
+
+		#[test]
+		fn holds_cannot_overlap() {
+			new_test_ext().execute_with(|| {
+				// If already holds should be overlapable
+				assert_ok!(Assets::hold(
+					COMMUNITY_B_ASSET_ID,
+					&pallet_preimage::HoldReason::Preimage.into(),
+					&CHARLIE,
+					6,
+				));
+
+				// Before voting, the poll is ongoing
+				assert_noop!(
+					Communities::vote(
+						RuntimeOrigin::signed(CHARLIE),
+						MembershipId(COMMUNITY_B, 2),
+						1,
+						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 5)
+					),
+					TokenError::FundsUnavailable
+				);
+			});
+		}
+
+		#[test]
+		fn passes_with_approval_and_support() {
+			new_test_ext().execute_with(|| {
+				// Before voting, the poll is ongoing
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::DecisionStarted {
+						index: 1,
+						track: COMMUNITY_B,
+						proposal: ProposalCallAddAlice::get(),
+						tally: Tally::default(),
+					}
+					.into(),
+				);
+
+				// We're going to vote high enough to pass to confirmation immediately:
+				// 66% approval / 10% of support
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					MembershipId(COMMUNITY_B, 1),
+					1,
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_B, 2),
+					1,
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
+				));
+
+				tick_block();
+
+				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 1 }.into());
+
+				tick_block();
+
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Confirmed {
+						index: 1,
+						tally: Tally {
+							ayes: 12,
+							nays: 0,
+							bare_ayes: 12,
+							..Default::default()
+						},
+					}
+					.into(),
+				);
+			});
+		}
+
+		#[test]
+		fn passes_with_approval_but_not_support() {
+			new_test_ext().execute_with(|| {
+				// Before voting, the poll is ongoing
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::DecisionStarted {
+						index: 1,
+						track: COMMUNITY_B,
+						proposal: ProposalCallAddAlice::get(),
+						tally: Tally::default(),
+					}
+					.into(),
+				);
+
+				// We're going to vote high enough to have a pass in approval, but not enough to
+				// pass in support until decision period ends: 66% approval / 10% of support
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					MembershipId(COMMUNITY_B, 1),
+					1,
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 2)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_B, 2),
+					1,
+					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 1)
+				));
+
+				tick_blocks(4);
+
+				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 1 }.into());
+
+				tick_blocks(2);
+
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Confirmed {
+						index: 1,
+						tally: Tally {
+							ayes: 2,
+							nays: 1,
+							bare_ayes: 2,
+							..Default::default()
+						},
+					}
+					.into(),
+				);
+			});
+		}
+
+		#[test]
+		fn voter_can_change_decision_over_time() {
+			new_test_ext().execute_with(|| {
+				// Before voting, the poll is ongoing
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::DecisionStarted {
+						index: 1,
+						track: COMMUNITY_B,
+						proposal: ProposalCallAddAlice::get(),
+						tally: Tally::default(),
+					}
+					.into(),
+				);
+
+				tick_block();
+
+				// We're going to vote high in a series of three votes, each one attempting to
+				// turn the poll over.
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_B, 2),
+					1,
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					MembershipId(COMMUNITY_B, 1),
+					1,
+					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 7)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_B, 2),
+					1,
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 8)
+				));
+
+				tick_blocks(4);
+
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Confirmed {
+						index: 1,
+						tally: Tally {
+							ayes: 8,
+							nays: 7,
+							bare_ayes: 8,
+							..Default::default()
+						},
+					}
+					.into(),
+				);
+			});
+		}
+	}
+
+	mod native_balance {
+		use super::*;
+		use frame_support::traits::fungible::MutateFreeze;
+
+		#[test]
+		fn fails_if_not_enough_balance() {
+			new_test_ext().execute_with(|| {
+				assert_noop!(
+					Communities::vote(
+						RuntimeOrigin::signed(BOB),
+						MembershipId(COMMUNITY_C, 2),
+						2,
+						Vote::NativeBalance(true, 16)
+					),
+					TokenError::FundsUnavailable
+				);
+			});
+		}
+
+		#[test]
+		fn locks_can_overlap() {
+			new_test_ext().execute_with(|| {
+				// Suppose CHARLIE has already casted a vote on other poll (let's call it 4)
+				assert_ok!(Balances::set_freeze(
+					&pallet_preimage::HoldReason::Preimage.into(),
+					&CHARLIE,
+					12
+				));
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_C, 3),
+					2,
+					Vote::NativeBalance(true, 11)
+				));
+			});
+		}
+
+		#[test]
+		fn rejects_on_most_nays() {
+			new_test_ext().execute_with(|| {
+				tick_block();
+
+				// Before voting, the poll is ongoing
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::DecisionStarted {
+						index: 2,
+						track: COMMUNITY_C,
+						proposal: ProposalCallRemoveCharlieFromC::get(),
+						tally: Tally::default(),
+					}
+					.into(),
+				);
+
+				tick_block();
+
+				// BOB won't be able to vote, since they don't have enough funds to do so
+				// ALICE has a limited support they can put, so CHARLIE will be able to
+				// cast a majority nay vote.
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_C, 3),
+					2,
+					Vote::NativeBalance(false, 14)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(ALICE),
+					MembershipId(COMMUNITY_C, 1),
+					2,
+					Vote::NativeBalance(true, 7)
+				));
+
+				tick_blocks(3);
+
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Rejected {
+						index: 2,
+						tally: Tally {
+							ayes: 7,
+							nays: 14,
+							bare_ayes: 7,
+							..Default::default()
+						},
+					}
+					.into(),
+				);
+			});
+		}
+
+		#[test]
+		fn voter_can_change_decision() {
+			new_test_ext().execute_with(|| {
+				tick_block();
+
+				// Before voting, the poll is ongoing
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::DecisionStarted {
+						index: 2,
+						track: COMMUNITY_C,
+						proposal: ProposalCallRemoveCharlieFromC::get(),
+						tally: Tally::default(),
+					}
+					.into(),
+				);
+
+				tick_block();
+
+				// We're going to vote high in a series of three votes, each one attempting to
+				// turn the poll over.
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_C, 3),
+					2,
+					Vote::NativeBalance(false, 6)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(ALICE),
+					MembershipId(COMMUNITY_C, 1),
+					2,
+					Vote::NativeBalance(true, 7)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_C, 3),
+					2,
+					Vote::NativeBalance(false, 8)
+				));
+
+				tick_blocks(2);
+
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Rejected {
+						index: 2,
+						tally: Tally {
+							ayes: 7,
+							nays: 8,
+							bare_ayes: 7,
+							..Default::default()
+						},
+					}
+					.into(),
+				);
+			});
+		}
+	}
+
+	mod rank {
+		// TODO: Implement rank-based voting first
 	}
 }
