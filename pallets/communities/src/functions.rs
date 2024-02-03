@@ -139,6 +139,34 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
+	pub(crate) fn do_remove_vote(
+		who: &AccountIdOf<T>,
+		community_id: &CommunityIdOf<T>,
+		poll_index: PollIndexOf<T>,
+	) -> DispatchResult {
+		T::Polls::try_access_poll(poll_index, |poll_status| {
+			if let Some((tally, class)) = poll_status.ensure_ongoing() {
+				ensure!(community_id == &class, Error::<T>::InvalidTrack);
+				let vote = Self::community_vote_of(who, poll_index).ok_or(Error::<T>::NoVoteCasted)?;
+
+				tally.remove_vote(vote.clone().into(), vote.clone().into());
+
+				let reason = HoldReason::VoteCasted(poll_index).into();
+				CommunityVotes::<T>::remove(who, poll_index);
+
+				match vote {
+					Vote::AssetBalance(_, asset_id, amount) => {
+						T::Assets::release(asset_id.clone(), &reason, who, amount, Precision::BestEffort).map(|_| ())
+					}
+					Vote::NativeBalance(..) => T::Balances::thaw(&reason, who),
+					_ => Ok(()),
+				}
+			} else {
+				Err(Error::<T>::NotOngoing.into())
+			}
+		})
+	}
+
 	fn do_lock_for_vote(who: &AccountIdOf<T>, poll_index: &PollIndexOf<T>, vote: &VoteOf<T>) -> DispatchResult {
 		let reason = HoldReason::VoteCasted(*poll_index).into();
 		CommunityVotes::<T>::insert(who.clone(), poll_index, vote.clone());
