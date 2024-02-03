@@ -185,7 +185,6 @@ pub mod pallet {
 		traits::{
 			fungible, fungibles,
 			membership::{self, Inspect, Membership, Mutate, WithRank},
-			tokens::{fungible::MutateHold as FunMutateHold, fungibles::MutateHold as FunsMutateHold, Precision},
 			EnsureOrigin, Polling,
 		},
 		Blake2_128Concat, Parameter,
@@ -232,7 +231,7 @@ pub mod pallet {
 		/// Type represents interactions between fungible tokens (native token)
 		type Balances: fungible::Inspect<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
-			+ fungible::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
+			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
@@ -541,31 +540,9 @@ pub mod pallet {
 		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
+			let vote = Self::community_vote_of(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
 
-			match Self::community_vote_of(&who, poll_index) {
-				Some(Vote::AssetBalance(_, asset_id, amount)) => {
-					T::Assets::release(
-						asset_id,
-						&HoldReason::VoteCasted(poll_index).into(),
-						&who,
-						amount,
-						Precision::BestEffort,
-					)?;
-				}
-				Some(Vote::NativeBalance(_, amount)) => {
-					T::Balances::release(
-						&HoldReason::VoteCasted(poll_index).into(),
-						&who,
-						amount,
-						Precision::BestEffort,
-					)?;
-				}
-				_ => Err(Error::<T>::NoLocksInPlace)?,
-			}
-
-			CommunityVotes::<T>::remove(&who, poll_index);
-
-			Ok(())
+			Self::do_unlock_for_vote(&who, &poll_index, &vote)
 		}
 	}
 }
