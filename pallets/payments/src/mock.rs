@@ -8,6 +8,8 @@ use frame_support::{
 };
 
 use frame_system::EnsureRoot;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
 use sp_runtime::{
@@ -20,6 +22,9 @@ type AccountId = u64;
 #[allow(unused)]
 type AssetId = u32;
 
+#[derive(Clone, Copy, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
+pub struct PaymentId(pub u32);
+
 pub const SENDER_ACCOUNT: AccountId = 10;
 pub const PAYMENT_BENEFICIARY: AccountId = 11;
 pub const ASSET_ADMIN_ACCOUNT: AccountId = 3;
@@ -29,7 +34,7 @@ pub const ASSET_ID: u32 = 1;
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 pub const MARKETPLACE_FEE_PERCENTAGE: u8 = 15;
 pub const INITIAL_BALANCE: u64 = 100;
-pub const PAYMENT_ID: u32 = 1;
+pub const PAYMENT_ID: PaymentId = PaymentId(1);
 
 pub const FEE_SENDER_ACCOUNT: AccountId = 30;
 pub const FEE_BENEFICIARY_ACCOUNT: AccountId = 31;
@@ -241,7 +246,7 @@ impl pallet_payments::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Assets = Assets;
 	type AssetsBalance = u64;
-	type PaymentId = u32;
+	type PaymentId = PaymentId;
 	type FeeHandler = MockFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
@@ -310,5 +315,19 @@ pub fn run_to_block(n: u64) {
 		Scheduler::on_finalize(System::block_number());
 		System::set_block_number(System::block_number() + 1);
 		Scheduler::on_initialize(System::block_number());
+	}
+}
+
+use core::cell::Cell;
+thread_local! {
+	pub static LAST_ID: Cell<u32>  = const { Cell::new(0) };
+}
+impl pallet_payments::PaymentId<Test> for PaymentId {
+	fn next(_sender: &AccountId, _beneficiary: &AccountId) -> Option<Self> {
+		LAST_ID.with(|id| {
+			let new_id = id.get() + 1;
+			id.set(new_id);
+			Some(PaymentId(new_id))
+		})
 	}
 }

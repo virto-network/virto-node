@@ -3,7 +3,16 @@ use wasm_bindgen::prelude::*;
 
 /// A compact identifier for payment
 #[cfg_attr(feature = "js", wasm_bindgen)]
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, Copy, PartialEq)]
+#[cfg_attr(
+	feature = "runtime",
+	derive(
+		parity_scale_codec::Encode,
+		parity_scale_codec::Decode,
+		parity_scale_codec::MaxEncodedLen,
+		scale_info::TypeInfo,
+	)
+)]
 #[repr(C)]
 pub struct PaymentId {
 	prefix: [u8; 2],

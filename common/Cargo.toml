@@ -7,6 +7,7 @@ edition = "2021"
 bs58 = { version = "0.5.0", default-features = false }
 wasm-bindgen = { version = "0.2.87", optional = true }
 
+pallet-payments = { workspace = true, optional = true }
 frame-support = { workspace = true, optional = true }
 parity-scale-codec = { workspace = true, optional = true }
 scale-info = { workspace = true, optional = true }
@@ -19,4 +20,9 @@ default = ["runtime"]
 alloc = []
 js = ["alloc", "wasm-bindgen"]
 nightly = []
-runtime = ["dep:frame-support", "dep:parity-scale-codec", "dep:scale-info"]
+runtime = [
+  "dep:frame-support", 
+  "dep:parity-scale-codec", 
+  "dep:scale-info",
+  "dep:pallet-payments",
+]

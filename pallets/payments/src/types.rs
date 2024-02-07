@@ -22,12 +22,13 @@ pub type CallOf<T> = <T as Config>::RuntimeCall;
 pub type PreimagesOf<T> = <T as Config>::Preimages;
 pub type BoundedCallOf<T> = Bounded<CallOf<T>, <T as frame_system::Config>::Hashing>;
 
-/// The PaymentDetail struct stores information about the payment/escrow
-/// A "payment" in virto network is similar to an escrow, it is used to
-/// guarantee proof of funds and can be released once an agreed upon condition
-/// has reached between the payment creator and recipient. The payment lifecycle
-/// is tracked using the state field.
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Debug, MaxEncodedLen, TypeInfo)]
+/// The PaymentDetail struct stores information about the payment
+/// A "payment" is similar to an escrow, it is used to guarantee proof of
+/// funds and can be released once an agreed upon condition has reached
+/// between the payment creator and recipient. The payment lifecycle is
+/// tracked using the state field.
+#[derive(Clone, Debug, Decode, Encode, MaxEncodedLen, PartialEq, TypeInfo)]
+// #[derive(Clone, Encode, Decode, Eq, PartialEq, Debug, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound(T: pallet::Config))]
 pub struct PaymentDetail<T: pallet::Config> {
@@ -35,6 +36,8 @@ pub struct PaymentDetail<T: pallet::Config> {
 	pub asset: AssetIdOf<T>,
 	/// amount of asset used for payment
 	pub amount: BalanceOf<T>,
+	/// the recipient of the payment
+	pub beneficiary: AccountIdOf<T>,
 	/// incentive amount that is credited to creator for resolving
 	pub incentive_amount: BalanceOf<T>,
 	/// enum to track payment lifecycle [Created, NeedsReview, RefundRequested,

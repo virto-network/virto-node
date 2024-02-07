@@ -2,9 +2,9 @@ use super::*;
 use crate::{
 	mock::*,
 	types::{PaymentDetail, PaymentState},
-	LastId, Payment as PaymentStore,
+	Payment as PaymentStore, PaymentId,
 };
-use frame_support::{assert_ok, traits::fungibles, weights::constants::WEIGHT_REF_TIME_PER_NANOS};
+use frame_support::{assert_err, assert_ok, traits::fungibles, weights::constants::WEIGHT_REF_TIME_PER_NANOS};
 use weights::SubstrateWeight;
 
 use sp_runtime::{BoundedVec, Perbill};
@@ -17,7 +17,7 @@ fn build_payment(assert_payment_creation: bool) -> Fees<Test> {
 
 	assert_ok!(Payments::pay(
 		RuntimeOrigin::signed(SENDER_ACCOUNT),
-		PAYMENT_BENEFICIARY,
+		PAYMENT_BENEFICIARY.into(),
 		ASSET_ID,
 		PAYMENT_AMOUNT,
 		Some(remark.clone()),
@@ -33,21 +33,21 @@ fn build_payment(assert_payment_creation: bool) -> Fees<Test> {
 
 	if assert_payment_creation {
 		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCreated {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
+			payment_id: PaymentId(1),
 			asset: ASSET_ID,
 			amount: PAYMENT_AMOUNT,
 			remark: Some(remark.clone()),
 		}));
 
 		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).unwrap(),
 			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
 				fees: fees_details.clone(),
+				beneficiary: PAYMENT_BENEFICIARY.into()
 			}
 		);
 
@@ -111,25 +111,21 @@ fn test_pay_and_release_works() {
 	new_test_ext().execute_with(|| {
 		let fees: Fees<Test> = build_payment(ASSERT_PAYMENT_CREATION);
 
-		assert_ok!(Payments::release(
-			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
-			PAYMENT_ID
-		));
+		assert_ok!(Payments::release(RuntimeOrigin::signed(SENDER_ACCOUNT), PAYMENT_ID));
 
 		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentReleased {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
+			payment_id: PAYMENT_ID,
 		}));
 
 		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).unwrap(),
 			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Finished,
 				fees,
+				beneficiary: PAYMENT_BENEFICIARY.into()
 			}
 		);
 
@@ -162,19 +158,18 @@ fn test_pay_and_release_works() {
 fn test_pay_and_cancel_works() {
 	new_test_ext().execute_with(|| {
 		build_payment(ASSERT_PAYMENT_CREATION);
-		assert_ok!(Payments::cancel(
-			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
-			SENDER_ACCOUNT,
-			PAYMENT_ID
-		));
+		assert_err!(
+			Payments::cancel(RuntimeOrigin::signed(999), PAYMENT_ID),
+			Error::<Test>::InvalidBeneficiary
+		);
+		assert_ok!(Payments::cancel(RuntimeOrigin::signed(PAYMENT_BENEFICIARY), PAYMENT_ID));
 
 		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentCancelled {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
+			payment_id: PAYMENT_ID,
 		}));
 
 		// This validates that the payment was removed from the storage.
-		assert!(PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).is_err());
+		assert!(PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).is_err());
 
 		assert_eq!(
 			<Assets as fungibles::Inspect<_>>::balance(ASSET_ID, &FEE_SYSTEM_ACCOUNT),
@@ -208,26 +203,25 @@ fn payment_refunded_request() {
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
 			PAYMENT_ID
 		));
 
 		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).unwrap(),
 			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::RefundRequested { cancel_block: 11 },
 				fees,
+				beneficiary: PAYMENT_BENEFICIARY.into()
 			}
 		);
 
 		run_to_block(11);
 
 		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentRefunded {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
+			payment_id: PAYMENT_ID,
 		}));
 
 		check_balance_cancellation();
@@ -292,31 +286,32 @@ fn payment_disputed_beneficiary_wins() {
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
 			PAYMENT_ID
 		));
 
+		assert_err!(
+			Payments::dispute_refund(RuntimeOrigin::signed(999), PAYMENT_ID),
+			Error::<Test>::InvalidBeneficiary
+		);
 		assert_ok!(Payments::dispute_refund(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
-			SENDER_ACCOUNT,
 			PAYMENT_ID
 		));
 
 		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).unwrap(),
 			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::NeedsReview,
 				fees,
+				beneficiary: PAYMENT_BENEFICIARY.into()
 			}
 		);
 
 		assert_ok!(Payments::resolve_dispute(
 			RuntimeOrigin::root(),
-			SENDER_ACCOUNT,
-			PAYMENT_BENEFICIARY,
 			PAYMENT_ID,
 			DisputeResult {
 				percent_beneficiary: Percent::from_percent(90),
@@ -410,31 +405,28 @@ fn payment_disputed_sender_wins() {
 
 		assert_ok!(Payments::request_refund(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
 			PAYMENT_ID
 		));
 
 		assert_ok!(Payments::dispute_refund(
 			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
-			SENDER_ACCOUNT,
 			PAYMENT_ID
 		));
 
 		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).unwrap(),
 			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::NeedsReview,
 				fees,
+				beneficiary: PAYMENT_BENEFICIARY.into()
 			}
 		);
 
 		assert_ok!(Payments::resolve_dispute(
 			RuntimeOrigin::root(),
-			SENDER_ACCOUNT,
-			PAYMENT_BENEFICIARY,
 			PAYMENT_ID,
 			DisputeResult {
 				percent_beneficiary: Percent::from_percent(90),
@@ -485,8 +477,7 @@ fn request_payment() {
 		));
 
 		System::assert_has_event(RuntimeEvent::Payments(pallet_payments::Event::PaymentRequestCreated {
-			sender: SENDER_ACCOUNT,
-			beneficiary: PAYMENT_BENEFICIARY,
+			payment_id: mock::PaymentId(1),
 		}));
 
 		let fees: Fees<Test> = <Test as pallet_payments::Config>::FeeHandler::apply_fees(
@@ -498,19 +489,19 @@ fn request_payment() {
 		);
 
 		assert_eq!(
-			PaymentStore::<Test>::get((SENDER_ACCOUNT, PAYMENT_BENEFICIARY, PAYMENT_ID)).unwrap(),
+			PaymentStore::<Test>::get(SENDER_ACCOUNT, PAYMENT_ID).unwrap(),
 			PaymentDetail {
 				asset: ASSET_ID,
 				amount: PAYMENT_AMOUNT,
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::PaymentRequested,
 				fees,
+				beneficiary: PAYMENT_BENEFICIARY.into()
 			}
 		);
 
 		assert_ok!(Payments::accept_and_pay(
 			RuntimeOrigin::signed(SENDER_ACCOUNT),
-			PAYMENT_BENEFICIARY,
 			PAYMENT_ID
 		));
 
@@ -542,20 +533,14 @@ fn request_payment() {
 #[test]
 fn next_id_works() {
 	new_test_ext().execute_with(|| {
-		build_payment(!ASSERT_PAYMENT_CREATION);
-
-		assert_eq!(LastId::<Test>::get().unwrap(), 1);
-		build_payment(!ASSERT_PAYMENT_CREATION);
-		assert_eq!(LastId::<Test>::get().unwrap(), 2);
-
-		assert_ok!(Payments::request_payment(
-			RuntimeOrigin::signed(PAYMENT_BENEFICIARY),
-			SENDER_ACCOUNT,
-			ASSET_ID,
-			PAYMENT_AMOUNT
-		));
-
-		assert_eq!(LastId::<Test>::get().unwrap(), 3);
+		assert_eq!(
+			mock::PaymentId::next(&SENDER_ACCOUNT, &PAYMENT_BENEFICIARY),
+			Some(mock::PaymentId(1))
+		);
+		assert_eq!(
+			mock::PaymentId::next(&SENDER_ACCOUNT, &PAYMENT_BENEFICIARY),
+			Some(mock::PaymentId(2))
+		);
 	});
 }
 
