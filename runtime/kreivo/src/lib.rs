@@ -48,7 +48,7 @@ pub use frame_system::Call as SystemCall;
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureSigned,
+	EnsureRoot,
 };
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
@@ -638,8 +638,6 @@ ord_parameter_types! {
 			123,149,48,25,6,91,67,66,164,241,252,246,43,232,243,232,60,141,21,48,59,103,79,215,25,30,89,143,105,158,118,79
 		]);
 }
-
-pub type PaymentId = u32;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct BenchmarkHelper;

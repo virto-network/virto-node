@@ -1,13 +1,11 @@
 use super::*;
+use parity_scale_codec::Encode;
 
 parameter_types! {
 	pub const MaxRemarkLength: u8 = 50;
 	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
 	pub const PaymentPalletId: PalletId = PalletId(*b"payments");
-
 }
-
-pub type PaymentId = u32;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct BenchmarkHelper;
@@ -60,11 +58,19 @@ impl FeeHandler<Runtime> for KreivoFeeHandler {
 	}
 }
 
+impl pallet_payments::PaymentId<Runtime> for virto_common::PaymentId {
+	fn next(_: &AccountId, beneficiary: &AccountId) -> Option<Self> {
+		let block: u32 = System::block_number();
+		let idx = System::extrinsic_index()?;
+		Some((block, idx, beneficiary.encode().as_slice()).into())
+	}
+}
+
 impl pallet_payments::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Assets = Assets;
 	type AssetsBalance = Balance;
-	type PaymentId = PaymentId;
+	type PaymentId = virto_common::PaymentId;
 	type FeeHandler = KreivoFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
