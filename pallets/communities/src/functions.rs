@@ -83,7 +83,7 @@ impl<T: Config> Pallet<T> {
 		poll_index: PollIndexOf<T>,
 		vote: VoteOf<T>,
 	) -> DispatchResult {
-		let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+		let info = T::MemberMgmt::get_membership(membership_id.clone(), who).ok_or(Error::<T>::NotAMember)?;
 		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
 
 		if VoteWeight::from(vote.clone()) == 0 {
@@ -165,7 +165,7 @@ impl<T: Config> Pallet<T> {
 		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
-		let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+		let info = T::MemberMgmt::get_membership(membership_id.clone(), who).ok_or(Error::<T>::NotAMember)?;
 		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
