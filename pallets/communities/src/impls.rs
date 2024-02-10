@@ -16,7 +16,7 @@ impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
 	}
 
 	fn support(&self, community_id: CommunityIdOf<T>) -> sp_runtime::Perbill {
-		Perbill::from_rational(self.bare_ayes, Self::max_ayes(community_id))
+		Perbill::from_rational(self.bare_ayes, Self::max_support(community_id))
 	}
 
 	fn approval(&self, _cid: CommunityIdOf<T>) -> sp_runtime::Perbill {

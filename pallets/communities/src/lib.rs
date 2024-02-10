@@ -279,6 +279,10 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
 
+	/// Stores the sum of members' ranks, managed by promote_member and demote_member
+	#[pallet::storage]
+	pub(super) type CommunityRanksSum<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
+
 	/// Stores the decision method for a community
 	#[pallet::storage]
 	pub(super) type CommunityDecisionMethod<T> =
@@ -428,6 +432,13 @@ pub mod pallet {
 			)?;
 			CommunityMembersCount::<T>::mutate(community_id, |count| {
 				*count += 1;
+				CommunityRanksSum::<T>::mutate(community_id, |sum| {
+					let rank = T::MemberMgmt::get_membership(membership_id.clone(), &who)
+						.ok_or(Error::<T>::NotAMember)
+						.expect("a member has just been inserted; qed")
+						.rank();
+					*sum += Into::<u8>::into(rank) as u32;
+				});
 			});
 
 			Self::deposit_event(Event::MemberAdded { who, membership_id });
@@ -463,6 +474,11 @@ pub mod pallet {
 			)?;
 			CommunityMembersCount::<T>::mutate(community_id, |count| {
 				*count -= 1;
+
+				CommunityRanksSum::<T>::mutate(community_id, |sum| {
+					let rank = info.rank();
+					*sum -= Into::<u8>::into(rank) as u32;
+				});
 			});
 
 			Self::deposit_event(Event::MemberRemoved { who, membership_id });
@@ -476,16 +492,24 @@ pub mod pallet {
 			who: AccountIdLookupOf<T>,
 			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
-			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			let rank = m.rank();
-			m.set_rank(rank.promote_by(1.try_into().expect("can promote by 1")));
-			T::MemberMgmt::update(membership_id.clone(), m, None)?;
+			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
+				let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+				let rank = m.rank();
 
-			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
-			Ok(())
+				*sum = sum.saturating_sub(Into::<u8>::into(rank) as u32);
+
+				let rank = rank.promote_by(1.try_into().expect("can demote by 1"));
+				m.set_rank(rank);
+				T::MemberMgmt::update(membership_id.clone(), m, None)?;
+
+				*sum += Into::<u8>::into(rank) as u32;
+
+				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+				Ok(())
+			})
 		}
 
 		/// Decreases the rank of a member in the community
@@ -495,16 +519,24 @@ pub mod pallet {
 			who: AccountIdLookupOf<T>,
 			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
-			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			let rank = m.rank();
-			m.set_rank(rank.demote_by(1.try_into().expect("can promote by 1")));
-			T::MemberMgmt::update(membership_id.clone(), m, None)?;
+			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
+				let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+				let rank = m.rank();
 
-			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
-			Ok(())
+				*sum = sum.saturating_sub(Into::<u8>::into(rank) as u32);
+
+				let rank = rank.demote_by(1.try_into().expect("can demote by 1"));
+				m.set_rank(rank);
+				T::MemberMgmt::update(membership_id.clone(), m, None)?;
+
+				*sum += Into::<u8>::into(rank) as u32;
+
+				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+				Ok(())
+			})
 		}
 
 		// === Governance ===
@@ -532,10 +564,7 @@ pub mod pallet {
 			vote: VoteOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			let community_id = CommunityIdOf::<T>::from(membership_id);
-
-			Self::do_vote(&who, &community_id, poll_index, vote)
+			Self::do_vote(&who, membership_id, poll_index, vote)
 		}
 
 		///
@@ -546,10 +575,7 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			let community_id = CommunityIdOf::<T>::from(membership_id);
-
-			Self::do_remove_vote(&who, &community_id, poll_index)
+			Self::do_remove_vote(&who, membership_id, poll_index)
 		}
 
 		///
