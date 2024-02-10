@@ -831,7 +831,133 @@ mod vote {
 	}
 
 	mod rank {
-		// TODO: Implement rank-based voting first
+		use frame_support::traits::Polling;
+
+		use super::*;
+
+		fn new_test_ext() -> sp_io::TestExternalities {
+			let mut ext = super::new_test_ext();
+
+			ext.execute_with(|| {
+				assert_ok!(Communities::promote_member(
+					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
+					ALICE,
+					MembershipId(COMMUNITY_D, 1)
+				));
+				assert_ok!(Communities::promote_member(
+					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
+					BOB,
+					MembershipId(COMMUNITY_D, 2)
+				));
+				assert_ok!(Communities::promote_member(
+					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
+					CHARLIE,
+					MembershipId(COMMUNITY_D, 3)
+				));
+
+				assert_ok!(Referenda::submit(
+					RuntimeOrigin::signed(CHARLIE),
+					OriginForCommunityD::get(),
+					ProposalCallPromoteCharlie::get(),
+					frame_support::traits::schedule::DispatchTime::After(1),
+				));
+
+				System::assert_has_event(
+					pallet_referenda::Event::<Test>::Submitted {
+						index: 3,
+						proposal: ProposalCallPromoteCharlie::get(),
+						track: COMMUNITY_D,
+					}
+					.into(),
+				);
+
+				assert_ok!(Referenda::place_decision_deposit(RuntimeOrigin::signed(CHARLIE), 3));
+
+				tick_block();
+			});
+
+			ext
+		}
+
+		#[test]
+		fn it_works() {
+			new_test_ext().execute_with(|| {
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(ALICE),
+					MembershipId(COMMUNITY_D, 1),
+					3,
+					Vote::Standard(true)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					MembershipId(COMMUNITY_D, 2),
+					3,
+					Vote::Standard(false)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_D, 3),
+					3,
+					Vote::Standard(true)
+				));
+
+				tick_blocks(3);
+
+				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 3 }.into());
+			});
+		}
+
+		#[test]
+		fn it_works_with_different_ranks() {
+			new_test_ext().execute_with(|| {
+				assert_ok!(Communities::promote_member(
+					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
+					ALICE,
+					MembershipId(COMMUNITY_D, 1)
+				));
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(ALICE),
+					MembershipId(COMMUNITY_D, 1),
+					3,
+					Vote::Standard(false)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					MembershipId(COMMUNITY_D, 2),
+					3,
+					Vote::Standard(true)
+				));
+
+				tick_block();
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(CHARLIE),
+					MembershipId(COMMUNITY_D, 3),
+					3,
+					Vote::Standard(true)
+				));
+
+				assert_eq!(
+					Referenda::as_ongoing(3).expect("the poll was initiated; qed").0,
+					Tally {
+						ayes: 2,
+						nays: 2,
+						bare_ayes: 2,
+						..Default::default()
+					}
+				)
+			});
+		}
 	}
 }
 

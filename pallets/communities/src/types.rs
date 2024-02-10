@@ -1,5 +1,5 @@
 use crate::origin::DecisionMethod;
-use crate::{CommunityDecisionMethod, CommunityMembersCount, Config};
+use crate::{CommunityDecisionMethod, CommunityMembersCount, CommunityRanksSum, Config};
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{
 	fungible::{self, Inspect as FunInspect},
@@ -123,10 +123,10 @@ impl<T> Default for Tally<T> {
 }
 
 impl<T: Config> Tally<T> {
-	pub(crate) fn max_ayes(community_id: CommunityIdOf<T>) -> VoteWeight {
+	pub(crate) fn max_support(community_id: CommunityIdOf<T>) -> VoteWeight {
 		match CommunityDecisionMethod::<T>::get(community_id) {
 			DecisionMethod::Membership => CommunityMembersCount::<T>::get(community_id),
-			DecisionMethod::Rank => todo!("max_ayes is the sum of each rank of each membership"),
+			DecisionMethod::Rank => CommunityRanksSum::<T>::get(community_id),
 			DecisionMethod::NativeToken => T::Balances::total_issuance().saturated_into::<VoteWeight>(),
 			DecisionMethod::CommunityAsset(asset_id) => {
 				T::Assets::total_issuance(asset_id).saturated_into::<VoteWeight>()
