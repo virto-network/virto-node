@@ -275,11 +275,12 @@ pub mod pallet {
 	pub(super) type Metadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
 
-	/// Stores the count of members, managed by add_member and removefly_member
+	/// Stores the count of members, managed by add_member and remove_member
 	#[pallet::storage]
 	pub(super) type CommunityMembersCount<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
 
-	/// Stores the sum of members' ranks, managed by promote_member and demote_member
+	/// Stores the sum of members' ranks, managed by promote_member and
+	/// demote_member
 	#[pallet::storage]
 	pub(super) type CommunityRanksSum<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
 
