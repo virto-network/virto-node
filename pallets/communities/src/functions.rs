@@ -79,24 +79,36 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_vote(
 		who: &AccountIdOf<T>,
-		community_id: &CommunityIdOf<T>,
+		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 		vote: VoteOf<T>,
 	) -> DispatchResult {
+		let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
+
 		if VoteWeight::from(vote.clone()) == 0 {
 			return Err(TokenError::BelowMinimum.into());
 		}
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
-			ensure!(community_id == &class, Error::<T>::InvalidTrack);
+			ensure!(community_id == class, Error::<T>::InvalidTrack);
 
 			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
 
 			let maybe_vote = Self::community_vote_of(who, poll_index);
 			if let Some(vote) = maybe_vote {
 				Self::do_unlock_for_vote(who, &poll_index, &vote)?;
-				tally.remove_vote(vote.clone().into(), vote.into());
+
+				let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
+					DecisionMethod::Rank => Into::<u8>::into(info.rank()) as u32,
+					_ => 1,
+				};
+				tally.remove_vote(
+					vote.clone().into(),
+					multiplied_vote * Into::<VoteWeight>::into(vote.clone()),
+					vote.into(),
+				);
 			}
 
 			let say = match vote.clone() {
@@ -127,7 +139,16 @@ impl<T: Config> Pallet<T> {
 			};
 
 			Self::do_lock_for_vote(who, &poll_index, &vote)?;
-			tally.add_vote(say, vote.clone().into());
+
+			let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
+				DecisionMethod::Rank => Into::<u8>::into(info.rank()) as u32,
+				_ => 1,
+			};
+			tally.add_vote(
+				say,
+				multiplied_vote * Into::<VoteWeight>::into(vote.clone()),
+				vote.clone().into(),
+			);
 
 			Self::deposit_event(Event::<T>::VoteCasted {
 				who: who.clone(),
@@ -141,15 +162,26 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_remove_vote(
 		who: &AccountIdOf<T>,
-		community_id: &CommunityIdOf<T>,
+		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
+		let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
+		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
+
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			if let Some((tally, class)) = poll_status.ensure_ongoing() {
-				ensure!(community_id == &class, Error::<T>::InvalidTrack);
+				ensure!(community_id == class, Error::<T>::InvalidTrack);
 				let vote = Self::community_vote_of(who, poll_index).ok_or(Error::<T>::NoVoteCasted)?;
 
-				tally.remove_vote(vote.clone().into(), vote.clone().into());
+				let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
+					DecisionMethod::Rank => Into::<u8>::into(info.rank()) as u32,
+					_ => 1,
+				};
+				tally.remove_vote(
+					vote.clone().into(),
+					multiplied_vote * Into::<VoteWeight>::into(vote.clone()),
+					vote.clone().into(),
+				);
 
 				let reason = HoldReason::VoteCasted(poll_index).into();
 				CommunityVotes::<T>::remove(who, poll_index);
@@ -199,26 +231,26 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> Tally<T> {
-	pub(self) fn add_vote(&mut self, say: bool, weight: VoteWeight) {
+	pub(self) fn add_vote(&mut self, say: bool, multiplied_weight: VoteWeight, weight: VoteWeight) {
 		match say {
 			true => {
-				self.ayes = self.ayes.saturating_add(weight);
+				self.ayes = self.ayes.saturating_add(multiplied_weight);
 				self.bare_ayes = self.bare_ayes.saturating_add(weight);
 			}
 			false => {
-				self.nays = self.nays.saturating_add(weight);
+				self.nays = self.nays.saturating_add(multiplied_weight);
 			}
 		}
 	}
 
-	pub(self) fn remove_vote(&mut self, say: bool, weight: VoteWeight) {
+	pub(self) fn remove_vote(&mut self, say: bool, multiplied_weight: VoteWeight, weight: VoteWeight) {
 		match say {
 			true => {
-				self.ayes = self.ayes.saturating_sub(weight);
+				self.ayes = self.ayes.saturating_sub(multiplied_weight);
 				self.bare_ayes = self.bare_ayes.saturating_sub(weight);
 			}
 			false => {
-				self.nays = self.nays.saturating_sub(weight);
+				self.nays = self.nays.saturating_sub(multiplied_weight);
 			}
 		}
 	}
