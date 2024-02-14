@@ -17,7 +17,7 @@ fn build_payment(assert_payment_creation: bool) -> Fees<Test> {
 
 	assert_ok!(Payments::pay(
 		RuntimeOrigin::signed(SENDER_ACCOUNT),
-		PAYMENT_BENEFICIARY.into(),
+		PAYMENT_BENEFICIARY,
 		ASSET_ID,
 		PAYMENT_AMOUNT,
 		Some(remark.clone()),
@@ -47,7 +47,7 @@ fn build_payment(assert_payment_creation: bool) -> Fees<Test> {
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Created,
 				fees: fees_details.clone(),
-				beneficiary: PAYMENT_BENEFICIARY.into()
+				beneficiary: PAYMENT_BENEFICIARY
 			}
 		);
 
@@ -125,7 +125,7 @@ fn test_pay_and_release_works() {
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::Finished,
 				fees,
-				beneficiary: PAYMENT_BENEFICIARY.into()
+				beneficiary: PAYMENT_BENEFICIARY
 			}
 		);
 
@@ -214,7 +214,7 @@ fn payment_refunded_request() {
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::RefundRequested { cancel_block: 11 },
 				fees,
-				beneficiary: PAYMENT_BENEFICIARY.into()
+				beneficiary: PAYMENT_BENEFICIARY
 			}
 		);
 
@@ -306,7 +306,7 @@ fn payment_disputed_beneficiary_wins() {
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::NeedsReview,
 				fees,
-				beneficiary: PAYMENT_BENEFICIARY.into()
+				beneficiary: PAYMENT_BENEFICIARY
 			}
 		);
 
@@ -421,7 +421,7 @@ fn payment_disputed_sender_wins() {
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::NeedsReview,
 				fees,
-				beneficiary: PAYMENT_BENEFICIARY.into()
+				beneficiary: PAYMENT_BENEFICIARY
 			}
 		);
 
@@ -496,7 +496,7 @@ fn request_payment() {
 				incentive_amount: INCENTIVE_AMOUNT,
 				state: PaymentState::PaymentRequested,
 				fees,
-				beneficiary: PAYMENT_BENEFICIARY.into()
+				beneficiary: PAYMENT_BENEFICIARY
 			}
 		);
 
