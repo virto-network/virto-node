@@ -585,10 +585,10 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
 		let beneficiary = &payment.beneficiary;
-		T::Assets::release(payment.asset.clone(), reason, &beneficiary, payment.amount, Exact)
+		T::Assets::release(payment.asset.clone(), reason, beneficiary, payment.amount, Exact)
 			.map_err(|_| Error::<T>::ReleaseFailed)?;
 
-		T::Assets::transfer(payment.asset, &beneficiary, sender, payment.amount, Expendable)
+		T::Assets::transfer(payment.asset, beneficiary, sender, payment.amount, Expendable)
 			.map_err(|_| Error::<T>::TransferFailed)?;
 
 		Ok(())
