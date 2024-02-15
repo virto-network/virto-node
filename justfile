@@ -74,7 +74,7 @@ _parachain_launch_artifacts:
 	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
 
 release-artifacts:
-	@mkdir release; rm release/*
+	@mkdir release; rm -f release/*
 	cp target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm release/
 	cp *.container release
 

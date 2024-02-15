@@ -1,6 +1,6 @@
 [package]
 name = "virto-node"
-version = "0.7.0"
+version = "0.7.1"
 authors = ['Virto Team <contact@virto.team>']
 license = "GPL-3.0-only"
 homepage = 'https://github.com/virto-network/virto-node'
