@@ -36,6 +36,7 @@ use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{
 		fungible::HoldConsideration,
+		fungibles,
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
 		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, LinearStoragePrice,
 		NeverEnsureOrigin, TransformOrigin,
@@ -625,13 +626,6 @@ impl pallet_preimage::Config for Runtime {
 	>;
 }
 
-parameter_types! {
-	pub const MaxRemarkLength: u8 = 50;
-	pub const IncentivePercentage: Percent = Percent::from_percent(INCENTIVE_PERCENTAGE);
-	pub const PaymentPalletId: PalletId = PalletId(*b"payments");
-
-}
-
 ord_parameter_types! {
 	pub const RootAccount: AccountId32 = AccountId32::new(
 		[
@@ -651,42 +645,6 @@ impl super::BenchmarkHelper<AccountId, AssetId, Balance> for BenchmarkHelper {
 			min_balance,
 		)
 		.unwrap();
-	}
-}
-
-pub struct KreivoFeeHandler;
-
-const MANDATORY_FEE: bool = true;
-pub const SYSTEM_FEE: u8 = 1;
-pub const SYSTEM_FEE_PERCENTAGE: Percent = Percent::from_percent(SYSTEM_FEE);
-pub const INCENTIVE_PERCENTAGE: u8 = 10;
-
-impl FeeHandler<Runtime> for KreivoFeeHandler {
-	fn apply_fees(
-		_asset: &AssetIdOf<Runtime>,
-		_sender: &AccountId,
-		_beneficiary: &AccountId,
-		amount: &Balance,
-		_remark: Option<&[u8]>,
-	) -> Fees<Runtime> {
-		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			RootAccount::get(),
-			SYSTEM_FEE_PERCENTAGE.mul_floor(*amount),
-			MANDATORY_FEE,
-		)];
-		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			RootAccount::get(),
-			SYSTEM_FEE_PERCENTAGE.mul_floor(*amount),
-			MANDATORY_FEE,
-		)];
-
-		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(sender_fee).unwrap();
-		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(beneficiary_fee).unwrap();
-
-		Fees {
-			sender_pays,
-			beneficiary_pays,
-		}
 	}
 }
 
