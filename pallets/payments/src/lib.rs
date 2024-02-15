@@ -104,6 +104,10 @@ pub mod pallet {
 
 		type FeeHandler: FeeHandler<Self>;
 
+		type SenderOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
+
+		type BeneficiaryOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
+
 		type DisputeResolver: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 
 		type PaymentId: PaymentId<Self> + Member + Parameter + MaxEncodedLen;
@@ -266,7 +270,7 @@ pub mod pallet {
 			#[pallet::compact] amount: BalanceOf<T>,
 			remark: Option<BoundedDataOf<T>>,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
+			let sender = T::SenderOrigin::ensure_origin(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
 			// create PaymentDetail and add to storage
@@ -297,7 +301,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::release())]
 		pub fn release(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
+			let sender = T::SenderOrigin::ensure_origin(origin)?;
 
 			// ensure the payment is in Created state
 			let payment = Payment::<T>::get(&sender, &payment_id).map_err(|_| Error::<T>::InvalidPayment)?;
@@ -308,43 +312,13 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Cancel a payment in created state, this will release the reserved
-		/// back to creator of the payment. This extrinsic can only be called by
-		/// the recipient of the payment
-		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::cancel())]
-		pub fn cancel(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
-			let beneficiary = ensure_signed(origin)?;
-			let (sender, b) = PaymentParties::<T>::get(&payment_id)?;
-			ensure!(beneficiary == b, Error::<T>::InvalidBeneficiary);
-
-			let payment = Payment::<T>::get(&sender, &payment_id).map_err(|_| Error::<T>::InvalidPayment)?;
-
-			match payment.state {
-				PaymentState::Created => {
-					Self::cancel_payment(&sender, payment)?;
-					Self::deposit_event(Event::PaymentCancelled { payment_id });
-				}
-				PaymentState::RefundRequested { cancel_block: _ } => {
-					Self::cancel_payment(&sender, payment)?;
-					Self::deposit_event(Event::PaymentRefunded { payment_id });
-				}
-				_ => fail!(Error::<T>::InvalidAction),
-			}
-
-			Payment::<T>::remove(&sender, &payment_id);
-			PaymentParties::<T>::remove(payment_id);
-
-			Ok(().into())
-		}
-
 		/// Allow the creator of a payment to initiate a refund that will return
 		/// the funds after a configured amount of time that the receiver has to
 		/// react and opose the request
-		#[pallet::call_index(3)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::request_refund())]
 		pub fn request_refund(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin.clone())?;
+			let sender = T::SenderOrigin::ensure_origin(origin)?;
 
 			let expiry = Payment::<T>::try_mutate(&sender, &payment_id, |maybe_payment| -> Result<_, DispatchError> {
 				// ensure the payment exists
@@ -378,100 +352,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Allow payment beneficiary to dispute the refund request from the
-		/// payment creator This does not cancel the request, instead sends the
-		/// payment to a NeedsReview state The assigned resolver account can
-		/// then change the state of the payment after review.
-		#[pallet::call_index(4)]
-		#[pallet::weight(<T as Config>::WeightInfo::dispute_refund())]
-		pub fn dispute_refund(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
-			use PaymentState::*;
-			let beneficiary = ensure_signed(origin)?;
-			let (sender, b) = PaymentParties::<T>::get(&payment_id)?;
-			ensure!(beneficiary == b, Error::<T>::InvalidBeneficiary);
-
-			Payment::<T>::try_mutate(&sender, &payment_id, |maybe_payment| -> Result<_, DispatchError> {
-				// ensure the payment exists
-				let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
-
-				// ensure the payment is in Requested Refund state
-				let RefundRequested { cancel_block } = payment.state else {
-					fail!(Error::<T>::InvalidAction);
-				};
-				ensure!(
-					cancel_block > frame_system::Pallet::<T>::block_number(),
-					Error::<T>::InvalidAction
-				);
-
-				// Hold beneficiary incentive amount to balance the incentives at the time to
-				// resolve the dispute
-				let reason = &HoldReason::TransferPayment.into();
-				T::Assets::hold(payment.asset.clone(), reason, &beneficiary, payment.incentive_amount)?;
-
-				payment.state = PaymentState::NeedsReview;
-
-				T::Scheduler::cancel_named(("payment", payment_id).using_encoded(blake2_256))
-			})?;
-
-			Self::deposit_event(Event::PaymentRefundDisputed { payment_id });
-			Ok(().into())
-		}
-
-		#[pallet::call_index(5)]
-		#[pallet::weight(<T as Config>::WeightInfo::resolve_dispute())]
-		pub fn resolve_dispute(
-			origin: OriginFor<T>,
-			payment_id: T::PaymentId,
-			dispute_result: DisputeResult,
-		) -> DispatchResultWithPostInfo {
-			let dispute_resolver = T::DisputeResolver::ensure_origin(origin)?;
-			let (sender, beneficiary) = PaymentParties::<T>::get(&payment_id)?;
-
-			let payment = Payment::<T>::get(&sender, &payment_id).map_err(|_| Error::<T>::InvalidPayment)?;
-			ensure!(payment.state == PaymentState::NeedsReview, Error::<T>::InvalidAction);
-
-			let dispute = Some((dispute_result, dispute_resolver));
-			Self::settle_payment(&sender, &beneficiary, &payment_id, dispute)?;
-
-			Self::deposit_event(Event::PaymentDisputeResolved { payment_id });
-			Ok(().into())
-		}
-
-		// Creates a new payment with the given details. This can be called by the
-		// recipient of the payment to create a payment and then completed by the sender
-		// using the `accept_and_pay` extrinsic.  The payment will be in
-		// PaymentRequested State and can only be modified by the `accept_and_pay`
-		// extrinsic.
-		#[pallet::call_index(6)]
-		#[pallet::weight(<T as Config>::WeightInfo::request_payment())]
-		pub fn request_payment(
-			origin: OriginFor<T>,
-			sender: AccountIdLookupOf<T>,
-			asset: AssetIdOf<T>,
-			#[pallet::compact] amount: BalanceOf<T>,
-		) -> DispatchResultWithPostInfo {
-			let beneficiary = ensure_signed(origin)?;
-			let sender = T::Lookup::lookup(sender)?;
-			// create PaymentDetail and add to storage
-			let (payment_id, _) = Self::create_payment(
-				&sender,
-				beneficiary,
-				asset,
-				amount,
-				PaymentState::PaymentRequested,
-				T::IncentivePercentage::get(),
-				None,
-			)?;
-
-			Self::deposit_event(Event::PaymentRequestCreated { payment_id });
-
-			Ok(().into())
-		}
-
-		#[pallet::call_index(7)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::accept_and_pay())]
 		pub fn accept_and_pay(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
+			let sender = T::SenderOrigin::ensure_origin(origin)?;
 			let (_, beneficiary) = PaymentParties::<T>::get(&payment_id)?;
 
 			Payment::<T>::try_mutate(&sender, payment_id, |maybe_payment| -> Result<_, DispatchError> {
@@ -500,6 +384,125 @@ pub mod pallet {
 			})?;
 
 			Self::deposit_event(Event::PaymentRequestCreated { payment_id });
+			Ok(().into())
+		}
+
+		/// Cancel a payment in created state, this will release the reserved
+		/// back to creator of the payment. This extrinsic can only be called by
+		/// the recipient of the payment
+		#[pallet::call_index(10)]
+		#[pallet::weight(<T as Config>::WeightInfo::cancel())]
+		pub fn cancel(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
+			let beneficiary = T::BeneficiaryOrigin::ensure_origin(origin)?;
+			let (sender, b) = PaymentParties::<T>::get(&payment_id)?;
+			ensure!(beneficiary == b, Error::<T>::InvalidBeneficiary);
+
+			let payment = Payment::<T>::get(&sender, &payment_id).map_err(|_| Error::<T>::InvalidPayment)?;
+
+			match payment.state {
+				PaymentState::Created => {
+					Self::cancel_payment(&sender, payment)?;
+					Self::deposit_event(Event::PaymentCancelled { payment_id });
+				}
+				PaymentState::RefundRequested { cancel_block: _ } => {
+					Self::cancel_payment(&sender, payment)?;
+					Self::deposit_event(Event::PaymentRefunded { payment_id });
+				}
+				_ => fail!(Error::<T>::InvalidAction),
+			}
+
+			Payment::<T>::remove(&sender, &payment_id);
+			PaymentParties::<T>::remove(payment_id);
+
+			Ok(().into())
+		}
+
+		/// Allow payment beneficiary to dispute the refund request from the
+		/// payment creator This does not cancel the request, instead sends the
+		/// payment to a NeedsReview state The assigned resolver account can
+		/// then change the state of the payment after review.
+		#[pallet::call_index(11)]
+		#[pallet::weight(<T as Config>::WeightInfo::dispute_refund())]
+		pub fn dispute_refund(origin: OriginFor<T>, payment_id: T::PaymentId) -> DispatchResultWithPostInfo {
+			let beneficiary = T::BeneficiaryOrigin::ensure_origin(origin)?;
+			let (sender, b) = PaymentParties::<T>::get(&payment_id)?;
+			ensure!(beneficiary == b, Error::<T>::InvalidBeneficiary);
+
+			Payment::<T>::try_mutate(&sender, &payment_id, |maybe_payment| -> Result<_, DispatchError> {
+				// ensure the payment exists
+				let payment = maybe_payment.as_mut().map_err(|_| Error::<T>::InvalidPayment)?;
+
+				// ensure the payment is in Requested Refund state
+				let PaymentState::RefundRequested { cancel_block } = payment.state else {
+					fail!(Error::<T>::InvalidAction);
+				};
+				ensure!(
+					cancel_block > frame_system::Pallet::<T>::block_number(),
+					Error::<T>::InvalidAction
+				);
+
+				// Hold beneficiary incentive amount to balance the incentives at the time to
+				// resolve the dispute
+				let reason = &HoldReason::TransferPayment.into();
+				T::Assets::hold(payment.asset.clone(), reason, &beneficiary, payment.incentive_amount)?;
+
+				payment.state = PaymentState::NeedsReview;
+
+				T::Scheduler::cancel_named(("payment", payment_id).using_encoded(blake2_256))
+			})?;
+
+			Self::deposit_event(Event::PaymentRefundDisputed { payment_id });
+			Ok(().into())
+		}
+
+		// Creates a new payment with the given details. This can be called by the
+		// recipient of the payment to create a payment and then completed by the sender
+		// using the `accept_and_pay` extrinsic.  The payment will be in
+		// PaymentRequested State and can only be modified by the `accept_and_pay`
+		// extrinsic.
+		#[pallet::call_index(12)]
+		#[pallet::weight(<T as Config>::WeightInfo::request_payment())]
+		pub fn request_payment(
+			origin: OriginFor<T>,
+			sender: AccountIdLookupOf<T>,
+			asset: AssetIdOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let beneficiary = T::BeneficiaryOrigin::ensure_origin(origin)?;
+			let sender = T::Lookup::lookup(sender)?;
+			// create PaymentDetail and add to storage
+			let (payment_id, _) = Self::create_payment(
+				&sender,
+				beneficiary,
+				asset,
+				amount,
+				PaymentState::PaymentRequested,
+				T::IncentivePercentage::get(),
+				None,
+			)?;
+
+			Self::deposit_event(Event::PaymentRequestCreated { payment_id });
+
+			Ok(().into())
+		}
+
+		#[pallet::call_index(20)]
+		#[pallet::weight(<T as Config>::WeightInfo::resolve_dispute())]
+		pub fn resolve_dispute(
+			origin: OriginFor<T>,
+			payment_id: T::PaymentId,
+			dispute_result: DisputeResult,
+		) -> DispatchResultWithPostInfo {
+			let dispute_resolver = T::DisputeResolver::ensure_origin(origin)?;
+			let (sender, beneficiary) = PaymentParties::<T>::get(&payment_id)?;
+
+			let payment = Payment::<T>::get(&sender, &payment_id).map_err(|_| Error::<T>::InvalidPayment)?;
+			ensure!(payment.state == PaymentState::NeedsReview, Error::<T>::InvalidAction);
+
+			let dispute = Some((dispute_result, dispute_resolver));
+			Self::settle_payment(&sender, &beneficiary, &payment_id, dispute)?;
+
+			Self::deposit_event(Event::PaymentDisputeResolved { payment_id });
 			Ok(().into())
 		}
 	}

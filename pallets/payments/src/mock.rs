@@ -7,7 +7,7 @@ use frame_support::{
 	PalletId,
 };
 
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSigned};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::H256;
@@ -250,6 +250,8 @@ impl pallet_payments::Config for Test {
 	type FeeHandler = MockFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
+	type SenderOrigin = EnsureSigned<AccountId>;
+	type BeneficiaryOrigin = EnsureSigned<AccountId>;
 	type DisputeResolver = frame_system::EnsureRootWithSuccess<u64, ConstU64<ROOT_ACCOUNT>>;
 	type PalletId = PaymentPalletId;
 	type RuntimeHoldReason = RuntimeHoldReason;

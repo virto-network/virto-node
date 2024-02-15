@@ -1,4 +1,5 @@
 use super::*;
+use frame_system::EnsureSigned;
 use parity_scale_codec::Encode;
 
 parameter_types! {
@@ -75,6 +76,8 @@ impl pallet_payments::Config for Runtime {
 	type FeeHandler = KreivoFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
+	type SenderOrigin = EnsureSigned<AccountId>;
+	type BeneficiaryOrigin = EnsureSigned<AccountId>;
 	type DisputeResolver = frame_system::EnsureRootWithSuccess<AccountId, TreasuryAccount>;
 	type PalletId = PaymentPalletId;
 	type RuntimeHoldReason = RuntimeHoldReason;
