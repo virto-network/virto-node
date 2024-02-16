@@ -19,8 +19,7 @@ PublishPort=30333:30333
 PublishPort=30334:30334
 PublishPort=9615:9615
 LogDriver=passthrough
-Exec=/usr/bin/virto-node \
-	--name kreivo.%H \
+Exec=--name kreivo-%H \
 	--rpc-external \
 	--rpc-cors=all \
 	--pruning archive-canonical \
