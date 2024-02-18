@@ -1,10 +1,9 @@
 use crate::chain_spec::{get_account_id_from_seed, get_collator_keys_from_seed, Extensions, SAFE_XCM_VERSION};
 use cumulus_primitives_core::ParaId;
 
-use hex_literal::hex;
 use kreivo_runtime::{constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId, SessionKeys};
 use sc_service::ChainType;
-use sp_core::{crypto::UncheckedInto, sr25519};
+use sp_core::sr25519;
 
 const DEFAULT_PROTOCOL_ID: &str = "kreivo";
 
@@ -176,47 +175,7 @@ pub fn local_testnet_config() -> ChainSpec {
 }
 
 pub fn kreivo_kusama_chain_spec() -> ChainSpec {
-	// Give your base currency a unit name and decimal places
-	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "KSM".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 2.into());
-
-	#[allow(deprecated)]
-	ChainSpec::builder(
-		kreivo_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
-		Extensions {
-			relay_chain: "kusama".into(),
-			// You MUST set this to the correct network!
-			para_id: KREIVO_PARA_ID,
-		},
-	)
-	.with_name("Kreivo")
-	.with_id("kreivo")
-	.with_chain_type(ChainType::Live)
-	.with_genesis_config_patch(genesis(
-		// initial collators.
-		vec![
-			(
-				hex!("203aec61cedbfa0cd23f183a972b8646794b9106e62d141c6af4fbbbe293847b").into(),
-				hex!("203aec61cedbfa0cd23f183a972b8646794b9106e62d141c6af4fbbbe293847b").unchecked_into(),
-			),
-			(
-				hex!("74d538cee938b3f988567a3d0ad4b0dd84735ceab8b51cdfb850ecf58accfd7e").into(),
-				hex!("74d538cee938b3f988567a3d0ad4b0dd84735ceab8b51cdfb850ecf58accfd7e").unchecked_into(),
-			),
-		],
-		vec![
-			hex!("68170716ab7c6735dd0a1012045d9ea33891b5f6596cf97eb217d0962d86a518").into(),
-			hex!("556d3b25d068997f358622cc0f9531e4175d0d10d8ae8511c091d61efc21f65c").into(),
-			hex!("8a0b6ddc780dbeb1c943caeadc7d09d85b2dc5b74026153f7931e068390d4441").into(),
-		],
-		hex!("7b953019065b4342a4f1fcf62be8f3e83c8d15303b674fd7191e598f699e764f").into(),
-		KREIVO_PARA_ID.into(),
-	))
-	.with_protocol_id(DEFAULT_PROTOCOL_ID)
-	.with_properties(properties)
-	.build()
+	ChainSpec::from_json_bytes(include_bytes!("kreivo_chainspec.json").as_slice()).unwrap()
 }
 
 fn testnet_genesis(
@@ -252,47 +211,5 @@ fn testnet_genesis(
 			"safeXcmVersion": Some(SAFE_XCM_VERSION),
 		},
 		"sudo": { "key": Some(root) }
-	})
-}
-
-fn genesis(
-	invulnerables: Vec<(AccountId, AuraId)>,
-	endowed_accounts: Vec<AccountId>,
-	root: AccountId,
-	id: ParaId,
-) -> serde_json::Value {
-	let balances: Vec<_> = endowed_accounts
-		.iter()
-		.cloned()
-		.chain(std::iter::once(root.clone()))
-		.map(|k| (k, 2_000_000_000_000_000u128))
-		.collect();
-	serde_json::json!({
-		"balances": {
-			"balances": balances
-		},
-		"parachainInfo": {
-			"parachainId": id,
-		},
-		"collatorSelection": {
-			"invulnerables": invulnerables.iter().cloned().map(|(acc, _)| acc).collect::<Vec<_>>(),
-			"candidacyBond": EXISTENTIAL_DEPOSIT * 16,
-		},
-		"session": {
-			"keys": invulnerables
-				.into_iter()
-				.map(|(acc, aura)| {
-					(
-						acc.clone(),                 // account id
-						acc,                         // validator id
-						session_keys(aura), // session keys
-					)
-				})
-			.collect::<Vec<_>>(),
-		},
-		"polkadotXcm": {
-			"safeXcmVersion": Some(SAFE_XCM_VERSION),
-		},
-		"sudo": { "key": Some(root) },
 	})
 }
