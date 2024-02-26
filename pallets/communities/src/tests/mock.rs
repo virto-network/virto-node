@@ -9,6 +9,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
+use pallet_communities::{types::CommunityIdOf, BenchmarkHelper};
 use pallet_referenda::{TrackIdOf, TrackInfoOf, TracksInfo};
 use parity_scale_codec::Compact;
 use sp_core::H256;
@@ -121,6 +122,17 @@ impl pallet_balances::Config for Test {
 }
 
 // Memberships
+#[cfg(feature = "runtime-benchmarks")]
+pub struct NftsBenchmarksHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_nfts::BenchmarkHelper<CollectionId, MembershipId> for NftsBenchmarksHelper {
+	fn collection(i: u16) -> CollectionId {
+		i.into()
+	}
+	fn item(i: u16) -> MembershipId {
+		MembershipId(COMMUNITY, i.into())
+	}
+}
 
 parameter_types! {
 	pub const RootAccount: AccountId = AccountId::new([0xff; 32]);
@@ -151,6 +163,9 @@ impl pallet_nfts::Config for Test {
 	type StringLimit = ();
 	type ValueLimit = ConstU32<10>;
 	type WeightInfo = ();
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = NftsBenchmarksHelper;
 }
 
 // Governance at Communities
@@ -201,6 +216,11 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToT
 
 		Ok(())
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(id: &TrackIdOf<Test, ()>) -> Result<RuntimeOrigin, ()> {
+		Ok(pallet_communities::Origin::<Test>::new(COMMUNITY).into())
+	}
 }
 
 parameter_types! {
@@ -250,6 +270,15 @@ parameter_types! {
 type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
+#[cfg(feature = "runtime-benchmarks")]
+struct CommunityBenchmarkHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
+	fn get_community_id() -> CommunityIdOf<Test> {
+		COMMUNITY
+	}
+}
+
 impl pallet_communities::Config for Test {
 	type Assets = Assets;
 	type Balances = Balances;
@@ -263,6 +292,9 @@ impl pallet_communities::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type WeightInfo = WeightInfo;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = CommunityBenchmarkHelper;
 }
 
 pub const COMMUNITY: CommunityId = CommunityId::new(1);

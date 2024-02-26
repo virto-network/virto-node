@@ -1,35 +1,56 @@
 //! Benchmarking setup for pallet-communities
 #![cfg(feature = "runtime-benchmarks")]
+use self::types::{CommunityIdOf, PalletsOriginOf};
+
 use super::*;
 
-#[allow(unused)]
-use crate::Pallet as Template;
+use crate::{origin::RawOrigin as Origin, Event, Pallet as Communities};
 use frame_benchmarking::v2::*;
-use frame_system::RawOrigin;
+use frame_support::traits::OriginTrait;
+use frame_system::{RawOrigin, pallet_prelude::OriginFor};
+use virto_common::CommunityId;
 
-#[benchmarks]
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
+	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+}
+
+fn get_community_origin_caller<T: Config>() -> PalletsOriginOf<T> 
+where 
+	CommunityIdOf<T>: From<CommunityId>,
+	<T as frame_system::Config>::RuntimeOrigin: From<Origin<T>>
+{
+	<Origin<T> as Into<OriginFor<T>>>::into(Origin::<T>::new(T::BenchmarkHelper::get_community_id())).into_caller()
+}
+
+#[benchmarks(
+	where 
+		CommunityIdOf<T>: From<CommunityId>,
+		<T as frame_system::Config>::RuntimeOrigin: From<Origin<T>>
+)]
 mod benchmarks {
 	use super::*;
 
 	#[benchmark]
-	fn do_something() {
-		let value = 100u32.into();
-		let caller: T::AccountId = whitelisted_caller();
-		#[extrinsic_call]
-		do_something(RawOrigin::Signed(caller), value);
+	fn create() {
+		// setup code
+		let id = T::BenchmarkHelper::get_community_id();
+		let origin = get_community_origin_caller::<T>();
 
-		assert_eq!(Something::<T>::get(), Some(value));
+		#[extrinsic_call]
+		_(RawOrigin::Root, origin, id);
+
+		// verification code
+		assert_last_event::<T>(Event::CommunityCreated { id, origin }.into());
 	}
 
-	#[benchmark]
-	fn cause_error() {
-		Something::<T>::put(100u32);
-		let caller: T::AccountId = whitelisted_caller();
-		#[extrinsic_call]
-		cause_error(RawOrigin::Signed(caller));
+	// #[benchmark]
+	// fn set_metadata(n: Linear<1, 64>, d: Linear<1, 256>, u: Linear<1, 64>) -> Result<(), BenchmarkError> {
 
-		assert_eq!(Something::<T>::get(), Some(101u32));
-	}
+	// }
 
-	impl_benchmark_test_suite!(Template, crate::mock::new_test_ext(), crate::mock::Test);
+	impl_benchmark_test_suite!(
+		Communities,
+		crate::tests::mock::new_test_ext(&[], &[]),
+		crate::tests::mock::Test
+	);
 }
