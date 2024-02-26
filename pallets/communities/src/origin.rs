@@ -37,7 +37,8 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		Ok(RawOrigin::new(T::Helper::get_community_id()).into())
+		use crate::types::BenchmarkHelperOf;
+		Ok(RawOrigin::new(<BenchmarkHelperOf<T> as crate::BenchmarkHelper<T>>::get_community_id()).into())
 	}
 }
 

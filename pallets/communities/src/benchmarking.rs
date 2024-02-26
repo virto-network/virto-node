@@ -34,10 +34,10 @@ mod benchmarks {
 	fn create() {
 		// setup code
 		let id = T::BenchmarkHelper::get_community_id();
-		let origin = get_community_origin_caller::<T>();
+		let origin: <<T as frame_system::Config>::RuntimeOrigin as OriginTrait>::PalletsOrigin = get_community_origin_caller::<T>();
 
 		#[extrinsic_call]
-		_(RawOrigin::Root, origin, id);
+		_(RawOrigin::Root, origin.clone(), id);
 
 		// verification code
 		assert_last_event::<T>(Event::CommunityCreated { id, origin }.into());
@@ -50,7 +50,7 @@ mod benchmarks {
 
 	impl_benchmark_test_suite!(
 		Communities,
-		crate::tests::mock::new_test_ext(&[], &[]),
+		crate::tests::mock::new_bench_ext(),
 		crate::tests::mock::Test
 	);
 }

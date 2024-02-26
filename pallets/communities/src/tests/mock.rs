@@ -9,7 +9,6 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
-use pallet_communities::{types::CommunityIdOf, BenchmarkHelper};
 use pallet_referenda::{TrackIdOf, TrackInfoOf, TracksInfo};
 use parity_scale_codec::Compact;
 use sp_core::H256;
@@ -23,7 +22,8 @@ pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 use crate::{
 	self as pallet_communities,
 	origin::{DecisionMethod, EnsureCommunity},
-	types::{Tally, VoteWeight},
+	types::{CommunityIdOf, Tally, VoteWeight},
+	BenchmarkHelper,
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -271,7 +271,7 @@ type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
 #[cfg(feature = "runtime-benchmarks")]
-struct CommunityBenchmarkHelper;
+pub struct CommunityBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 	fn get_community_id() -> CommunityIdOf<Test> {
@@ -294,12 +294,18 @@ impl pallet_communities::Config for Test {
 	type WeightInfo = WeightInfo;
 
 	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = CommunityBenchmarkHelper;
+	type BenchmarkHelper = CommunityBenchmarkHelper;
 }
 
 pub const COMMUNITY: CommunityId = CommunityId::new(1);
 pub const COMMUNITY_ORIGIN: OriginCaller =
 	OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
+
+// Build genesis storage according to the mock runtime.
+#[cfg(feature = "runtime-benchmarks")]
+pub fn new_bench_ext() -> sp_io::TestExternalities {
+	TestEnvBuilder::new().build()
+}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
