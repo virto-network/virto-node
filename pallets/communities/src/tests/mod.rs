@@ -1,7 +1,7 @@
 use frame_support::assert_ok;
 
 mod helpers;
-mod mock;
+pub mod mock;
 
 use helpers::*;
 use mock::*;

@@ -193,6 +193,11 @@ pub mod pallet {
 	use sp_runtime::traits::StaticLookup;
 	use types::{PollIndexOf, *};
 
+	#[cfg(feature = "runtime-benchmarks")]
+	pub trait BenchmarkHelper<T: Config> {
+		fn get_community_id() -> CommunityIdOf<T>;
+	}
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
@@ -246,6 +251,9 @@ pub mod pallet {
 		/// The pallet id used for deriving sovereign account IDs.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type Helper: BenchmarkHelper<Self>;
 	}
 
 	/// The origin of the pallet
@@ -393,6 +401,11 @@ pub mod pallet {
 		///
 		/// [11]: `types::CommunityMetadata`
 		#[pallet::call_index(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_metadata(
+				name.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+				description.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+				url.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+		))]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,

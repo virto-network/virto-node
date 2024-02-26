@@ -34,6 +34,11 @@ where
 			.and_then(|c| c.state.eq(&Active).then_some(id))
 			.ok_or(o)
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		Ok(RawOrigin::new(T::Helper::get_community_id()).into())
+	}
 }
 
 /// Origin to represent the voice of a community or a subset of its members

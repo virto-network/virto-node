@@ -1,23 +1,24 @@
 [package]
 name = "pallet-communities"
 version = "0.1.0"
-description = "This pallet enables the creation of communities that are soverign entities with diverse forms of governance. In simpler terms, it can be considered a DAO Factory."
 authors = ["Virto Team<contact@virto.team>"]
-edition = "2021"
+description = "This pallet enables the creation of communities that are soverign entities with diverse forms of governance. In simpler terms, it can be considered a DAO Factory."
 license = "MIT-0"
-publish = false
-repository = "https://github.com/virto-network/virto-node/"
+homepage = 'https://github.com/virto-network/virto-node'
+repository = 'https://github.com/virto-network/virto-node'
+edition = "2021"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-parity-scale-codec = { workspace = true, features = ["derive"] }
-scale-info = { workspace = true, features = ["derive"] }
-
 frame-benchmarking = { workspace = true, optional = true }
 frame-support =  { workspace = true }
 frame-system = { workspace = true }
+
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 xcm = { workspace = true, optional = true }
@@ -42,12 +43,16 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"pallet-assets/std",
-	"sp-core/std",
 	"pallet-balances/std",
 	"pallet-nfts/std",
+	"pallet-preimage/std",
 	"pallet-referenda/std",
+	"pallet-referenda-tracks/std",
+	"pallet-scheduler/std",
 	"parity-scale-codec/std",
+	"sp-core/std",
 	"scale-info/std",
+	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"xcm?/std",
@@ -55,5 +60,11 @@ std = [
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-nfts/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks",
+	"pallet-referenda/runtime-benchmarks",
+	"pallet-referenda-tracks/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
 ]
 try-runtime = ["frame-support/try-runtime"]
