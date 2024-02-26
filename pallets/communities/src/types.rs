@@ -25,6 +25,9 @@ pub type MembershipIdOf<T> = <<T as Config>::Membership as membership::Membershi
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
 
+#[cfg(feature = "runtime-benchmarks")]
+pub type BenchmarkHelperOf<T> = <T as Config>::BenchmarkHelper;
+
 /// The Community struct holds the basic definition of a community. It includes
 /// the current state of a community, the [`AccountId`][1] for the community
 /// admin, and (if any) the ID of the community-issued asset the community has

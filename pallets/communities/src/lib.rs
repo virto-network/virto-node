@@ -253,7 +253,7 @@ pub mod pallet {
 		type PalletId: Get<frame_support::PalletId>;
 
 		#[cfg(feature = "runtime-benchmarks")]
-		type Helper: BenchmarkHelper<Self>;
+		type BenchmarkHelper: BenchmarkHelper<Self>;
 	}
 
 	/// The origin of the pallet
