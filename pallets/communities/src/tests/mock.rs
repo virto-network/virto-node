@@ -219,7 +219,7 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToT
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin(id: &TrackIdOf<Test, ()>) -> Result<RuntimeOrigin, ()> {
-		Ok(pallet_communities::Origin::<Test>::new(COMMUNITY).into())
+		Ok(pallet_communities::Origin::<Test>::new(id.clone()).into())
 	}
 }
 
@@ -472,7 +472,7 @@ impl TestEnvBuilder {
 		decision_method: &DecisionMethod<AssetId>,
 	) -> RuntimeOrigin {
 		let mut origin = pallet_communities::Origin::<Test>::new(*community_id);
-		origin.set_decision_method(decision_method.clone());
+		origin.with_decision_method(decision_method.clone());
 
 		origin.into()
 	}

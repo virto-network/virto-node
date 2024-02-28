@@ -64,17 +64,16 @@ impl<T: Config> RawOrigin<T> {
 		self.subset = Some(s);
 	}
 
+	pub fn with_decision_method(&mut self, m: DecisionMethod<AssetIdOf<T>>) {
+		self.method = m;
+	}
+
 	pub fn id(&self) -> CommunityIdOf<T> {
 		self.community_id
 	}
 
 	pub fn decision_method(&self) -> DecisionMethod<AssetIdOf<T>> {
 		self.method.clone()
-	}
-
-	#[cfg(test)]
-	pub(crate) fn set_decision_method(&mut self, decision_method: DecisionMethod<AssetIdOf<T>>) {
-		self.method = decision_method;
 	}
 }
 
