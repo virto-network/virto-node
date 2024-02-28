@@ -274,6 +274,7 @@ use crate::{types::CommunityIdOf, BenchmarkHelper};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
+
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 	fn get_community_id() -> CommunityIdOf<Test> {

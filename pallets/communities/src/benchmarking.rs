@@ -4,19 +4,22 @@ use self::types::{CommunityIdOf, PalletsOriginOf};
 
 use super::*;
 
-use crate::{origin::{RawOrigin as Origin, DecisionMethod}, types::AssetIdOf, Event, Pallet as Communities};
+use crate::{
+	origin::{DecisionMethod, RawOrigin as Origin},
+	types::AssetIdOf,
+	Event, Pallet as Communities,
+};
 use frame_benchmarking::v2::*;
 use frame_support::{traits::OriginTrait, BoundedVec};
-use frame_system::{RawOrigin, pallet_prelude::OriginFor};
-use virto_common::CommunityId;
+use frame_system::{pallet_prelude::OriginFor, RawOrigin};
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
-fn get_community_origin_caller<T: Config>(id: CommunityIdOf<T>) -> PalletsOriginOf<T> 
-where 
-	<T as frame_system::Config>::RuntimeOrigin: From<Origin<T>>
+fn get_community_origin_caller<T: Config>(id: CommunityIdOf<T>) -> PalletsOriginOf<T>
+where
+	<T as frame_system::Config>::RuntimeOrigin: From<Origin<T>>,
 {
 	let mut origin = Origin::<T>::new(id);
 	origin.with_decision_method(origin::DecisionMethod::Rank);
@@ -24,13 +27,12 @@ where
 	<Origin<T> as Into<OriginFor<T>>>::into(origin).into_caller()
 }
 
-fn create_community <T: Config>(id: CommunityIdOf<T>, origin: PalletsOriginOf<T>) -> Result<(), BenchmarkError> {
+fn create_community<T: Config>(id: CommunityIdOf<T>, origin: PalletsOriginOf<T>) -> Result<(), BenchmarkError> {
 	Communities::<T>::create(RawOrigin::Root.into(), origin, id).map_err(|e| e.into())
 }
 
 #[benchmarks(
-	where 
-		CommunityIdOf<T>: From<CommunityId>,
+	where
 		<T as frame_system::Config>::RuntimeOrigin: From<Origin<T>>
 )]
 mod benchmarks {
@@ -75,7 +77,7 @@ mod benchmarks {
 
 		Ok(())
 	}
-	
+
 	#[benchmark]
 	fn set_decision_method() -> Result<(), BenchmarkError> {
 		// setup code
