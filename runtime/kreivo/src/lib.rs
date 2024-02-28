@@ -497,6 +497,9 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = PayoutSpendPeriod;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 parameter_types! {
@@ -706,58 +709,9 @@ ord_parameter_types! {
 		]);
 }
 
-pub type PaymentId = u32;
-
-#[cfg(feature = "runtime-benchmarks")]
-pub struct BenchmarkHelper;
-#[cfg(feature = "runtime-benchmarks")]
-impl super::BenchmarkHelper<AccountId, AssetId, Balance> for BenchmarkHelper {
-	fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
-		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
-			id,
-			admin,
-			is_sufficient,
-			min_balance,
-		)
-		.unwrap();
-	}
-}
-
-pub struct KreivoFeeHandler;
-
-const MANDATORY_FEE: bool = true;
 pub const SYSTEM_FEE: u8 = 1;
 pub const SYSTEM_FEE_PERCENTAGE: Percent = Percent::from_percent(SYSTEM_FEE);
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
-
-impl FeeHandler<Runtime> for KreivoFeeHandler {
-	fn apply_fees(
-		_asset: &AssetIdOf<Runtime>,
-		_sender: &AccountId,
-		_beneficiary: &AccountId,
-		amount: &Balance,
-		_remark: Option<&[u8]>,
-	) -> Fees<Runtime> {
-		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			RootAccount::get(),
-			SYSTEM_FEE_PERCENTAGE.mul_floor(*amount),
-			MANDATORY_FEE,
-		)];
-		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			RootAccount::get(),
-			SYSTEM_FEE_PERCENTAGE.mul_floor(*amount),
-			MANDATORY_FEE,
-		)];
-
-		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(sender_fee).unwrap();
-		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(beneficiary_fee).unwrap();
-
-		Fees {
-			sender_pays,
-			beneficiary_pays,
-		}
-	}
-}
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct AssetRegistryBenchmarkHelper;
@@ -804,7 +758,7 @@ mod benches {
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_burner, Burner]
-		[pallet_lockdown_mode, LockdownMode]
+		// [pallet_lockdown_mode, LockdownMode]
 		[pallet_treasury, Treasury]
 		[pallet_multisig, Multisig]
 		[pallet_utility, Utility]
