@@ -9,7 +9,7 @@ use crate::{
 #[cfg(feature = "runtime-benchmarks")]
 use crate::{CommunityIdFor, Pallet};
 #[cfg(feature = "runtime-benchmarks")]
-use frame_support::traits::membership::Inspect;
+use ::{frame_support::traits::membership::Inspect, sp_runtime::traits::StaticLookup};
 
 impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
 	fn new(_cid: CommunityIdOf<T>) -> Self {
