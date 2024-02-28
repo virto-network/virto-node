@@ -498,6 +498,9 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = PayoutSpendPeriod;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 parameter_types! {
@@ -647,20 +650,9 @@ ord_parameter_types! {
 		]);
 }
 
-#[cfg(feature = "runtime-benchmarks")]
-pub struct BenchmarkHelper;
-#[cfg(feature = "runtime-benchmarks")]
-impl super::BenchmarkHelper<AccountId, AssetId, Balance> for BenchmarkHelper {
-	fn create_asset(id: AssetId, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
-		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
-			id,
-			admin,
-			is_sufficient,
-			min_balance,
-		)
-		.unwrap();
-	}
-}
+pub const SYSTEM_FEE: u8 = 1;
+pub const SYSTEM_FEE_PERCENTAGE: Percent = Percent::from_percent(SYSTEM_FEE);
+pub const INCENTIVE_PERCENTAGE: u8 = 10;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct AssetRegistryBenchmarkHelper;
@@ -707,7 +699,7 @@ mod benches {
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_burner, Burner]
-		[pallet_lockdown_mode, LockdownMode]
+		// [pallet_lockdown_mode, LockdownMode]
 		[pallet_treasury, Treasury]
 		[pallet_multisig, Multisig]
 		[pallet_utility, Utility]

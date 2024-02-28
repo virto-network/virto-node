@@ -8,7 +8,7 @@ pub type CommunityReferendaInstance = pallet_referenda::Instance2;
 
 parameter_types! {
 	pub const AlarmInterval: BlockNumber = 1;
-	pub const SubmissionDeposit: Balance = 1 * QUID;
+	pub const SubmissionDeposit: Balance = QUID;
 	pub const UndecidingTimeout: BlockNumber = 14 * DAYS;
 }
 
@@ -25,6 +25,11 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Runtime, CommunityTracksInstan
 		ensure!(&track_id_for_origin == id, o);
 
 		Ok(())
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(id: &TrackIdOf<Runtime, CommunityTracksInstance>) -> Result<RuntimeOrigin, ()> {
+		Ok(pallet_communities::Origin::<Runtime>::new(id.clone()).into())
 	}
 }
 

@@ -33,4 +33,36 @@ impl pallet_communities::Config for Runtime {
 	type WeightInfo = pallet_communities::weights::SubstrateWeight<Runtime>;
 
 	type PalletId = CommunityPalletId;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = CommunityBenchmarkHelper;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+use ::{
+	pallet_communities::{types::CommunityIdOf, BenchmarkHelper},
+	virto_common::MembershipId,
+};
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct CommunityBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
+	fn get_community_id() -> CommunityIdOf<Runtime> {
+		CommunityId::new(1)
+	}
+
+	fn build_memberships(community_id: CommunityIdOf<Runtime>) -> Result<u32, frame_benchmarking::BenchmarkError> {
+		let memberships = (0..u8::MAX).map(|i| MembershipId(Self::get_community_id(), i as u32));
+
+		let account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
+		for membership in memberships {
+			use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+			MembershipCollection::mint_into(&membership, &account, &Default::default(), true)?;
+		}
+
+		Ok(u8::MAX as u32)
+	}
 }
