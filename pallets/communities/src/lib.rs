@@ -195,7 +195,17 @@ pub mod pallet {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	pub trait BenchmarkHelper<T: Config> {
+		/// Returns the ID of the community to use in benchmarks
 		fn get_community_id() -> CommunityIdOf<T>;
+
+		/// Initializes the memberships of a community built for benchamrking
+		/// purposes.
+		///
+		/// Then, returns the count of memberships minted to the community.
+		/// This is equivalent to the number of members that can be added, as
+		/// well as the max number of members/rank that can vote in a poll proposed
+		/// over the community's track.
+		fn build_memberships(community_id: CommunityIdOf<T>) -> Result<u32, frame_benchmarking::BenchmarkError>;
 	}
 
 	#[pallet::pallet]

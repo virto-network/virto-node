@@ -1,5 +1,5 @@
 use frame_support::traits::VoteTally;
-use sp_runtime::{traits::StaticLookup, Perbill};
+use sp_runtime::Perbill;
 
 use crate::{
 	types::{CommunityIdOf, Tally, VoteWeight},
