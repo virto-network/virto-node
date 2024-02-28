@@ -28,11 +28,6 @@ fn create_community <T: Config>(id: CommunityIdOf<T>, origin: PalletsOriginOf<T>
 	Communities::<T>::create(RawOrigin::Root.into(), origin, id).map_err(|e| e.into())
 }
 
-#[allow(dead_code)]
-fn create_community_memberships () {
-
-}
-
 #[benchmarks(
 	where 
 		CommunityIdOf<T>: From<CommunityId>,
@@ -97,6 +92,11 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	// #[benchmark]
+	// fn vote () -> Result<(), BenchmarkError> {
+
+	// }
 
 	impl_benchmark_test_suite!(
 		Communities,

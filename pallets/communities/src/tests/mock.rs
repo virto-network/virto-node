@@ -22,8 +22,7 @@ pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 use crate::{
 	self as pallet_communities,
 	origin::{DecisionMethod, EnsureCommunity},
-	types::{CommunityIdOf, Tally, VoteWeight},
-	BenchmarkHelper,
+	types::{Tally, VoteWeight},
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -271,11 +270,27 @@ type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
 #[cfg(feature = "runtime-benchmarks")]
+use crate::{types::CommunityIdOf, BenchmarkHelper};
+
+#[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 	fn get_community_id() -> CommunityIdOf<Test> {
 		COMMUNITY
+	}
+
+	fn build_memberships(community_id: CommunityIdOf<Test>) -> Result<u32, frame_benchmarking::BenchmarkError> {
+		let memberships = (0..u8::MAX).map(|i| MembershipId(Self::get_community_id(), i as u32));
+
+		let account = Communities::community_account(&community_id);
+		for membership in memberships {
+			use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+			MembershipCollection::mint_into(&membership, &account, &Default::default(), true)?;
+		}
+
+		Ok(u8::MAX as u32)
 	}
 }
 
