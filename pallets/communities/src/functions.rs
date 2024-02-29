@@ -169,7 +169,7 @@ impl<T: Config> Pallet<T> {
 		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
-			if let Some((tally, class)) = poll_status.ensure_ongoing() {
+			let res = if let Some((tally, class)) = poll_status.ensure_ongoing() {
 				ensure!(community_id == class, Error::<T>::InvalidTrack);
 				let vote = Self::community_vote_of(who, poll_index).ok_or(Error::<T>::NoVoteCasted)?;
 
@@ -195,7 +195,14 @@ impl<T: Config> Pallet<T> {
 				}
 			} else {
 				Err(Error::<T>::NotOngoing.into())
-			}
+			};
+
+			Self::deposit_event(Event::<T>::VoteRemoved {
+				who: who.clone(),
+				poll_index,
+			});
+
+			res
 		})
 	}
 
