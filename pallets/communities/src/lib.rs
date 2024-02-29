@@ -351,6 +351,10 @@ pub mod pallet {
 			poll_index: PollIndexOf<T>,
 			vote: VoteOf<T>,
 		},
+		VoteRemoved {
+			who: AccountIdOf<T>,
+			poll_index: PollIndexOf<T>,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
