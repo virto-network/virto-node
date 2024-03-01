@@ -198,14 +198,19 @@ pub mod pallet {
 		/// Returns the ID of the community to use in benchmarks
 		fn get_community_id() -> CommunityIdOf<T>;
 
+		/// Returns the desired size of the community for
+		/// effects of benchmark testing
+		fn community_desired_size() -> u32;
+
 		/// Initializes the memberships of a community built for benchamrking
 		/// purposes.
 		///
-		/// Then, returns the count of memberships minted to the community.
-		/// This is equivalent to the number of members that can be added, as
-		/// well as the max number of members/rank that can vote in a poll
-		/// proposed over the community's track.
-		fn build_memberships(community_id: CommunityIdOf<T>) -> Result<u32, frame_benchmarking::BenchmarkError>;
+		/// Then, returns a list of tuples, each one containing a member's
+		/// [AccountId] and their corresponding
+		fn setup_members(
+			community_id: CommunityIdOf<T>,
+			members: Vec<AccountIdOf<T>>,
+		) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, frame_benchmarking::BenchmarkError>;
 	}
 
 	#[pallet::pallet]
