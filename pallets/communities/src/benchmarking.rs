@@ -185,6 +185,45 @@ mod benchmarks {
 	}
 
 	#[benchmark]
+	fn add_member() -> Result<(), BenchmarkError> {
+		// setup code
+		let id = T::BenchmarkHelper::get_community_id();
+		let origin = get_community_origin_caller::<T>(id.clone());
+		create_community::<T>(id, origin.clone())?;
+
+		T::BenchmarkHelper::initialize_memberships_collection()?;
+
+		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
+		let membership_id = T::BenchmarkHelper::new_membership_id(id, 0);
+
+		T::BenchmarkHelper::extend_membership(id, membership_id.clone())?;
+
+		#[extrinsic_call]
+		_(origin, T::Lookup::unlookup(who.clone()));
+
+		// verification code
+		assert_has_event::<T>(
+			Event::MemberAdded {
+				who: who.clone(),
+				membership_id: membership_id.clone(),
+			}
+			.into(),
+		);
+		assert!(Communities::<T>::has_membership(&who, membership_id));
+
+		Ok(())
+	}
+
+	// #[benchmark]
+	// fn remove_member() -> Result<(), BenchmarkError> {}
+
+	// #[benchmark]
+	// fn promote_member() -> Result<(), BenchmarkError> {}
+
+	// #[benchmark]
+	// fn demote_member() -> Result<(), BenchmarkError> {}
+
+	#[benchmark]
 	fn vote() -> Result<(), BenchmarkError> {
 		// setup code
 		let id = T::BenchmarkHelper::get_community_id();
@@ -221,35 +260,11 @@ mod benchmarks {
 		Ok(())
 	}
 
-	#[benchmark]
-	fn add_member() -> Result<(), BenchmarkError> {
-		// setup code
-		let id = T::BenchmarkHelper::get_community_id();
-		let origin = get_community_origin_caller::<T>(id.clone());
-		create_community::<T>(id, origin.clone())?;
+	// #[benchmark]
+	// fn remove_vote () -> Result<(), BenchmarkError> {}
 
-		T::BenchmarkHelper::initialize_memberships_collection()?;
-
-		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
-		let membership_id = T::BenchmarkHelper::new_membership_id(id, 0);
-
-		T::BenchmarkHelper::extend_membership(id, membership_id.clone())?;
-
-		#[extrinsic_call]
-		_(origin, T::Lookup::unlookup(who.clone()));
-
-		// verification code
-		assert_has_event::<T>(
-			Event::MemberAdded {
-				who: who.clone(),
-				membership_id: membership_id.clone(),
-			}
-			.into(),
-		);
-		assert!(Communities::<T>::has_membership(&who, membership_id));
-
-		Ok(())
-	}
+	// #[benchmark]
+	// fn unlock_vote () -> Result<(), BenchmarkError> {}
 
 	impl_benchmark_test_suite!(
 		Communities,
