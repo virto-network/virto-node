@@ -198,10 +198,8 @@ mod benchmarks {
 			.expect("desired size of community to be equal or greather than 1")
 			.clone();
 
-		println!("Submitting a proposal...");
 		submit_proposal_to_add_member::<T>(community_origin, who.clone())?;
 
-		println!("extrinsic_call");
 		#[extrinsic_call]
 		_(
 			RawOrigin::Signed(who.clone()),
@@ -219,6 +217,36 @@ mod benchmarks {
 			}
 			.into(),
 		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn add_member() -> Result<(), BenchmarkError> {
+		// setup code
+		let id = T::BenchmarkHelper::get_community_id();
+		let origin = get_community_origin_caller::<T>(id.clone());
+		create_community::<T>(id, origin.clone())?;
+
+		T::BenchmarkHelper::initialize_memberships_collection()?;
+
+		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
+		let membership_id = T::BenchmarkHelper::new_membership_id(id, 0);
+
+		T::BenchmarkHelper::extend_membership(id, membership_id.clone())?;
+
+		#[extrinsic_call]
+		_(origin, T::Lookup::unlookup(who.clone()));
+
+		// verification code
+		assert_has_event::<T>(
+			Event::MemberAdded {
+				who: who.clone(),
+				membership_id: membership_id.clone(),
+			}
+			.into(),
+		);
+		assert!(Communities::<T>::has_membership(&who, membership_id));
 
 		Ok(())
 	}
