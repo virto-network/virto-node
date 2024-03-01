@@ -22,7 +22,7 @@ pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 use crate::{
 	self as pallet_communities,
 	origin::{DecisionMethod, EnsureCommunity},
-	types::{Tally, VoteWeight},
+	types::{AccountIdOf, MembershipIdOf, Tally, VoteWeight},
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -273,6 +273,9 @@ pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, M
 use crate::{types::CommunityIdOf, BenchmarkHelper};
 
 #[cfg(feature = "runtime-benchmarks")]
+use sp_runtime::traits::StaticLookup;
+
+#[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -281,17 +284,34 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 		COMMUNITY
 	}
 
-	fn build_memberships(community_id: CommunityIdOf<Test>) -> Result<u32, frame_benchmarking::BenchmarkError> {
-		let memberships = (0..u8::MAX).map(|i| MembershipId(Self::get_community_id(), i as u32));
+	fn community_desired_size() -> u32 {
+		u8::MAX as u32
+	}
 
-		let account = Communities::community_account(&community_id);
-		for membership in memberships {
+	fn setup_members(
+		community_id: CommunityIdOf<Test>,
+		members: Vec<AccountIdOf<Test>>,
+	) -> Result<Vec<(AccountIdOf<Test>, MembershipIdOf<Test>)>, frame_benchmarking::BenchmarkError> {
+		let origin = TestEnvBuilder::create_community_origin(&community_id, &DecisionMethod::Rank);
+		let members_with_memberships = members
+			.into_iter()
+			.enumerate()
+			.map(|(i, account_id)| (account_id, MembershipId(Self::get_community_id(), i as u32)));
+
+		TestEnvBuilder::initialize_memberships_collection();
+
+		let community_account = Communities::community_account(&community_id);
+		for (who, membership_id) in members_with_memberships.clone() {
 			use frame_support::traits::tokens::nonfungible_v2::Mutate;
 
-			MembershipCollection::mint_into(&membership, &account, &Default::default(), true)?;
+			MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+
+			let who = <Test as frame_system::Config>::Lookup::unlookup(who.clone());
+			Communities::add_member(origin.clone(), who.clone())?;
+			Communities::promote_member(origin.clone(), who, membership_id)?;
 		}
 
-		Ok(u8::MAX as u32)
+		Ok(members_with_memberships.collect())
 	}
 }
 
@@ -421,19 +441,7 @@ impl TestEnvBuilder {
 		ext.execute_with(|| {
 			System::set_block_number(1);
 
-			let collection = MembershipsCollectionId::get();
-			Nfts::do_create_collection(
-				collection,
-				RootAccount::get(),
-				RootAccount::get(),
-				Default::default(),
-				0,
-				pallet_nfts::Event::ForceCreated {
-					collection,
-					owner: RootAccount::get(),
-				},
-			)
-			.expect("creates memberships collection");
+			Self::initialize_memberships_collection();
 
 			for community_id in &self.communities {
 				let decision_method = self
@@ -481,6 +489,22 @@ impl TestEnvBuilder {
 		});
 
 		ext
+	}
+
+	pub(crate) fn initialize_memberships_collection() {
+		let collection = MembershipsCollectionId::get();
+		Nfts::do_create_collection(
+			collection,
+			RootAccount::get(),
+			RootAccount::get(),
+			Default::default(),
+			0,
+			pallet_nfts::Event::ForceCreated {
+				collection,
+				owner: RootAccount::get(),
+			},
+		)
+		.expect("creates memberships collection");
 	}
 
 	pub fn create_community_origin(

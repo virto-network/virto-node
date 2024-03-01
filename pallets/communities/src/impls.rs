@@ -6,11 +6,6 @@ use crate::{
 	Config,
 };
 
-#[cfg(feature = "runtime-benchmarks")]
-use crate::{CommunityIdFor, Pallet};
-#[cfg(feature = "runtime-benchmarks")]
-use ::{frame_support::traits::membership::Inspect, sp_runtime::traits::StaticLookup};
-
 impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
 	fn new(_cid: CommunityIdOf<T>) -> Self {
 		Self::default()
@@ -63,23 +58,5 @@ impl<T: Config> VoteTally<VoteWeight, CommunityIdOf<T>> for Tally<T> {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn setup(community_id: CommunityIdOf<T>, granularity: Perbill) {
-		let community_account_id = Pallet::<T>::community_account(&community_id);
-		let community_origin = CommunityIdFor::<T>::iter_keys()
-			.find(|key| CommunityIdFor::<T>::get(key) == Some(community_id))
-			.expect("find a community origin by its id");
-		let origin = community_origin.into();
-		let voters = granularity.saturating_reciprocal_mul(1u32);
-
-		// Worst case scenarios can be best assessed via Rank decision method
-		for i in 0..voters {
-			let account_id: T::AccountId = frame_benchmarking::account("ranked_collective_benchmarking", i, 0);
-			let who = T::Lookup::unlookup(account_id);
-			let membership_id = T::MemberMgmt::account_memberships(&community_account_id)
-				.next()
-				.expect("has enough memberships");
-			Pallet::<T>::add_member(origin.clone(), who.clone()).expect("can add member to community");
-			Pallet::<T>::promote_member(origin.clone(), who, membership_id).expect("can add member to community");
-		}
-	}
+	fn setup(_community_id: CommunityIdOf<T>, _granularity: Perbill) {}
 }

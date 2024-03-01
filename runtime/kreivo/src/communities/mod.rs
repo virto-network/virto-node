@@ -53,7 +53,11 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		CommunityId::new(1)
 	}
 
-	fn build_memberships(community_id: CommunityIdOf<Runtime>) -> Result<u32, frame_benchmarking::BenchmarkError> {
+	fn community_desired_size() -> u32 {
+		u32::MAX
+	}
+
+	fn setup_members(community_id: CommunityIdOf<Runtime>) -> Result<u32, frame_benchmarking::BenchmarkError> {
 		let memberships = (0..u8::MAX).map(|i| MembershipId(Self::get_community_id(), i as u32));
 
 		let account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
