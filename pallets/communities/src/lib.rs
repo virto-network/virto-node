@@ -202,7 +202,20 @@ pub mod pallet {
 		/// effects of benchmark testing
 		fn community_desired_size() -> u32;
 
-		/// Initializes the memberships of a community built for benchamrking
+		/// Initializes the membership collection of a community.
+		fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;
+
+		/// Extends the membership collection of a community with a given
+		/// membership ID.
+		fn extend_membership(
+			community_id: CommunityIdOf<T>,
+			membership_id: MembershipIdOf<T>,
+		) -> Result<(), frame_benchmarking::BenchmarkError>;
+
+		/// Returns a new membership ID for a community with a given index.
+		fn new_membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
+
+		/// Initializes the memberships of a community built for benchmarking
 		/// purposes.
 		///
 		/// Then, returns a list of tuples, each one containing a member's
