@@ -291,6 +291,29 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 		u8::MAX as u32
 	}
 
+	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
+		TestEnvBuilder::initialize_memberships_collection();
+
+		Ok(())
+	}
+
+	fn extend_membership(
+		community_id: CommunityIdOf<Test>,
+		membership_id: MembershipIdOf<Test>,
+	) -> Result<(), frame_benchmarking::BenchmarkError> {
+		let community_account = Communities::community_account(&community_id);
+
+		use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+
+		Ok(())
+	}
+
+	fn new_membership_id(community_id: CommunityIdOf<Test>, index: u32) -> MembershipIdOf<Test> {
+		MembershipId(community_id, index)
+	}
+
 	fn setup_members(
 		community_id: CommunityIdOf<Test>,
 		members: Vec<AccountIdOf<Test>>,
@@ -301,13 +324,10 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 			.enumerate()
 			.map(|(i, account_id)| (account_id, MembershipId(Self::get_community_id(), i as u32)));
 
-		TestEnvBuilder::initialize_memberships_collection();
+		Self::initialize_memberships_collection()?;
 
-		let community_account = Communities::community_account(&community_id);
 		for (who, membership_id) in members_with_memberships.clone() {
-			use frame_support::traits::tokens::nonfungible_v2::Mutate;
-
-			MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+			Self::extend_membership(community_id, membership_id)?;
 
 			let who = <Test as frame_system::Config>::Lookup::unlookup(who.clone());
 			Communities::add_member(origin.clone(), who.clone())?;
