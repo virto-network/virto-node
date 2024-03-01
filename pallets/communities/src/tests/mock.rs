@@ -22,7 +22,7 @@ pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 use crate::{
 	self as pallet_communities,
 	origin::{DecisionMethod, EnsureCommunity},
-	types::{AccountIdOf, MembershipIdOf, Tally, VoteWeight},
+	types::{Tally, VoteWeight},
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -270,7 +270,10 @@ type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
 #[cfg(feature = "runtime-benchmarks")]
-use crate::{types::CommunityIdOf, BenchmarkHelper};
+use crate::{
+	types::{AccountIdOf, CommunityIdOf, MembershipIdOf},
+	BenchmarkHelper,
+};
 
 #[cfg(feature = "runtime-benchmarks")]
 use sp_runtime::traits::StaticLookup;
