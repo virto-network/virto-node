@@ -260,8 +260,41 @@ mod benchmarks {
 		Ok(())
 	}
 
-	// #[benchmark]
-	// fn remove_vote () -> Result<(), BenchmarkError> {}
+	#[benchmark]
+	fn remove_vote() -> Result<(), BenchmarkError> {
+		let id = T::BenchmarkHelper::get_community_id();
+		let community_origin = get_community_origin_caller::<T>(id);
+		create_community::<T>(id, community_origin.clone())?;
+
+		let members = T::BenchmarkHelper::setup_members(id, setup_accounts::<T>()?)?;
+
+		let (who, membership_id) = members
+			.first()
+			.expect("desired size of community to be equal or greather than 1")
+			.clone();
+
+		submit_proposal_to_add_member::<T>(community_origin, who.clone())?;
+		Communities::<T>::vote(
+			RawOrigin::Signed(who.clone()).into(),
+			membership_id.clone(),
+			0u32,
+			Vote::Standard(true),
+		)?;
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(who.clone()), membership_id.clone(), 0u32);
+
+		// verification code
+		assert_has_event::<T>(
+			Event::VoteRemoved {
+				who: who.clone(),
+				poll_index: 0u32.into(),
+			}
+			.into(),
+		);
+
+		Ok(())
+	}
 
 	// #[benchmark]
 	// fn unlock_vote () -> Result<(), BenchmarkError> {}
