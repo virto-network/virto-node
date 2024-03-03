@@ -56,6 +56,7 @@ use ::{
 	pallet_nfts::Pallet as Nfts,
 	pallet_referenda::{BoundedCallOf, Curve, Pallet as Referenda, TrackInfo},
 	pallet_referenda_tracks::Pallet as Tracks,
+	sp_core::Encode,
 	sp_runtime::Perbill,
 	virto_common::MembershipId,
 };
