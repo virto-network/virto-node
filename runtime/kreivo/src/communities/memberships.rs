@@ -39,4 +39,23 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type OffchainSignature = Signature;
 	type OffchainPublic = <Signature as Verify>::Signer;
 	type WeightInfo = pallet_nfts::weights::SubstrateWeight<Runtime>;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = NftsBenchmarksHelper;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct NftsBenchmarksHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_nfts::BenchmarkHelper<CollectionId, MembershipId> for NftsBenchmarksHelper {
+	fn collection(i: u16) -> CollectionId {
+		i.into()
+	}
+	fn item(i: u16) -> MembershipId {
+		MembershipId(
+			<Runtime as pallet_communities::Config>::BenchmarkHelper::community_id(),
+			i.into(),
+		)
+	}
 }
