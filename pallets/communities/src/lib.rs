@@ -190,20 +190,50 @@ pub mod pallet {
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
+	use pallet_referenda::PalletsOriginOf;
 	use sp_runtime::traits::StaticLookup;
 	use types::{PollIndexOf, *};
 
 	#[cfg(feature = "runtime-benchmarks")]
+	use ::{frame_benchmarking::BenchmarkError, frame_support::traits::OriginTrait};
+
+	#[cfg(feature = "runtime-benchmarks")]
 	pub trait BenchmarkHelper<T: Config> {
 		/// Returns the ID of the community to use in benchmarks
-		fn get_community_id() -> CommunityIdOf<T>;
+		fn community_id() -> CommunityIdOf<T>;
 
 		/// Returns the desired size of the community for
 		/// effects of benchmark testing
 		fn community_desired_size() -> u32;
 
+		/// Returns the origin for the community
+		/// as well as the caller
+		fn community_origin(decision_method: DecisionMethodFor<T>) -> OriginFor<T>;
+
 		/// Initializes the membership collection of a community.
 		fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;
+
+		/// Creates a community, setting a [DecisionMethod], returning
+		/// its ID as well as the caller origin, and origin caller.
+		fn create_community(
+			origin: OriginFor<T>,
+			maybe_decision_method: Option<DecisionMethodFor<T>>,
+		) -> Result<(CommunityIdOf<T>, OriginFor<T>), BenchmarkError> {
+			Self::initialize_memberships_collection()?;
+
+			let community_id = Self::community_id();
+			let decision_method = maybe_decision_method.unwrap_or(origin::DecisionMethod::Rank);
+			let admin_origin: T::RuntimeOrigin = Self::community_origin(decision_method.clone());
+			let admin_origin_caller: PalletsOriginOf<T> = admin_origin.clone().into_caller();
+
+			Pallet::<T>::create(origin.clone(), admin_origin_caller, community_id)?;
+			Pallet::<T>::set_decision_method(origin, community_id, decision_method)?;
+
+			Ok((community_id, admin_origin))
+		}
+
+		/// Returns a new membership ID for a community with a given index.
+		fn new_membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
 
 		/// Extends the membership collection of a community with a given
 		/// membership ID.
@@ -212,8 +242,12 @@ pub mod pallet {
 			membership_id: MembershipIdOf<T>,
 		) -> Result<(), frame_benchmarking::BenchmarkError>;
 
-		/// Returns a new membership ID for a community with a given index.
-		fn new_membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
+		/// This method sets up and configures
+		fn prepare_track_and_submit_referendum(
+			origin: OriginFor<T>,
+			proposal_origin: PalletsOriginOf<T>,
+			proposal_call: RuntimeCallFor<T>,
+		) -> Result<PollIndexOf<T>, BenchmarkError>;
 
 		/// Initializes the memberships of a community built for benchmarking
 		/// purposes.
@@ -221,9 +255,25 @@ pub mod pallet {
 		/// Then, returns a list of tuples, each one containing a member's
 		/// [AccountId] and their corresponding
 		fn setup_members(
+			origin: OriginFor<T>,
 			community_id: CommunityIdOf<T>,
 			members: Vec<AccountIdOf<T>>,
-		) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, frame_benchmarking::BenchmarkError>;
+		) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, frame_benchmarking::BenchmarkError> {
+			let members_with_memberships = members
+				.into_iter()
+				.enumerate()
+				.map(|(i, account_id)| (account_id, Self::new_membership_id(community_id, i as u32)));
+
+			for (who, membership_id) in members_with_memberships.clone() {
+				Self::extend_membership(community_id, membership_id.clone())?;
+
+				let who = T::Lookup::unlookup(who.clone());
+				Pallet::<T>::add_member(origin.clone(), who.clone())?;
+				Pallet::<T>::promote_member(origin.clone(), who, membership_id)?;
+			}
+
+			Ok(members_with_memberships.collect())
+		}
 	}
 
 	#[pallet::pallet]
@@ -244,10 +294,10 @@ pub mod pallet {
 			+ membership::Mutate<Self::AccountId>;
 
 		/// Origin authorized to manage the state of a community
-		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type CommunityMgmtOrigin: EnsureOrigin<OriginFor<Self>>;
 
 		/// Origin authorized to manage memeberships of an active community
-		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
+		type MemberMgmtOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
 
 		type Polls: Polling<
 			Tally<Self>,
