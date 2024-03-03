@@ -82,7 +82,7 @@ impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = AssetId;
-	type AssetIdParameter = Compact<u32>;
+	type AssetIdParameter = Compact<AssetId>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
@@ -271,19 +271,26 @@ pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, M
 
 #[cfg(feature = "runtime-benchmarks")]
 use crate::{
-	types::{AccountIdOf, CommunityIdOf, MembershipIdOf},
-	BenchmarkHelper,
+	types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PollIndexOf},
+	BenchmarkHelper, Origin,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
-use sp_runtime::traits::StaticLookup;
+use ::{
+	frame_benchmarking::BenchmarkError,
+	frame_support::BoundedVec,
+	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
+	pallet_referenda::{BoundedCallOf, Curve, PalletsOriginOf, TrackInfo},
+	parity_scale_codec::Encode,
+	sp_runtime::Perbill,
+};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
-	fn get_community_id() -> CommunityIdOf<Test> {
+	fn community_id() -> CommunityIdOf<Test> {
 		COMMUNITY
 	}
 
@@ -293,18 +300,60 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
 		TestEnvBuilder::initialize_memberships_collection();
-
 		Ok(())
+	}
+
+	fn community_origin(decision_method: DecisionMethodFor<Test>) -> OriginFor<Test> {
+		let mut origin = Origin::<Test>::new(Self::community_id());
+		origin.with_decision_method(decision_method);
+
+		origin.into()
+	}
+
+	fn prepare_track_and_submit_referendum(
+		origin: OriginFor<Test>,
+		proposal_origin: PalletsOriginOf<Test>,
+		proposal_call: RuntimeCallFor<Test>,
+	) -> Result<PollIndexOf<Test>, BenchmarkError> {
+		let id = Self::community_id();
+		let info = TrackInfo {
+			name: sp_runtime::str_array("Community"),
+			max_deciding: 1,
+			decision_deposit: 5,
+			prepare_period: 1,
+			decision_period: 5,
+			confirm_period: 1,
+			min_enactment_period: 1,
+			min_approval: Curve::LinearDecreasing {
+				length: Perbill::from_percent(100),
+				floor: Perbill::from_percent(50),
+				ceil: Perbill::from_percent(100),
+			},
+			min_support: Curve::LinearDecreasing {
+				length: Perbill::from_percent(100),
+				floor: Perbill::from_percent(0),
+				ceil: Perbill::from_percent(100),
+			},
+		};
+
+		Tracks::insert(RuntimeOrigin::root(), id, info, proposal_origin.clone())?;
+
+		let bounded_call = BoundedVec::truncate_from(proposal_call.encode());
+		let proposal = BoundedCallOf::<Test, ()>::Inline(bounded_call);
+		let enactment_moment = frame_support::traits::schedule::DispatchTime::After(1);
+		Referenda::submit(origin.clone(), Box::new(proposal_origin), proposal, enactment_moment)?;
+		Referenda::place_decision_deposit(origin, 0)?;
+
+		Ok(0)
 	}
 
 	fn extend_membership(
 		community_id: CommunityIdOf<Test>,
 		membership_id: MembershipIdOf<Test>,
 	) -> Result<(), frame_benchmarking::BenchmarkError> {
-		let community_account = Communities::community_account(&community_id);
-
 		use frame_support::traits::tokens::nonfungible_v2::Mutate;
 
+		let community_account = Communities::community_account(&community_id);
 		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
 
 		Ok(())
@@ -312,29 +361,6 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 
 	fn new_membership_id(community_id: CommunityIdOf<Test>, index: u32) -> MembershipIdOf<Test> {
 		MembershipId(community_id, index)
-	}
-
-	fn setup_members(
-		community_id: CommunityIdOf<Test>,
-		members: Vec<AccountIdOf<Test>>,
-	) -> Result<Vec<(AccountIdOf<Test>, MembershipIdOf<Test>)>, frame_benchmarking::BenchmarkError> {
-		let origin = TestEnvBuilder::create_community_origin(&community_id, &DecisionMethod::Rank);
-		let members_with_memberships = members
-			.into_iter()
-			.enumerate()
-			.map(|(i, account_id)| (account_id, MembershipId(Self::get_community_id(), i as u32)));
-
-		Self::initialize_memberships_collection()?;
-
-		for (who, membership_id) in members_with_memberships.clone() {
-			Self::extend_membership(community_id, membership_id)?;
-
-			let who = <Test as frame_system::Config>::Lookup::unlookup(who.clone());
-			Communities::add_member(origin.clone(), who.clone())?;
-			Communities::promote_member(origin.clone(), who, membership_id)?;
-		}
-
-		Ok(members_with_memberships.collect())
 	}
 }
 
