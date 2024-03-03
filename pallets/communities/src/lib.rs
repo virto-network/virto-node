@@ -190,7 +190,6 @@ pub mod pallet {
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use pallet_referenda::PalletsOriginOf;
 	use sp_runtime::traits::StaticLookup;
 	use types::{PollIndexOf, *};
 

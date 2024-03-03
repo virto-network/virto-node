@@ -16,7 +16,6 @@ use frame_system::{
 	pallet_prelude::{BlockNumberFor, OriginFor, RuntimeCallFor},
 	RawOrigin,
 };
-use pallet_referenda;
 use sp_runtime::traits::StaticLookup;
 
 fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
@@ -44,8 +43,7 @@ where
 
 #[benchmarks(
 	where
-		T: frame_system::Config + crate::Config + pallet_referenda::Config,
-		<T as pallet_referenda::Config>::RuntimeCall: From<crate::Call<T>>,
+		T: frame_system::Config + crate::Config,
 		RuntimeCallFor<T>: From<crate::Call<T>>,
 		BlockNumberFor<T>: From<u32>
 )]
