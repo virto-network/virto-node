@@ -39,8 +39,24 @@ impl pallet_communities::Config for Runtime {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
+use self::{
+	governance::{CommunityReferendaInstance, CommunityTracksInstance},
+	memberships::CommunityMembershipsInstance,
+};
+
+#[cfg(feature = "runtime-benchmarks")]
 use ::{
-	pallet_communities::{types::CommunityIdOf, BenchmarkHelper},
+	frame_benchmarking::BenchmarkError,
+	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::Mutate},
+	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
+	pallet_communities::{
+		types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf},
+		BenchmarkHelper, Origin,
+	},
+	pallet_nfts::Pallet as Nfts,
+	pallet_referenda::{BoundedCallOf, Curve, Pallet as Referenda, TrackInfo},
+	pallet_referenda_tracks::Pallet as Tracks,
+	sp_runtime::Perbill,
 	virto_common::MembershipId,
 };
 
@@ -49,24 +65,91 @@ pub struct CommunityBenchmarkHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
-	fn get_community_id() -> CommunityIdOf<Runtime> {
+	fn community_id() -> CommunityIdOf<Runtime> {
 		CommunityId::new(1)
 	}
-
 	fn community_desired_size() -> u32 {
 		u32::MAX
 	}
+	fn community_origin(decision_method: DecisionMethodFor<Runtime>) -> OriginFor<Runtime> {
+		let mut origin = Origin::<Runtime>::new(Self::community_id());
+		origin.with_decision_method(decision_method.clone());
+		origin.into()
+	}
 
-	fn setup_members(community_id: CommunityIdOf<Runtime>) -> Result<u32, frame_benchmarking::BenchmarkError> {
-		let memberships = (0..u8::MAX).map(|i| MembershipId(Self::get_community_id(), i as u32));
+	fn initialize_memberships_collection() -> Result<(), BenchmarkError> {
+		let collection = MembershipsCollectionId::get();
+		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
+			collection,
+			RootAccount::get(),
+			RootAccount::get(),
+			Default::default(),
+			0,
+			pallet_nfts::Event::ForceCreated {
+				collection,
+				owner: RootAccount::get(),
+			},
+		)?;
 
-		let account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
-		for membership in memberships {
-			use frame_support::traits::tokens::nonfungible_v2::Mutate;
+		Ok(())
+	}
 
-			MembershipCollection::mint_into(&membership, &account, &Default::default(), true)?;
-		}
+	fn new_membership_id(community_id: CommunityIdOf<Runtime>, index: u32) -> MembershipIdOf<Runtime> {
+		MembershipId(community_id, index)
+	}
 
-		Ok(u8::MAX as u32)
+	fn prepare_track_and_submit_referendum(
+		origin: OriginFor<Runtime>,
+		proposal_origin: PalletsOriginOf<Runtime>,
+		proposal_call: RuntimeCallFor<Runtime>,
+	) -> Result<PollIndexOf<Runtime>, BenchmarkError> {
+		let id = Self::community_id();
+		let info = TrackInfo {
+			name: sp_runtime::str_array("Community"),
+			max_deciding: 1,
+			decision_deposit: 5,
+			prepare_period: 1,
+			decision_period: 5,
+			confirm_period: 1,
+			min_enactment_period: 1,
+			min_approval: Curve::LinearDecreasing {
+				length: Perbill::from_percent(100),
+				floor: Perbill::from_percent(50),
+				ceil: Perbill::from_percent(100),
+			},
+			min_support: Curve::LinearDecreasing {
+				length: Perbill::from_percent(100),
+				floor: Perbill::from_percent(0),
+				ceil: Perbill::from_percent(100),
+			},
+		};
+
+		Tracks::<Runtime, CommunityTracksInstance>::insert(RuntimeOrigin::root(), id, info, proposal_origin.clone())?;
+
+		let bounded_call = BoundedVec::truncate_from(proposal_call.encode());
+		let proposal_origin = Box::new(proposal_origin);
+		let proposal = BoundedCallOf::<Runtime, CommunityReferendaInstance>::Inline(bounded_call);
+		let enactment_moment = DispatchTime::After(1);
+
+		let index = 0u32;
+		Referenda::<Runtime, CommunityReferendaInstance>::submit(
+			origin.clone(),
+			proposal_origin,
+			proposal,
+			enactment_moment,
+		)?;
+		Referenda::<Runtime, CommunityReferendaInstance>::place_decision_deposit(origin, index)?;
+
+		Ok(index)
+	}
+
+	fn extend_membership(
+		community_id: CommunityIdOf<Runtime>,
+		membership_id: MembershipIdOf<Runtime>,
+	) -> Result<(), BenchmarkError> {
+		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
+		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+
+		Ok(())
 	}
 }
