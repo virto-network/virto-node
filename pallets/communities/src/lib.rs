@@ -166,6 +166,9 @@ pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+pub use types::BenchmarkHelper;
+
 #[cfg(test)]
 mod tests;
 
@@ -191,7 +194,6 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
-	pub use types::BenchmarkHelper;
 	use types::{PollIndexOf, *};
 
 	#[pallet::pallet]
