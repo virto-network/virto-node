@@ -49,6 +49,7 @@ pub use types::*;
 
 pub trait PaymentId<T: frame_system::Config>: Copy + Clone {
 	fn next(sender: &T::AccountId, beneficiary: &T::AccountId) -> Option<Self>;
+	fn from_number(number: u64) -> Self;
 }
 
 #[frame_support::pallet]

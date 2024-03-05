@@ -66,6 +66,9 @@ impl pallet_payments::PaymentId<Runtime> for virto_common::PaymentId {
 		let idx = System::extrinsic_index()?;
 		Some((block, idx, beneficiary.encode().as_slice()).into())
 	}
+	fn from_number(number: u64) -> Self {
+		number.into()
+	}
 }
 
 impl pallet_payments::Config for Runtime {
