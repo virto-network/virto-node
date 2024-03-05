@@ -10,7 +10,7 @@ pub use pallet::*;
 mod benchmarking;
 
 #[cfg(test)]
-mod mock;
+pub mod mock;
 
 #[cfg(test)]
 mod tests;
