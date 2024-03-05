@@ -23,6 +23,13 @@ frame-system = { workspace = true }
 sp-core  = { workspace = true }
 sp-io =  { workspace = true }
 pallet-balances = { workspace = true }
+passkey-authenticator = { version = "0.2.0", features = ["testable"] }
+passkey-client = "0.2.0"
+passkey-types = "0.2.0"
+public-suffix = "0.1.1"
+tokio = { workspace = true, features = ["rt"] }
+coset = "0.3.6"
+url = "2.5.0"
 
 [features]
 default = ["std"]
