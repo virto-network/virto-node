@@ -135,14 +135,107 @@ mod benchmarks {
 		Ok(())
 	}
 
-	// #[benchmark]
-	// fn remove_member() -> Result<(), BenchmarkError> {}
+	#[benchmark]
+	fn remove_member() -> Result<(), BenchmarkError> {
+		// setup code
+		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) =
+			T::BenchmarkHelper::create_community(RawOrigin::Root.into(), None)?;
 
-	// #[benchmark]
-	// fn promote_member() -> Result<(), BenchmarkError> {}
+		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
+		let membership_id = T::BenchmarkHelper::new_membership_id(id, 0);
 
-	// #[benchmark]
-	// fn demote_member() -> Result<(), BenchmarkError> {}
+		T::BenchmarkHelper::extend_membership(id, membership_id.clone())?;
+
+		Communities::<T>::add_member(origin.clone(), T::Lookup::unlookup(who.clone()))?;
+
+		#[extrinsic_call]
+		_(
+			origin.into_caller(),
+			T::Lookup::unlookup(who.clone()),
+			membership_id.clone(),
+		);
+
+		// verification code
+		assert_has_event::<T>(
+			Event::MemberRemoved {
+				who: who.clone(),
+				membership_id: membership_id.clone(),
+			}
+			.into(),
+		);
+		assert!(!Communities::<T>::has_membership(&who, membership_id));
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn promote_member() -> Result<(), BenchmarkError> {
+		// setup code
+		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) =
+			T::BenchmarkHelper::create_community(RawOrigin::Root.into(), None)?;
+
+		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
+		let membership_id = T::BenchmarkHelper::new_membership_id(id, 0);
+
+		T::BenchmarkHelper::extend_membership(id, membership_id.clone())?;
+
+		Communities::<T>::add_member(origin.clone(), T::Lookup::unlookup(who.clone()))?;
+
+		#[extrinsic_call]
+		_(
+			origin.into_caller(),
+			T::Lookup::unlookup(who.clone()),
+			membership_id.clone(),
+		);
+
+		// verification code
+
+		// Couldn't get this to work, get_membership is not found in `<T as
+		// Config>::MemberMgmt`
+
+		// let m = T::MemberMgmt::get_membership(membership_id.clone(),
+		// &who).ok_or(Error::<T>::NotAMember)?; let rank = m.rank();
+
+		// assert_has_event::<T>(
+		// 	Event::MembershipRankUpdated {
+		// 		membership_id: membership_id.clone(),
+		// 		rank
+		// 	}
+		// 	.into(),
+		// );
+
+		assert_eq!(Communities::<T>::member_rank(&who, membership_id), Some(1.into()));
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn demote_member() -> Result<(), BenchmarkError> {
+		// setup code
+		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) =
+			T::BenchmarkHelper::create_community(RawOrigin::Root.into(), None)?;
+
+		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
+		let membership_id = T::BenchmarkHelper::new_membership_id(id, 0);
+
+		T::BenchmarkHelper::extend_membership(id, membership_id.clone())?;
+
+		Communities::<T>::add_member(origin.clone(), T::Lookup::unlookup(who.clone()))?;
+
+		Communities::<T>::promote_member(origin.clone(), T::Lookup::unlookup(who.clone()), membership_id.clone())?;
+
+		#[extrinsic_call]
+		_(
+			origin.into_caller(),
+			T::Lookup::unlookup(who.clone()),
+			membership_id.clone(),
+		);
+
+		// verification code
+		assert_eq!(Communities::<T>::member_rank(&who, membership_id), Some(0.into()));
+
+		Ok(())
+	}
 
 	#[benchmark]
 	fn vote() -> Result<(), BenchmarkError> {
