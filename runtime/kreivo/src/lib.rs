@@ -33,7 +33,7 @@ use frame_support::{
 	construct_runtime, derive_impl,
 	dispatch::DispatchClass,
 	genesis_builder_helper::{build_config, create_default_config},
-	ord_parameter_types, parameter_types,
+	parameter_types,
 	traits::{
 		fungible::HoldConsideration,
 		fungibles,
@@ -626,13 +626,6 @@ impl pallet_preimage::Config for Runtime {
 	>;
 }
 
-ord_parameter_types! {
-	pub const RootAccount: AccountId32 = AccountId32::new(
-		[
-			123,149,48,25,6,91,67,66,164,241,252,246,43,232,243,232,60,141,21,48,59,103,79,215,25,30,89,143,105,158,118,79
-		]);
-}
-
 #[cfg(feature = "runtime-benchmarks")]
 pub struct BenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
@@ -693,7 +686,6 @@ mod benches {
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_burner, Burner]
-		[pallet_lockdown_mode, LockdownMode]
 		[pallet_treasury, Treasury]
 		[pallet_multisig, Multisig]
 		[pallet_utility, Utility]
