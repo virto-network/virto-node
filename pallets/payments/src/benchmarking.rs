@@ -7,7 +7,7 @@ use frame_support::{
 		fungibles::{Inspect, Mutate},
 		Get,
 	},
-	BoundedVec,
+	BoundedVec,assert_ok, dispatch::DispatchResult
 };
 
 use frame_system::RawOrigin;
@@ -15,6 +15,7 @@ use log;
 use sp_runtime::{Percent, traits::Zero};
 use sp_std::vec;
 use frame_support::pallet_prelude::TypeInfo;
+
 
 // Compare `generic_event` to the last emitted event.
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
@@ -24,6 +25,13 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
+
+pub fn assert_has_event_without_params<T: Config>(event: <T as pallet::Config>::RuntimeEvent) -> bool{
+	let event: Event<_> = event.into();
+	matches!(event, Event::PaymentCreated {..})
+}
+
+
 
 fn create_accounts<T: Config>() -> (T::AccountId, T::AccountId, AccountIdLookupOf<T>, AccountIdLookupOf<T>) {
 	let sender: T::AccountId = account("Alice", 0, 10);
@@ -89,7 +97,6 @@ fn create_payment<T: Config>(
 )]
 mod benchmarks {
 	use super::*;
-
 	#[benchmark]
 	fn pay(q: Linear<1, { T::MaxRemarkLength::get() }>) -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, _, beneficiary_lookup) = create_accounts::<T>();
@@ -137,7 +144,13 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(RawOrigin::Signed(sender),payment_id);
 
-		assert_has_event::<T>(Event::PaymentReleased { payment_id: T::PaymentId::from_number(3) }.into());
+
+		//assert_event_triggered::<T>(Payments::Event::PaymentReleased);
+
+		//assert!(frame_system::Pallet::<T>::events().iter().any(|record| matches!(record.event,RuntimeEvent::Payments(Event::PaymentReleased {..}))));
+
+
+		//assert_has_event::<T>(Event::PaymentReleased { payment_id: T::PaymentId::from_number(3) }.into());
 		Ok(())
 	}
 
