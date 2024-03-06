@@ -9,9 +9,9 @@ parameter_types! {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-pub struct BenchmarkHelper;
+pub struct PaymentsBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_payments::BenchmarkHelper<AccountId, AssetIdForTrustBackedAssets, Balance> for BenchmarkHelper {
+impl pallet_payments::BenchmarkHelper<AccountId, AssetIdForTrustBackedAssets, Balance> for PaymentsBenchmarkHelper {
 	fn create_asset(id: AssetIdForTrustBackedAssets, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
 		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
 			id,
@@ -66,6 +66,9 @@ impl pallet_payments::PaymentId<Runtime> for virto_common::PaymentId {
 		let idx = System::extrinsic_index()?;
 		Some((block, idx, beneficiary.encode().as_slice()).into())
 	}
+	fn from_number(number: u64) -> Self {
+		number.into()
+	}
 }
 
 impl pallet_payments::Config for Runtime {
@@ -90,5 +93,5 @@ impl pallet_payments::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = pallet_payments::weights::SubstrateWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = BenchmarkHelper;
+	type BenchmarkHelper = PaymentsBenchmarkHelper;
 }

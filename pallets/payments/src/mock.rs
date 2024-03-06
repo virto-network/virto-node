@@ -332,4 +332,7 @@ impl pallet_payments::PaymentId<Test> for PaymentId {
 			Some(PaymentId(new_id))
 		})
 	}
+	fn from_number(number: u64) -> Self {
+		PaymentId(number as u32)
+	}
 }
