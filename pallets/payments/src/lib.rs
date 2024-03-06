@@ -49,12 +49,10 @@ pub use types::*;
 
 pub trait PaymentId<T: frame_system::Config>: Copy + Clone {
 	fn next(sender: &T::AccountId, beneficiary: &T::AccountId) -> Option<Self>;
-	fn from_number(number: u64) -> Self;
 }
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -72,7 +70,9 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent> + TryInto<Event<Self>>;
+		type RuntimeEvent: TryInto<Event<Self>>
+			+ From<Event<Self>>
+			+ IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The caller origin, overarching type of all pallets origins.
 		type PalletsOrigin: From<frame_system::RawOrigin<Self::AccountId>>
@@ -384,7 +384,7 @@ pub mod pallet {
 				Ok(())
 			})?;
 
-			Self::deposit_event(Event::PaymentRequestCreated { payment_id });
+			Self::deposit_event(Event::PaymentRequestCompleted { payment_id });
 			Ok(().into())
 		}
 
