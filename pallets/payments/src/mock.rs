@@ -63,21 +63,6 @@ frame_support::construct_runtime!(
 	}
 );
 
-/* impl <T:pallet_payments::Config> From<RuntimeEvent> for pallet_payments::Event<T> {
-	fn from(event: RuntimeEvent) -> Self {
-		match event {
-			RuntimeEvent::PaymentCreated { payment_id, .. } => pallet_payments::Event::PaymentCreated(payment_id),
-			RuntimeEvent::PaymentResolved { payment_id, .. } => pallet_payments::Event::PaymentResolved(payment_id),
-			RuntimeEvent::PaymentDisputed { payment_id, .. } => pallet_payments::Event::PaymentDisputed(payment_id),
-			RuntimeEvent::PaymentResolvedWithIncentive { payment_id, .. } => {
-				pallet_payments::Event::PaymentResolvedWithIncentive(payment_id)
-			}
-			RuntimeEvent::PaymentDisputeResolved { payment_id, .. } => pallet_payments::Event::PaymentDisputeResolved(payment_id),
-		}
-	}
-
-} */
-
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
