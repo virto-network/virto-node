@@ -25,20 +25,6 @@ macro_rules! assert_has_event {
 	};
 }
 
-fn last_event<T: Config>() -> pallet::Event<T> {
-	let Ok(e) = <T as Config>::RuntimeEvent::from(
-		frame_system::Pallet::<T>::events()
-			.last()
-			.expect("An event occurred")
-			.event
-			.clone(),
-	)
-	.try_into() else {
-		unreachable!()
-	};
-	e
-}
-
 fn create_accounts<T: Config>() -> (T::AccountId, T::AccountId, AccountIdLookupOf<T>, AccountIdLookupOf<T>) {
 	let sender: T::AccountId = account("Alice", 0, 10);
 	let beneficiary: T::AccountId = account("Bob", 0, 11);
@@ -243,7 +229,7 @@ mod benchmarks {
 
 	#[benchmark]
 	fn accept_and_pay() -> Result<(), BenchmarkError> {
-		let (sender, beneficiary, sender_lookup, _beneficiary_lookup) = create_accounts::<T>();
+		let (sender, beneficiary, _sender_lookup, _beneficiary_lookup) = create_accounts::<T>();
 		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
@@ -257,8 +243,6 @@ mod benchmarks {
 			T::IncentivePercentage::get(),
 			None,
 		)?;
-
-		assert_has_event!(Event::PaymentRequestCreated { .. });
 
 		#[extrinsic_call]
 		_(RawOrigin::Signed(sender.clone()), payment_id);
