@@ -248,15 +248,17 @@ mod benchmarks {
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
 
-		assert_ok!(Payments::<T>::request_payment(
-			RawOrigin::Signed(beneficiary.clone()).into(),
-			sender_lookup,
-			asset,
-			amount
-		));
-		let Event::PaymentRequestCreated { payment_id } = last_event::<T>() else {
-			unreachable!()
-		};
+		let (payment_id, _) = Payments::<T>::create_payment(
+			&sender,
+			beneficiary,
+			asset.clone(),
+			amount.clone(),
+			PaymentState::PaymentRequested,
+			T::IncentivePercentage::get(),
+			None,
+		)?;
+
+		assert_has_event!(Event::PaymentRequestCreated { .. });
 
 		#[extrinsic_call]
 		_(RawOrigin::Signed(sender.clone()), payment_id);
