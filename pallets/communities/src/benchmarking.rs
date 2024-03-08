@@ -17,6 +17,7 @@ use frame_system::{
 	RawOrigin,
 };
 use sp_runtime::traits::StaticLookup;
+use sp_std::{vec, vec::Vec};
 
 fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
