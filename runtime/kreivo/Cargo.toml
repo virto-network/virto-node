@@ -178,6 +178,7 @@ runtime-benchmarks = [
 	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-burner/runtime-benchmarks",
+	"pallet-communities/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-nfts/runtime-benchmarks",

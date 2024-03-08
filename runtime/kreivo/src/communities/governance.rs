@@ -40,6 +40,9 @@ impl pallet_referenda_tracks::Config<CommunityTracksInstance> for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type UpdateOrigin = EnsureOriginToTrack;
 	type WeightInfo = pallet_referenda_tracks::weights::SubstrateWeight<Runtime>;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = CommunityTracksBenchmarkHelper;
 }
 
 // Paritally from https://github.com/polkadot-fellows/runtimes/blob/b5ba0e91d5dd3c4020e848b27be5f2b47e16f281/relay/kusama/src/governance/mod.rs#L75
@@ -61,4 +64,17 @@ impl pallet_referenda::Config<CommunityReferendaInstance> for Runtime {
 	type AlarmInterval = AlarmInterval;
 	type Tracks = CommunityTracks;
 	type Preimages = Preimage;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+use sp_runtime::SaturatedConversion;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct CommunityTracksBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_referenda_tracks::BenchmarkHelper<Runtime, CommunityTracksInstance> for CommunityTracksBenchmarkHelper {
+	fn track_id(id: u32) -> TrackIdOf<Runtime, CommunityTracksInstance> {
+		CommunityId::new(id.saturated_into())
+	}
 }
