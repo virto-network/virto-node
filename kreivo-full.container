@@ -1,0 +1,37 @@
+[Unit]
+Description=Kreivo full node container
+After=network-online.target
+
+[Service]
+Environment=BOOTNODES="/dns/eu1.virto.one/tcp/30333/p2p/12D3KooWJY4iZrxXR8iz4185XTdmiuHAGvGRLXKbJ1qoFZSysTwc"
+Environment=NODE_ARGS
+Environment=RELAY_ARGS
+
+[Container]
+Image=ghcr.io/virto-network/virto:latest
+ContainerName=kreivo-full
+Volume=kreivo-full-data:/data
+# an IPv6 capable podman network
+Network=podman6
+PublishPort=9944:9944
+PublishPort=9945:9945
+PublishPort=30333:30333
+PublishPort=30334:30334
+PublishPort=9615:9615
+LogDriver=passthrough
+Exec=--name kreivo-%H \
+	--rpc-external \
+	--rpc-cors=all \
+	--pruning archive-canonical \
+	--bootnodes $BOOTNODES \
+	--base-path /data $NODE_ARGS \
+	-- $RELAY_ARGS \
+	--chain kusama \
+	--rpc-external \
+	--sync=warp \
+	--state-pruning=200 \
+	--blocks-pruning=200 \
+	--no-telemetry
+
+[Install]
+WantedBy=multi-user.target default.target

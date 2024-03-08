@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 
 /// A compact identifier for payment
 #[cfg_attr(feature = "js", wasm_bindgen)]
-#[derive(Debug, Default, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, Copy, PartialEq)]
 #[repr(C)]
 pub struct PaymentId {
 	prefix: [u8; 2],
@@ -123,6 +123,48 @@ impl core::fmt::Display for PaymentId {
 			write!(f, "-")?;
 		}
 		write!(f, "{}", &out[5..])
+	}
+}
+
+// Manual implementation of Encode/Decode/TypeInfo to treat PaymentId like a u64
+#[cfg(feature = "runtime")]
+mod runtime {
+	use super::PaymentId;
+	use core::mem;
+	use parity_scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen};
+	use scale_info::{TypeDefPrimitive, TypeInfo};
+
+	impl EncodeLike for PaymentId {}
+
+	impl MaxEncodedLen for PaymentId {
+		fn max_encoded_len() -> usize {
+			mem::size_of::<u64>()
+		}
+	}
+	impl Encode for PaymentId {
+		fn size_hint(&self) -> usize {
+			mem::size_of::<u64>()
+		}
+		fn using_encoded<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
+			let buf = self.to_number().to_le_bytes();
+			f(&buf[..])
+		}
+	}
+	impl Decode for PaymentId {
+		fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+			let mut buf = [0u8; mem::size_of::<u64>()];
+			input.read(&mut buf)?;
+			Ok(<u64>::from_le_bytes(buf).into())
+		}
+		fn encoded_fixed_size() -> Option<usize> {
+			Some(mem::size_of::<u64>())
+		}
+	}
+	impl TypeInfo for PaymentId {
+		type Identity = u64;
+		fn type_info() -> scale_info::Type {
+			TypeDefPrimitive::U64.into()
+		}
 	}
 }
 
