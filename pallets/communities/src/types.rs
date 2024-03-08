@@ -146,6 +146,7 @@ use ::{
 	frame_benchmarking::BenchmarkError,
 	frame_support::traits::OriginTrait,
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
+	sp_std::vec::Vec,
 };
 
 #[cfg(feature = "runtime-benchmarks")]

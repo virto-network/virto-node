@@ -222,6 +222,19 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToT
 	}
 }
 
+#[cfg(feature = "runtime-benchmarks")]
+use sp_runtime::SaturatedConversion;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct TracksBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_referenda_tracks::BenchmarkHelper<Test> for TracksBenchmarkHelper {
+	fn track_id(id: u32) -> TrackIdOf<Test, ()> {
+		CommunityId::new(id.saturated_into())
+	}
+}
+
 parameter_types! {
 	pub const MaxTracks: u32 = u32::MAX;
 }
@@ -232,6 +245,9 @@ impl pallet_referenda_tracks::Config for Test {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type UpdateOrigin = EnsureOriginToTrack;
 	type WeightInfo = ();
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = TracksBenchmarkHelper;
 }
 
 parameter_types! {
