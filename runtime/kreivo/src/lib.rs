@@ -499,9 +499,10 @@ impl pallet_treasury::Config for Runtime {
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = PayoutSpendPeriod;
 	#[cfg(feature = "runtime-benchmarks")]
+	/// TODO: fix this benchmark helper in next release. We can proceed with the
+	/// empty implementation. type BenchmarkHelper =
+	/// polkadot_runtime_common::impls::benchmarks::TreasuryArguments;
 	type BenchmarkHelper = ();
-	// TODO: fix this benchmark helper in next release. We can proceed with the empty implementation.
-	//type BenchmarkHelper = polkadot_runtime_common::impls::benchmarks::TreasuryArguments;
 }
 
 parameter_types! {
