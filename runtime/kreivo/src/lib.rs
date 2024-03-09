@@ -12,11 +12,10 @@ pub mod impls;
 mod weights;
 pub mod xcm_config;
 
-
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-use cumulus_primitives_core::{AggregateMessageOrigin, ParaId, Concrete};
+use cumulus_primitives_core::{AggregateMessageOrigin, Concrete, ParaId};
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
-use polkadot_runtime_common::xcm_sender::{NoPriceForMessageDelivery};
+use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::{
@@ -486,9 +485,10 @@ impl pallet_treasury::Config for Runtime {
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = PayoutSpendPeriod;
 	#[cfg(feature = "runtime-benchmarks")]
+	/// TODO: fix this benchmark helper in next release. We can proceed with the
+	/// empty implementation. type BenchmarkHelper =
+	/// polkadot_runtime_common::impls::benchmarks::TreasuryArguments;
 	type BenchmarkHelper = ();
-	// TODO: fix this benchmark helper in next release. We can proceed with the empty implementation.
-	//type BenchmarkHelper = polkadot_runtime_common::impls::benchmarks::TreasuryArguments;
 }
 
 parameter_types! {
@@ -651,7 +651,6 @@ pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::Exponenti
 	TransactionByteFee,
 	ParachainSystem,
 >;
-
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct AssetRegistryBenchmarkHelper;
@@ -946,7 +945,7 @@ impl_runtime_apis! {
 			use xcm_config::RelayLocation;
 			use pallet_xcm_benchmarks::asset_instance_from;
 
-		
+
 			parameter_types! {
 				pub ExistentialDepositMultiAsset: Option<MultiAsset> = Some((
 					RelayLocation::get(),
