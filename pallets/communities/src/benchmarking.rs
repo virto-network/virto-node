@@ -408,7 +408,7 @@ mod benchmarks {
 
 	impl_benchmark_test_suite!(
 		Communities,
-		crate::tests::mock::new_bench_ext(),
+		sp_io::TestExternalities::new(Default::default()),
 		crate::tests::mock::Test
 	);
 }

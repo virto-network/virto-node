@@ -426,12 +426,6 @@ pub const COMMUNITY_ORIGIN: OriginCaller =
 	OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
 
 // Build genesis storage according to the mock runtime.
-#[cfg(feature = "runtime-benchmarks")]
-pub fn new_bench_ext() -> sp_io::TestExternalities {
-	TestEnvBuilder::new().build()
-}
-
-// Build genesis storage according to the mock runtime.
 pub fn new_test_ext(members: &[AccountId], memberships: &[MembershipId]) -> sp_io::TestExternalities {
 	TestEnvBuilder::new()
 		.add_community(COMMUNITY, DecisionMethod::Membership, members, memberships, None)
