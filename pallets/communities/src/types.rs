@@ -139,14 +139,9 @@ impl<T: Config> Tally<T> {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-use crate::Pallet;
-
-#[cfg(feature = "runtime-benchmarks")]
 use {
 	frame_benchmarking::BenchmarkError,
-	frame_support::traits::OriginTrait,
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
-	sp_std::vec::Vec,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -162,68 +157,30 @@ pub trait BenchmarkHelper<T: Config> {
 	/// as well as the caller
 	fn community_origin(decision_method: DecisionMethodFor<T>) -> OriginFor<T>;
 
+	/// Returns a new membership ID for a community with a given index.
+	fn membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
+
 	/// Initializes the membership collection of a community.
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;
 
-	/// Creates a community, setting a [DecisionMethod], returning
-	/// its ID as well as the caller origin, and origin caller.
-	fn create_community(
-		origin: OriginFor<T>,
-		maybe_decision_method: Option<DecisionMethodFor<T>>,
-	) -> Result<(CommunityIdOf<T>, OriginFor<T>), BenchmarkError> {
-		Self::initialize_memberships_collection()?;
-
-		let community_id = Self::community_id();
-		let decision_method = maybe_decision_method.unwrap_or(DecisionMethod::Rank);
-		let admin_origin: T::RuntimeOrigin = Self::community_origin(decision_method.clone());
-		let admin_origin_caller: PalletsOriginOf<T> = admin_origin.clone().into_caller();
-
-		Pallet::<T>::create(origin.clone(), admin_origin_caller, community_id)?;
-		Pallet::<T>::set_decision_method(origin, community_id, decision_method)?;
-
-		Ok((community_id, admin_origin))
-	}
-
-	/// Returns a new membership ID for a community with a given index.
-	fn new_membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
-
 	/// Extends the membership collection of a community with a given
 	/// membership ID.
-	fn extend_membership(
+	fn issue_membership(
 		community_id: CommunityIdOf<T>,
 		membership_id: MembershipIdOf<T>,
 	) -> Result<(), frame_benchmarking::BenchmarkError>;
 
-	/// This method sets up and configures
-	fn prepare_track_and_submit_referendum(
+	/// This method prepares the referenda track to be used
+	/// to submit the poll, for benchmarking purposes.
+	fn prepare_track(track_origin: PalletsOriginOf<T>) -> Result<(), BenchmarkError>;
+
+	/// This method prepares the poll to be used to
+	/// benchmark vote-related calls.
+	fn prepare_poll(
 		origin: OriginFor<T>,
 		proposal_origin: PalletsOriginOf<T>,
 		proposal_call: RuntimeCallFor<T>,
 	) -> Result<PollIndexOf<T>, BenchmarkError>;
 
-	/// Initializes the memberships of a community built for benchmarking
-	/// purposes.
-	///
-	/// Then, returns a list of tuples, each one containing a member's
-	/// [AccountId] and their corresponding
-	fn setup_members(
-		origin: OriginFor<T>,
-		community_id: CommunityIdOf<T>,
-		members: Vec<AccountIdOf<T>>,
-	) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, frame_benchmarking::BenchmarkError> {
-		let members_with_memberships = members
-			.into_iter()
-			.enumerate()
-			.map(|(i, account_id)| (account_id, Self::new_membership_id(community_id, i as u32)));
-
-		for (who, membership_id) in members_with_memberships.clone() {
-			Self::extend_membership(community_id, membership_id.clone())?;
-
-			let who = T::Lookup::unlookup(who.clone());
-			Pallet::<T>::add_member(origin.clone(), who.clone())?;
-			Pallet::<T>::promote_member(origin.clone(), who, membership_id)?;
-		}
-
-		Ok(members_with_memberships.collect())
-	}
+	fn finish_poll(index: PollIndexOf<T>) -> Result<(), BenchmarkError>;
 }

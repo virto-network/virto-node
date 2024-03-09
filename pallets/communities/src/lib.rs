@@ -234,6 +234,7 @@ pub mod pallet {
 		/// Type represents interactions between fungible tokens (native token)
 		type Balances: fungible::Inspect<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
+			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeHoldReason>
 			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
 
 		/// The overarching hold reason.

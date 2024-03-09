@@ -314,11 +314,6 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 		u8::MAX as u32
 	}
 
-	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
-		TestEnvBuilder::initialize_memberships_collection();
-		Ok(())
-	}
-
 	fn community_origin(decision_method: DecisionMethodFor<Test>) -> OriginFor<Test> {
 		let mut origin = Origin::<Test>::new(Self::community_id());
 		origin.with_decision_method(decision_method);
@@ -326,11 +321,28 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 		origin.into()
 	}
 
-	fn prepare_track_and_submit_referendum(
-		origin: OriginFor<Test>,
-		proposal_origin: PalletsOriginOf<Test>,
-		proposal_call: RuntimeCallFor<Test>,
-	) -> Result<PollIndexOf<Test>, BenchmarkError> {
+	fn membership_id(community_id: CommunityIdOf<Test>, index: u32) -> MembershipIdOf<Test> {
+		MembershipId(community_id, index)
+	}
+
+	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
+		TestEnvBuilder::initialize_memberships_collection();
+		Ok(())
+	}
+
+	fn issue_membership(
+		community_id: CommunityIdOf<Test>,
+		membership_id: MembershipIdOf<Test>,
+	) -> Result<(), frame_benchmarking::BenchmarkError> {
+		use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+		let community_account = Communities::community_account(&community_id);
+		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+
+		Ok(())
+	}
+
+	fn prepare_track(track_origin: PalletsOriginOf<Test>) -> Result<(), BenchmarkError> {
 		let id = Self::community_id();
 		let info = TrackInfo {
 			name: sp_runtime::str_array("Community"),
@@ -352,31 +364,42 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 			},
 		};
 
-		Tracks::insert(RuntimeOrigin::root(), id, info, proposal_origin.clone())?;
-
-		let bounded_call = BoundedVec::truncate_from(proposal_call.encode());
-		let proposal = BoundedCallOf::<Test, ()>::Inline(bounded_call);
-		let enactment_moment = frame_support::traits::schedule::DispatchTime::After(1);
-		Referenda::submit(origin.clone(), Box::new(proposal_origin), proposal, enactment_moment)?;
-		Referenda::place_decision_deposit(origin, 0)?;
-
-		Ok(0)
-	}
-
-	fn extend_membership(
-		community_id: CommunityIdOf<Test>,
-		membership_id: MembershipIdOf<Test>,
-	) -> Result<(), frame_benchmarking::BenchmarkError> {
-		use frame_support::traits::tokens::nonfungible_v2::Mutate;
-
-		let community_account = Communities::community_account(&community_id);
-		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+		Tracks::insert(RuntimeOrigin::root(), id, info, track_origin.clone())?;
 
 		Ok(())
 	}
 
-	fn new_membership_id(community_id: CommunityIdOf<Test>, index: u32) -> MembershipIdOf<Test> {
-		MembershipId(community_id, index)
+	fn prepare_poll(
+		origin: OriginFor<Test>,
+		proposal_origin: PalletsOriginOf<Test>,
+		proposal_call: RuntimeCallFor<Test>,
+	) -> Result<PollIndexOf<Test>, BenchmarkError> {
+		let proposal = BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(proposal_call.encode()));
+		let enactment_moment = frame_support::traits::schedule::DispatchTime::After(1);
+		Referenda::submit(origin.clone(), Box::new(proposal_origin), proposal, enactment_moment)?;
+		Referenda::place_decision_deposit(origin, 0)?;
+
+		System::set_block_number(2);
+		Referenda::nudge_referendum(RuntimeOrigin::root(), 0)?;
+
+		Ok(0)
+	}
+
+	fn finish_poll(index: PollIndexOf<Test>) -> Result<(), BenchmarkError> {
+		System::set_block_number(8);
+		Referenda::nudge_referendum(RuntimeOrigin::root(), index)?;
+
+		frame_support::assert_ok!(Referenda::ensure_ongoing(index));
+
+		System::set_block_number(9);
+		Referenda::nudge_referendum(RuntimeOrigin::root(), index)?;
+
+		frame_support::assert_err!(
+			Referenda::ensure_ongoing(index),
+			pallet_referenda::Error::<Test, ()>::NotOngoing
+		);
+
+		Ok(())
 	}
 }
 
