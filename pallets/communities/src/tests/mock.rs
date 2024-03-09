@@ -292,7 +292,7 @@ use crate::{
 };
 
 #[cfg(feature = "runtime-benchmarks")]
-use ::{
+use {
 	frame_benchmarking::BenchmarkError,
 	frame_support::BoundedVec,
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},

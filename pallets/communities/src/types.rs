@@ -142,7 +142,7 @@ impl<T: Config> Tally<T> {
 use crate::Pallet;
 
 #[cfg(feature = "runtime-benchmarks")]
-use ::{
+use {
 	frame_benchmarking::BenchmarkError,
 	frame_support::traits::OriginTrait,
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
