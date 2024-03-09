@@ -78,32 +78,38 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		origin.into()
 	}
 
+	fn membership_id(community_id: CommunityIdOf<Runtime>, index: u32) -> MembershipIdOf<Runtime> {
+		MembershipId(community_id, index)
+	}
+
 	fn initialize_memberships_collection() -> Result<(), BenchmarkError> {
 		let collection = MembershipsCollectionId::get();
 		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
 			collection,
-			RootAccount::get(),
-			RootAccount::get(),
+			TreasuryAccount::get(),
+			TreasuryAccount::get(),
 			Default::default(),
 			0,
 			pallet_nfts::Event::ForceCreated {
 				collection,
-				owner: RootAccount::get(),
+				owner: TreasuryAccount::get(),
 			},
 		)?;
 
 		Ok(())
 	}
 
-	fn new_membership_id(community_id: CommunityIdOf<Runtime>, index: u32) -> MembershipIdOf<Runtime> {
-		MembershipId(community_id, index)
+	fn issue_membership(
+		community_id: CommunityIdOf<Runtime>,
+		membership_id: MembershipIdOf<Runtime>,
+	) -> Result<(), BenchmarkError> {
+		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
+		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+
+		Ok(())
 	}
 
-	fn prepare_track_and_submit_referendum(
-		origin: OriginFor<Runtime>,
-		proposal_origin: PalletsOriginOf<Runtime>,
-		proposal_call: RuntimeCallFor<Runtime>,
-	) -> Result<PollIndexOf<Runtime>, BenchmarkError> {
+	fn prepare_track(pallet_origin: PalletsOriginOf<Runtime>) -> Result<(), BenchmarkError> {
 		let id = Self::community_id();
 		let info = TrackInfo {
 			name: sp_runtime::str_array("Community"),
@@ -125,8 +131,16 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 			},
 		};
 
-		Tracks::<Runtime, CommunityTracksInstance>::insert(RuntimeOrigin::root(), id, info, proposal_origin.clone())?;
+		Tracks::<Runtime, CommunityTracksInstance>::insert(RuntimeOrigin::root(), id, info, pallet_origin)?;
 
+		Ok(())
+	}
+
+	fn prepare_poll(
+		origin: OriginFor<Runtime>,
+		proposal_origin: PalletsOriginOf<Runtime>,
+		proposal_call: RuntimeCallFor<Runtime>,
+	) -> Result<PollIndexOf<Runtime>, BenchmarkError> {
 		let bounded_call = BoundedVec::truncate_from(proposal_call.encode());
 		let proposal_origin = Box::new(proposal_origin);
 		let proposal = BoundedCallOf::<Runtime, CommunityReferendaInstance>::Inline(bounded_call);
@@ -141,15 +155,25 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		)?;
 		Referenda::<Runtime, CommunityReferendaInstance>::place_decision_deposit(origin, index)?;
 
-		Ok(index)
+		System::set_block_number(2);
+		Referenda::<Runtime, CommunityReferendaInstance>::nudge_referendum(RuntimeOrigin::root(), 0)?;
+
+		Ok(0)
 	}
 
-	fn extend_membership(
-		community_id: CommunityIdOf<Runtime>,
-		membership_id: MembershipIdOf<Runtime>,
-	) -> Result<(), BenchmarkError> {
-		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
-		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+	fn finish_poll(index: PollIndexOf<Runtime>) -> Result<(), BenchmarkError> {
+		System::set_block_number(8);
+		Referenda::<Runtime, CommunityReferendaInstance>::nudge_referendum(RuntimeOrigin::root(), index)?;
+
+		frame_support::assert_ok!(Referenda::<Runtime, CommunityReferendaInstance>::ensure_ongoing(index));
+
+		System::set_block_number(9);
+		Referenda::<Runtime, CommunityReferendaInstance>::nudge_referendum(RuntimeOrigin::root(), index)?;
+
+		frame_support::assert_err!(
+			Referenda::<Runtime, CommunityReferendaInstance>::ensure_ongoing(index),
+			pallet_referenda::Error::<Runtime, CommunityReferendaInstance>::NotOngoing
+		);
 
 		Ok(())
 	}
