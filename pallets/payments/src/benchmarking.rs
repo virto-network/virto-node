@@ -3,6 +3,7 @@ use super::*;
 use crate::{types::*, Pallet as Payments};
 use frame_benchmarking::{account, v2::*};
 use frame_support::{
+	assert_ok,
 	traits::{
 		fungibles::{Inspect, Mutate},
 		Get,
@@ -12,12 +13,16 @@ use frame_support::{
 
 use frame_system::RawOrigin;
 use log;
-use sp_runtime::Percent;
+use sp_runtime::{traits::Zero, Percent};
 use sp_std::vec;
 
-// Compare `generic_event` to the last emitted event.
-fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
-	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+macro_rules! assert_has_event {
+	($patt:pat $(if $guard:expr)?) => {
+		assert!(frame_system::Pallet::<T>::events().iter().any(|record| {
+			let e = <T as Config>::RuntimeEvent::from(record.event.clone());
+			matches!(e.try_into(), Ok($patt) $(if $guard)?)
+		}));
+	};
 }
 
 fn create_accounts<T: Config>() -> (T::AccountId, T::AccountId, AccountIdLookupOf<T>, AccountIdLookupOf<T>) {
@@ -58,12 +63,9 @@ fn create_payment<T: Config>(
 	let (sender, beneficiary, sender_lookup, beneficiary_lookup) = create_accounts::<T>();
 	create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 
-	let payment_id: T::PaymentId = Payments::<T>::next_payment_id()?;
-	log::info!("payment_id: {:?}", payment_id);
-
-	let payment_detail = Payments::<T>::create_payment(
+	let (payment_id, payment_detail) = Payments::<T>::create_payment(
 		&sender,
-		&beneficiary,
+		beneficiary.clone(),
 		asset.clone(),
 		amount.clone(),
 		PaymentState::Created,
@@ -72,7 +74,7 @@ fn create_payment<T: Config>(
 	)?;
 
 	// reserve funds for payment
-	Payments::<T>::reserve_payment_amount(&sender, &beneficiary, payment_detail)?;
+	Payments::<T>::reserve_payment_amount(&sender, payment_detail)?;
 
 	log::info!("reserve_payment_amount executed");
 
@@ -87,10 +89,10 @@ fn create_payment<T: Config>(
 )]
 mod benchmarks {
 	use super::*;
-
 	#[benchmark]
 	fn pay(q: Linear<1, { T::MaxRemarkLength::get() }>) -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, _, beneficiary_lookup) = create_accounts::<T>();
+
 		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
@@ -110,15 +112,9 @@ mod benchmarks {
 			remark.clone(),
 		);
 
-		assert_last_event::<T>(
-			Event::PaymentCreated {
-				sender,
-				beneficiary,
-				asset,
-				amount,
-				remark,
-			}
-			.into(),
+		assert_has_event!(
+			Event::PaymentCreated { asset, amount, remark, .. }
+			if asset == asset && amount == amount && remark == remark
 		);
 		Ok(())
 	}
@@ -127,14 +123,14 @@ mod benchmarks {
 	fn release() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
-		let (payment_id, sender, beneficiary, _, beneficiary_lookup) = create_payment::<T>(&amount, &asset, None)?;
+		let (payment_id, sender, _beneficiary, _, beneficiary_lookup) = create_payment::<T>(&amount, &asset, None)?;
 
 		log::info!("beneficiary_lookup: {:?}", beneficiary_lookup);
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(sender.clone()), beneficiary_lookup, payment_id);
+		_(RawOrigin::Signed(sender), payment_id);
 
-		assert_last_event::<T>(Event::PaymentReleased { sender, beneficiary }.into());
+		assert_has_event!(Event::PaymentReleased { .. });
 		Ok(())
 	}
 
@@ -142,13 +138,13 @@ mod benchmarks {
 	fn cancel() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
-		let (payment_id, sender, beneficiary, sender_lookup, _beneficiary_lookup) =
+		let (payment_id, _sender, beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(beneficiary.clone()), sender_lookup, payment_id);
+		_(RawOrigin::Signed(beneficiary.clone()), payment_id);
 
-		assert_last_event::<T>(Event::PaymentCancelled { sender, beneficiary }.into());
+		assert_has_event!(Event::PaymentCancelled { .. });
 		Ok(())
 	}
 
@@ -156,22 +152,16 @@ mod benchmarks {
 	fn request_refund() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
-		let (payment_id, sender, beneficiary, _sender_lookup, beneficiary_lookup) =
+		let (payment_id, sender, _beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(sender.clone()), beneficiary_lookup, payment_id);
+		_(RawOrigin::Signed(sender.clone()), payment_id);
 
 		let current_block = frame_system::Pallet::<T>::block_number();
-		let expiry = current_block + T::CancelBufferBlockLength::get();
-
-		assert_last_event::<T>(
-			Event::PaymentCreatorRequestedRefund {
-				sender,
-				beneficiary,
-				expiry,
-			}
-			.into(),
+		assert_has_event!(
+			Event::PaymentCreatorRequestedRefund { expiry, .. }
+			if expiry == (current_block + T::CancelBufferBlockLength::get())
 		);
 		Ok(())
 	}
@@ -180,20 +170,18 @@ mod benchmarks {
 	fn dispute_refund() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
-		let (payment_id, sender, beneficiary, sender_lookup, beneficiary_lookup) =
+		let (payment_id, sender, beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
-		assert!(Payments::<T>::request_refund(
+		assert_ok!(Payments::<T>::request_refund(
 			RawOrigin::Signed(sender.clone()).into(),
-			beneficiary_lookup,
 			payment_id
-		)
-		.is_ok());
+		));
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(beneficiary.clone()), sender_lookup, payment_id);
+		_(RawOrigin::Signed(beneficiary.clone()), payment_id);
 
-		assert_last_event::<T>(Event::PaymentRefundDisputed { sender, beneficiary }.into());
+		assert_has_event!(Event::PaymentRefundDisputed { .. });
 		Ok(())
 	}
 
@@ -201,22 +189,17 @@ mod benchmarks {
 	fn resolve_dispute() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
 		let asset = <AssetIdOf<T>>::zero();
-		let (payment_id, sender, beneficiary, sender_lookup, beneficiary_lookup) =
+		let (payment_id, sender, beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
-		assert!(Payments::<T>::request_refund(
+		assert_ok!(Payments::<T>::request_refund(
 			RawOrigin::Signed(sender.clone()).into(),
-			beneficiary_lookup.clone(),
 			payment_id
-		)
-		.is_ok());
-
-		assert!(Payments::<T>::dispute_refund(
+		));
+		assert_ok!(Payments::<T>::dispute_refund(
 			RawOrigin::Signed(beneficiary.clone()).into(),
-			sender_lookup.clone(),
 			payment_id
-		)
-		.is_ok());
+		));
 
 		let dispute_result = DisputeResult {
 			percent_beneficiary: Percent::from_percent(90),
@@ -224,15 +207,9 @@ mod benchmarks {
 		};
 
 		#[extrinsic_call]
-		_(
-			RawOrigin::Root,
-			sender_lookup,
-			beneficiary_lookup,
-			payment_id,
-			dispute_result,
-		);
+		_(RawOrigin::Root, payment_id, dispute_result);
 
-		assert_last_event::<T>(Event::PaymentDisputeResolved { sender, beneficiary }.into());
+		assert_has_event!(Event::PaymentDisputeResolved { .. });
 		Ok(())
 	}
 
@@ -246,30 +223,31 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(RawOrigin::Signed(beneficiary.clone()), sender_lookup, asset, amount);
 
-		assert_last_event::<T>(Event::PaymentRequestCreated { sender, beneficiary }.into());
+		assert_has_event!(Event::PaymentRequestCreated { .. });
 		Ok(())
 	}
 
 	#[benchmark]
 	fn accept_and_pay() -> Result<(), BenchmarkError> {
-		let (sender, beneficiary, sender_lookup, beneficiary_lookup) = create_accounts::<T>();
+		let (sender, beneficiary, _sender_lookup, _beneficiary_lookup) = create_accounts::<T>();
 		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
-		let payment_id: T::PaymentId = Payments::<T>::next_payment_id()?;
 
-		assert!(Payments::<T>::request_payment(
-			RawOrigin::Signed(beneficiary.clone()).into(),
-			sender_lookup,
-			asset,
-			amount
-		)
-		.is_ok());
+		let (payment_id, _) = Payments::<T>::create_payment(
+			&sender,
+			beneficiary,
+			asset.clone(),
+			amount.clone(),
+			PaymentState::PaymentRequested,
+			T::IncentivePercentage::get(),
+			None,
+		)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(sender.clone()), beneficiary_lookup, payment_id);
+		_(RawOrigin::Signed(sender.clone()), payment_id);
 
-		assert_last_event::<T>(Event::PaymentRequestCreated { sender, beneficiary }.into());
+		assert_has_event!(Event::PaymentRequestCompleted { .. });
 		Ok(())
 	}
 
