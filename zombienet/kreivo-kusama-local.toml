@@ -30,7 +30,7 @@ default_command = "./bin/polkadot"
 
 [[parachains]]
 id = 2281
-add_to_genesis = false
+add_to_genesis = true
 cumulus_based = true
 chain = "kreivo-local"
 
