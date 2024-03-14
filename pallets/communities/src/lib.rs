@@ -170,6 +170,8 @@ mod benchmarking;
 pub use types::BenchmarkHelper;
 
 #[cfg(test)]
+mod mock;
+#[cfg(test)]
 mod tests;
 
 mod functions;
