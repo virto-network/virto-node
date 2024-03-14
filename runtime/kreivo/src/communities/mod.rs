@@ -1,7 +1,7 @@
 use super::*;
 
 use frame_support::traits::{membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf};
-use pallet_communities::origin::EnsureCommunity;
+use pallet_communities::origin::{EnsureCommunity, EnsureCommunityAccountId};
 use virto_common::{CommunityId, MembershipInfo};
 
 pub mod governance;
@@ -20,7 +20,7 @@ impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
 
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
-	type MemberMgmtOrigin = EnsureCommunity<Self>;
+	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
 	type MemberMgmt = Memberships;
 	type Membership = MembershipInfo;
 
