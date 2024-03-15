@@ -21,6 +21,7 @@ use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_runtime::traits::Verify;
 pub use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup},
@@ -36,14 +37,15 @@ pub use virto_common::FungibleAssetLocation;
 use frame_support::{
 	construct_runtime, derive_impl,
 	dispatch::DispatchClass,
+	ensure,
 	genesis_builder_helper::{build_config, create_default_config},
 	parameter_types,
 	traits::{
 		fungible::HoldConsideration,
 		fungibles,
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
-		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, LinearStoragePrice,
-		NeverEnsureOrigin, TransformOrigin,
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOf, EitherOfDiverse,
+		EnsureOriginWithArg, LinearStoragePrice, NeverEnsureOrigin, TransformOrigin,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	BoundedVec, PalletId,
@@ -56,6 +58,8 @@ use frame_system::{
 	EnsureRoot,
 };
 
+use pallet_nfts::PalletFeatures;
+
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
 use xcm_config::{MultiLocationConvertedConcreteId, RelayLocation, XcmOriginToTransactDispatchOrigin};
 
@@ -67,7 +71,10 @@ pub use polkadot_runtime_common::{prod_or_fast, BlockHashCount, SlowAdjustingFee
 
 pub use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
+// Virto toolchain
 pub mod payments;
+
+pub mod communities;
 
 // XCM Imports
 use xcm::latest::prelude::BodyId;
@@ -192,6 +199,12 @@ construct_runtime!(
 
 		// Virto Tooling
 		Payments: pallet_payments = 60,
+
+		// Communities at Kreivo
+		Communities: pallet_communities = 71,
+		CommunityTracks: pallet_referenda_tracks::<Instance2> = 72,
+		CommunityReferenda: pallet_referenda::<Instance2> = 73,
+		CommunityMemberships: pallet_nfts::<Instance2> = 74,
 	}
 );
 
@@ -285,9 +298,9 @@ impl pallet_balances::Config for Runtime {
 	type MaxReserves = ConstU32<50>;
 	type ReserveIdentifier = [u8; 8];
 	type RuntimeHoldReason = RuntimeHoldReason;
-	type FreezeIdentifier = ();
-	type MaxHolds = ConstU32<2>;
-	type MaxFreezes = ConstU32<0>;
+	type FreezeIdentifier = RuntimeHoldReason;
+	type MaxHolds = ConstU32<3>;
+	type MaxFreezes = ConstU32<256>;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
@@ -635,6 +648,17 @@ impl pallet_preimage::Config for Runtime {
 }
 
 parameter_types! {
+	pub NftsPalletFeatures: PalletFeatures = PalletFeatures::all_enabled();
+	pub const NftsMaxDeadlineDuration: BlockNumber = 12 * 30 * DAYS;
+	// From https://github.com/polkadot-fellows/runtimes/blob/main/system-parachains/asset-hubs/asset-hub-kusama/src/lib.rs#L745
+	pub const NftsCollectionDeposit: Balance = UNITS / 10;
+	pub const NftsItemDeposit: Balance = UNITS / 1_000;
+	pub const NftsMetadataDepositBase: Balance = MetadataDepositBase::get();
+	pub const NftsAttributeDepositBase: Balance = deposit(1, 0);
+	pub const NftsDepositPerByte: Balance = MetadataDepositPerByte::get();
+}
+
+parameter_types! {
 	/// The asset ID for the asset that we use to pay for message delivery fees.
 	pub FeeAssetId: cumulus_primitives_core::AssetId = Concrete(xcm_config::RelayLocation::get());
 	/// The base fee for the message delivery fees.
@@ -680,6 +704,10 @@ mod benches {
 		[pallet_assets, Assets]
 		[pallet_proxy, Proxy]
 		[pallet_payments, Payments]
+		[pallet_communities, Communities]
+		[pallet_referenda_tracks, CommunityTracks]
+		[pallet_referenda, CommunityReferenda]
+		[pallet_nfts, CommunityMemberships]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.
 		[pallet_xcm_benchmarks::fungible, XcmBalances]

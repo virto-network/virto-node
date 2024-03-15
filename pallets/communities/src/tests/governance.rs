@@ -1014,6 +1014,14 @@ mod remove_vote {
 				0
 			));
 
+			System::assert_has_event(
+				crate::Event::<Test>::VoteRemoved {
+					who: ALICE,
+					poll_index: 0,
+				}
+				.into(),
+			);
+
 			assert_eq!(
 				Referenda::as_ongoing(0).expect("we already created poll 0; qed").0,
 				Tally::default()
@@ -1044,6 +1052,14 @@ mod remove_vote {
 				MembershipId(COMMUNITY_C, 1),
 				2
 			));
+
+			System::assert_has_event(
+				crate::Event::<Test>::VoteRemoved {
+					who: ALICE,
+					poll_index: 2,
+				}
+				.into(),
+			);
 
 			assert_eq!(
 				Referenda::as_ongoing(2).expect("we already created poll 2; qed").0,
