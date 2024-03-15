@@ -1,6 +1,10 @@
 use super::*;
 
-use pallet_referenda::{TrackIdOf, TracksInfo};
+use frame_system::pallet_prelude::BlockNumberFor;
+use sp_std::marker::PhantomData;
+
+use pallet_communities::types::CommunityIdOf;
+use pallet_referenda::{BalanceOf, PalletsOriginOf, TrackIdOf, TracksInfo};
 use parachains_common::kusama::currency::QUID;
 
 pub type CommunityTracksInstance = pallet_referenda_tracks::Instance2;
@@ -45,6 +49,44 @@ impl pallet_referenda_tracks::Config<CommunityTracksInstance> for Runtime {
 	type BenchmarkHelper = CommunityTracksBenchmarkHelper;
 }
 
+pub struct EnsureCommunityMember<T, I: 'static = ()>(PhantomData<T>, PhantomData<I>);
+
+impl<T, I> EnsureOriginWithArg<T::RuntimeOrigin, PalletsOriginOf<T>> for EnsureCommunityMember<T, I>
+where
+	T: pallet_communities::Config + pallet_referenda::Config<I>,
+	T::Tracks: TracksInfo<
+		BalanceOf<T, I>,
+		BlockNumberFor<T>,
+		RuntimeOrigin = PalletsOriginOf<T>,
+		Id = <T as pallet_communities::Config>::CommunityId,
+	>,
+{
+	type Success = T::AccountId;
+
+	fn try_origin(o: T::RuntimeOrigin, track_origin: &PalletsOriginOf<T>) -> Result<Self::Success, T::RuntimeOrigin> {
+		match o.clone().into() {
+			Ok(frame_system::RawOrigin::Signed(account_id)) => {
+				let community_id = T::Tracks::track_for(track_origin).map_err(|_| o.clone())?;
+
+				use frame_support::traits::membership::Inspect;
+				if T::MemberMgmt::account_memberships(&account_id)
+					.any(|membership_id| CommunityIdOf::<T>::from(membership_id.clone()) == community_id)
+				{
+					Ok(account_id)
+				} else {
+					Err(o)
+				}
+			}
+			_ => Err(o),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(_track_origin: &PalletsOriginOf<T>) -> Result<T::RuntimeOrigin, ()> {
+		todo!()
+	}
+}
+
 // Paritally from https://github.com/polkadot-fellows/runtimes/blob/b5ba0e91d5dd3c4020e848b27be5f2b47e16f281/relay/kusama/src/governance/mod.rs#L75
 impl pallet_referenda::Config<CommunityReferendaInstance> for Runtime {
 	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Runtime>;
@@ -52,7 +94,7 @@ impl pallet_referenda::Config<CommunityReferendaInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Scheduler = Scheduler;
 	type Currency = Balances;
-	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
+	type SubmitOrigin = EnsureCommunityMember<Self, CommunityReferendaInstance>;
 	type CancelOrigin = EnsureRoot<AccountId>;
 	type KillOrigin = EnsureRoot<AccountId>;
 	type Slash = Treasury;

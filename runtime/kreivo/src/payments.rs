@@ -1,5 +1,8 @@
 use super::*;
+
+use frame_support::traits::EitherOf;
 use frame_system::EnsureSigned;
+use pallet_communities::origin::AsSignedByCommunity;
 use parity_scale_codec::Encode;
 
 parameter_types! {
@@ -76,7 +79,7 @@ impl pallet_payments::Config for Runtime {
 	type FeeHandler = KreivoFeeHandler;
 	type IncentivePercentage = IncentivePercentage;
 	type MaxRemarkLength = MaxRemarkLength;
-	type SenderOrigin = EnsureSigned<AccountId>;
+	type SenderOrigin = EitherOf<AsSignedByCommunity<Self>, EnsureSigned<AccountId>>;
 	type BeneficiaryOrigin = EnsureSigned<AccountId>;
 	type DisputeResolver = frame_system::EnsureRootWithSuccess<AccountId, TreasuryAccount>;
 	type PalletId = PaymentPalletId;

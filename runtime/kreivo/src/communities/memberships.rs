@@ -1,6 +1,5 @@
 use super::*;
 
-use frame_support::traits::EitherOf;
 use frame_system::EnsureRootWithSuccess;
 use virto_common::MembershipId;
 
@@ -16,8 +15,7 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type Currency = Balances;
 	type ForceOrigin = EnsureRoot<AccountId>;
 	// Ensure only root is allowed to executing `create` calls
-	type CreateOrigin =
-		AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, TreasuryAccount>, EnsureSigned<AccountId>>>;
+	type CreateOrigin = EnsureRootWithSuccess<AccountId, TreasuryAccount>;
 	type Locker = ();
 
 	type CollectionDeposit = NftsCollectionDeposit;
