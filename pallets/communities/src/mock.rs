@@ -21,7 +21,7 @@ pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 
 use crate::{
 	self as pallet_communities,
-	origin::{DecisionMethod, EnsureCommunity},
+	origin::{DecisionMethod, EnsureCommunity, EnsureCommunityAccountId},
 	types::{Tally, VoteWeight},
 };
 
@@ -82,7 +82,7 @@ impl pallet_assets::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = AssetId;
-	type AssetIdParameter = Compact<u32>;
+	type AssetIdParameter = Compact<AssetId>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
@@ -121,6 +121,17 @@ impl pallet_balances::Config for Test {
 }
 
 // Memberships
+#[cfg(feature = "runtime-benchmarks")]
+pub struct NftsBenchmarksHelper;
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_nfts::BenchmarkHelper<CollectionId, MembershipId> for NftsBenchmarksHelper {
+	fn collection(i: u16) -> CollectionId {
+		i.into()
+	}
+	fn item(i: u16) -> MembershipId {
+		MembershipId(COMMUNITY, i.into())
+	}
+}
 
 parameter_types! {
 	pub const RootAccount: AccountId = AccountId::new([0xff; 32]);
@@ -151,6 +162,9 @@ impl pallet_nfts::Config for Test {
 	type StringLimit = ();
 	type ValueLimit = ConstU32<10>;
 	type WeightInfo = ();
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type Helper = NftsBenchmarksHelper;
 }
 
 // Governance at Communities
@@ -201,6 +215,24 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Test, ()>> for EnsureOriginToT
 
 		Ok(())
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(id: &TrackIdOf<Test, ()>) -> Result<RuntimeOrigin, ()> {
+		Ok(pallet_communities::Origin::<Test>::new(id.clone()).into())
+	}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+use sp_runtime::SaturatedConversion;
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct TracksBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_referenda_tracks::BenchmarkHelper<Test> for TracksBenchmarkHelper {
+	fn track_id(id: u32) -> TrackIdOf<Test, ()> {
+		CommunityId::new(id.saturated_into())
+	}
 }
 
 parameter_types! {
@@ -213,6 +245,9 @@ impl pallet_referenda_tracks::Config for Test {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type UpdateOrigin = EnsureOriginToTrack;
 	type WeightInfo = ();
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = TracksBenchmarkHelper;
 }
 
 parameter_types! {
@@ -250,12 +285,130 @@ parameter_types! {
 type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
 pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 
+#[cfg(feature = "runtime-benchmarks")]
+use crate::{
+	types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PollIndexOf},
+	BenchmarkHelper, Origin,
+};
+
+#[cfg(feature = "runtime-benchmarks")]
+use {
+	frame_benchmarking::BenchmarkError,
+	frame_support::BoundedVec,
+	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
+	pallet_referenda::{BoundedCallOf, Curve, PalletsOriginOf, TrackInfo},
+	parity_scale_codec::Encode,
+	sp_runtime::Perbill,
+};
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct CommunityBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
+	fn community_id() -> CommunityIdOf<Test> {
+		COMMUNITY
+	}
+
+	fn community_desired_size() -> u32 {
+		u8::MAX as u32
+	}
+
+	fn community_origin(decision_method: DecisionMethodFor<Test>) -> OriginFor<Test> {
+		let mut origin = Origin::<Test>::new(Self::community_id());
+		origin.with_decision_method(decision_method);
+
+		origin.into()
+	}
+
+	fn membership_id(community_id: CommunityIdOf<Test>, index: u32) -> MembershipIdOf<Test> {
+		MembershipId(community_id, index)
+	}
+
+	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
+		TestEnvBuilder::initialize_memberships_collection();
+		Ok(())
+	}
+
+	fn issue_membership(
+		community_id: CommunityIdOf<Test>,
+		membership_id: MembershipIdOf<Test>,
+	) -> Result<(), frame_benchmarking::BenchmarkError> {
+		use frame_support::traits::tokens::nonfungible_v2::Mutate;
+
+		let community_account = Communities::community_account(&community_id);
+		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+
+		Ok(())
+	}
+
+	fn prepare_track(track_origin: PalletsOriginOf<Test>) -> Result<(), BenchmarkError> {
+		let id = Self::community_id();
+		let info = TrackInfo {
+			name: sp_runtime::str_array("Community"),
+			max_deciding: 1,
+			decision_deposit: 5,
+			prepare_period: 1,
+			decision_period: 5,
+			confirm_period: 1,
+			min_enactment_period: 1,
+			min_approval: Curve::LinearDecreasing {
+				length: Perbill::from_percent(100),
+				floor: Perbill::from_percent(50),
+				ceil: Perbill::from_percent(100),
+			},
+			min_support: Curve::LinearDecreasing {
+				length: Perbill::from_percent(100),
+				floor: Perbill::from_percent(0),
+				ceil: Perbill::from_percent(100),
+			},
+		};
+
+		Tracks::insert(RuntimeOrigin::root(), id, info, track_origin.clone())?;
+
+		Ok(())
+	}
+
+	fn prepare_poll(
+		origin: OriginFor<Test>,
+		proposal_origin: PalletsOriginOf<Test>,
+		proposal_call: RuntimeCallFor<Test>,
+	) -> Result<PollIndexOf<Test>, BenchmarkError> {
+		let proposal = BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(proposal_call.encode()));
+		let enactment_moment = frame_support::traits::schedule::DispatchTime::After(1);
+		Referenda::submit(origin.clone(), Box::new(proposal_origin), proposal, enactment_moment)?;
+		Referenda::place_decision_deposit(origin, 0)?;
+
+		System::set_block_number(2);
+		Referenda::nudge_referendum(RuntimeOrigin::root(), 0)?;
+
+		Ok(0)
+	}
+
+	fn finish_poll(index: PollIndexOf<Test>) -> Result<(), BenchmarkError> {
+		System::set_block_number(8);
+		Referenda::nudge_referendum(RuntimeOrigin::root(), index)?;
+
+		frame_support::assert_ok!(Referenda::ensure_ongoing(index));
+
+		System::set_block_number(9);
+		Referenda::nudge_referendum(RuntimeOrigin::root(), index)?;
+
+		frame_support::assert_err!(
+			Referenda::ensure_ongoing(index),
+			pallet_referenda::Error::<Test, ()>::NotOngoing
+		);
+
+		Ok(())
+	}
+}
+
 impl pallet_communities::Config for Test {
 	type Assets = Assets;
 	type Balances = Balances;
 	type CommunityId = CommunityId;
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
-	type MemberMgmtOrigin = EnsureCommunity<Test>;
+	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
 	type MemberMgmt = Memberships;
 	type Membership = MembershipInfo;
 	type PalletId = CommunitiesPalletId;
@@ -263,6 +416,9 @@ impl pallet_communities::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type WeightInfo = WeightInfo;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = CommunityBenchmarkHelper;
 }
 
 pub const COMMUNITY: CommunityId = CommunityId::new(1);
@@ -367,19 +523,7 @@ impl TestEnvBuilder {
 		ext.execute_with(|| {
 			System::set_block_number(1);
 
-			let collection = MembershipsCollectionId::get();
-			Nfts::do_create_collection(
-				collection,
-				RootAccount::get(),
-				RootAccount::get(),
-				Default::default(),
-				0,
-				pallet_nfts::Event::ForceCreated {
-					collection,
-					owner: RootAccount::get(),
-				},
-			)
-			.expect("creates memberships collection");
+			Self::initialize_memberships_collection();
 
 			for community_id in &self.communities {
 				let decision_method = self
@@ -429,12 +573,28 @@ impl TestEnvBuilder {
 		ext
 	}
 
+	pub(crate) fn initialize_memberships_collection() {
+		let collection = MembershipsCollectionId::get();
+		Nfts::do_create_collection(
+			collection,
+			RootAccount::get(),
+			RootAccount::get(),
+			Default::default(),
+			0,
+			pallet_nfts::Event::ForceCreated {
+				collection,
+				owner: RootAccount::get(),
+			},
+		)
+		.expect("creates memberships collection");
+	}
+
 	pub fn create_community_origin(
 		community_id: &CommunityId,
 		decision_method: &DecisionMethod<AssetId>,
 	) -> RuntimeOrigin {
 		let mut origin = pallet_communities::Origin::<Test>::new(*community_id);
-		origin.set_decision_method(decision_method.clone());
+		origin.with_decision_method(decision_method.clone());
 
 		origin.into()
 	}

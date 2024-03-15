@@ -1,10 +1,9 @@
 use frame_support::assert_ok;
 
 mod helpers;
-mod mock;
 
+use crate::mock::*;
 use helpers::*;
-use mock::*;
 
 type Error = crate::Error<Test>;
 
