@@ -1,7 +1,11 @@
 use super::*;
 
-use frame_support::traits::{membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf};
-use pallet_communities::origin::{EnsureCommunity, EnsureCommunityAccountId};
+use frame_support::{
+	pallet_prelude::{EnsureOrigin, PhantomData},
+	traits::{membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf, OriginTrait},
+};
+use pallet_communities::origin::EnsureCommunity;
+use sp_runtime::traits::AccountIdConversion;
 use virto_common::{CommunityId, MembershipInfo};
 
 pub mod governance;
@@ -15,6 +19,31 @@ parameter_types! {
 
 type MembershipCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
+pub struct EnsureCommunityAccountId<T>(PhantomData<T>);
+
+impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureCommunityAccountId<T>
+where
+	T::RuntimeOrigin: OriginTrait + From<frame_system::RawOrigin<T::AccountId>> + From<pallet_communities::Origin<T>>,
+	T: pallet_communities::Config,
+{
+	type Success = T::CommunityId;
+
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+		match o.clone().into() {
+			Ok(frame_system::RawOrigin::Signed(account_id)) => {
+				let (_, community_id) = PalletId::try_from_sub_account(&account_id).ok_or(o.clone())?;
+				Ok(community_id)
+			}
+			_ => Err(o),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		use crate::BenchmarkHelper;
+		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
+	}
+}
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
