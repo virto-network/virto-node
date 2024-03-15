@@ -1,6 +1,6 @@
 use super::*;
 
-use frame_system::pallet_prelude::BlockNumberFor;
+use frame_system::{pallet_prelude::BlockNumberFor, EnsureRootWithSuccess};
 use sp_std::marker::PhantomData;
 
 use pallet_communities::types::CommunityIdOf;
@@ -94,7 +94,10 @@ impl pallet_referenda::Config<CommunityReferendaInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Scheduler = Scheduler;
 	type Currency = Balances;
-	type SubmitOrigin = EnsureCommunityMember<Self, CommunityReferendaInstance>;
+	type SubmitOrigin = EitherOf<
+		EnsureRootWithSuccess<AccountId, TreasuryAccount>,
+		EnsureCommunityMember<Self, CommunityReferendaInstance>,
+	>;
 	type CancelOrigin = EnsureRoot<AccountId>;
 	type KillOrigin = EnsureRoot<AccountId>;
 	type Slash = Treasury;
