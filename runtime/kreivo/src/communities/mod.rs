@@ -9,7 +9,7 @@ pub mod memberships;
 
 parameter_types! {
   pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
-	pub const MembershipsCollectionId: CollectionId = 0;
+	pub const MembershipsCollectionId: memberships::CollectionId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 }
 

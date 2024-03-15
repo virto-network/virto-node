@@ -51,7 +51,7 @@ pub use frame_system::Call as SystemCall;
 
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureRootWithSuccess, EnsureSigned,
+	EnsureRoot,
 };
 
 use pallet_nfts::PalletFeatures;
@@ -168,7 +168,6 @@ construct_runtime!(
 		Burner: pallet_burner = 12,
 		Assets: pallet_assets::<Instance1> = 13,
 		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 14,
-		Nfts: pallet_nfts::<Instance1> = 15,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship = 20,
@@ -645,12 +644,6 @@ impl pallet_preimage::Config for Runtime {
 	>;
 }
 
-// Define the type for a NFT Collection's ID
-pub type CollectionId = u32;
-
-// Define the type for a NFT Item's ID
-pub type ItemId = u32;
-
 parameter_types! {
 	pub NftsPalletFeatures: PalletFeatures = PalletFeatures::all_enabled();
 	pub const NftsMaxDeadlineDuration: BlockNumber = 12 * 30 * DAYS;
@@ -660,45 +653,6 @@ parameter_types! {
 	pub const NftsMetadataDepositBase: Balance = MetadataDepositBase::get();
 	pub const NftsAttributeDepositBase: Balance = deposit(1, 0);
 	pub const NftsDepositPerByte: Balance = MetadataDepositPerByte::get();
-}
-
-pub type NftsInstance = pallet_nfts::Instance1;
-
-// From https://github.com/polkadot-fellows/runtimes/blob/main/system-parachains/asset-hubs/asset-hub-kusama/src/lib.rs#L810
-impl pallet_nfts::Config<NftsInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-
-	type CollectionId = CollectionId;
-	type ItemId = ItemId;
-
-	type Currency = Balances;
-	type ForceOrigin = EnsureRoot<AccountId>;
-	type CreateOrigin =
-		AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, TreasuryAccount>, EnsureSigned<AccountId>>>;
-	type Locker = ();
-
-	type CollectionDeposit = NftsCollectionDeposit;
-	type ItemDeposit = NftsItemDeposit;
-	type MetadataDepositBase = NftsMetadataDepositBase;
-	type AttributeDepositBase = NftsAttributeDepositBase;
-	type DepositPerByte = NftsDepositPerByte;
-
-	type StringLimit = ConstU32<256>;
-	type KeyLimit = ConstU32<64>;
-	type ValueLimit = ConstU32<256>;
-	type ApprovalsLimit = ConstU32<20>;
-	type ItemAttributesApprovalsLimit = ConstU32<30>;
-	type MaxTips = ConstU32<10>;
-	type MaxDeadlineDuration = NftsMaxDeadlineDuration;
-	type MaxAttributesPerCall = ConstU32<10>;
-	type Features = NftsPalletFeatures;
-
-	type OffchainSignature = Signature;
-	type OffchainPublic = <Signature as Verify>::Signer;
-	type WeightInfo = pallet_nfts::weights::SubstrateWeight<Runtime>;
-
-	#[cfg(feature = "runtime-benchmarks")]
-	type Helper = ();
 }
 
 parameter_types! {
@@ -774,7 +728,6 @@ mod benches {
 		[pallet_proxy, Proxy]
 		[pallet_asset_registry, AssetRegistry]
 		[pallet_payments, Payments]
-		[pallet_nfts, Nfts]
 		[pallet_communities, Communities]
 		[pallet_referenda_tracks, CommunityTracks]
 		[pallet_referenda, CommunityReferenda]

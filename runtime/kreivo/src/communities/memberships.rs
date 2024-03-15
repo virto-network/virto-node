@@ -5,6 +5,8 @@ use virto_common::MembershipId;
 
 pub type CommunityMembershipsInstance = pallet_nfts::Instance2;
 
+pub type CollectionId = u16;
+
 // From https://github.com/polkadot-fellows/runtimes/blob/main/system-parachains/asset-hubs/asset-hub-kusama/src/lib.rs#L810
 impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
