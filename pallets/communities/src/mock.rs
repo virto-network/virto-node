@@ -21,7 +21,7 @@ pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
 
 use crate::{
 	self as pallet_communities,
-	origin::{DecisionMethod, EnsureCommunity, EnsureCommunityAccountId},
+	origin::{DecisionMethod, EnsureCommunity},
 	types::{Tally, VoteWeight},
 };
 
@@ -408,7 +408,7 @@ impl pallet_communities::Config for Test {
 	type Balances = Balances;
 	type CommunityId = CommunityId;
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
-	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
+	type MemberMgmtOrigin = EnsureCommunity<Self>;
 	type MemberMgmt = Memberships;
 	type Membership = MembershipInfo;
 	type PalletId = CommunitiesPalletId;

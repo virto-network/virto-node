@@ -206,7 +206,6 @@ mod benchmarks {
 	fn remove_member() -> Result<(), BenchmarkError> {
 		// setup code
 		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) = create_community::<T>(RawOrigin::Root.into(), None)?;
-		let community_account_id = Communities::<T>::community_account(&id);
 
 		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
 		let membership_id = T::BenchmarkHelper::membership_id(id, 0);
@@ -217,7 +216,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(community_account_id),
+			origin.into_caller(),
 			T::Lookup::unlookup(who.clone()),
 			membership_id.clone(),
 		);
