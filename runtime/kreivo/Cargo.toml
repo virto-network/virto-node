@@ -25,8 +25,9 @@ smallvec = { workspace = true }
 pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
 pallet-communities = { workspace = true }
-virto-common = { workspace = true, default-features = false, features = ["runtime"] }
 
+# Local: Common
+virto-common = { workspace = true, default-features = false, features = ["runtime"] }
 runtime-common = { workspace = true }
 
 # Substrate
@@ -43,10 +44,13 @@ pallet-assets = { workspace = true }
 pallet-asset-tx-payment = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
+pallet-nfts = { workspace = true }
 pallet-multisig = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-preimage = { workspace = true }
 pallet-proxy = { workspace = true }
+pallet-referenda = { workspace = true }
+pallet-referenda-tracks = { workspace = true }
 pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-sudo = { workspace = true }
@@ -116,11 +120,15 @@ std = [
 	"pallet-authorship/std",
 	"pallet-balances/std",
 	"pallet-burner/std",
+	"pallet-communities/std",
 	"pallet-collator-selection/std",
 	"pallet-message-queue/std",
 	"pallet-multisig/std",
+	"pallet-nfts/std",
 	"pallet-preimage/std",
 	"pallet-proxy/std",
+	"pallet-referenda/std",
+	"pallet-referenda-tracks/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
 	"pallet-sudo/std",
@@ -168,11 +176,15 @@ runtime-benchmarks = [
 	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-burner/runtime-benchmarks",
+	"pallet-communities/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
+	"pallet-nfts/runtime-benchmarks",
 	"pallet-payments/runtime-benchmarks",
 	"pallet-preimage/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
+	"pallet-referenda/runtime-benchmarks",
+	"pallet-referenda-tracks/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",

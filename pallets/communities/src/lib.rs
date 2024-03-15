@@ -166,6 +166,11 @@ pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+pub use types::BenchmarkHelper;
+
+#[cfg(test)]
+mod mock;
 #[cfg(test)]
 mod tests;
 
@@ -211,10 +216,10 @@ pub mod pallet {
 			+ membership::Mutate<Self::AccountId>;
 
 		/// Origin authorized to manage the state of a community
-		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type CommunityMgmtOrigin: EnsureOrigin<OriginFor<Self>>;
 
 		/// Origin authorized to manage memeberships of an active community
-		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
+		type MemberMgmtOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
 
 		type Polls: Polling<
 			Tally<Self>,
@@ -231,6 +236,7 @@ pub mod pallet {
 		/// Type represents interactions between fungible tokens (native token)
 		type Balances: fungible::Inspect<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
+			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeHoldReason>
 			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
 
 		/// The overarching hold reason.
@@ -246,6 +252,9 @@ pub mod pallet {
 		/// The pallet id used for deriving sovereign account IDs.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type BenchmarkHelper: BenchmarkHelper<Self>;
 	}
 
 	/// The origin of the pallet
@@ -333,6 +342,10 @@ pub mod pallet {
 			poll_index: PollIndexOf<T>,
 			vote: VoteOf<T>,
 		},
+		VoteRemoved {
+			who: AccountIdOf<T>,
+			poll_index: PollIndexOf<T>,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -393,6 +406,11 @@ pub mod pallet {
 		///
 		/// [11]: `types::CommunityMetadata`
 		#[pallet::call_index(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_metadata(
+				name.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+				description.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+				url.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+		))]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,

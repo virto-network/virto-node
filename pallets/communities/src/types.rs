@@ -25,6 +25,9 @@ pub type MembershipIdOf<T> = <<T as Config>::Membership as membership::Membershi
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
 
+#[cfg(feature = "runtime-benchmarks")]
+pub type BenchmarkHelperOf<T> = <T as Config>::BenchmarkHelper;
+
 /// The Community struct holds the basic definition of a community. It includes
 /// the current state of a community, the [`AccountId`][1] for the community
 /// admin, and (if any) the ID of the community-issued asset the community has
@@ -133,4 +136,51 @@ impl<T: Config> Tally<T> {
 			}
 		}
 	}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+use {
+	frame_benchmarking::BenchmarkError,
+	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
+};
+
+#[cfg(feature = "runtime-benchmarks")]
+pub trait BenchmarkHelper<T: Config> {
+	/// Returns the ID of the community to use in benchmarks
+	fn community_id() -> CommunityIdOf<T>;
+
+	/// Returns the desired size of the community for
+	/// effects of benchmark testing
+	fn community_desired_size() -> u32;
+
+	/// Returns the origin for the community
+	/// as well as the caller
+	fn community_origin(decision_method: DecisionMethodFor<T>) -> OriginFor<T>;
+
+	/// Returns a new membership ID for a community with a given index.
+	fn membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
+
+	/// Initializes the membership collection of a community.
+	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;
+
+	/// Extends the membership collection of a community with a given
+	/// membership ID.
+	fn issue_membership(
+		community_id: CommunityIdOf<T>,
+		membership_id: MembershipIdOf<T>,
+	) -> Result<(), frame_benchmarking::BenchmarkError>;
+
+	/// This method prepares the referenda track to be used
+	/// to submit the poll, for benchmarking purposes.
+	fn prepare_track(track_origin: PalletsOriginOf<T>) -> Result<(), BenchmarkError>;
+
+	/// This method prepares the poll to be used to
+	/// benchmark vote-related calls.
+	fn prepare_poll(
+		origin: OriginFor<T>,
+		proposal_origin: PalletsOriginOf<T>,
+		proposal_call: RuntimeCallFor<T>,
+	) -> Result<PollIndexOf<T>, BenchmarkError>;
+
+	fn finish_poll(index: PollIndexOf<T>) -> Result<(), BenchmarkError>;
 }
