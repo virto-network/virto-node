@@ -1,0 +1,28 @@
+name: Checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: ['feat/ci-benchmarking']
+
+jobs:
+  benchmark:
+    name: Build with Benchmarks
+    runs-on: [self-hosted, virto-build]
+    steps:
+      - uses: actions/checkout@v4
+      - run: just build-local --features=runtime-benchmarks
+      - run: |
+          mkdir benchmark_logs
+          just benchmark pallet_payments
+      - uses: actions/upload-artifact@v3
+        with:
+            name: ${{ github.run_id }}-weight-files
+            path: ./runtime/kreivo/src/weights
+      - uses: actions/upload-artifact@v3
+        with:
+            name: ${{ github.run_id }}-benchmark_logs
+            path: ./benchmark_logs
+      - run: rm -rf benchmark_logs
+      # TODO: Generate the PR based on the resulting files
