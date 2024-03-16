@@ -42,6 +42,19 @@ check: _check_deps
 build-local features="":
 	cargo build --release --features '{{features}}'
 
+benchmarks:
+	# TODO: build benchmarks for every pallet that's currently within the runtime as
+	# a dependency
+
+benchmark pallet="" extrinsic="*":
+	./target/release/virto-node benchmark pallet \
+		--chain kreivo-local \
+		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
+		--log state=trace,benchmark=trace \
+		--steps 50 \ # Modify the range of values to test for this extrinsic
+    --repeat 20 \ # Adjust the number of times we repeat a benchmark
+		--output runtime/kreivo/src/weights/{{pallet}}.rs > benchmark_logs/{{pallet}}.txt
+
 build-container:
 	#!/usr/bin/env nu
 	'FROM docker.io/paritytech/ci-linux:production as builder
