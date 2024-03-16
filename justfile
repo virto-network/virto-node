@@ -52,7 +52,7 @@ benchmark pallet="" extrinsic="*":
 		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
 		--log state=trace,benchmark=trace \
 		--steps 50 \ # Modify the range of values to test for this extrinsic
-    --repeat 20 \ # Adjust the number of times we repeat a benchmark
+		--repeat 20 \ # Adjust the number of times we repeat a benchmark
 		--output runtime/kreivo/src/weights/{{pallet}}.rs > benchmark_logs/{{pallet}}.txt
 
 build-container:
