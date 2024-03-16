@@ -1,10 +1,10 @@
-name: Checks
+name: Benchmarks
 
 on:
   push:
-    branches: [master]
-  pull_request:
-    branches: ['feat/ci-benchmarking']
+    branches: 
+      - 'feat/ci-benchmarking'
+      - master
 
 jobs:
   benchmark:
@@ -12,7 +12,7 @@ jobs:
     runs-on: [self-hosted, benchmarks]
     steps:
       - uses: actions/checkout@v4
-      - run: just build-local --features=runtime-benchmarks
+      - run: just build-local runtime-benchmarks
       - run: |
           mkdir benchmark_logs
           just benchmark pallet_payments
