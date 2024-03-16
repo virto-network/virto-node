@@ -9,7 +9,7 @@ on:
 jobs:
   benchmark:
     name: Build with Benchmarks
-    runs-on: [self-hosted, virto-build]
+    runs-on: [self-hosted, benchmarks]
     steps:
       - uses: actions/checkout@v4
       - run: just build-local --features=runtime-benchmarks
