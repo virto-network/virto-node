@@ -11,6 +11,29 @@ use virto_common::{CommunityId, MembershipInfo};
 pub mod governance;
 pub mod memberships;
 
+#[cfg(feature = "runtime-benchmarks")]
+use self::{
+	governance::{CommunityReferendaInstance, CommunityTracksInstance},
+	memberships::CommunityMembershipsInstance,
+};
+
+#[cfg(feature = "runtime-benchmarks")]
+use ::{
+	frame_benchmarking::BenchmarkError,
+	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::Mutate},
+	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
+	pallet_communities::{
+		types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf},
+		BenchmarkHelper, Origin,
+	},
+	pallet_nfts::Pallet as Nfts,
+	pallet_referenda::{BoundedCallOf, Curve, Pallet as Referenda, TrackInfo},
+	pallet_referenda_tracks::Pallet as Tracks,
+	sp_core::Encode,
+	sp_runtime::Perbill,
+	virto_common::MembershipId,
+};
+
 parameter_types! {
   pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
 	pub const MembershipsCollectionId: memberships::CollectionId = 0;
@@ -40,8 +63,7 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		use crate::BenchmarkHelper;
-		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
+		Ok(Origin::new(T::BenchmarkHelper::community_id()).into())
 	}
 }
 
@@ -66,29 +88,6 @@ impl pallet_communities::Config for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
 }
-
-#[cfg(feature = "runtime-benchmarks")]
-use self::{
-	governance::{CommunityReferendaInstance, CommunityTracksInstance},
-	memberships::CommunityMembershipsInstance,
-};
-
-#[cfg(feature = "runtime-benchmarks")]
-use ::{
-	frame_benchmarking::BenchmarkError,
-	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::Mutate},
-	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
-	pallet_communities::{
-		types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf},
-		BenchmarkHelper, Origin,
-	},
-	pallet_nfts::Pallet as Nfts,
-	pallet_referenda::{BoundedCallOf, Curve, Pallet as Referenda, TrackInfo},
-	pallet_referenda_tracks::Pallet as Tracks,
-	sp_core::Encode,
-	sp_runtime::Perbill,
-	virto_common::MembershipId,
-};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
