@@ -6,15 +6,15 @@ on:
 jobs:
   build:
     name: Check lint
-    runs-on: self-hosted
+    runs-on: [self-hosted, build]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: just check
 
   tests:
     name: Check project
-    runs-on: self-hosted
+    runs-on: [self-hosted, build]
     needs: build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: just test
