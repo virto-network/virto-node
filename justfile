@@ -47,14 +47,19 @@ benchmarks:
 	# TODO: build benchmarks for every pallet that's currently within the runtime as
 	# a dependency
 	mkdir .benchmarking-logs
-	chmod +x ./target/release/virto-node
-	
-	just benchmark pallet_payments
+	chmod +x {{node}}
+
+	ls "pallets" \
+		| each {|path| open ($path.name + /Cargo.toml) | get package.name} \
+		| filter {|pallet| cat runtime/Kreivo/Cargo.toml | str contains $pallet} \
+		| filter {|pallet| cat runtime/Kreivo/Cargo.toml | str contains ([$pallet, "runtime-benchmarks"] | str join '/')} \
+		| each {|pallet| str replace --all '-' '_' } \
+		| each {|pallet| just benchmark $pallet}
 
 benchmark pallet="" extrinsic="*":
 	touch .benchmarking-logs/{{pallet}}.txt
 	./target/release/virto-node benchmark pallet \
-		--chain kreivo-local \
+		--chain {{chain}}-local \
 		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
 		--steps 50 \
 		--repeat 20 \
