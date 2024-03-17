@@ -10,6 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: just check
+      - uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-cache
 
   tests:
     name: Check project
@@ -18,3 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: just test
+      - uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-cache

@@ -7,15 +7,35 @@ on:
       - master
 
 jobs:
-  benchmark:
+  build:
     name: Build with Benchmarks
-    runs-on: [self-hosted, benchmarks]
+    runs-on: [self-hosted, builder]
     steps:
       - uses: actions/checkout@v4
       - run: just build-local runtime-benchmarks
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.run_number }}-virto-node
+          path: ./target/release/virto-node
+      - uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-cache
+        
+  benchmark:
+    name: Build with Benchmarks
+    needs: build
+    runs-on: [self-hosted, benchmarks]
+    steps:
+      - uses: actions/checkout@v4
       - run: |
-          mkdir benchmark_logs
-          just benchmark pallet_payments > benchmark_logs/pallet_payments.txt
+          mkdir -p .benchmarking-logs target/release
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.run_number }}-virto-node
+          path: ./target/release
+      - run: |
+          just benchmark pallet_payments
       - uses: actions/upload-artifact@v3
         with:
             name: ${{ github.run_id }}-weight-files
@@ -23,6 +43,5 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
             name: ${{ github.run_id }}-benchmark_logs
-            path: ./benchmark_logs
-      - run: rm -rf benchmark_logs
+            path: ./.benchmarking-logs
       # TODO: Generate the PR based on the resulting files

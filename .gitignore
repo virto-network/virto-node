@@ -26,6 +26,9 @@ node_modules/
 **/bin/
 release/
 
+# Benchmarking
+.benchmarking-logs
+
 # zombienet binaries
 zombienet-macos
 zombienet-linux

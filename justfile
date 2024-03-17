@@ -52,8 +52,7 @@ benchmark pallet="" extrinsic="*":
 		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
 		--steps 50 \
 		--repeat 20 \
-		--output runtime/kreivo/src/weights/{{pallet}}.rs \
-		--log state=trace,benchmark=trace
+		--output runtime/kreivo/src/weights/{{pallet}}.rs | tee .benchmarking-logs/{{pallet}}.txt
 
 build-container:
 	#!/usr/bin/env nu
