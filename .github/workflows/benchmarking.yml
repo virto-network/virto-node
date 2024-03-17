@@ -15,7 +15,7 @@ jobs:
       - run: just build-local runtime-benchmarks
       - run: |
           mkdir benchmark_logs
-          just benchmark pallet_payments
+          just benchmark pallet_payments > benchmark_logs/pallet_payments.txt
       - uses: actions/upload-artifact@v3
         with:
             name: ${{ github.run_id }}-weight-files

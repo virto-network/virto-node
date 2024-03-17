@@ -50,10 +50,10 @@ benchmark pallet="" extrinsic="*":
 	./target/release/virto-node benchmark pallet \
 		--chain kreivo-local \
 		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
-		--log state=trace,benchmark=trace \
 		--steps 50 \
 		--repeat 20 \
-		--output runtime/kreivo/src/weights/{{pallet}}.rs > benchmark_logs/{{pallet}}.txt
+		--output runtime/kreivo/src/weights/{{pallet}}.rs \
+		--log state=trace,benchmark=trace
 
 build-container:
 	#!/usr/bin/env nu
