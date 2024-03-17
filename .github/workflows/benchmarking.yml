@@ -38,7 +38,7 @@ jobs:
           path: ./target/release
       - run: |
           just benchmarks
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ github.run_id }}-benchmark_logs
           path: ./.benchmarking-logs
@@ -47,7 +47,7 @@ jobs:
           add-paths: runtime/kreivo/src/weights
           commit-message: '[ci] calculate weights'
           branch: benchmarks
-          branch-suffix: ${{ github.sha }}
+          branch-suffix: short-commit-hash
           title: "Benchmarking: Calculate weights for ${{ github.sha }}"
           body: |
             This Pull Request is automatically raised when pushing over `master`
