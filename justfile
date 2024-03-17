@@ -46,9 +46,12 @@ build-local features="":
 benchmarks:
 	# TODO: build benchmarks for every pallet that's currently within the runtime as
 	# a dependency
+	mkdir .benchmarking-logs
+	chmod +x ./target/release/virto-node
+	
+	just benchmark pallet_payments
 
 benchmark pallet="" extrinsic="*":
-	mkdir .benchmarking-logs
 	touch .benchmarking-logs/{{pallet}}.txt
 	./target/release/virto-node benchmark pallet \
 		--chain kreivo-local \

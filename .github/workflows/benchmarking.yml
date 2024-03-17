@@ -35,7 +35,7 @@ jobs:
           name: ${{ github.run_number }}-virto-node
           path: ./target/release
       - run: |
-          just benchmark pallet_payments
+          just benchmarks
       - uses: actions/upload-artifact@v3
         with:
             name: ${{ github.run_id }}-weight-files
