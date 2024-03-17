@@ -1,5 +1,6 @@
 # NOTE: This justfile relies heavily on nushell, make sure to install it: https://www.nushell.sh
 set shell := ["nu", "-c"]
+
 podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
 ver := `open node/Cargo.toml | get package.version`
 image := "ghcr.io/virto-network/virto"
@@ -41,6 +42,28 @@ check: _check_deps
 
 build-local features="":
 	cargo build --release --features '{{features}}'
+
+benchmarks:
+	# TODO: build benchmarks for every pallet that's currently within the runtime as
+	# a dependency
+	mkdir .benchmarking-logs
+	chmod +x {{node}}
+
+	ls "pallets" \
+		| each {|path| open ($path.name + /Cargo.toml) | get package.name} \
+		| filter {|pallet| cat runtime/kreivo/Cargo.toml | str contains $pallet} \
+		| filter {|pallet| cat runtime/kreivo/Cargo.toml | str contains ([$pallet, "runtime-benchmarks"] | str join '/')} \
+		| each {|pallet| str replace --all '-' '_' } \
+		| each {|pallet| just benchmark $pallet}
+
+benchmark pallet="" extrinsic="*":
+	touch .benchmarking-logs/{{pallet}}.txt
+	./target/release/virto-node benchmark pallet \
+		--chain {{chain}}-local \
+		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
+		--steps 50 \
+		--repeat 20 \
+		--output runtime/kreivo/src/weights/{{pallet}}.rs | save -a --force .benchmarking-logs/{{pallet}}.txt
 
 build-container:
 	#!/usr/bin/env nu
