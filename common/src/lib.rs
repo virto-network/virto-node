@@ -11,6 +11,8 @@ mod membership;
 mod pass;
 mod payment_id;
 pub use membership::{MembershipId, MembershipInfo};
+#[cfg(feature = "pass-client")]
+pub use pass::UserPass;
 pub use payment_id::PaymentId;
 
 #[cfg_attr(feature = "runtime", derive(Decode, Encode, MaxEncodedLen, TypeInfo))]

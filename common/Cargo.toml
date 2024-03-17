@@ -12,13 +12,43 @@ frame-support = { workspace = true, optional = true }
 parity-scale-codec = { workspace = true, optional = true }
 scale-info = { workspace = true, optional = true }
 
+passkey-types = { version = "0.2.0", default-features = false, optional = true }
+coset = { version = "0.3.6", optional = true }
+web-sys = { version = "0.3.69", optional = true }
+serde-wasm-bindgen = { version = "0.6.5", optional = true }
+wasm-bindgen-futures = { version = "0.4.42", optional = true }
+# url = { version = "2.5.0", optional = true }
+
 [dev-dependencies]
 frame-support = { workspace = true, features = ["std"] }
 
+[patch.crates-io]
+getrandom = { version = "0.2.12", features = ["js"] }
+
 [features]
-default = ["runtime"]
+default = ["pass-client-js"]
+# default = ["runtime"]
 alloc = []
-js = ["alloc", "wasm-bindgen"]
+js = [
+  "alloc",
+  "wasm-bindgen",
+]
+pass-client = [
+  "passkey-types",
+  "coset",
+]
+pass-client-js = [
+  "js",
+  "pass-client",
+  "dep:serde-wasm-bindgen", 
+  "dep:wasm-bindgen-futures", 
+  "web-sys/Window",
+  "web-sys/Navigator",
+  "web-sys/CredentialsContainer",
+  "web-sys/CredentialCreationOptions",
+  "web-sys/CredentialRequestOptions",
+  "web-sys/PublicKeyCredential", 
+]
 nightly = []
 runtime = [
   "dep:frame-support", 
@@ -26,3 +56,6 @@ runtime = [
   "dep:scale-info",
   "dep:pallet-payments",
 ]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }

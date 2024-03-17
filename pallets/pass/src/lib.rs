@@ -49,6 +49,14 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::call())]
+		pub fn register(origin: OriginFor<T>,  webauthn_assertion: [u8; 32]) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			Self::deposit_event(Event::Foo);
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::call())]
 		pub fn call(origin: OriginFor<T>, _call: Box<CallOf<T>>, _signature: [u8; 32]) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::Foo);
