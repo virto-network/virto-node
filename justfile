@@ -1,5 +1,6 @@
 # NOTE: This justfile relies heavily on nushell, make sure to install it: https://www.nushell.sh
 set shell := ["nu", "-c"]
+
 podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
 ver := `open node/Cargo.toml | get package.version`
 image := "ghcr.io/virto-network/virto"
@@ -47,12 +48,14 @@ benchmarks:
 	# a dependency
 
 benchmark pallet="" extrinsic="*":
+	mkdir .benchmarking-logs
+	touch .benchmarking-logs/{{pallet}}.txt
 	./target/release/virto-node benchmark pallet \
 		--chain kreivo-local \
 		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
 		--steps 50 \
 		--repeat 20 \
-		--output runtime/kreivo/src/weights/{{pallet}}.rs | tee .benchmarking-logs/{{pallet}}.txt
+		--output runtime/kreivo/src/weights/{{pallet}}.rs | save -a --force .benchmarking-logs/{{pallet}}.txt
 
 build-container:
 	#!/usr/bin/env nu
