@@ -51,8 +51,8 @@ benchmarks:
 
 	ls "pallets" \
 		| each {|path| open ($path.name + /Cargo.toml) | get package.name} \
-		| filter {|pallet| cat runtime/Kreivo/Cargo.toml | str contains $pallet} \
-		| filter {|pallet| cat runtime/Kreivo/Cargo.toml | str contains ([$pallet, "runtime-benchmarks"] | str join '/')} \
+		| filter {|pallet| cat runtime/kreivo/Cargo.toml | str contains $pallet} \
+		| filter {|pallet| cat runtime/kreivo/Cargo.toml | str contains ([$pallet, "runtime-benchmarks"] | str join '/')} \
 		| each {|pallet| str replace --all '-' '_' } \
 		| each {|pallet| just benchmark $pallet}
 

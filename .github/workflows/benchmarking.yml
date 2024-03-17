@@ -3,7 +3,6 @@ name: Benchmarks
 on:
   push:
     branches: 
-      - 'feat/ci-benchmarking'
       - master
 
 jobs:
