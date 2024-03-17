@@ -26,6 +26,9 @@ jobs:
     name: Build with Benchmarks
     needs: build
     runs-on: [self-hosted, benchmarks]
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - run: |
@@ -38,10 +41,16 @@ jobs:
           just benchmarks
       - uses: actions/upload-artifact@v3
         with:
-            name: ${{ github.run_id }}-weight-files
-            path: ./runtime/kreivo/src/weights
-      - uses: actions/upload-artifact@v3
+          name: ${{ github.run_id }}-benchmark_logs
+          path: ./.benchmarking-logs
+      - uses: peter-evans/create-pull-request@v6
         with:
-            name: ${{ github.run_id }}-benchmark_logs
-            path: ./.benchmarking-logs
-      # TODO: Generate the PR based on the resulting files
+          add-paths: runtime/kreivo/src/weights
+          commit-message: '[ci] calculate weights'
+          branch: benchmarks
+          branch-suffix: ${{ github.sha }}
+          title: "Benchmarking: Calculate weights for ${{ github.sha }}"
+          body: |
+            This Pull Request is automatically raised when pushing over `master`
+            and should be resolved and reviewed manually.
+          assignees: ${{ github.actor_id }}
