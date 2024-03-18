@@ -28,7 +28,7 @@ impl<T: Config> Pallet<T> {
 
 	pub fn has_membership(who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> bool {
 		let community_id = m.into();
-		T::MemberMgmt::is_member_of(&community_id, &who)
+		T::MemberMgmt::is_member_of(&community_id, who)
 	}
 
 	pub fn member_rank(_who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> GenericRank {
@@ -83,8 +83,8 @@ impl<T: Config> Pallet<T> {
 		poll_index: PollIndexOf<T>,
 		vote: VoteOf<T>,
 	) -> DispatchResult {
-		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
-		ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
+		let community_id = CommunityIdOf::<T>::from(membership_id);
+		ensure!(T::MemberMgmt::is_member_of(&community_id, who), Error::<T>::NotAMember);
 
 		if VoteWeight::from(vote.clone()) == 0 {
 			return Err(TokenError::BelowMinimum.into());
@@ -165,8 +165,8 @@ impl<T: Config> Pallet<T> {
 		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
-		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
-		ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
+		let community_id = CommunityIdOf::<T>::from(membership_id);
+		ensure!(T::MemberMgmt::is_member_of(&community_id, who), Error::<T>::NotAMember);
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let res = if let Some((tally, class)) = poll_status.ensure_ongoing() {
