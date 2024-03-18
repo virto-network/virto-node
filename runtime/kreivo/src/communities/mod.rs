@@ -2,11 +2,11 @@ use super::*;
 
 use frame_support::{
 	pallet_prelude::{EnsureOrigin, PhantomData},
-	traits::{membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf, OriginTrait},
+	traits::OriginTrait,
 };
 use pallet_communities::origin::EnsureCommunity;
 use sp_runtime::traits::AccountIdConversion;
-use virto_common::{CommunityId, MembershipInfo};
+use virto_common::{CommunityId, MembershipId};
 
 pub mod governance;
 pub mod memberships;
@@ -36,12 +36,10 @@ use ::{
 
 parameter_types! {
   pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
-	pub const MembershipsCollectionId: memberships::CollectionId = 0;
+	pub const MembershipsCollectionId: CommunityId = CommunityId::new(0);
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 }
 
-type MembershipCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
-type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
 pub struct EnsureCommunityAccountId<T>(PhantomData<T>);
 
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureCommunityAccountId<T>
@@ -72,8 +70,8 @@ impl pallet_communities::Config for Runtime {
 
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
-	type MemberMgmt = Memberships;
-	type Membership = MembershipInfo;
+	type MemberMgmt = CommunityMemberships;
+	type MembershipId = MembershipId;
 
 	type Polls = CommunityReferenda;
 
@@ -88,6 +86,9 @@ impl pallet_communities::Config for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
 }
+
+#[cfg(feature = "runtime-benchmarks")]
+type MembershipCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
@@ -121,6 +122,20 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 			pallet_nfts::Event::ForceCreated {
 				collection,
 				owner: TreasuryAccount::get(),
+			},
+		)?;
+
+		let community_id = Self::community_id();
+		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
+		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
+			community_id,
+			community_account,
+			community_account,
+			Default::default(),
+			0,
+			pallet_nfts::Event::ForceCreated {
+				collection: community_id,
+				owner: community_account,
 			},
 		)?;
 

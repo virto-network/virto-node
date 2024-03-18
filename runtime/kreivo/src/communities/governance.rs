@@ -3,7 +3,6 @@ use super::*;
 use frame_system::{pallet_prelude::BlockNumberFor, EnsureRootWithSuccess};
 use sp_std::marker::PhantomData;
 
-use pallet_communities::types::CommunityIdOf;
 use pallet_referenda::{BalanceOf, PalletsOriginOf, TrackIdOf, TracksInfo};
 use parachains_common::kusama::currency::QUID;
 
@@ -64,17 +63,16 @@ where
 	type Success = T::AccountId;
 
 	fn try_origin(o: T::RuntimeOrigin, track_origin: &PalletsOriginOf<T>) -> Result<Self::Success, T::RuntimeOrigin> {
-		match o.clone().into() {
-			Ok(frame_system::RawOrigin::Signed(account_id)) => {
-				let community_id = T::Tracks::track_for(track_origin).map_err(|_| o.clone())?;
+		use fc_traits_memberships::Inspect;
+		use frame_system::RawOrigin::Signed;
+		let community_id = T::Tracks::track_for(track_origin).map_err(|_| o.clone())?;
 
-				use frame_support::traits::membership::Inspect;
-				if T::MemberMgmt::account_memberships(&account_id)
-					.any(|membership_id| CommunityIdOf::<T>::from(membership_id.clone()) == community_id)
-				{
-					Ok(account_id)
+		match o.clone().into() {
+			Ok(Signed(who)) => {
+				if T::MemberMgmt::is_member_of(&community_id, &who) {
+					Ok(who)
 				} else {
-					Err(o)
+					Err(o.clone())
 				}
 			}
 			_ => Err(o),
