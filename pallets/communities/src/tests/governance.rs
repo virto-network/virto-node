@@ -253,7 +253,7 @@ mod vote {
 	}
 
 	mod membership {
-		use frame_support::traits::membership::Inspect;
+		use fc_traits_memberships::Inspect;
 
 		use super::*;
 
@@ -300,7 +300,7 @@ mod vote {
 				);
 
 				let community_account = Communities::community_account(&COMMUNITY_A);
-				let membership_id = Memberships::account_memberships(&community_account)
+				let (_, membership_id) = Nfts::user_memberships(&community_account, None)
 					.next()
 					.expect("CommunityA should still have memberships");
 

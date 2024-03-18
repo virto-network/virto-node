@@ -1,9 +1,9 @@
 use frame_support::{
+	dispatch::DispatchResult,
 	parameter_types,
 	traits::{
-		fungible::HoldConsideration, membership::NonFungibleAdpter, tokens::nonfungible_v2::ItemOf,
-		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EnsureOriginWithArg,
-		EqualPrivilegeOnly, Footprint, OriginTrait,
+		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16,
+		ConstU32, ConstU64, EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint, OriginTrait,
 	},
 	weights::Weight,
 	PalletId,
@@ -17,7 +17,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage, MultiSignature,
 };
-pub use virto_common::{CommunityId, MembershipId, MembershipInfo};
+pub use virto_common::{CommunityId, MembershipId};
 
 use crate::{
 	self as pallet_communities,
@@ -32,7 +32,6 @@ pub type AccountPublic = <MultiSignature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
 pub type Balance = u128;
 pub type AssetId = u32;
-pub type CollectionId = u32;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -124,9 +123,9 @@ impl pallet_balances::Config for Test {
 #[cfg(feature = "runtime-benchmarks")]
 pub struct NftsBenchmarksHelper;
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_nfts::BenchmarkHelper<CollectionId, MembershipId> for NftsBenchmarksHelper {
-	fn collection(i: u16) -> CollectionId {
-		i.into()
+impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksHelper {
+	fn collection(_i: u16) -> CommunityId {
+		COMMUNITY
 	}
 	fn item(i: u16) -> MembershipId {
 		MembershipId(COMMUNITY, i.into())
@@ -140,7 +139,7 @@ impl pallet_nfts::Config for Test {
 	type ApprovalsLimit = ();
 	type AttributeDepositBase = ();
 	type CollectionDeposit = ();
-	type CollectionId = CollectionId;
+	type CollectionId = CommunityId;
 	type CreateOrigin =
 		AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, RootAccount>, EnsureSigned<AccountId>>>;
 	type Currency = ();
@@ -150,7 +149,7 @@ impl pallet_nfts::Config for Test {
 	type ItemAttributesApprovalsLimit = ();
 	type ItemDeposit = ();
 	type ItemId = MembershipId;
-	type KeyLimit = ConstU32<10>;
+	type KeyLimit = ConstU32<64>;
 	type Locker = ();
 	type MaxAttributesPerCall = ();
 	type MaxDeadlineDuration = ();
@@ -277,13 +276,12 @@ impl pallet_referenda::Config for Test {
 
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
-	pub const MembershipsCollectionId: CollectionId = 1;
+	pub const MembershipsManagerCollectionId: CommunityId = CommunityId::new(0);
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = COMMUNITY;
 }
 
-type MembershipCollection = ItemOf<Nfts, MembershipsCollectionId, AccountId>;
-pub type Memberships = NonFungibleAdpter<MembershipCollection, MembershipInfo, MembershipNftAttr>;
+type MembershipCollection = ItemOf<Nfts, MembershipsManagerCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 use crate::{
@@ -326,7 +324,8 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 	}
 
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
-		TestEnvBuilder::initialize_memberships_collection();
+		TestEnvBuilder::initialize_memberships_manager_collection()?;
+		TestEnvBuilder::initialize_community_memberships_collection(&Self::community_id())?;
 		Ok(())
 	}
 
@@ -404,15 +403,18 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 }
 
 impl pallet_communities::Config for Test {
+	type PalletId = CommunitiesPalletId;
+	type CommunityId = CommunityId;
+	type MembershipId = MembershipId;
+
 	type Assets = Assets;
 	type Balances = Balances;
-	type CommunityId = CommunityId;
+	type MemberMgmt = Nfts;
+	type Polls = Referenda;
+
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
-	type MemberMgmt = Memberships;
-	type Membership = MembershipInfo;
-	type PalletId = CommunitiesPalletId;
-	type Polls = Referenda;
+
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type WeightInfo = WeightInfo;
@@ -523,9 +525,11 @@ impl TestEnvBuilder {
 		ext.execute_with(|| {
 			System::set_block_number(1);
 
-			Self::initialize_memberships_collection();
+			Self::initialize_memberships_manager_collection().expect("collection is initialized");
 
 			for community_id in &self.communities {
+				Self::initialize_community_memberships_collection(community_id).expect("collection is initialized");
+
 				let decision_method = self
 					.decision_methods
 					.get(community_id)
@@ -573,20 +577,33 @@ impl TestEnvBuilder {
 		ext
 	}
 
-	pub(crate) fn initialize_memberships_collection() {
-		let collection = MembershipsCollectionId::get();
+	pub(crate) fn initialize_memberships_manager_collection() -> DispatchResult {
 		Nfts::do_create_collection(
-			collection,
+			MembershipsManagerCollectionId::get(),
 			RootAccount::get(),
 			RootAccount::get(),
 			Default::default(),
 			0,
 			pallet_nfts::Event::ForceCreated {
-				collection,
+				collection: MembershipsManagerCollectionId::get(),
 				owner: RootAccount::get(),
 			},
 		)
-		.expect("creates memberships collection");
+	}
+
+	pub(crate) fn initialize_community_memberships_collection(community_id: &CommunityId) -> DispatchResult {
+		let account = Communities::community_account(community_id);
+		Nfts::do_create_collection(
+			*community_id,
+			account.clone(),
+			account.clone(),
+			Default::default(),
+			0,
+			pallet_nfts::Event::ForceCreated {
+				collection: *community_id,
+				owner: account,
+			},
+		)
 	}
 
 	pub fn create_community_origin(

@@ -4,7 +4,7 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::{
 	fungible::{self, Inspect as FunInspect},
 	fungibles::{self, Inspect as FunsInspect},
-	membership, Polling,
+	Polling,
 };
 use sp_runtime::traits::{StaticLookup, UniqueSaturatedInto};
 use sp_runtime::SaturatedConversion;
@@ -20,7 +20,7 @@ pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type PalletsOriginOf<T> =
 	<<T as frame_system::Config>::RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
-pub type MembershipIdOf<T> = <<T as Config>::Membership as membership::Membership>::Id;
+pub type MembershipIdOf<T> = <T as Config>::MembershipId;
 
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;

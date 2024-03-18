@@ -150,10 +150,7 @@ mod member_rank {
 					COMMUNITY_MEMBER_1,
 					MEMBERSHIP_1
 				));
-				assert_eq!(
-					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
-					Some(1.into())
-				);
+				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 1.into());
 			});
 		}
 	}
@@ -193,29 +190,20 @@ mod member_rank {
 					COMMUNITY_MEMBER_1,
 					MEMBERSHIP_1
 				));
-				assert_eq!(
-					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
-					Some(1.into())
-				);
+				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 1.into());
 			});
 		}
 
 		#[test]
 		fn should_remain_at_min_rank() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				assert_eq!(
-					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
-					Some(0.into())
-				);
+				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 0.into());
 				assert_ok!(Communities::demote_member(
 					COMMUNITY_ORIGIN.into(),
 					COMMUNITY_MEMBER_1,
 					MEMBERSHIP_1,
 				));
-				assert_eq!(
-					Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1),
-					Some(0.into())
-				);
+				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 0.into());
 			});
 		}
 	}

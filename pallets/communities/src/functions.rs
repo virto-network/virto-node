@@ -6,14 +6,11 @@ use crate::{
 	},
 	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, Event, HoldReason, Info, Metadata, Pallet,
 };
+use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		fungible::MutateFreeze as FunMutateFreeze,
-		fungibles::MutateHold as FunsMutateHold,
-		membership::{GenericRank, Inspect, WithRank},
-		tokens::Precision,
-		Polling,
+		fungible::MutateFreeze as FunMutateFreeze, fungibles::MutateHold as FunsMutateHold, tokens::Precision, Polling,
 	},
 };
 use sp_runtime::{traits::AccountIdConversion, TokenError};
@@ -30,17 +27,20 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn has_membership(who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> bool {
-		T::MemberMgmt::has_membership(m, who)
+		let community_id = m.into();
+		T::MemberMgmt::is_member_of(&community_id, &who)
 	}
 
-	pub fn member_rank(who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> Option<GenericRank> {
-		T::MemberMgmt::get_membership(m, who).map(|m| m.rank())
+	pub fn member_rank(_who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> GenericRank {
+		let group = m.into();
+		T::MemberMgmt::rank_of(&group, &m)
 	}
 
 	pub fn get_memberships(who: &AccountIdOf<T>, community_id: T::CommunityId) -> Vec<MembershipIdOf<T>> {
-		T::MemberMgmt::account_memberships(who)
-			.filter(|id| CommunityIdOf::<T>::from(id.clone()) == community_id)
-			.collect()
+		T::MemberMgmt::user_memberships(who, None)
+			.filter(|(c, _)| c == &community_id)
+			.map(|(_, m)| m)
+			.collect::<Vec<_>>()
 	}
 
 	pub fn force_state(community_id: &CommunityIdOf<T>, state: CommunityState) {
@@ -83,8 +83,8 @@ impl<T: Config> Pallet<T> {
 		poll_index: PollIndexOf<T>,
 		vote: VoteOf<T>,
 	) -> DispatchResult {
-		let info = T::MemberMgmt::get_membership(membership_id.clone(), who).ok_or(Error::<T>::NotAMember)?;
 		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
+		ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
 		if VoteWeight::from(vote.clone()) == 0 {
 			return Err(TokenError::BelowMinimum.into());
@@ -101,7 +101,7 @@ impl<T: Config> Pallet<T> {
 				Self::do_unlock_for_vote(who, &poll_index, &vote)?;
 
 				let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
-					DecisionMethod::Rank => Into::<u8>::into(info.rank()) as u32,
+					DecisionMethod::Rank => u8::from(T::MemberMgmt::rank_of(&community_id, &membership_id)) as u32,
 					_ => 1,
 				};
 				tally.remove_vote(
@@ -141,7 +141,7 @@ impl<T: Config> Pallet<T> {
 			Self::do_lock_for_vote(who, &poll_index, &vote)?;
 
 			let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
-				DecisionMethod::Rank => Into::<u8>::into(info.rank()) as u32,
+				DecisionMethod::Rank => u8::from(T::MemberMgmt::rank_of(&community_id, &membership_id)) as u32,
 				_ => 1,
 			};
 			tally.add_vote(
@@ -165,8 +165,8 @@ impl<T: Config> Pallet<T> {
 		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
-		let info = T::MemberMgmt::get_membership(membership_id.clone(), who).ok_or(Error::<T>::NotAMember)?;
 		let community_id = CommunityIdOf::<T>::from(membership_id.clone());
+		ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let res = if let Some((tally, class)) = poll_status.ensure_ongoing() {
@@ -174,7 +174,7 @@ impl<T: Config> Pallet<T> {
 				let vote = Self::community_vote_of(who, poll_index).ok_or(Error::<T>::NoVoteCasted)?;
 
 				let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
-					DecisionMethod::Rank => Into::<u8>::into(info.rank()) as u32,
+					DecisionMethod::Rank => u8::from(T::MemberMgmt::rank_of(&community_id, &membership_id)) as u32,
 					_ => 1,
 				};
 				tally.remove_vote(
