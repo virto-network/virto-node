@@ -205,7 +205,8 @@ pub mod pallet {
 		/// This type represents an unique ID for the community
 		type CommunityId: Parameter + MaxEncodedLen + Copy + From<MembershipIdOf<Self>>;
 
-		/// This type represents an unique ID to identify a membership within a community
+		/// This type represents an unique ID to identify a membership within a
+		/// community
 		type MembershipId: Parameter + MaxEncodedLen + Copy;
 
 		/// Means to manage memberships of a community
