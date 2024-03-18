@@ -410,7 +410,7 @@ impl pallet_burner::Config for Runtime {
 	type BurnDestination = ();
 	type BurnOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type PalletId = BurnerPalletId;
-	type WeightInfo = pallet_burner::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_burner::WeightInfo<Runtime>;
 }
 
 /// We allow root and the StakingAdmin to execute privileged collator selection
@@ -673,7 +673,7 @@ impl pallet_asset_registry::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ReserveAssetModifierOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Assets = Assets;
-	type WeightInfo = pallet_asset_registry::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_asset_registry::WeightInfo<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = AssetRegistryBenchmarkHelper;
 }
