@@ -3162,6 +3162,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc-pallet-referenda-tracks"
+version = "1.0.0"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#f3d4cf0c9b94122e4a2a27fe7f017ddfe8f2813f"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-referenda",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 8.0.0",
+]
+
+[[package]]
+name = "fc-traits-memberships"
+version = "0.1.0"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#f3d4cf0c9b94122e4a2a27fe7f017ddfe8f2813f"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+]
+
+[[package]]
 name = "fdlimit"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4179,7 +4207,7 @@ dependencies = [
  "iana-time-zone-haiku",
  "js-sys",
  "wasm-bindgen",
- "windows-core 0.52.0",
+ "windows-core",
 ]
 
 [[package]]
@@ -4644,6 +4672,8 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "fc-pallet-referenda-tracks",
+ "fc-traits-memberships",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -4670,7 +4700,6 @@ dependencies = [
  "pallet-preimage",
  "pallet-proxy",
  "pallet-referenda",
- "pallet-referenda-tracks",
  "pallet-scheduler",
  "pallet-session",
  "pallet-sudo",
@@ -6523,6 +6552,8 @@ dependencies = [
 name = "pallet-communities"
 version = "0.1.0"
 dependencies = [
+ "fc-pallet-referenda-tracks",
+ "fc-traits-memberships",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6531,7 +6562,6 @@ dependencies = [
  "pallet-nfts",
  "pallet-preimage",
  "pallet-referenda",
- "pallet-referenda-tracks",
  "pallet-scheduler",
  "parity-scale-codec",
  "scale-info",
@@ -7026,24 +7056,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
- "sp-io",
- "sp-runtime",
- "sp-std 8.0.0",
-]
-
-[[package]]
-name = "pallet-referenda-tracks"
-version = "4.0.0-dev"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.5.0#b20a9cb40b2af12c56ea33c6d11104a162ea3d2e"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-referenda",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std 8.0.0",
@@ -12016,7 +12028,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-ec-utils"
 version = "0.10.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-377-ext",
@@ -12056,7 +12068,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12077,7 +12089,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -12296,7 +12308,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -12328,7 +12340,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "Inflector",
  "expander 2.1.0",
@@ -12420,7 +12432,7 @@ source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 
 [[package]]
 name = "sp-storage"
@@ -12438,7 +12450,7 @@ dependencies = [
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -12476,7 +12488,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "parity-scale-codec",
  "sp-std 14.0.0",
@@ -12578,7 +12590,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#4987d7982461e2e5ffe219cdf71ec697284cea7c"
+source = "git+https://github.com/paritytech/polkadot-sdk#6b1179f13b4815685769c9f523720ec9ed0e2ff4"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
@@ -14540,7 +14552,7 @@ version = "0.51.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca229916c5ee38c2f2bc1e9d8f04df975b4bd93f9955dc69fabb5d91270045c9"
 dependencies = [
- "windows-core 0.51.1",
+ "windows-core",
  "windows-targets 0.48.5",
 ]
 
@@ -14551,15 +14563,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1f8cf84f35d2db49a46868f947758c7a1138116f7fac3bc844f43ade1292e64"
 dependencies = [
  "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "windows-core"
-version = "0.52.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9"
-dependencies = [
- "windows-targets 0.52.4",
 ]
 
 [[package]]
