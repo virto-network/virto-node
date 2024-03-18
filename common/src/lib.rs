@@ -58,7 +58,8 @@ impl Add for CommunityId {
 // method by pallet Nfts
 impl Incrementable for CommunityId {
 	fn increment(&self) -> Option<Self> {
-		self.0.increment().map(|i| Self(i))
+		let next_id = self.0.increment()?;
+		Some(Self(next_id))
 	}
 
 	fn initial_value() -> Option<Self> {
