@@ -47,7 +47,7 @@ pub struct NftsBenchmarksHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
 impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksHelper {
-	fn collection(i: u16) -> CommunityId {
+	fn collection(_: u16) -> CommunityId {
 		<Runtime as pallet_communities::Config>::BenchmarkHelper::community_id()
 	}
 	fn item(i: u16) -> MembershipId {

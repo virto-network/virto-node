@@ -20,7 +20,7 @@ use self::{
 #[cfg(feature = "runtime-benchmarks")]
 use ::{
 	frame_benchmarking::BenchmarkError,
-	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::Mutate},
+	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::ItemOf, tokens::nonfungible_v2::Mutate},
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_communities::{
 		types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf},
@@ -31,7 +31,6 @@ use ::{
 	pallet_referenda_tracks::Pallet as Tracks,
 	sp_core::Encode,
 	sp_runtime::Perbill,
-	virto_common::MembershipId,
 };
 
 parameter_types! {
@@ -129,8 +128,8 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
 		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
 			community_id,
-			community_account,
-			community_account,
+			community_account.clone(),
+			community_account.clone(),
 			Default::default(),
 			0,
 			pallet_nfts::Event::ForceCreated {
