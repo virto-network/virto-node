@@ -7,11 +7,11 @@ use self::{
 	types::{AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf, Vote},
 	Event, HoldReason, Pallet as Communities,
 };
+use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
 use frame_support::{
 	traits::{
 		fungible::{InspectFreeze, Mutate},
-		membership::{Inspect, WithRank},
 		OriginTrait,
 	},
 	BoundedVec,
@@ -20,7 +20,7 @@ use frame_system::{
 	pallet_prelude::{BlockNumberFor, OriginFor, RuntimeCallFor},
 	RawOrigin,
 };
-use sp_runtime::{traits::StaticLookup, DispatchError};
+use sp_runtime::traits::StaticLookup;
 use sp_std::{vec, vec::Vec};
 
 fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
@@ -254,9 +254,10 @@ mod benchmarks {
 		);
 
 		// verification code
-		let m = T::MemberMgmt::get_membership(membership_id.clone(), &who)
-			.ok_or::<DispatchError>(Error::<T>::NotAMember.into())?;
-		let rank = m.rank();
+		let (_, m) = T::MemberMgmt::user_memberships(&who, Some(id))
+			.next()
+			.ok_or::<frame_support::pallet_prelude::DispatchError>(Error::<T>::NotAMember.into())?;
+		let rank = T::MemberMgmt::rank_of(&id, &m);
 
 		assert_has_event::<T>(
 			Event::MembershipRankUpdated {
@@ -266,7 +267,7 @@ mod benchmarks {
 			.into(),
 		);
 
-		assert_eq!(Communities::<T>::member_rank(&who, membership_id), Some(rank));
+		assert_eq!(Communities::<T>::member_rank(&who, membership_id), rank);
 
 		Ok(())
 	}
@@ -293,7 +294,7 @@ mod benchmarks {
 		);
 
 		// verification code
-		assert_eq!(Communities::<T>::member_rank(&who, membership_id), Some(0.into()));
+		assert_eq!(Communities::<T>::member_rank(&who, membership_id), 0.into());
 
 		Ok(())
 	}

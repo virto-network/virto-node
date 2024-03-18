@@ -3,9 +3,10 @@ use crate::{
 	CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
+use fc_traits_memberships::Inspect;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{membership::GenericRank, OriginTrait},
+	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
 };
 use sp_runtime::Permill;
 
@@ -39,6 +40,36 @@ where
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 		use crate::BenchmarkHelper;
 		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
+	}
+}
+
+pub struct EnsureMember<T>(PhantomData<T>);
+
+impl<T> EnsureOriginWithArg<T::RuntimeOrigin, CommunityIdOf<T>> for EnsureMember<T>
+where
+	T: Config,
+	T::RuntimeOrigin: OriginTrait + From<frame_system::Origin<T>>,
+{
+	type Success = ();
+
+	fn try_origin(o: T::RuntimeOrigin, community_id: &CommunityIdOf<T>) -> Result<Self::Success, T::RuntimeOrigin> {
+		use frame_system::RawOrigin::Signed;
+
+		match o.clone().into() {
+			Ok(Signed(who)) => {
+				if T::MemberMgmt::is_member_of(community_id, &who) {
+					Ok(())
+				} else {
+					Err(o.clone())
+				}
+			}
+			_ => Err(o),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(_community_id: &CommunityIdOf<T>) -> Result<T::RuntimeOrigin, ()> {
+		todo!("Find an account that is a member of this community");
 	}
 }
 

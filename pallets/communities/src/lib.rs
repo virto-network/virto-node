@@ -185,13 +185,10 @@ pub mod origin;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use fc_traits_memberships::{self as membership, Inspect, Manager, Rank};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{
-			fungible, fungibles,
-			membership::{self, Inspect, Membership, Mutate, WithRank},
-			EnsureOrigin, Polling,
-		},
+		traits::{fungible, fungibles, EnsureOrigin, Polling},
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
@@ -208,12 +205,13 @@ pub mod pallet {
 		/// This type represents an unique ID for the community
 		type CommunityId: Parameter + MaxEncodedLen + Copy + From<MembershipIdOf<Self>>;
 
-		/// The type holding relevant information of a membership
-		type Membership: Membership + membership::WithRank;
+		/// This type represents an unique ID to identify a membership within a community
+		type MembershipId: Parameter + MaxEncodedLen + Copy;
 
 		/// Means to manage memberships of a community
-		type MemberMgmt: membership::Inspect<Self::AccountId, MembershipInfo = Self::Membership, MembershipId = MembershipIdOf<Self>>
-			+ membership::Mutate<Self::AccountId>;
+		type MemberMgmt: membership::Inspect<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
+			+ membership::Manager<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
+			+ membership::Rank<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
 
 		/// Origin authorized to manage the state of a community
 		type CommunityMgmtOrigin: EnsureOrigin<OriginFor<Self>>;
@@ -439,25 +437,18 @@ pub mod pallet {
 		pub fn add_member(origin: OriginFor<T>, who: AccountIdLookupOf<T>) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
+
 			let account = Self::community_account(&community_id);
 			// assume the community has memberships to give out to the new member
-			let membership_id = T::MemberMgmt::account_memberships(&account)
+			let (_, membership_id) = T::MemberMgmt::user_memberships(&account, None)
 				.next()
 				.ok_or(Error::<T>::CommunityAtCapacity)?;
-			T::MemberMgmt::update(
-				membership_id.clone(),
-				T::Membership::new(membership_id.clone()),
-				Some(who.clone()),
-			)?;
-			CommunityMembersCount::<T>::mutate(community_id, |count| {
-				*count += 1;
-				CommunityRanksSum::<T>::mutate(community_id, |sum| {
-					let rank = T::MemberMgmt::get_membership(membership_id.clone(), &who)
-						.ok_or(Error::<T>::NotAMember)
-						.expect("a member has just been inserted; qed")
-						.rank();
-					*sum += Into::<u8>::into(rank) as u32;
-				});
+
+			T::MemberMgmt::assign(&community_id, &membership_id, &who)?;
+
+			CommunityRanksSum::<T>::mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum += u8::from(rank) as u32;
 			});
 
 			Self::deposit_event(Event::MemberAdded { who, membership_id });
@@ -478,27 +469,15 @@ pub mod pallet {
 		) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
-			let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			ensure!(
-				CommunityIdOf::<T>::from(info.id()) == community_id,
-				Error::<T>::CommunityDoesNotExist
-			);
 
-			let account = Self::community_account(&community_id);
-			// Move the membership back to the community resetting any previous stored info
-			T::MemberMgmt::update(
-				membership_id.clone(),
-				T::Membership::new(membership_id.clone()),
-				Some(account),
-			)?;
-			CommunityMembersCount::<T>::mutate(community_id, |count| {
-				*count -= 1;
+			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
-				CommunityRanksSum::<T>::mutate(community_id, |sum| {
-					let rank = info.rank();
-					*sum -= Into::<u8>::into(rank) as u32;
-				});
+			CommunityRanksSum::<T>::mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum -= u8::from(rank) as u32;
 			});
+
+			T::MemberMgmt::release(&community_id, &membership_id)?;
 
 			Self::deposit_event(Event::MemberRemoved { who, membership_id });
 			Ok(())
@@ -514,17 +493,16 @@ pub mod pallet {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
-				let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-				let rank = m.rank();
+			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
-				*sum = sum.saturating_sub(Into::<u8>::into(rank) as u32);
+			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum = sum.saturating_sub(u8::from(rank) as u32);
 
 				let rank = rank.promote_by(1.try_into().expect("can demote by 1"));
-				m.set_rank(rank);
-				T::MemberMgmt::update(membership_id.clone(), m, None)?;
+				T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
 
-				*sum += Into::<u8>::into(rank) as u32;
+				*sum += u8::from(rank) as u32;
 
 				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
 				Ok(())
@@ -541,17 +519,16 @@ pub mod pallet {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
-				let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-				let rank = m.rank();
+			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
+			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
 				*sum = sum.saturating_sub(Into::<u8>::into(rank) as u32);
 
 				let rank = rank.demote_by(1.try_into().expect("can demote by 1"));
-				m.set_rank(rank);
-				T::MemberMgmt::update(membership_id.clone(), m, None)?;
+				T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
 
-				*sum += Into::<u8>::into(rank) as u32;
+				*sum += u8::from(rank) as u32;
 
 				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
 				Ok(())

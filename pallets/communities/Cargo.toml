@@ -15,6 +15,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 frame-benchmarking = { workspace = true, optional = true }
 frame-support =  { workspace = true }
 frame-system = { workspace = true }
+fc-traits-memberships = { workspace = true }
 
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
@@ -42,6 +43,7 @@ std = [
 	"frame-benchmarking?/std",
 	"frame-support/std",
 	"frame-system/std",
+	"fc-traits-memberships/std",
 	"pallet-assets/std",
 	"pallet-balances/std",
 	"pallet-nfts/std",
