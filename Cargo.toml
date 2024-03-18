@@ -56,6 +56,10 @@ virto-common =  { default-features = false, path = "common" }
 runtime-common =  { default-features = false, path = "runtime/common" }
 kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }
 
+# Frame Contrib
+fc-traits-memberships = { git = "https://github.com/virto-network/frame-contrib", branch = "main", default-features = false }
+pallet-referenda-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "main", package="fc-pallet-referenda-tracks", default-features = false }
+
 # Substrate std
 try-runtime-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 frame-benchmarking-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
@@ -134,7 +138,6 @@ pallet-nfts = { default-features = false, git = "https://github.com/virto-networ
 pallet-preimage = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-proxy = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-referenda = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
-pallet-referenda-tracks = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-remark = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-scheduler = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-session = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
