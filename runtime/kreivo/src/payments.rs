@@ -88,7 +88,7 @@ impl pallet_payments::Config for Runtime {
 	type Preimages = Preimage;
 	type CancelBufferBlockLength = ConstU32<14400>; // 2 days
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = pallet_payments::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = crate::weights::pallet_payments::WeightInfo<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = PaymentsBenchmarkHelper;
 }

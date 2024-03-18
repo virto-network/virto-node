@@ -4,6 +4,8 @@ on:
   push:
     branches: 
       - master
+    paths:
+      - '!runtime/kreivo/src/weights/**'
 
 jobs:
   build:

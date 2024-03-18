@@ -19,7 +19,10 @@
 
 pub mod block_weights;
 pub mod extrinsic_weights;
+pub mod pallet_asset_registry;
 pub mod pallet_assets;
+pub mod pallet_burner;
+pub mod pallet_payments;
 pub mod pallet_proxy;
 pub mod paritydb_weights;
 pub mod rocksdb_weights;
