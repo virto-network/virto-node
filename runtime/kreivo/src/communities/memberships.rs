@@ -5,13 +5,11 @@ use virto_common::MembershipId;
 
 pub type CommunityMembershipsInstance = pallet_nfts::Instance2;
 
-pub type CollectionId = u16;
-
 // From https://github.com/polkadot-fellows/runtimes/blob/main/system-parachains/asset-hubs/asset-hub-kusama/src/lib.rs#L810
 impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 
-	type CollectionId = CollectionId;
+	type CollectionId = CommunityId;
 	type ItemId = MembershipId;
 
 	type Currency = Balances;
@@ -48,9 +46,9 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 pub struct NftsBenchmarksHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_nfts::BenchmarkHelper<CollectionId, MembershipId> for NftsBenchmarksHelper {
-	fn collection(i: u16) -> CollectionId {
-		i.into()
+impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksHelper {
+	fn collection(i: u16) -> CommunityId {
+		<Runtime as pallet_communities::Config>::BenchmarkHelper::community_id()
 	}
 	fn item(i: u16) -> MembershipId {
 		MembershipId(

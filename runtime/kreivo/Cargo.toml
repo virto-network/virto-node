@@ -98,6 +98,9 @@ parachain-info = { workspace = true }
 parachains-common = { workspace = true }
 pallet-message-queue = { workspace = true }
 
+# Frame Contrib
+fc-traits-memberships = { workspace = true }
+
 [features]
 default = ["std"]
 std = [
@@ -113,6 +116,7 @@ std = [
 	"frame-support/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
+	"fc-traits-memberships/std",
 	"log/std",
 	"pallet-asset-tx-payment/std",
 	"pallet-assets/std",
