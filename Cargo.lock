@@ -3162,6 +3162,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "fc-pallet-referenda-tracks"
+version = "1.0.0"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#f3d4cf0c9b94122e4a2a27fe7f017ddfe8f2813f"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-referenda",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 8.0.0",
+]
+
+[[package]]
+name = "fc-traits-memberships"
+version = "0.1.0"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#f3d4cf0c9b94122e4a2a27fe7f017ddfe8f2813f"
+dependencies = [
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+]
+
+[[package]]
 name = "fdlimit"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4185,7 +4213,7 @@ dependencies = [
  "iana-time-zone-haiku",
  "js-sys",
  "wasm-bindgen",
- "windows-core 0.52.0",
+ "windows-core",
 ]
 
 [[package]]
@@ -4650,6 +4678,8 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "fc-pallet-referenda-tracks",
+ "fc-traits-memberships",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -6507,6 +6537,8 @@ dependencies = [
 name = "pallet-communities"
 version = "0.1.0"
 dependencies = [
+ "fc-pallet-referenda-tracks",
+ "fc-traits-memberships",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6515,7 +6547,6 @@ dependencies = [
  "pallet-nfts",
  "pallet-preimage",
  "pallet-referenda",
- "pallet-referenda-tracks",
  "pallet-scheduler",
  "parity-scale-codec",
  "scale-info",
@@ -14523,7 +14554,7 @@ version = "0.51.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca229916c5ee38c2f2bc1e9d8f04df975b4bd93f9955dc69fabb5d91270045c9"
 dependencies = [
- "windows-core 0.51.1",
+ "windows-core",
  "windows-targets 0.48.5",
 ]
 
@@ -14534,15 +14565,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1f8cf84f35d2db49a46868f947758c7a1138116f7fac3bc844f43ade1292e64"
 dependencies = [
  "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "windows-core"
-version = "0.52.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ab640c8d7e35bf8ba19b884ba838ceb4fba93a4e8c65a9059d08afcfc683d9"
-dependencies = [
- "windows-targets 0.52.4",
 ]
 
 [[package]]
