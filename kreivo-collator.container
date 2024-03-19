@@ -11,11 +11,7 @@ Environment=NODE_ARGS
 Image=ghcr.io/virto-network/virto:latest
 ContainerName=kreivo-collator
 Volume=kreivo-collator-data:/data
-# an IPv6 capable podman network
-Network=podman6 
-PublishPort=30333:30333
-PublishPort=30334:30334
-PublishPort=9615:9615
+Network=host
 LogDriver=passthrough
 Exec=--name kreivo-collator-%H \
 	--collator \
@@ -24,8 +20,6 @@ Exec=--name kreivo-collator-%H \
 	-- $RELAY_ARGS \
 	--chain kusama \
 	--sync=warp \
-	--state-pruning=200 \
-	--blocks-pruning=200 \
 	--no-telemetry
 
 [Install]

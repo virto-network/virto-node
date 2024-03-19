@@ -11,17 +11,12 @@ Environment=RELAY_ARGS
 Image=ghcr.io/virto-network/virto:latest
 ContainerName=kreivo-full
 Volume=kreivo-full-data:/data
-# an IPv6 capable podman network
-Network=podman6
-PublishPort=9944:9944
-PublishPort=9945:9945
-PublishPort=30333:30333
-PublishPort=30334:30334
-PublishPort=9615:9615
+Network=host
 LogDriver=passthrough
 Exec=--name kreivo-%H \
 	--rpc-external \
 	--rpc-cors=all \
+	--rpc-max-connections=1000 \
 	--pruning archive-canonical \
 	--bootnodes $BOOTNODES \
 	--base-path /data $NODE_ARGS \
@@ -29,8 +24,6 @@ Exec=--name kreivo-%H \
 	--chain kusama \
 	--rpc-external \
 	--sync=warp \
-	--state-pruning=200 \
-	--blocks-pruning=200 \
 	--no-telemetry
 
 [Install]

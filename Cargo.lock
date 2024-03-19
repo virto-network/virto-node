@@ -4633,7 +4633,7 @@ checksum = "c33070833c9ee02266356de0c43f723152bd38bd96ddf52c82b3af10c9138b28"
 
 [[package]]
 name = "kreivo-runtime"
-version = "0.7.3"
+version = "0.8.1"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
@@ -13720,7 +13720,7 @@ dependencies = [
 
 [[package]]
 name = "virto-node"
-version = "0.7.3"
+version = "0.8.1"
 dependencies = [
  "assert_cmd",
  "async-trait",
