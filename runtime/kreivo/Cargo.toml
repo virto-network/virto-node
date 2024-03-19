@@ -50,7 +50,6 @@ pallet-utility = { workspace = true }
 pallet-preimage = { workspace = true }
 pallet-proxy = { workspace = true }
 pallet-referenda = { workspace = true }
-pallet-referenda-tracks = { workspace = true }
 pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-sudo = { workspace = true }
@@ -100,6 +99,7 @@ pallet-message-queue = { workspace = true }
 
 # Frame Contrib
 fc-traits-memberships = { workspace = true }
+pallet-referenda-tracks = { workspace = true }
 
 [features]
 default = ["std"]
