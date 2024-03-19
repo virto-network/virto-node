@@ -35,7 +35,7 @@ hex-literal = { version = "0.4.1" }
 log = { version = "0.4.20" }
 serde = { version = "1.0.188" }
 serde_json = "1.0.104"
-scale-info = { version = "2.9.0", default-features = false, features = [
+scale-info = { version = "2.10.0", default-features = false, features = [
 	"derive",
 ] }
 smallvec = "1.11"
