@@ -166,10 +166,16 @@ pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+pub use types::BenchmarkHelper;
+
+#[cfg(test)]
+mod mock;
 #[cfg(test)]
 mod tests;
 
 mod functions;
+mod impls;
 
 pub mod types;
 pub mod weights;
@@ -179,18 +185,15 @@ pub mod origin;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use fc_traits_memberships::{self as membership, Inspect, Manager, Rank};
 	use frame_support::{
-		pallet_prelude::{ValueQuery, *},
-		traits::{
-			fungible, fungibles,
-			membership::{self, Inspect, Membership, Mutate, WithRank},
-			EnsureOrigin, Polling,
-		},
+		pallet_prelude::*,
+		traits::{fungible, fungibles, EnsureOrigin, Polling},
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
-	use types::{MembershipIdOf, *};
+	use types::{PollIndexOf, *};
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -202,26 +205,41 @@ pub mod pallet {
 		/// This type represents an unique ID for the community
 		type CommunityId: Parameter + MaxEncodedLen + Copy + From<MembershipIdOf<Self>>;
 
-		/// The type holding relevant information of a membership
-		type Membership: Membership + membership::WithRank;
+		/// This type represents an unique ID to identify a membership within a
+		/// community
+		type MembershipId: Parameter + MaxEncodedLen + Copy;
 
 		/// Means to manage memberships of a community
-		type MemberMgmt: membership::Inspect<Self::AccountId, MembershipInfo = Self::Membership, MembershipId = MembershipIdOf<Self>>
-			+ membership::Mutate<Self::AccountId>;
+		type MemberMgmt: membership::Inspect<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
+			+ membership::Manager<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
+			+ membership::Rank<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
+
+		/// Origin authorized to manage the state of a community
+		type CommunityMgmtOrigin: EnsureOrigin<OriginFor<Self>>;
 
 		/// Origin authorized to manage memeberships of an active community
-		type MemberMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::CommunityId>;
+		type MemberMgmtOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
 
-		/// Origin authorized to manage memeberships of an active community
-		type CommunityMgmtOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		type Polls: Polling<Tally<Self>, Votes = VoteWeight, Moment = BlockNumberFor<Self>>;
-
-		/// The asset used for governance
-		type Assets: fungibles::Inspect<Self::AccountId>;
+		type Polls: Polling<
+			Tally<Self>,
+			Class = CommunityIdOf<Self>,
+			Index = u32,
+			Votes = VoteWeight,
+			Moment = BlockNumberFor<Self>,
+		>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
-		type Balances: fungible::Inspect<Self::AccountId> + fungible::Mutate<Self::AccountId>;
+		type Assets: fungibles::Inspect<Self::AccountId>
+			+ fungibles::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
+
+		/// Type represents interactions between fungible tokens (native token)
+		type Balances: fungible::Inspect<Self::AccountId>
+			+ fungible::Mutate<Self::AccountId>
+			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeHoldReason>
+			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
+
+		/// The overarching hold reason.
+		type RuntimeHoldReason: From<HoldReason>;
 
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
@@ -233,11 +251,21 @@ pub mod pallet {
 		/// The pallet id used for deriving sovereign account IDs.
 		#[pallet::constant]
 		type PalletId: Get<frame_support::PalletId>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type BenchmarkHelper: BenchmarkHelper<Self>;
 	}
 
 	/// The origin of the pallet
 	#[pallet::origin]
 	pub type Origin<T> = origin::RawOrigin<T>;
+
+	/// A reason for the pallet communities placing a hold on funds.
+	#[pallet::composite_enum]
+	pub enum HoldReason {
+		// A vote has been casted on a poll
+		VoteCasted(u32),
+	}
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
@@ -255,10 +283,21 @@ pub mod pallet {
 	pub(super) type Metadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
 
+	/// Stores the sum of members' ranks, managed by promote_member and
+	/// demote_member
+	#[pallet::storage]
+	pub(super) type CommunityRanksSum<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
+
+	/// Stores the decision method for a community
+	#[pallet::storage]
+	pub(super) type CommunityDecisionMethod<T> =
+		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, DecisionMethodFor<T>, ValueQuery>;
+
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
+	#[pallet::getter(fn community_vote_of)]
 	pub(super) type CommunityVotes<T> =
-		StorageDoubleMap<_, Blake2_128Concat, CommunityIdOf<T>, Blake2_128Concat, AccountIdOf<T>, ()>;
+		StorageDoubleMap<_, Blake2_128Concat, AccountIdOf<T>, Blake2_128Concat, PollIndexOf<T>, VoteOf<T>>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
@@ -278,6 +317,9 @@ pub mod pallet {
 			description: Option<ConstSizedField<256>>,
 			main_url: Option<ConstSizedField<256>>,
 		},
+		DecisionMethodSet {
+			id: T::CommunityId,
+		},
 		MemberAdded {
 			who: AccountIdOf<T>,
 			membership_id: MembershipIdOf<T>,
@@ -289,6 +331,15 @@ pub mod pallet {
 		MembershipRankUpdated {
 			membership_id: MembershipIdOf<T>,
 			rank: membership::GenericRank,
+		},
+		VoteCasted {
+			who: AccountIdOf<T>,
+			poll_index: PollIndexOf<T>,
+			vote: VoteOf<T>,
+		},
+		VoteRemoved {
+			who: AccountIdOf<T>,
+			poll_index: PollIndexOf<T>,
 		},
 	}
 
@@ -305,6 +356,21 @@ pub mod pallet {
 		/// The specified [`AccountId`][`frame_system::Config::AccountId`] is
 		/// not a member of the community
 		NotAMember,
+		/// The indicated index corresponds to a poll that is already ongoing
+		AlreadyOngoing,
+		/// The indicated index corresponds to a poll that is not ongoing
+		NotOngoing,
+		/// The track for the poll voted for does not correspond to the
+		/// community ID
+		InvalidTrack,
+		/// The vote type does not correspond with the community's selected
+		/// [`DecisionMethod`][`origin::DecisionMethod`]
+		InvalidVoteType,
+		/// The signer tried to remove a vote from a poll they haven't
+		/// casted a vote yet, or they have already removed it from.
+		NoVoteCasted,
+		/// The poll
+		NoLocksInPlace,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -335,6 +401,11 @@ pub mod pallet {
 		///
 		/// [11]: `types::CommunityMetadata`
 		#[pallet::call_index(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_metadata(
+				name.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+				description.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+				url.as_ref().map(|x| x.len() as u32).unwrap_or(0),
+		))]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			community_id: T::CommunityId,
@@ -363,16 +434,19 @@ pub mod pallet {
 		pub fn add_member(origin: OriginFor<T>, who: AccountIdLookupOf<T>) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
+
 			let account = Self::community_account(&community_id);
 			// assume the community has memberships to give out to the new member
-			let membership_id = T::MemberMgmt::account_memberships(&account)
+			let (_, membership_id) = T::MemberMgmt::user_memberships(&account, None)
 				.next()
 				.ok_or(Error::<T>::CommunityAtCapacity)?;
-			T::MemberMgmt::update(
-				membership_id.clone(),
-				T::Membership::new(membership_id.clone()),
-				Some(who.clone()),
-			)?;
+
+			T::MemberMgmt::assign(&community_id, &membership_id, &who)?;
+
+			CommunityRanksSum::<T>::mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum += u8::from(rank) as u32;
+			});
 
 			Self::deposit_event(Event::MemberAdded { who, membership_id });
 			Ok(())
@@ -392,19 +466,15 @@ pub mod pallet {
 		) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
-			let info = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			ensure!(
-				CommunityIdOf::<T>::from(info.id()) == community_id,
-				Error::<T>::CommunityDoesNotExist
-			);
 
-			let account = Self::community_account(&community_id);
-			// Move the membership back to the community resetting any previous stored info
-			T::MemberMgmt::update(
-				membership_id.clone(),
-				T::Membership::new(membership_id.clone()),
-				Some(account),
-			)?;
+			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
+
+			CommunityRanksSum::<T>::mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum -= u8::from(rank) as u32;
+			});
+
+			T::MemberMgmt::release(&community_id, &membership_id)?;
 
 			Self::deposit_event(Event::MemberRemoved { who, membership_id });
 			Ok(())
@@ -417,16 +487,23 @@ pub mod pallet {
 			who: AccountIdLookupOf<T>,
 			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
-			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			let rank = m.rank();
-			m.set_rank(rank.promote_by(1.try_into().expect("can promote by 1")));
-			T::MemberMgmt::update(membership_id.clone(), m, None)?;
+			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
-			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
-			Ok(())
+			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum = sum.saturating_sub(u8::from(rank) as u32);
+
+				let rank = rank.promote_by(1.try_into().expect("can demote by 1"));
+				T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
+
+				*sum += u8::from(rank) as u32;
+
+				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+				Ok(())
+			})
 		}
 
 		/// Decreases the rank of a member in the community
@@ -436,30 +513,72 @@ pub mod pallet {
 			who: AccountIdLookupOf<T>,
 			membership_id: MembershipIdOf<T>,
 		) -> DispatchResult {
-			let _community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			let mut m = T::MemberMgmt::get_membership(membership_id.clone(), &who).ok_or(Error::<T>::NotAMember)?;
-			let rank = m.rank();
-			m.set_rank(rank.demote_by(1.try_into().expect("can promote by 1")));
-			T::MemberMgmt::update(membership_id.clone(), m, None)?;
+			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
-			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
-			Ok(())
+			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
+				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
+				*sum = sum.saturating_sub(Into::<u8>::into(rank) as u32);
+
+				let rank = rank.demote_by(1.try_into().expect("can demote by 1"));
+				T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
+
+				*sum += u8::from(rank) as u32;
+
+				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+				Ok(())
+			})
 		}
 
 		// === Governance ===
 
-		// ///
-		// #[pallet::call_index(4)]
-		// pub fn vote(
-		// 	origin: OriginFor<T>,
-		// 	#[pallet::compact] poll_index: PollIndexOf<T>,
-		// 	_vote: VoteOf<T>,
-		// ) -> DispatchResult {
-		// 	let _ = ensure_signed(origin)?;
-		// 	// TODO
-		// 	Ok(())
-		// }
+		///
+		#[pallet::call_index(7)]
+		pub fn set_decision_method(
+			origin: OriginFor<T>,
+			community_id: T::CommunityId,
+			decision_method: DecisionMethodFor<T>,
+		) -> DispatchResult {
+			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+			CommunityDecisionMethod::<T>::set(community_id, decision_method);
+
+			Self::deposit_event(Event::DecisionMethodSet { id: community_id });
+			Ok(())
+		}
+
+		///
+		#[pallet::call_index(4)]
+		pub fn vote(
+			origin: OriginFor<T>,
+			membership_id: MembershipIdOf<T>,
+			#[pallet::compact] poll_index: PollIndexOf<T>,
+			vote: VoteOf<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			Self::do_vote(&who, membership_id, poll_index, vote)
+		}
+
+		///
+		#[pallet::call_index(8)]
+		pub fn remove_vote(
+			origin: OriginFor<T>,
+			membership_id: MembershipIdOf<T>,
+			#[pallet::compact] poll_index: PollIndexOf<T>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			Self::do_remove_vote(&who, membership_id, poll_index)
+		}
+
+		///
+		#[pallet::call_index(9)]
+		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
+			let vote = Self::community_vote_of(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
+
+			Self::do_unlock_for_vote(&who, &poll_index, &vote)
+		}
 	}
 }

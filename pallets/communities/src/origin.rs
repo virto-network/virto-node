@@ -1,11 +1,12 @@
 use crate::{
-	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf},
-	CommunityIdFor, Config, Info,
+	types::{AssetIdOf, CommunityIdOf, CommunityState::Active, MembershipIdOf},
+	CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
+use fc_traits_memberships::Inspect;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{membership::GenericRank, OriginTrait},
+	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
 };
 use sp_runtime::Permill;
 
@@ -34,6 +35,42 @@ where
 			.and_then(|c| c.state.eq(&Active).then_some(id))
 			.ok_or(o)
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		use crate::BenchmarkHelper;
+		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
+	}
+}
+
+pub struct EnsureMember<T>(PhantomData<T>);
+
+impl<T> EnsureOriginWithArg<T::RuntimeOrigin, CommunityIdOf<T>> for EnsureMember<T>
+where
+	T: Config,
+	T::RuntimeOrigin: OriginTrait + From<frame_system::Origin<T>>,
+{
+	type Success = ();
+
+	fn try_origin(o: T::RuntimeOrigin, community_id: &CommunityIdOf<T>) -> Result<Self::Success, T::RuntimeOrigin> {
+		use frame_system::RawOrigin::Signed;
+
+		match o.clone().into() {
+			Ok(Signed(who)) => {
+				if T::MemberMgmt::is_member_of(community_id, &who) {
+					Ok(())
+				} else {
+					Err(o.clone())
+				}
+			}
+			_ => Err(o),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(_community_id: &CommunityIdOf<T>) -> Result<T::RuntimeOrigin, ()> {
+		todo!("Find an account that is a member of this community");
+	}
 }
 
 /// Origin to represent the voice of a community or a subset of its members
@@ -41,7 +78,7 @@ where
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
 pub struct RawOrigin<T: Config> {
 	community_id: CommunityIdOf<T>,
-	method: DecisionMethod,
+	method: DecisionMethod<AssetIdOf<T>>,
 	subset: Option<Subset<T>>,
 }
 
@@ -58,10 +95,15 @@ impl<T: Config> RawOrigin<T> {
 		self.subset = Some(s);
 	}
 
+	pub fn with_decision_method(&mut self, m: DecisionMethod<AssetIdOf<T>>) {
+		self.method = m;
+	}
+
 	pub fn id(&self) -> CommunityIdOf<T> {
 		self.community_id
 	}
-	pub fn decision_method(&self) -> DecisionMethod {
+
+	pub fn decision_method(&self) -> DecisionMethod<AssetIdOf<T>> {
 		self.method.clone()
 	}
 }
@@ -77,11 +119,11 @@ pub enum Subset<T: Config> {
 
 /// The mechanism used by the community or one of its subsets to make decisions
 #[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub enum DecisionMethod {
+pub enum DecisionMethod<AssetId> {
 	#[default]
 	Membership,
 	NativeToken,
-	CommunityAsset,
+	CommunityAsset(AssetId),
 	Rank,
 }
 
@@ -136,5 +178,34 @@ where
 			origin.with_subset(s);
 		}
 		Ok(origin)
+	}
+}
+
+/// Ensure the origin is any `Signed` origin.
+pub struct AsSignedByCommunity<T>(PhantomData<T>);
+impl<T, OuterOrigin> EnsureOrigin<OuterOrigin> for AsSignedByCommunity<T>
+where
+	OuterOrigin: OriginTrait
+		+ From<frame_system::RawOrigin<T::AccountId>>
+		+ From<RawOrigin<T>>
+		+ Clone
+		+ Into<Result<frame_system::RawOrigin<T::AccountId>, OuterOrigin>>
+		+ Into<Result<RawOrigin<T>, OuterOrigin>>,
+	T: Config,
+{
+	type Success = T::AccountId;
+
+	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
+		match o.clone().into() {
+			Ok(RawOrigin { community_id, .. }) => Ok(Pallet::<T>::community_account(&community_id)),
+			_ => Err(o.clone()),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<OuterOrigin, ()> {
+		use crate::BenchmarkHelper;
+		let community_id = T::BenchmarkHelper::community_id();
+		Ok(frame_system::RawOrigin::Signed(Pallet::<T>::community_account(&community_id)).into())
 	}
 }
