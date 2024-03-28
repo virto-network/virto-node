@@ -22,8 +22,8 @@ use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, ConvertedConcreteId,
 	CurrencyAdapter, EnsureXcmOrigin, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
-	WeightInfoBounds, WithComputedOrigin,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, StartsWith, TakeWeightCredit,
+	UsingComponents, WeightInfoBounds, WithComputedOrigin,
 };
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
@@ -56,8 +56,13 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-pub type TrustBackedAssetsConvertedConcreteId =
-	assets_common::TrustBackedAssetsConvertedConcreteId<AssetsPalletLocation, Balance>;
+pub type MultiLocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
+	AssetIdForTrustBackedAssets,
+	Balance,
+	StartsWith<AssetHubLocation>,
+	AsAssetMultiLocation<AssetIdForTrustBackedAssets, AssetRegistry>,
+	JustTry,
+>;
 
 /// Means for transacting assets besides the native currency on this chain.
 pub type FungiblesTransactor = FungiblesAdapter<
@@ -149,7 +154,7 @@ pub type Barrier = (
 pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub StatemineLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
+	pub AssetHubLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
@@ -189,7 +194,7 @@ pub type Traders = (
 	cumulus_primitives_utility::TakeFirstAssetTrader<
 		AccountId,
 		AssetFeeAsExistentialDepositMultiplierFeeCharger,
-		TrustBackedAssetsConvertedConcreteId,
+		MultiLocationConvertedConcreteId,
 		Assets,
 		cumulus_primitives_utility::XcmFeesTo32ByteAccount<FungiblesTransactor, AccountId, XcmAssetFeesReceiver>,
 	>,
@@ -197,7 +202,7 @@ pub type Traders = (
 	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFees<Runtime>>,
 );
 
-pub type Reserves = (NativeAsset, ReserveAssetsFrom<StatemineLocation>);
+pub type Reserves = (NativeAsset, ReserveAssetsFrom<AssetHubLocation>);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {

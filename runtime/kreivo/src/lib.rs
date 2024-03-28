@@ -53,7 +53,7 @@ use frame_system::{
 };
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
-use xcm_config::{RelayLocation, TrustBackedAssetsConvertedConcreteId, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{MultiLocationConvertedConcreteId, RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -802,7 +802,7 @@ impl_runtime_apis! {
 					}
 				},
 				// collect pallet_assets (TrustBackedAssets)
-				convert::<_, _, _, _, TrustBackedAssetsConvertedConcreteId>(
+				convert::<_, _, _, _, MultiLocationConvertedConcreteId>(
 					Assets::account_balances(account)
 						.iter()
 						.filter(|(_, balance)| balance > &0)
