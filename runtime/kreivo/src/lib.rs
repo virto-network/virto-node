@@ -53,7 +53,9 @@ use frame_system::{
 };
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
-use xcm_config::{RelayLocation, TrustBackedAssetsConvertedConcreteId, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{
+	MultiLocationConvertedConcreteId, MultiLocationForAssetId, RelayLocation, XcmOriginToTransactDispatchOrigin,
+};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -535,8 +537,8 @@ type KreivoAssetsCall = pallet_assets::Call<Runtime, KreivoAssetsInstance>;
 impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = AssetIdForTrustBackedAssets;
-	type AssetIdParameter = parity_scale_codec::Compact<AssetIdForTrustBackedAssets>;
+	type AssetId = MultiLocationForAssetId;
+	type AssetIdParameter = MultiLocationForAssetId;
 	type Currency = Balances;
 	/// Only root can create assets and force state changes.
 	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
@@ -802,7 +804,7 @@ impl_runtime_apis! {
 					}
 				},
 				// collect pallet_assets (TrustBackedAssets)
-				convert::<_, _, _, _, TrustBackedAssetsConvertedConcreteId>(
+				convert::<_, _, _, _, MultiLocationConvertedConcreteId>(
 					Assets::account_balances(account)
 						.iter()
 						.filter(|(_, balance)| balance > &0)
