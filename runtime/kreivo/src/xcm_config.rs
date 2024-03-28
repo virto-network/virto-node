@@ -1,7 +1,6 @@
 use super::{
-	AccountId, AllPalletsWithSystem, AssetIdForTrustBackedAssets, AssetRegistry, Assets, Balance, Balances,
-	KreivoAssetsInstance, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent,
-	RuntimeOrigin, Treasury, WeightToFee, XcmpQueue,
+	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, KreivoAssetsInstance, ParachainInfo, ParachainSystem,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury, WeightToFee, XcmpQueue,
 };
 
 use crate::constants::locations::STATEMINE_PARA_ID;
@@ -14,7 +13,7 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::xcm_config::AssetFeeAsExistentialDepositMultiplier;
 use polkadot_parachain_primitives::primitives::Sibling;
-use runtime_common::impls::{AsAssetMultiLocation, DealWithFees};
+use runtime_common::impls::DealWithFees;
 use sp_runtime::traits::ConvertInto;
 use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
@@ -25,7 +24,7 @@ use xcm_builder::{
 	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, StartsWith, TakeWeightCredit,
 	UsingComponents, WeightInfoBounds, WithComputedOrigin,
 };
-use xcm_executor::traits::JustTry;
+use xcm_executor::traits::{Identity, JustTry};
 use xcm_executor::XcmExecutor;
 
 parameter_types! {
@@ -56,11 +55,13 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+pub type MultiLocationForAssetId = assets_common::MultiLocationForAssetId;
+
 pub type MultiLocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
-	AssetIdForTrustBackedAssets,
+	MultiLocationForAssetId,
 	Balance,
 	StartsWith<AssetHubLocation>,
-	AsAssetMultiLocation<AssetIdForTrustBackedAssets, AssetRegistry>,
+	Identity,
 	JustTry,
 >;
 
@@ -70,12 +71,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	Assets,
 	// Use this currency when it is a registered fungible asset matching the given location or name
 	// Assets not found in AssetRegistry will not be used
-	ConvertedConcreteId<
-		AssetIdForTrustBackedAssets,
-		Balance,
-		AsAssetMultiLocation<AssetIdForTrustBackedAssets, AssetRegistry>,
-		JustTry,
-	>,
+	ConvertedConcreteId<MultiLocationForAssetId, Balance, Identity, JustTry>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
