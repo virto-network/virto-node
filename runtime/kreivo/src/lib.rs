@@ -28,6 +28,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+pub use virto_common::MultiLocationFungibleAsset;
 
 use frame_support::{
 	construct_runtime, derive_impl,
@@ -53,9 +54,7 @@ use frame_system::{
 };
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
-use xcm_config::{
-	MultiLocationConvertedConcreteId, MultiLocationForAssetId, RelayLocation, XcmOriginToTransactDispatchOrigin,
-};
+use xcm_config::{MultiLocationConvertedConcreteId, RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -536,8 +535,8 @@ type KreivoAssetsCall = pallet_assets::Call<Runtime, KreivoAssetsInstance>;
 impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = MultiLocationForAssetId;
-	type AssetIdParameter = MultiLocationForAssetId;
+	type AssetId = MultiLocationFungibleAsset;
+	type AssetIdParameter = MultiLocationFungibleAsset;
 	type Currency = Balances;
 	/// Only root can create assets and force state changes.
 	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
