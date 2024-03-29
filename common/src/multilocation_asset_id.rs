@@ -50,34 +50,12 @@ impl From<u32> for FungibleAssetLocation {
 #[cfg(feature = "runtime")]
 pub mod runtime {
 	use super::FungibleAssetLocation;
-	use core::ops::Add;
 	use cumulus_primitives_core::MultiLocation;
-	use sp_runtime::traits::{MaybeEquivalence, Zero};
+	use sp_runtime::traits::MaybeEquivalence;
 	use xcm::v3::{
 		Junction::{GeneralIndex, GlobalConsensus, PalletInstance, Parachain},
 		Junctions, NetworkId,
 	};
-
-	impl Zero for FungibleAssetLocation {
-		fn zero() -> Self {
-			Self::Here(0)
-		}
-
-		fn is_zero(&self) -> bool {
-			self.eq(&Self::zero())
-		}
-	}
-
-	impl Add for FungibleAssetLocation {
-		type Output = FungibleAssetLocation;
-
-		/// [FungibleAssetLocation] cannot be added
-		/// since it's an immutable value. Instead, you'll get
-		/// [FungibleAssetLocation::zero()]
-		fn add(self, _rhs: Self) -> Self::Output {
-			Self::zero()
-		}
-	}
 
 	impl TryFrom<NetworkId> for super::NetworkId {
 		type Error = &'static str;
