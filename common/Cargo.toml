@@ -7,22 +7,33 @@ edition = "2021"
 bs58 = { version = "0.5.0", default-features = false }
 wasm-bindgen = { version = "0.2.87", optional = true }
 
-pallet-payments = { workspace = true, optional = true }
+cumulus-primitives-core = { workspace = true, optional = true }
 frame-support = { workspace = true, optional = true }
+pallet-payments = { workspace = true, optional = true }
 parity-scale-codec = { workspace = true, optional = true }
 scale-info = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+sp-runtime = { workspace = true, optional = true }
+xcm = { workspace = true, optional = true }
 
 [dev-dependencies]
 frame-support = { workspace = true, features = ["std"] }
 
 [features]
 default = ["runtime"]
+std = [
+  "dep:serde",
+  "serde?/std",
+]
 alloc = []
 js = ["alloc", "wasm-bindgen"]
 nightly = []
 runtime = [
+  "dep:cumulus-primitives-core",
   "dep:frame-support", 
-  "dep:parity-scale-codec", 
-  "dep:scale-info",
   "dep:pallet-payments",
+  "dep:parity-scale-codec", 
+  "dep:scale-info",  
+  "dep:sp-runtime",
+  "dep:xcm",
 ]
