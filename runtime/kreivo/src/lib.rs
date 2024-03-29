@@ -7,6 +7,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+#[cfg(test)]
+mod tests;
+
 pub mod constants;
 pub mod impls;
 mod weights;
@@ -28,6 +31,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+pub use virto_common::FungibleAssetLocation;
 
 use frame_support::{
 	construct_runtime, derive_impl,
@@ -53,7 +57,7 @@ use frame_system::{
 };
 
 use pallet_xcm::{EnsureXcm, IsVoiceOfBody};
-use xcm_config::{RelayLocation, TrustBackedAssetsConvertedConcreteId, XcmOriginToTransactDispatchOrigin};
+use xcm_config::{MultiLocationConvertedConcreteId, RelayLocation, XcmOriginToTransactDispatchOrigin};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -174,7 +178,6 @@ construct_runtime!(
 		PolkadotXcm: pallet_xcm = 31,
 		CumulusXcm: cumulus_pallet_xcm = 32,
 		MessageQueue: pallet_message_queue = 33,
-		AssetRegistry: pallet_asset_registry = 34,
 
 		// Utils
 		Sudo: pallet_sudo = 40,
@@ -535,8 +538,8 @@ type KreivoAssetsCall = pallet_assets::Call<Runtime, KreivoAssetsInstance>;
 impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = AssetIdForTrustBackedAssets;
-	type AssetIdParameter = parity_scale_codec::Compact<AssetIdForTrustBackedAssets>;
+	type AssetId = FungibleAssetLocation;
+	type AssetIdParameter = FungibleAssetLocation;
 	type Currency = Balances;
 	/// Only root can create assets and force state changes.
 	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
@@ -652,32 +655,6 @@ pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::Exponenti
 	ParachainSystem,
 >;
 
-#[cfg(feature = "runtime-benchmarks")]
-pub struct AssetRegistryBenchmarkHelper;
-#[cfg(feature = "runtime-benchmarks")]
-impl pallet_asset_registry::BenchmarkHelper<AssetIdForTrustBackedAssets> for AssetRegistryBenchmarkHelper {
-	fn get_registered_asset() -> AssetIdForTrustBackedAssets {
-		use sp_runtime::traits::StaticLookup;
-
-		let root = frame_system::RawOrigin::Root.into();
-		let asset_id = 1;
-		let caller = frame_benchmarking::whitelisted_caller();
-		let caller_lookup = <Runtime as frame_system::Config>::Lookup::unlookup(caller);
-		Assets::force_create(root, asset_id.into(), caller_lookup, true, 1)
-			.expect("Should have been able to force create asset");
-		asset_id
-	}
-}
-
-impl pallet_asset_registry::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type ReserveAssetModifierOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type Assets = Assets;
-	type WeightInfo = weights::pallet_asset_registry::WeightInfo<Runtime>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = AssetRegistryBenchmarkHelper;
-}
-
 impl pallet_asset_tx_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Fungibles = Assets;
@@ -702,7 +679,6 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_assets, Assets]
 		[pallet_proxy, Proxy]
-		[pallet_asset_registry, AssetRegistry]
 		[pallet_payments, Payments]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.
@@ -802,7 +778,7 @@ impl_runtime_apis! {
 					}
 				},
 				// collect pallet_assets (TrustBackedAssets)
-				convert::<_, _, _, _, TrustBackedAssetsConvertedConcreteId>(
+				convert::<_, _, _, _, MultiLocationConvertedConcreteId>(
 					Assets::account_balances(account)
 						.iter()
 						.filter(|(_, balance)| balance > &0)

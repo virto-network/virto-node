@@ -11,8 +11,8 @@ parameter_types! {
 #[cfg(feature = "runtime-benchmarks")]
 pub struct PaymentsBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_payments::BenchmarkHelper<AccountId, AssetIdForTrustBackedAssets, Balance> for PaymentsBenchmarkHelper {
-	fn create_asset(id: AssetIdForTrustBackedAssets, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
+impl pallet_payments::BenchmarkHelper<AccountId, FungibleAssetLocation, Balance> for PaymentsBenchmarkHelper {
+	fn create_asset(id: FungibleAssetLocation, admin: AccountId, is_sufficient: bool, min_balance: Balance) {
 		<Assets as frame_support::traits::tokens::fungibles::Create<AccountId>>::create(
 			id,
 			admin,

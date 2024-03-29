@@ -13,7 +13,7 @@ use frame_support::{
 
 use frame_system::RawOrigin;
 use log;
-use sp_runtime::{traits::Zero, Percent};
+use sp_runtime::Percent;
 use sp_std::vec;
 
 macro_rules! assert_has_event {
@@ -85,7 +85,7 @@ fn create_payment<T: Config>(
 
 #[benchmarks(
 	where
-		<<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId: Zero,
+		<<T as Config>::Assets as Inspect<<T as frame_system::Config>::AccountId>>::AssetId: Default,
 )]
 mod benchmarks {
 	use super::*;
@@ -93,7 +93,7 @@ mod benchmarks {
 	fn pay(q: Linear<1, { T::MaxRemarkLength::get() }>) -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, _, beneficiary_lookup) = create_accounts::<T>();
 
-		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
+		let asset: AssetIdOf<T> = <AssetIdOf<T>>::default();
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
 
@@ -122,7 +122,7 @@ mod benchmarks {
 	#[benchmark]
 	fn release() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
-		let asset = <AssetIdOf<T>>::zero();
+		let asset = <AssetIdOf<T>>::default();
 		let (payment_id, sender, _beneficiary, _, beneficiary_lookup) = create_payment::<T>(&amount, &asset, None)?;
 
 		log::info!("beneficiary_lookup: {:?}", beneficiary_lookup);
@@ -137,7 +137,7 @@ mod benchmarks {
 	#[benchmark]
 	fn cancel() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
-		let asset = <AssetIdOf<T>>::zero();
+		let asset = <AssetIdOf<T>>::default();
 		let (payment_id, _sender, beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
@@ -151,7 +151,7 @@ mod benchmarks {
 	#[benchmark]
 	fn request_refund() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
-		let asset = <AssetIdOf<T>>::zero();
+		let asset = <AssetIdOf<T>>::default();
 		let (payment_id, sender, _beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
@@ -169,7 +169,7 @@ mod benchmarks {
 	#[benchmark]
 	fn dispute_refund() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
-		let asset = <AssetIdOf<T>>::zero();
+		let asset = <AssetIdOf<T>>::default();
 		let (payment_id, sender, beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
@@ -188,7 +188,7 @@ mod benchmarks {
 	#[benchmark]
 	fn resolve_dispute() -> Result<(), BenchmarkError> {
 		let amount = <BalanceOf<T>>::from(100000_u32);
-		let asset = <AssetIdOf<T>>::zero();
+		let asset = <AssetIdOf<T>>::default();
 		let (payment_id, sender, beneficiary, _sender_lookup, _beneficiary_lookup) =
 			create_payment::<T>(&amount, &asset, None)?;
 
@@ -216,7 +216,7 @@ mod benchmarks {
 	#[benchmark]
 	fn request_payment() -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, sender_lookup, _beneficiary_lookup) = create_accounts::<T>();
-		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
+		let asset: AssetIdOf<T> = <AssetIdOf<T>>::default();
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
 
@@ -230,7 +230,7 @@ mod benchmarks {
 	#[benchmark]
 	fn accept_and_pay() -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, _sender_lookup, _beneficiary_lookup) = create_accounts::<T>();
-		let asset: AssetIdOf<T> = <AssetIdOf<T>>::zero();
+		let asset: AssetIdOf<T> = <AssetIdOf<T>>::default();
 		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
 		let amount = <BalanceOf<T>>::from(100000_u32);
 

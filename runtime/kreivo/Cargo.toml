@@ -22,10 +22,9 @@ scale-info = { workspace = true, features = ["derive"] }
 smallvec = { workspace = true }
 
 # Local
-pallet-asset-registry ={ workspace = true }
 pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
-virto-common = { workspace = true }
+virto-common = { workspace = true, default-features = false, features = ["runtime"] }
 runtime-common = { workspace = true }
 
 # Substrate
@@ -111,7 +110,6 @@ std = [
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
 	"log/std",
-	"pallet-asset-registry/std",
 	"pallet-asset-tx-payment/std",
 	"pallet-assets/std",
 	"pallet-aura/std",
@@ -152,6 +150,7 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	"sp-weights/std",
+	"virto-common/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
@@ -166,7 +165,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 	"hex-literal",
-	"pallet-asset-registry/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-burner/runtime-benchmarks",
@@ -192,8 +190,8 @@ try-runtime = [
 	"cumulus-pallet-xcmp-queue/try-runtime",
 	"frame-executive/try-runtime",
 	"frame-system/try-runtime",
+	"frame-support/try-runtime",
 	"frame-try-runtime/try-runtime",
-	"pallet-asset-registry/try-runtime",
 	"pallet-assets/try-runtime",
 	"pallet-aura/try-runtime",
 	"pallet-authorship/try-runtime",
