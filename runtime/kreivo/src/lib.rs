@@ -7,6 +7,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+#[cfg(test)]
+mod tests;
+
 pub mod constants;
 pub mod impls;
 mod weights;
