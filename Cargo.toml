@@ -37,7 +37,9 @@ parity-scale-codec = { version = "3.6.4", default-features = false, features = [
 futures = { version = "0.3.28" }
 hex-literal = { version = "0.4.1" }
 log = { version = "0.4.20" }
-serde = { version = "1.0.188" }
+serde = { version = "1.0.188", default-features = false, features = [
+	"derive"
+] }
 serde_json = "1.0.104"
 scale-info = { version = "2.9.0", default-features = false, features = [
 	"derive",
@@ -53,7 +55,7 @@ pallet-asset-registry = { default-features = false, path = "pallets/asset-regist
 pallet-burner = { default-features = false, path = "pallets/burner" }
 pallet-payments = { default-features = false, path = "pallets/payments" }
 
-virto-common =  { path = "common" }
+virto-common =  { default-features = false, path = "common" }
 runtime-common =  { default-features = false, path = "runtime/common" }
 kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }
 

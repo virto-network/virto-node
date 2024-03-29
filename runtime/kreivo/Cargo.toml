@@ -24,7 +24,7 @@ smallvec = { workspace = true }
 # Local
 pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
-virto-common = { workspace = true }
+virto-common = { workspace = true, default-features = false, features = ["runtime"] }
 runtime-common = { workspace = true }
 
 # Substrate

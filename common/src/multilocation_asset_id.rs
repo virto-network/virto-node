@@ -1,4 +1,3 @@
-#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
 use core::ops::Add;
@@ -11,8 +10,7 @@ use xcm::v3::{
 	Junctions, NetworkId,
 };
 
-#[derive(Copy, Clone, Debug, Encode, Decode, MaxEncodedLen, Eq, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Copy, Clone, Debug, Encode, Decode, Serialize, Deserialize, MaxEncodedLen, Eq, PartialEq, TypeInfo)]
 pub enum MultiLocationFungibleAsset {
 	Me(u128),
 	Ancestor {
