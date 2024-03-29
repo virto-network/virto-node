@@ -40,7 +40,6 @@ impl Contains<RuntimeCall> for RuntimeBlackListedCalls {
 				| RuntimeCall::Utility(_)
 				| RuntimeCall::Assets(_)
 				| RuntimeCall::Proxy(_)
-				| RuntimeCall::AssetRegistry(_)
 				| RuntimeCall::Burner(_)
 		)
 	}
