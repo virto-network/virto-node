@@ -1,11 +1,7 @@
 name: Benchmarks
 
 on:
-  push:
-    branches: 
-      - master
-    paths:
-      - '!runtime/kreivo/src/weights/**'
+  workflow_dispatch:
 
 jobs:
   build:
