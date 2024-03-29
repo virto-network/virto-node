@@ -10,9 +10,13 @@ use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 mod membership;
 mod multilocation_asset_id;
 mod payment_id;
+
 pub use membership::{MembershipId, MembershipInfo};
-pub use multilocation_asset_id::{AsMultiLocationFungibleAsset, MultiLocationFungibleAsset};
+pub use multilocation_asset_id::{FungibleAssetLocation, NetworkId};
 pub use payment_id::PaymentId;
+
+#[cfg(feature = "runtime")]
+pub use multilocation_asset_id::runtime::AsFungibleAssetLocation;
 
 #[cfg_attr(feature = "runtime", derive(Decode, Encode, MaxEncodedLen, TypeInfo))]
 #[derive(Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd)]

@@ -1,7 +1,7 @@
-use virto_common::AsMultiLocationFungibleAsset;
+use virto_common::AsFungibleAssetLocation;
 
 use super::{
-	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, KreivoAssetsInstance, MultiLocationFungibleAsset,
+	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, FungibleAssetLocation, KreivoAssetsInstance,
 	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury,
 	WeightToFee, XcmpQueue,
 };
@@ -59,10 +59,10 @@ pub type LocationToAccountId = (
 );
 
 pub type MultiLocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
-	MultiLocationFungibleAsset,
+	FungibleAssetLocation,
 	Balance,
 	StartsWith<AssetHubLocation>,
-	AsMultiLocationFungibleAsset,
+	AsFungibleAssetLocation,
 	JustTry,
 >;
 
@@ -72,7 +72,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	Assets,
 	// Use this currency when it is a registered fungible asset matching the given location or name
 	// Assets not found in AssetRegistry will not be used
-	ConvertedConcreteId<MultiLocationFungibleAsset, Balance, AsMultiLocationFungibleAsset, JustTry>,
+	ConvertedConcreteId<FungibleAssetLocation, Balance, AsFungibleAssetLocation, JustTry>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):

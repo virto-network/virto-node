@@ -20,7 +20,7 @@ xcm = { workspace = true, optional = true }
 frame-support = { workspace = true, features = ["std"] }
 
 [features]
-default = ["runtime", "std"]
+default = ["std"]
 std = [
   "serde?/std",
 ]
