@@ -10,3 +10,4 @@ type Error = crate::Error<Test>;
 mod governance;
 mod membership;
 mod registry;
+mod weights;
