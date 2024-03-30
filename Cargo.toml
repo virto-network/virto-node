@@ -52,7 +52,7 @@ pallet-burner = { default-features = false, path = "pallets/burner" }
 pallet-payments = { default-features = false, path = "pallets/payments" }
 pallet-communities = { default-features = false, path = "pallets/communities" }
 
-virto-common =  { default-features = false, path = "common" }
+virto-common = { default-features = false, path = "common" }
 runtime-common =  { default-features = false, path = "runtime/common" }
 kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }
 

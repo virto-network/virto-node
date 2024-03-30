@@ -35,7 +35,7 @@ pallet-preimage = { workspace = true }
 pallet-referenda = { workspace = true }
 pallet-referenda-tracks = { workspace = true }
 pallet-scheduler = { workspace = true }
-virto-common = { workspace = true }
+virto-common = { workspace = true, default-features = false, features = ["runtime"] }
 
 [features]
 default = ["std", "xcm"]
@@ -52,11 +52,12 @@ std = [
 	"pallet-referenda-tracks/std",
 	"pallet-scheduler/std",
 	"parity-scale-codec/std",
-	"sp-core/std",
 	"scale-info/std",
 	"sp-core/std",
+	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"virto-common/std",
 	"xcm?/std",
 ]
 runtime-benchmarks = [
