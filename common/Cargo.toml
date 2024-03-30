@@ -22,7 +22,14 @@ frame-support = { workspace = true, features = ["std"] }
 [features]
 default = ["std"]
 std = [
+  "cumulus-primitives-core?/std",
+  "frame-support?/std",
+  "pallet-payments?/std",
+  "parity-scale-codec?/std",
+  "scale-info?/std",
   "serde?/std",
+  "sp-runtime?/std",
+  "xcm?/std",
 ]
 alloc = []
 js = ["alloc", "wasm-bindgen"]
