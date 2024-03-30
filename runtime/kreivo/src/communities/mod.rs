@@ -98,7 +98,7 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		CommunityId::new(1)
 	}
 	fn community_desired_size() -> u32 {
-		u32::MAX
+		u8::MAX.into()
 	}
 	fn community_origin(decision_method: DecisionMethodFor<Runtime>) -> OriginFor<Runtime> {
 		let mut origin = Origin::<Runtime>::new(Self::community_id());
@@ -126,6 +126,14 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 
 		let community_id = Self::community_id();
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
+		
+		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
+			&community_account, 
+			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::AttributeDepositBase::get() +
+				// Deposit for membership_member_count attribute
+				<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::DepositPerByte::get() * 27
+		)?;
+		
 		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
 			community_id,
 			community_account.clone(),
@@ -146,6 +154,23 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		membership_id: MembershipIdOf<Runtime>,
 	) -> Result<(), BenchmarkError> {
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
+
+		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
+			&TreasuryAccount::get(), 
+			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::ItemDeposit::get()
+		)?;
+		
+		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
+			&community_account, 
+			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::ItemDeposit::get()
+		)?;
+		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
+			&community_account, 
+			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::AttributeDepositBase::get() +
+				// Deposit for membership_member_rank attribute
+				<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::DepositPerByte::get() * 26
+		)?;
+		
 		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
 
 		Ok(())
