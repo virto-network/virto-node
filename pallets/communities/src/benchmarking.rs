@@ -33,7 +33,6 @@ fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 fn setup_account<T: Config>(name: &'static str, index: u32, seed: u32) -> Result<AccountIdOf<T>, BenchmarkError> {
 	let who = frame_benchmarking::account(name, index, seed);
 
-	// let conversion_error = Box::leak(Box::new(format!("cannot mint an accurate balance into {:?}", &who)));
 	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u128
 		.try_into()
 		.map_err(|_| BenchmarkError::Stop("could not mint balance for a new account"))?;
