@@ -126,14 +126,14 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 
 		let community_id = Self::community_id();
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
-		
+
 		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&community_account, 
+			&community_account,
 			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::AttributeDepositBase::get() +
 				// Deposit for membership_member_count attribute
 				<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::DepositPerByte::get() * 27
 		)?;
-		
+
 		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
 			community_id,
 			community_account.clone(),
@@ -156,21 +156,21 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
 
 		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&TreasuryAccount::get(), 
+			&TreasuryAccount::get(),
 			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::ItemDeposit::get()
 		)?;
-		
+
 		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&community_account, 
+			&community_account,
 			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::ItemDeposit::get()
 		)?;
 		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&community_account, 
+			&community_account,
 			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::AttributeDepositBase::get() +
 				// Deposit for membership_member_rank attribute
 				<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::DepositPerByte::get() * 26
 		)?;
-		
+
 		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
 
 		Ok(())
