@@ -17,6 +17,8 @@ frame-support =  { workspace = true }
 frame-system = { workspace = true }
 fc-traits-memberships = { workspace = true }
 
+log = { workspace = true }
+
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info = { workspace = true, features = ["derive"] }
 

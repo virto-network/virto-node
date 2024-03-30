@@ -4,7 +4,10 @@ use super::*;
 
 use self::{
 	origin::DecisionMethod,
-	types::{AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf, Vote},
+	types::{
+		AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf, PollIndexOf,
+		Vote,
+	},
 	Event, HoldReason, Pallet as Communities,
 };
 use fc_traits_memberships::{Inspect, Rank};
@@ -27,15 +30,29 @@ fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
 
+fn setup_account<T: Config>(name: &'static str, index: u32, seed: u32) -> Result<AccountIdOf<T>, BenchmarkError> {
+	let who = frame_benchmarking::account(name, index, seed);
+
+	// let conversion_error = Box::leak(Box::new(format!("cannot mint an accurate balance into {:?}", &who)));
+	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u128
+		.try_into()
+		.map_err(|_| BenchmarkError::Stop("could not mint balance for a new account"))?;
+
+	T::Balances::mint_into(&who, initial_balance)?;
+
+	Ok(who)
+}
+
 fn setup_accounts<T: Config>() -> Result<Vec<AccountIdOf<T>>, BenchmarkError> {
 	let size = T::BenchmarkHelper::community_desired_size();
-	let accounts = (0..size).map(|i| frame_benchmarking::account("community_benchmarking", i, 0));
+	let mut accounts = vec![];
 
-	for who in accounts.clone() {
-		T::Balances::mint_into(&who, 10u32.into())?;
+	for i in 0..size {
+		let who = setup_account::<T>("community_benchmarking", i, 0)?;
+		accounts.push(who);
 	}
 
-	Ok(accounts.collect())
+	Ok(accounts)
 }
 
 fn community_params<T: Config>(
