@@ -78,7 +78,7 @@ impl pallet_communities::Config for Runtime {
 	type Balances = Balances;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_communities::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = crate::weights::pallet_communities::WeightInfo<Runtime>;
 
 	type PalletId = CommunityPalletId;
 
