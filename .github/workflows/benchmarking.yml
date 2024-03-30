@@ -8,16 +8,16 @@ jobs:
     name: Build Target
     runs-on: [self-hosted, builder]
     steps:
+      - uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-target-cache
       - uses: actions/checkout@v4
       - run: just build-local runtime-benchmarks
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ github.run_number }}-virto-node
           path: ./target/release/virto-node
-      - uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-target-cache
         
   benchmark:
     name: Run Benchmarks
