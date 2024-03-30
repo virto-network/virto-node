@@ -54,7 +54,7 @@ fn weights() {
 		println!(
 			"\tmax tx per block: {} (ref_time), {} (proof_size)",
 			max_extrinsic_weight.ref_time() / weight.ref_time(),
-			max_extrinsic_weight.proof_size() / weight.proof_size()
+			max_extrinsic_weight.proof_size() / weight.proof_size().max(1)
 		);
 
 		assert!(weight.all_lt(max_extrinsic_weight));

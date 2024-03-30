@@ -285,7 +285,7 @@ type MembershipCollection = ItemOf<Nfts, MembershipsManagerCollectionId, Account
 
 #[cfg(feature = "runtime-benchmarks")]
 use crate::{
-	types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PollIndexOf},
+	types::{AssetIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, PollIndexOf},
 	BenchmarkHelper, Origin,
 };
 
@@ -306,6 +306,10 @@ pub struct CommunityBenchmarkHelper;
 impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 	fn community_id() -> CommunityIdOf<Test> {
 		COMMUNITY
+	}
+
+	fn community_asset_id() -> AssetIdOf<Test> {
+		1u32
 	}
 
 	fn community_desired_size() -> u32 {

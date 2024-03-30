@@ -97,6 +97,9 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 	fn community_id() -> CommunityIdOf<Runtime> {
 		CommunityId::new(1)
 	}
+	fn community_asset_id() -> AssetIdOf<Runtime> {
+		1u32.into()
+	}
 	fn community_desired_size() -> u32 {
 		u8::MAX.into()
 	}

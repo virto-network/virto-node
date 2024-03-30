@@ -182,9 +182,14 @@ mod benchmarks {
 		// setup code
 		let (id, _, _, admin_origin) = community_params::<T>(Default::default());
 		Communities::<T>::create(RawOrigin::Root.into(), admin_origin, id)?;
+		crate::pallet::CommunityDecisionMethod::<T>::set(id, DecisionMethod::Rank);
 
 		#[extrinsic_call]
-		_(RawOrigin::Root, id, DecisionMethod::Membership);
+		_(
+			RawOrigin::Root,
+			id,
+			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id()),
+		);
 
 		// verification code
 		assert_has_event::<T>(Event::DecisionMethodSet { id }.into());

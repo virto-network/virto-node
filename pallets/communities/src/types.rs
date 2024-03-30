@@ -150,6 +150,9 @@ pub trait BenchmarkHelper<T: Config> {
 	/// Returns the ID of the community to use in benchmarks
 	fn community_id() -> CommunityIdOf<T>;
 
+	/// Returns the ID of the community to use in benchmarks
+	fn community_asset_id() -> AssetIdOf<T>;
+
 	/// Returns the desired size of the community for
 	/// effects of benchmark testing
 	fn community_desired_size() -> u32;
