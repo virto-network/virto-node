@@ -369,8 +369,6 @@ mod vote {
 						DecisionMethod::Membership
 					));
 
-					tick_block();
-
 					// Before voting, the poll is ongoing
 					System::assert_has_event(
 						pallet_referenda::Event::<Test>::DecisionStarted {
@@ -594,7 +592,7 @@ mod vote {
 
 				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 1 }.into());
 
-				tick_blocks(2);
+				tick_block();
 
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::Confirmed {
@@ -655,7 +653,7 @@ mod vote {
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 8)
 				));
 
-				tick_blocks(4);
+				tick_blocks(3);
 
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::Confirmed {
@@ -714,8 +712,6 @@ mod vote {
 		#[test]
 		fn rejects_on_most_nays() {
 			new_test_ext().execute_with(|| {
-				tick_block();
-
 				// Before voting, the poll is ongoing
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::DecisionStarted {
@@ -769,8 +765,6 @@ mod vote {
 		#[test]
 		fn voter_can_change_decision() {
 			new_test_ext().execute_with(|| {
-				tick_block();
-
 				// Before voting, the poll is ongoing
 				System::assert_has_event(
 					pallet_referenda::Event::<Test>::DecisionStarted {
@@ -904,7 +898,7 @@ mod vote {
 					Vote::Standard(true)
 				));
 
-				tick_blocks(3);
+				tick_blocks(2);
 
 				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 3 }.into());
 			});

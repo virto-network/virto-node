@@ -1,25 +1,14 @@
-use crate::mock::Test;
+use super::*;
 use crate::weights::{SubstrateWeight, WeightInfo};
-use frame_support::weights::{constants::WEIGHT_REF_TIME_PER_NANOS, constants::WEIGHT_REF_TIME_PER_SECOND, Weight};
-use sp_runtime::Perbill;
+use frame_support::weights::Weight;
 
 #[test]
 fn weights() {
-	// max block: 0.5s compute with 12s average block time
-	const MAX_BLOCK_REF_TIME: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(2); // https://github.com/paritytech/cumulus/blob/98e68bd54257b4039a5d5b734816f4a1b7c83a9d/parachain-template/runtime/src/lib.rs#L221
-	const MAX_BLOCK_POV_SIZE: u64 = 5 * 1024 * 1024; // https://github.com/paritytech/polkadot/blob/ba1f65493d91d4ab1787af2fd6fe880f1da90586/primitives/src/v4/mod.rs#L384
-	const MAX_BLOCK_WEIGHT: Weight = Weight::from_parts(MAX_BLOCK_REF_TIME, MAX_BLOCK_POV_SIZE);
-	// max extrinsics: 75% of block
-	const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75); // https://github.com/paritytech/cumulus/blob/d20c4283fe85df0c1ef8cb7c9eb7c09abbcbfa31/parachain-template/runtime/src/lib.rs#L218
 	let max_total_extrinsics = MAX_BLOCK_WEIGHT * NORMAL_DISPATCH_RATIO;
-	// max extrinsic: max total extrinsics less average on_initialize ratio and less
-	// base extrinsic weight
-	const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5); // https://github.com/paritytech/cumulus/blob/d20c4283fe85df0c1ef8cb7c9eb7c09abbcbfa31/parachain-template/runtime/src/lib.rs#L214
-	const BASE_EXTRINSIC: Weight = Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(125_000), 0); // https://github.com/paritytech/cumulus/blob/d20c4283fe85df0c1ef8cb7c9eb7c09abbcbfa31/parachain-template/runtime/src/weights/extrinsic_weights.rs#L26
-
 	let max_extrinsic_weight = max_total_extrinsics
 		.saturating_sub(MAX_BLOCK_WEIGHT * AVERAGE_ON_INITIALIZE_RATIO)
 		.saturating_sub(BASE_EXTRINSIC);
+
 	assert_eq!(max_extrinsic_weight, Weight::from_parts(349_875_000_000, 3_670_016));
 
 	println!("max block weight: {MAX_BLOCK_WEIGHT}");
