@@ -308,7 +308,6 @@ use {
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_referenda::{BoundedCallOf, Curve, PalletsOriginOf, TrackInfo},
 	parity_scale_codec::Encode,
-	sp_runtime::Perbill,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
