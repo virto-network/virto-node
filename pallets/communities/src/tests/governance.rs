@@ -72,7 +72,7 @@ parameter_types! {
 	};
 
 	pub ProposalCallPromoteCharlie: BoundedCallOf<Test, ()> = {
-		let call: RuntimeCall = Call::<Test>::promote_member { who: CHARLIE, membership_id: MembershipId(COMMUNITY_D, 3) }.into();
+		let call: RuntimeCall = Call::<Test>::promote { membership_id: MembershipId(COMMUNITY_D, 3) }.into();
 		BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(call.encode()))
 	};
 }
@@ -839,19 +839,16 @@ mod vote {
 			let mut ext = super::new_test_ext();
 
 			ext.execute_with(|| {
-				assert_ok!(Communities::promote_member(
+				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					ALICE,
 					MembershipId(COMMUNITY_D, 1)
 				));
-				assert_ok!(Communities::promote_member(
+				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					BOB,
 					MembershipId(COMMUNITY_D, 2)
 				));
-				assert_ok!(Communities::promote_member(
+				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					CHARLIE,
 					MembershipId(COMMUNITY_D, 3)
 				));
 
@@ -916,9 +913,8 @@ mod vote {
 		#[test]
 		fn it_works_with_different_ranks() {
 			new_test_ext().execute_with(|| {
-				assert_ok!(Communities::promote_member(
+				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					ALICE,
 					MembershipId(COMMUNITY_D, 1)
 				));
 

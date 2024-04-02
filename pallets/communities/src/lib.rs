@@ -185,6 +185,7 @@ pub mod origin;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use core::num::NonZeroU8;
 	use fc_traits_memberships::{self as membership, Inspect, Manager, Rank};
 	use frame_support::{
 		pallet_prelude::*,
@@ -194,6 +195,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::StaticLookup;
 	use types::{PollIndexOf, *};
+	const ONE: NonZeroU8 = NonZeroU8::MIN;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -274,6 +276,7 @@ pub mod pallet {
 	#[pallet::getter(fn community)]
 	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo>;
 
+	/// List of origins and how they map to communities
 	#[pallet::storage]
 	pub(super) type CommunityIdFor<T> = StorageMap<_, Blake2_128Concat, PalletsOriginOf<T>, CommunityIdOf<T>>;
 
@@ -282,11 +285,6 @@ pub mod pallet {
 	#[pallet::getter(fn metadata)]
 	pub(super) type Metadata<T: Config> =
 		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
-
-	/// Stores the sum of members' ranks, managed by promote_member and
-	/// demote_member
-	#[pallet::storage]
-	pub(super) type CommunityRanksSum<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, u32, ValueQuery>;
 
 	/// Stores the decision method for a community
 	#[pallet::storage]
@@ -443,11 +441,6 @@ pub mod pallet {
 
 			T::MemberMgmt::assign(&community_id, &membership_id, &who)?;
 
-			CommunityRanksSum::<T>::mutate(community_id, |sum| {
-				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
-				*sum += u8::from(rank) as u32;
-			});
-
 			Self::deposit_event(Event::MemberAdded { who, membership_id });
 			Ok(())
 		}
@@ -469,11 +462,6 @@ pub mod pallet {
 
 			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
 
-			CommunityRanksSum::<T>::mutate(community_id, |sum| {
-				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
-				*sum -= u8::from(rank) as u32;
-			});
-
 			T::MemberMgmt::release(&community_id, &membership_id)?;
 
 			Self::deposit_event(Event::MemberRemoved { who, membership_id });
@@ -482,54 +470,26 @@ pub mod pallet {
 
 		/// Increases the rank of a member in the community
 		#[pallet::call_index(5)]
-		pub fn promote_member(
-			origin: OriginFor<T>,
-			who: AccountIdLookupOf<T>,
-			membership_id: MembershipIdOf<T>,
-		) -> DispatchResult {
+		pub fn promote(origin: OriginFor<T>, membership_id: MembershipIdOf<T>) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-			let who = T::Lookup::lookup(who)?;
 
-			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
+			let rank = T::MemberMgmt::rank_of(&community_id, &membership_id).ok_or(Error::<T>::NotAMember)?;
+			T::MemberMgmt::set_rank(&community_id, &membership_id, rank.promote_by(ONE))?;
 
-			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
-				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
-				*sum = sum.saturating_sub(u8::from(rank) as u32);
-
-				let rank = rank.promote_by(1.try_into().expect("can demote by 1"));
-				T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
-
-				*sum += u8::from(rank) as u32;
-
-				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
-				Ok(())
-			})
+			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+			Ok(())
 		}
 
 		/// Decreases the rank of a member in the community
 		#[pallet::call_index(6)]
-		pub fn demote_member(
-			origin: OriginFor<T>,
-			who: AccountIdLookupOf<T>,
-			membership_id: MembershipIdOf<T>,
-		) -> DispatchResult {
+		pub fn demote(origin: OriginFor<T>, membership_id: MembershipIdOf<T>) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-			let who = T::Lookup::lookup(who)?;
 
-			ensure!(T::MemberMgmt::is_member_of(&community_id, &who), Error::<T>::NotAMember);
+			let rank = T::MemberMgmt::rank_of(&community_id, &membership_id).ok_or(Error::<T>::NotAMember)?;
+			T::MemberMgmt::set_rank(&community_id, &membership_id, rank.demote_by(ONE))?;
 
-			CommunityRanksSum::<T>::try_mutate(community_id, |sum| {
-				let rank = T::MemberMgmt::rank_of(&community_id, &membership_id);
-				*sum = sum.saturating_sub(Into::<u8>::into(rank) as u32);
-
-				let rank = rank.demote_by(1.try_into().expect("can demote by 1"));
-				T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
-
-				*sum += u8::from(rank) as u32;
-
-				Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
-				Ok(())
-			})
+			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
+			Ok(())
 		}
 
 		// === Governance ===

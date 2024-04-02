@@ -26,14 +26,12 @@ impl<T: Config> Pallet<T> {
 		Self::community(community_id).is_some()
 	}
 
-	pub fn has_membership(who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> bool {
-		let community_id = m.into();
-		T::MemberMgmt::is_member_of(&community_id, who)
+	pub fn is_member(community_id: &T::CommunityId, who: &AccountIdOf<T>) -> bool {
+		T::MemberMgmt::is_member_of(community_id, who)
 	}
 
-	pub fn member_rank(_who: &AccountIdOf<T>, m: MembershipIdOf<T>) -> GenericRank {
-		let group = m.into();
-		T::MemberMgmt::rank_of(&group, &m)
+	pub fn member_rank(community_id: &T::CommunityId, m: &MembershipIdOf<T>) -> GenericRank {
+		T::MemberMgmt::rank_of(community_id, m).unwrap_or_default()
 	}
 
 	pub fn get_memberships(who: &AccountIdOf<T>, community_id: T::CommunityId) -> Vec<MembershipIdOf<T>> {
@@ -101,7 +99,9 @@ impl<T: Config> Pallet<T> {
 				Self::do_unlock_for_vote(who, &poll_index, &vote)?;
 
 				let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
-					DecisionMethod::Rank => u8::from(T::MemberMgmt::rank_of(&community_id, &membership_id)) as u32,
+					DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
+						.unwrap_or_default()
+						.into(),
 					_ => 1,
 				};
 				tally.remove_vote(
@@ -141,7 +141,9 @@ impl<T: Config> Pallet<T> {
 			Self::do_lock_for_vote(who, &poll_index, &vote)?;
 
 			let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
-				DecisionMethod::Rank => u8::from(T::MemberMgmt::rank_of(&community_id, &membership_id)) as u32,
+				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
+					.unwrap_or_default()
+					.into(),
 				_ => 1,
 			};
 			tally.add_vote(
@@ -174,7 +176,9 @@ impl<T: Config> Pallet<T> {
 				let vote = Self::community_vote_of(who, poll_index).ok_or(Error::<T>::NoVoteCasted)?;
 
 				let multiplied_vote = match CommunityDecisionMethod::<T>::get(community_id) {
-					DecisionMethod::Rank => u8::from(T::MemberMgmt::rank_of(&community_id, &membership_id)) as u32,
+					DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
+						.unwrap_or_default()
+						.into(),
 					_ => 1,
 				};
 				tally.remove_vote(

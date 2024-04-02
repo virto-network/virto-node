@@ -37,8 +37,8 @@ pub trait WeightInfo {
 	fn create() -> Weight;
 	fn set_metadata(n: u32, d: u32, u: u32) -> Weight;
 	fn add_member() -> Weight;
-	fn promote_member() -> Weight;
-	fn demote_member() -> Weight;
+	fn promote() -> Weight;
+	fn demote() -> Weight;
 	fn remove_member() -> Weight;
 	fn set_decision_method () -> Weight;
 	fn vote() -> Weight;
@@ -95,7 +95,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn promote_member() -> Weight {
+	fn promote() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
@@ -106,7 +106,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn demote_member() -> Weight {
+	fn demote() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
@@ -208,7 +208,7 @@ impl WeightInfo for () {
 	
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn promote_member() -> Weight {
+	fn promote() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
@@ -219,7 +219,7 @@ impl WeightInfo for () {
 	
 	/// Storage: Communities Something (r:0 w:1)
 	/// Proof: Communities Something (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
-	fn demote_member() -> Weight {
+	fn demote() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
