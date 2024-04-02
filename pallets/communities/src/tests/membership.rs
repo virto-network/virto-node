@@ -46,8 +46,8 @@ mod add_member {
 			assert_ok!(Communities::add_member(COMMUNITY_ORIGIN.into(), COMMUNITY_MEMBER_1));
 			assert_ok!(Communities::add_member(COMMUNITY_ORIGIN.into(), COMMUNITY_MEMBER_2));
 
-			assert!(Communities::has_membership(&COMMUNITY_MEMBER_1, MEMBERSHIP_1));
-			assert!(Communities::has_membership(&COMMUNITY_MEMBER_2, MEMBERSHIP_2));
+			assert!(Communities::is_member(&COMMUNITY, &COMMUNITY_MEMBER_1));
+			assert!(Communities::is_member(&COMMUNITY, &COMMUNITY_MEMBER_2));
 		});
 	}
 
@@ -125,10 +125,7 @@ mod member_rank {
 		#[test]
 		fn fails_when_caller_not_admin_origin() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				assert_noop!(
-					Communities::promote_member(Root.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
-					BadOrigin
-				);
+				assert_noop!(Communities::promote(Root.into(), MEMBERSHIP_1), BadOrigin);
 			});
 		}
 
@@ -136,7 +133,7 @@ mod member_rank {
 		fn fails_when_not_a_community_member() {
 			new_test_ext(&[], &[MEMBERSHIP_1]).execute_with(|| {
 				assert_noop!(
-					Communities::promote_member(COMMUNITY_ORIGIN.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
+					Communities::promote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1),
 					Error::NotAMember,
 				);
 			});
@@ -145,12 +142,8 @@ mod member_rank {
 		#[test]
 		fn it_works() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				assert_ok!(Communities::promote_member(
-					COMMUNITY_ORIGIN.into(),
-					COMMUNITY_MEMBER_1,
-					MEMBERSHIP_1
-				));
-				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 1.into());
+				assert_ok!(Communities::promote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1));
+				assert_eq!(Communities::member_rank(&COMMUNITY, &MEMBERSHIP_1), 1.into());
 			});
 		}
 	}
@@ -161,18 +154,15 @@ mod member_rank {
 		#[test]
 		fn fails_when_caller_not_a_privleged_origin() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				assert_noop!(
-					Communities::demote_member(Root.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1),
-					BadOrigin
-				);
+				assert_noop!(Communities::demote(Root.into(), MEMBERSHIP_1), BadOrigin);
 			});
 		}
 
 		#[test]
 		fn fails_when_not_a_community_member() {
-			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
+			new_test_ext(&[], &[]).execute_with(|| {
 				assert_noop!(
-					Communities::demote_member(COMMUNITY_ORIGIN.into(), COMMUNITY_NON_MEMBER, MEMBERSHIP_1),
+					Communities::demote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1),
 					Error::NotAMember,
 				);
 			});
@@ -181,29 +171,19 @@ mod member_rank {
 		#[test]
 		fn it_works() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				Communities::promote_member(COMMUNITY_ORIGIN.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
-					.expect("can promote");
-				Communities::promote_member(COMMUNITY_ORIGIN.into(), COMMUNITY_MEMBER_1, MEMBERSHIP_1)
-					.expect("can promote");
-				assert_ok!(Communities::demote_member(
-					COMMUNITY_ORIGIN.into(),
-					COMMUNITY_MEMBER_1,
-					MEMBERSHIP_1
-				));
-				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 1.into());
+				Communities::promote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1).expect("can promote");
+				Communities::promote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1).expect("can promote");
+				assert_ok!(Communities::demote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1));
+				assert_eq!(Communities::member_rank(&COMMUNITY, &MEMBERSHIP_1), 1.into());
 			});
 		}
 
 		#[test]
 		fn should_remain_at_min_rank() {
 			new_test_ext(&[COMMUNITY_MEMBER_1], &[MEMBERSHIP_1]).execute_with(|| {
-				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 0.into());
-				assert_ok!(Communities::demote_member(
-					COMMUNITY_ORIGIN.into(),
-					COMMUNITY_MEMBER_1,
-					MEMBERSHIP_1,
-				));
-				assert_eq!(Communities::member_rank(&COMMUNITY_MEMBER_1, MEMBERSHIP_1), 0.into());
+				assert_eq!(Communities::member_rank(&COMMUNITY, &MEMBERSHIP_1), 0.into());
+				assert_ok!(Communities::demote(COMMUNITY_ORIGIN.into(), MEMBERSHIP_1,));
+				assert_eq!(Communities::member_rank(&COMMUNITY, &MEMBERSHIP_1), 0.into());
 			});
 		}
 	}

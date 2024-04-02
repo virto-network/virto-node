@@ -1,6 +1,6 @@
 use crate::origin::DecisionMethod;
-use crate::{CommunityDecisionMethod, CommunityRanksSum, Config};
-use fc_traits_memberships::Inspect;
+use crate::{CommunityDecisionMethod, Config};
+use fc_traits_memberships::{Inspect, Rank};
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{
 	fungible::{self, Inspect as FunInspect},
@@ -129,8 +129,8 @@ impl<T> Default for Tally<T> {
 impl<T: Config> Tally<T> {
 	pub(crate) fn max_support(community_id: CommunityIdOf<T>) -> VoteWeight {
 		match CommunityDecisionMethod::<T>::get(community_id) {
-			DecisionMethod::Membership => T::MemberMgmt::member_count(&community_id),
-			DecisionMethod::Rank => CommunityRanksSum::<T>::get(community_id),
+			DecisionMethod::Membership => T::MemberMgmt::members_total(&community_id),
+			DecisionMethod::Rank => T::MemberMgmt::ranks_total(&community_id),
 			DecisionMethod::NativeToken => T::Balances::total_issuance().saturated_into::<VoteWeight>(),
 			DecisionMethod::CommunityAsset(asset_id) => {
 				T::Assets::total_issuance(asset_id).saturated_into::<VoteWeight>()
