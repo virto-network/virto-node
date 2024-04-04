@@ -169,15 +169,7 @@ mod benchmarks {
 		_(RawOrigin::Root, id, name.clone(), description.clone(), url.clone());
 
 		// verification code
-		assert_has_event::<T>(
-			Event::MetadataSet {
-				id,
-				name,
-				description,
-				main_url: url,
-			}
-			.into(),
-		);
+		assert_has_event::<T>(Event::MetadataSet { id, name }.into());
 
 		Ok(())
 	}
@@ -223,7 +215,7 @@ mod benchmarks {
 			}
 			.into(),
 		);
-		assert!(T::MemberMgmt::has_membership(&who, &membership_id).is_some());
+		assert!(T::MemberMgmt::check_membership(&who, &membership_id).is_some());
 
 		Ok(())
 	}
@@ -251,7 +243,7 @@ mod benchmarks {
 			}
 			.into(),
 		);
-		assert!(T::MemberMgmt::has_membership(&who, &membership_id).is_none());
+		assert!(T::MemberMgmt::check_membership(&who, &membership_id).is_none());
 
 		Ok(())
 	}

@@ -312,8 +312,6 @@ pub mod pallet {
 		MetadataSet {
 			id: T::CommunityId,
 			name: Option<ConstSizedField<64>>,
-			description: Option<ConstSizedField<256>>,
-			main_url: Option<ConstSizedField<256>>,
 		},
 		DecisionMethodSet {
 			id: T::CommunityId,
@@ -413,13 +411,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::CommunityMgmtOrigin::ensure_origin(origin)?;
 
-			Self::do_set_metadata(&community_id, &name, &description, &url);
-			Self::deposit_event(Event::MetadataSet {
-				id: community_id,
-				name,
-				description,
-				main_url: url,
-			});
+			Self::do_set_metadata(&community_id, &name, description, url);
+			Self::deposit_event(Event::MetadataSet { id: community_id, name });
 
 			Ok(())
 		}
@@ -496,7 +489,7 @@ pub mod pallet {
 
 		// === Governance ===
 
-		///
+		/// Decide the method used by the community to vote on proposals
 		#[pallet::call_index(7)]
 		pub fn set_decision_method(
 			origin: OriginFor<T>,
@@ -510,7 +503,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		///
+		/// Cast a vote on an on-going referendum
 		#[pallet::call_index(4)]
 		pub fn vote(
 			origin: OriginFor<T>,
@@ -519,7 +512,13 @@ pub mod pallet {
 			vote: VoteOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_vote(&who, membership_id, poll_index, vote)
+			Self::do_vote(&who, membership_id, poll_index, &vote)?;
+			Self::deposit_event(Event::<T>::VoteCasted {
+				who: who.clone(),
+				poll_index,
+				vote,
+			});
+			Ok(())
 		}
 
 		///
@@ -530,10 +529,16 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_remove_vote(&who, membership_id, poll_index)
+			Self::do_remove_vote(&who, membership_id, poll_index)?;
+			Self::deposit_event(Event::<T>::VoteRemoved {
+				who: who.clone(),
+				poll_index,
+			});
+			Ok(())
 		}
 
-		///
+		/// Make previously held or locked funds from a vote available
+		// if the refereundum  has finished
 		#[pallet::call_index(9)]
 		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
