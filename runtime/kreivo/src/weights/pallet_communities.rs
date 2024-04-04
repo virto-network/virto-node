@@ -159,7 +159,7 @@ impl<T: frame_system::Config> pallet_communities::WeightInfo for WeightInfo<T> {
 	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
 	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
-	fn promote_member() -> Weight {
+	fn promote() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `799`
 		//  Estimated: `3944`
@@ -179,7 +179,7 @@ impl<T: frame_system::Config> pallet_communities::WeightInfo for WeightInfo<T> {
 	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(479), added: 2954, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
 	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
-	fn demote_member() -> Weight {
+	fn demote() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `841`
 		//  Estimated: `3944`

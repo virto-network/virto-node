@@ -15,10 +15,27 @@ use pallet_referenda::TrackInfo;
 use sp_runtime::Perbill;
 use virto_common::MembershipId;
 
-const COMMUNITY_A: CommunityId = CommunityId::new(1);
-const COMMUNITY_B: CommunityId = CommunityId::new(2);
-const COMMUNITY_C: CommunityId = CommunityId::new(3);
-const COMMUNITY_D: CommunityId = CommunityId::new(4);
+const COMMUNITY_A: CommunityId = 1;
+const COMMUNITY_B: CommunityId = 2;
+const COMMUNITY_C: CommunityId = 3;
+const COMMUNITY_D: CommunityId = 4;
+
+const MS_X_COMMUNITY: usize = 3;
+const MEMBERSHIPS: [[MembershipId; MS_X_COMMUNITY]; 4] = {
+	let mut m = [[0; MS_X_COMMUNITY]; 4];
+	let mut i = 0;
+	while i < MS_X_COMMUNITY * 4 {
+		m[i / MS_X_COMMUNITY][i % MS_X_COMMUNITY] = (i + 1) as MembershipId;
+		i += 1;
+	}
+	m
+};
+const fn memberships_of(community: CommunityId) -> &'static [MembershipId] {
+	&MEMBERSHIPS[community as usize - 1]
+}
+const fn membership(community: CommunityId, m: usize) -> MembershipId {
+	MEMBERSHIPS[community as usize - 1][m - 1]
+}
 
 const COMMUNITY_B_ASSET_ID: AssetId = 2;
 
@@ -67,25 +84,17 @@ parameter_types! {
 	};
 
 	pub ProposalCallRemoveCharlieFromC: BoundedCallOf<Test, ()> = {
-		let call: RuntimeCall = Call::<Test>::remove_member { who: CHARLIE, membership_id: MembershipId(COMMUNITY_C, 3) }.into();
+		let call: RuntimeCall = Call::<Test>::remove_member { who: CHARLIE, membership_id: membership(COMMUNITY_C, 3) }.into();
 		BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(call.encode()))
 	};
 
 	pub ProposalCallPromoteCharlie: BoundedCallOf<Test, ()> = {
-		let call: RuntimeCall = Call::<Test>::promote { membership_id: MembershipId(COMMUNITY_D, 3) }.into();
+		let call: RuntimeCall = Call::<Test>::promote { membership_id: membership(COMMUNITY_D, 3) }.into();
 		BoundedCallOf::<Test, ()>::Inline(BoundedVec::truncate_from(call.encode()))
 	};
 }
 
 fn new_test_ext() -> sp_io::TestExternalities {
-	fn produce_memberships<const N: usize>(community_id: CommunityId) -> [MembershipId; N] {
-		(1..=N)
-			.map(|n| MembershipId(community_id, n as u32))
-			.collect::<Vec<_>>()
-			.try_into()
-			.expect("Same size in, same size out")
-	}
-
 	let mut t = TestEnvBuilder::new()
 		.with_balances(&[(ALICE, 15), (BOB, 15), (CHARLIE, 15)])
 		// Membership-based
@@ -93,7 +102,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			COMMUNITY_A,
 			DecisionMethod::Membership,
 			&[ALICE],
-			&produce_memberships::<3>(COMMUNITY_A),
+			memberships_of(COMMUNITY_A),
 			Some(CommunityTrack::get()),
 		)
 		// Community-asset based
@@ -101,7 +110,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			COMMUNITY_B,
 			DecisionMethod::CommunityAsset(COMMUNITY_B_ASSET_ID),
 			&[BOB, CHARLIE],
-			&produce_memberships::<3>(COMMUNITY_B),
+			&memberships_of(COMMUNITY_B),
 			Some(CommunityTrack::get()),
 		)
 		.add_asset(
@@ -117,7 +126,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			COMMUNITY_C,
 			DecisionMethod::NativeToken,
 			&[ALICE, BOB, CHARLIE],
-			&produce_memberships::<3>(COMMUNITY_C),
+			memberships_of(COMMUNITY_C),
 			Some(CommunityTrack::get()),
 		)
 		// Rank-based
@@ -125,7 +134,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			COMMUNITY_D,
 			DecisionMethod::Rank,
 			&[ALICE, BOB, CHARLIE],
-			&produce_memberships::<3>(COMMUNITY_D),
+			memberships_of(COMMUNITY_D),
 			Some(CommunityTrack::get()),
 		)
 		.build();
@@ -197,7 +206,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(BOB),
-						MembershipId(COMMUNITY_B, 1),
+						membership(COMMUNITY_B, 1),
 						1,
 						Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 0)
 					),
@@ -212,7 +221,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(BOB),
-						MembershipId(COMMUNITY_A, 2),
+						membership(COMMUNITY_A, 2),
 						0,
 						Vote::Standard(true)
 					),
@@ -227,7 +236,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(ALICE),
-						MembershipId(COMMUNITY_A, 1),
+						membership(COMMUNITY_A, 1),
 						256,
 						Vote::Standard(true)
 					),
@@ -242,7 +251,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(BOB),
-						MembershipId(COMMUNITY_B, 1),
+						membership(COMMUNITY_B, 1),
 						0,
 						Vote::Standard(true)
 					),
@@ -273,7 +282,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(ALICE),
-					MembershipId(COMMUNITY_A, 1),
+					membership(COMMUNITY_A, 1),
 					0,
 					Vote::Standard(true)
 				));
@@ -333,7 +342,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(ALICE),
-					MembershipId(COMMUNITY_A, 1),
+					membership(COMMUNITY_A, 1),
 					0,
 					Vote::Standard(false)
 				));
@@ -382,7 +391,7 @@ mod vote {
 
 					assert_ok!(Communities::vote(
 						RuntimeOrigin::signed(ALICE),
-						MembershipId(COMMUNITY_C, 1),
+						membership(COMMUNITY_C, 1),
 						2,
 						Vote::Standard(true)
 					));
@@ -391,7 +400,7 @@ mod vote {
 
 					assert_ok!(Communities::vote(
 						RuntimeOrigin::signed(CHARLIE),
-						MembershipId(COMMUNITY_C, 3),
+						membership(COMMUNITY_C, 3),
 						2,
 						Vote::Standard(false)
 					));
@@ -408,7 +417,7 @@ mod vote {
 			run_referenda().execute_with(|| {
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_C, 2),
+					membership(COMMUNITY_C, 2),
 					2,
 					Vote::Standard(true)
 				));
@@ -433,7 +442,7 @@ mod vote {
 			run_referenda().execute_with(|| {
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_C, 2),
+					membership(COMMUNITY_C, 2),
 					2,
 					Vote::Standard(false)
 				));
@@ -468,7 +477,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(CHARLIE),
-						MembershipId(COMMUNITY_B, 2),
+						membership(COMMUNITY_B, 2),
 						1,
 						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 10)
 					),
@@ -492,7 +501,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(CHARLIE),
-						MembershipId(COMMUNITY_B, 2),
+						membership(COMMUNITY_B, 2),
 						1,
 						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 5)
 					),
@@ -520,7 +529,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_B, 1),
+					membership(COMMUNITY_B, 1),
 					1,
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
 				));
@@ -529,7 +538,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_B, 2),
+					membership(COMMUNITY_B, 2),
 					1,
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
 				));
@@ -574,7 +583,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_B, 1),
+					membership(COMMUNITY_B, 1),
 					1,
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 2)
 				));
@@ -583,7 +592,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_B, 2),
+					membership(COMMUNITY_B, 2),
 					1,
 					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 1)
 				));
@@ -630,7 +639,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_B, 2),
+					membership(COMMUNITY_B, 2),
 					1,
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
 				));
@@ -639,7 +648,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_B, 1),
+					membership(COMMUNITY_B, 1),
 					1,
 					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 7)
 				));
@@ -648,7 +657,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_B, 2),
+					membership(COMMUNITY_B, 2),
 					1,
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 8)
 				));
@@ -681,7 +690,7 @@ mod vote {
 				assert_noop!(
 					Communities::vote(
 						RuntimeOrigin::signed(BOB),
-						MembershipId(COMMUNITY_C, 2),
+						membership(COMMUNITY_C, 2),
 						2,
 						Vote::NativeBalance(true, 16)
 					),
@@ -702,7 +711,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_C, 3),
+					membership(COMMUNITY_C, 3),
 					2,
 					Vote::NativeBalance(true, 11)
 				));
@@ -731,7 +740,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_C, 3),
+					membership(COMMUNITY_C, 3),
 					2,
 					Vote::NativeBalance(false, 14)
 				));
@@ -740,7 +749,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(ALICE),
-					MembershipId(COMMUNITY_C, 1),
+					membership(COMMUNITY_C, 1),
 					2,
 					Vote::NativeBalance(true, 7)
 				));
@@ -783,7 +792,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_C, 3),
+					membership(COMMUNITY_C, 3),
 					2,
 					Vote::NativeBalance(false, 6)
 				));
@@ -792,7 +801,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(ALICE),
-					MembershipId(COMMUNITY_C, 1),
+					membership(COMMUNITY_C, 1),
 					2,
 					Vote::NativeBalance(true, 7)
 				));
@@ -801,7 +810,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_C, 3),
+					membership(COMMUNITY_C, 3),
 					2,
 					Vote::NativeBalance(false, 8)
 				));
@@ -835,15 +844,15 @@ mod vote {
 			ext.execute_with(|| {
 				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					MembershipId(COMMUNITY_D, 1)
+					membership(COMMUNITY_D, 1)
 				));
 				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					MembershipId(COMMUNITY_D, 2)
+					membership(COMMUNITY_D, 2)
 				));
 				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					MembershipId(COMMUNITY_D, 3)
+					membership(COMMUNITY_D, 3)
 				));
 
 				assert_ok!(Referenda::submit(
@@ -875,7 +884,7 @@ mod vote {
 			new_test_ext().execute_with(|| {
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(ALICE),
-					MembershipId(COMMUNITY_D, 1),
+					membership(COMMUNITY_D, 1),
 					3,
 					Vote::Standard(true)
 				));
@@ -884,7 +893,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_D, 2),
+					membership(COMMUNITY_D, 2),
 					3,
 					Vote::Standard(false)
 				));
@@ -893,13 +902,14 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_D, 3),
+					membership(COMMUNITY_D, 3),
 					3,
 					Vote::Standard(true)
 				));
 
 				tick_blocks(2);
 
+				dbg!(System::events());
 				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 3 }.into());
 			});
 		}
@@ -909,12 +919,12 @@ mod vote {
 			new_test_ext().execute_with(|| {
 				assert_ok!(Communities::promote(
 					Into::<RuntimeOrigin>::into(*OriginForCommunityD::get()),
-					MembershipId(COMMUNITY_D, 1)
+					membership(COMMUNITY_D, 1)
 				));
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(ALICE),
-					MembershipId(COMMUNITY_D, 1),
+					membership(COMMUNITY_D, 1),
 					3,
 					Vote::Standard(false)
 				));
@@ -923,7 +933,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(BOB),
-					MembershipId(COMMUNITY_D, 2),
+					membership(COMMUNITY_D, 2),
 					3,
 					Vote::Standard(true)
 				));
@@ -932,7 +942,7 @@ mod vote {
 
 				assert_ok!(Communities::vote(
 					RuntimeOrigin::signed(CHARLIE),
-					MembershipId(COMMUNITY_D, 3),
+					membership(COMMUNITY_D, 3),
 					3,
 					Vote::Standard(true)
 				));
@@ -960,7 +970,7 @@ mod remove_vote {
 	fn fails_if_not_a_member() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Communities::remove_vote(RuntimeOrigin::signed(BOB), MembershipId(COMMUNITY_A, 2), 0,),
+				Communities::remove_vote(RuntimeOrigin::signed(BOB), membership(COMMUNITY_A, 2), 0,),
 				Error::NotAMember
 			);
 		});
@@ -970,7 +980,7 @@ mod remove_vote {
 	fn fails_if_trying_to_remove_vote_from_invalid_track() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Communities::remove_vote(RuntimeOrigin::signed(ALICE), MembershipId(COMMUNITY_A, 1), 1),
+				Communities::remove_vote(RuntimeOrigin::signed(ALICE), membership(COMMUNITY_A, 1), 1),
 				Error::InvalidTrack
 			);
 		});
@@ -980,7 +990,7 @@ mod remove_vote {
 	fn fails_if_poll_is_no_vote_casted() {
 		new_test_ext().execute_with(|| {
 			assert_noop!(
-				Communities::remove_vote(RuntimeOrigin::signed(ALICE), MembershipId(COMMUNITY_A, 1), 0),
+				Communities::remove_vote(RuntimeOrigin::signed(ALICE), membership(COMMUNITY_A, 1), 0),
 				Error::NoVoteCasted
 			);
 		});
@@ -991,7 +1001,7 @@ mod remove_vote {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Communities::vote(
 				RuntimeOrigin::signed(ALICE),
-				MembershipId(COMMUNITY_A, 1),
+				membership(COMMUNITY_A, 1),
 				0,
 				Vote::Standard(true)
 			));
@@ -1000,7 +1010,7 @@ mod remove_vote {
 
 			assert_ok!(Communities::remove_vote(
 				RuntimeOrigin::signed(ALICE),
-				MembershipId(COMMUNITY_A, 1),
+				membership(COMMUNITY_A, 1),
 				0
 			));
 
@@ -1021,7 +1031,7 @@ mod remove_vote {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Communities::vote(
 				RuntimeOrigin::signed(ALICE),
-				MembershipId(COMMUNITY_C, 1),
+				membership(COMMUNITY_C, 1),
 				2,
 				Vote::NativeBalance(true, 15)
 			));
@@ -1039,7 +1049,7 @@ mod remove_vote {
 
 			assert_ok!(Communities::remove_vote(
 				RuntimeOrigin::signed(ALICE),
-				MembershipId(COMMUNITY_C, 1),
+				membership(COMMUNITY_C, 1),
 				2
 			));
 
@@ -1106,14 +1116,14 @@ mod unlock {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Communities::vote(
 				RuntimeOrigin::signed(BOB),
-				MembershipId(COMMUNITY_B, 1),
+				membership(COMMUNITY_B, 1),
 				1,
 				Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 9)
 			));
 
 			assert_ok!(Communities::vote(
 				RuntimeOrigin::signed(CHARLIE),
-				MembershipId(COMMUNITY_C, 3),
+				membership(COMMUNITY_C, 3),
 				2,
 				Vote::NativeBalance(true, 15)
 			));

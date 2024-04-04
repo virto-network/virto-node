@@ -118,6 +118,6 @@ pub struct CommunityTracksBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
 impl pallet_referenda_tracks::BenchmarkHelper<Runtime, CommunityTracksInstance> for CommunityTracksBenchmarkHelper {
 	fn track_id(id: u32) -> TrackIdOf<Runtime, CommunityTracksInstance> {
-		CommunityId::new(id.saturated_into())
+		id.saturated_into()
 	}
 }

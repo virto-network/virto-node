@@ -92,21 +92,25 @@ fn create_community<T: Config>(
 ///
 /// Then, returns a list of tuples, each one containing a member's
 /// [AccountId] and their corresponding
-fn setup_members<T: Config>(
+fn setup_members<T>(
 	origin: OriginFor<T>,
 	community_id: CommunityIdOf<T>,
-) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, frame_benchmarking::BenchmarkError> {
+) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, BenchmarkError>
+where
+	T: Config,
+	T::MembershipId: From<u32>,
+{
 	let members_with_memberships = setup_accounts::<T>()?
 		.into_iter()
 		.enumerate()
-		.map(|(i, account_id)| (account_id, T::BenchmarkHelper::membership_id(community_id, i as u32)));
+		.map(|(i, account_id)| (account_id, MembershipIdOf::<T>::from(i as u32)));
 
 	for (who, membership_id) in members_with_memberships.clone() {
-		T::BenchmarkHelper::issue_membership(community_id, membership_id.clone())?;
+		T::BenchmarkHelper::issue_membership(community_id, membership_id)?;
 
 		let who = T::Lookup::unlookup(who.clone());
 		Pallet::<T>::add_member(origin.clone(), who.clone())?;
-		Pallet::<T>::promote_member(origin.clone(), who, membership_id)?;
+		Pallet::<T>::promote(origin.clone(), membership_id)?;
 	}
 
 	Ok(members_with_memberships.collect())
@@ -133,6 +137,7 @@ where
 	where
 		T: frame_system::Config + crate::Config,
 		RuntimeCallFor<T>: From<crate::Call<T>>,
+		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
 )]
 mod benchmarks {
@@ -203,9 +208,9 @@ mod benchmarks {
 		let (id, origin) = create_community::<T>(RawOrigin::Root.into(), None)?;
 
 		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
-		let membership_id = T::BenchmarkHelper::membership_id(id, 0);
+		let membership_id = MembershipIdOf::<T>::from(0);
 
-		T::BenchmarkHelper::issue_membership(id, membership_id.clone())?;
+		T::BenchmarkHelper::issue_membership(id, membership_id)?;
 
 		#[extrinsic_call]
 		_(origin.into_caller(), T::Lookup::unlookup(who.clone()));
@@ -214,11 +219,11 @@ mod benchmarks {
 		assert_has_event::<T>(
 			Event::MemberAdded {
 				who: who.clone(),
-				membership_id: membership_id.clone(),
+				membership_id,
 			}
 			.into(),
 		);
-		assert!(Communities::<T>::has_membership(&who, membership_id));
+		assert!(T::MemberMgmt::has_membership(&who, &membership_id).is_some());
 
 		Ok(())
 	}
@@ -229,93 +234,75 @@ mod benchmarks {
 		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) = create_community::<T>(RawOrigin::Root.into(), None)?;
 
 		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
-		let membership_id = T::BenchmarkHelper::membership_id(id, 0);
+		let membership_id = MembershipIdOf::<T>::from(0);
 
-		T::BenchmarkHelper::issue_membership(id, membership_id.clone())?;
+		T::BenchmarkHelper::issue_membership(id, membership_id)?;
 
 		Communities::<T>::add_member(origin.clone(), T::Lookup::unlookup(who.clone()))?;
 
 		#[extrinsic_call]
-		_(
-			origin.into_caller(),
-			T::Lookup::unlookup(who.clone()),
-			membership_id.clone(),
-		);
+		_(origin.into_caller(), T::Lookup::unlookup(who.clone()), membership_id);
 
 		// verification code
 		assert_has_event::<T>(
 			Event::MemberRemoved {
 				who: who.clone(),
-				membership_id: membership_id.clone(),
+				membership_id,
 			}
 			.into(),
 		);
-		assert!(!Communities::<T>::has_membership(&who, membership_id));
+		assert!(T::MemberMgmt::has_membership(&who, &membership_id).is_none());
 
 		Ok(())
 	}
 
 	#[benchmark]
-	fn promote_member() -> Result<(), BenchmarkError> {
+	fn promote() -> Result<(), BenchmarkError> {
 		// setup code
 		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) = create_community::<T>(RawOrigin::Root.into(), None)?;
 
 		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
-		let membership_id = T::BenchmarkHelper::membership_id(id, 0);
+		let membership_id = MembershipIdOf::<T>::from(0);
 
-		T::BenchmarkHelper::issue_membership(id, membership_id.clone())?;
+		T::BenchmarkHelper::issue_membership(id, membership_id)?;
 
 		Communities::<T>::add_member(origin.clone(), T::Lookup::unlookup(who.clone()))?;
 
 		#[extrinsic_call]
-		_(
-			origin.into_caller(),
-			T::Lookup::unlookup(who.clone()),
-			membership_id.clone(),
-		);
+		_(origin.into_caller(), membership_id);
 
 		// verification code
 		let (_, m) = T::MemberMgmt::user_memberships(&who, Some(id))
 			.next()
 			.ok_or::<frame_support::pallet_prelude::DispatchError>(Error::<T>::NotAMember.into())?;
-		let rank = T::MemberMgmt::rank_of(&id, &m);
+		let rank = T::MemberMgmt::rank_of(&id, &m).expect("has rank");
 
-		assert_has_event::<T>(
-			Event::MembershipRankUpdated {
-				membership_id: membership_id.clone(),
-				rank,
-			}
-			.into(),
-		);
+		assert_has_event::<T>(Event::MembershipRankUpdated { membership_id, rank }.into());
 
-		assert_eq!(Communities::<T>::member_rank(&who, membership_id), rank);
+		assert_eq!(Communities::<T>::member_rank(&id, &membership_id), rank);
 
 		Ok(())
 	}
 
 	#[benchmark]
-	fn demote_member() -> Result<(), BenchmarkError> {
+	fn demote() -> Result<(), BenchmarkError> {
 		// setup code
 		let (id, origin): (CommunityIdOf<T>, OriginFor<T>) = create_community::<T>(RawOrigin::Root.into(), None)?;
 
 		let who: AccountIdOf<T> = frame_benchmarking::account("community_benchmarking", 0, 0);
-		let membership_id = T::BenchmarkHelper::membership_id(id, 0);
+		let membership_id = MembershipIdOf::<T>::from(0);
 
-		T::BenchmarkHelper::issue_membership(id, membership_id.clone())?;
+		T::BenchmarkHelper::issue_membership(id, membership_id)?;
 
 		Communities::<T>::add_member(origin.clone(), T::Lookup::unlookup(who.clone()))?;
 
-		Communities::<T>::promote_member(origin.clone(), T::Lookup::unlookup(who.clone()), membership_id.clone())?;
+		Communities::<T>::promote(origin.clone(), membership_id)?;
 
 		#[extrinsic_call]
-		_(
-			origin.into_caller(),
-			T::Lookup::unlookup(who.clone()),
-			membership_id.clone(),
-		);
+		_(origin.into_caller(), membership_id);
 
 		// verification code
-		assert_eq!(Communities::<T>::member_rank(&who, membership_id), 0.into());
+		assert_eq!(Communities::<T>::member_rank(&id, &membership_id), 0.into());
 
 		Ok(())
 	}
@@ -336,7 +323,7 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(
 			RawOrigin::Signed(who.clone()),
-			membership_id.clone(),
+			membership_id,
 			0u32,
 			Vote::Standard(true),
 		);
@@ -345,7 +332,7 @@ mod benchmarks {
 		assert_has_event::<T>(
 			Event::VoteCasted {
 				who: who.clone(),
-				poll_index: 0u32.into(),
+				poll_index: 0u32,
 				vote: Vote::Standard(true),
 			}
 			.into(),
@@ -369,19 +356,19 @@ mod benchmarks {
 
 		Communities::<T>::vote(
 			RawOrigin::Signed(who.clone()).into(),
-			membership_id.clone(),
+			membership_id,
 			0u32,
 			Vote::Standard(true),
 		)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(who.clone()), membership_id.clone(), 0u32);
+		_(RawOrigin::Signed(who.clone()), membership_id, 0u32);
 
 		// verification code
 		assert_has_event::<T>(
 			Event::VoteRemoved {
 				who: who.clone(),
-				poll_index: 0u32.into(),
+				poll_index: 0u32,
 			}
 			.into(),
 		);
@@ -404,7 +391,7 @@ mod benchmarks {
 
 		Communities::<T>::vote(
 			RawOrigin::Signed(who.clone()).into(),
-			membership_id.clone(),
+			membership_id,
 			0u32,
 			Vote::NativeBalance(true, 1u32.into()),
 		)?;

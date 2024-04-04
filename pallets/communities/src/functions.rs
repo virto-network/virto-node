@@ -34,9 +34,8 @@ impl<T: Config> Pallet<T> {
 		T::MemberMgmt::rank_of(community_id, m).unwrap_or_default()
 	}
 
-	pub fn get_memberships(who: &AccountIdOf<T>, community_id: T::CommunityId) -> Vec<MembershipIdOf<T>> {
-		T::MemberMgmt::user_memberships(who, None)
-			.filter(|(c, _)| c == &community_id)
+	pub fn get_memberships(community_id: T::CommunityId, who: &AccountIdOf<T>) -> Vec<MembershipIdOf<T>> {
+		T::MemberMgmt::user_memberships(who, Some(community_id))
 			.map(|(_, m)| m)
 			.collect::<Vec<_>>()
 	}
@@ -81,9 +80,9 @@ impl<T: Config> Pallet<T> {
 		poll_index: PollIndexOf<T>,
 		vote: VoteOf<T>,
 	) -> DispatchResult {
-		let community_id = CommunityIdOf::<T>::from(membership_id);
-		ensure!(T::MemberMgmt::is_member_of(&community_id, who), Error::<T>::NotAMember);
-
+		let Some(community_id) = T::MemberMgmt::has_membership(who, &membership_id) else {
+			return Err(Error::<T>::NotAMember.into());
+		};
 		if VoteWeight::from(vote.clone()) == 0 {
 			return Err(TokenError::BelowMinimum.into());
 		}
@@ -167,8 +166,9 @@ impl<T: Config> Pallet<T> {
 		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
-		let community_id = CommunityIdOf::<T>::from(membership_id);
-		ensure!(T::MemberMgmt::is_member_of(&community_id, who), Error::<T>::NotAMember);
+		let Some(community_id) = T::MemberMgmt::has_membership(who, &membership_id) else {
+			return Err(Error::<T>::NotAMember.into());
+		};
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let res = if let Some((tally, class)) = poll_status.ensure_ongoing() {

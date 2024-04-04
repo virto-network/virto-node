@@ -161,9 +161,6 @@ pub trait BenchmarkHelper<T: Config> {
 	/// as well as the caller
 	fn community_origin(decision_method: DecisionMethodFor<T>) -> OriginFor<T>;
 
-	/// Returns a new membership ID for a community with a given index.
-	fn membership_id(community_id: CommunityIdOf<T>, index: u32) -> MembershipIdOf<T>;
-
 	/// Initializes the membership collection of a community.
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;
 
