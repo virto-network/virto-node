@@ -205,7 +205,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// This type represents an unique ID for the community
-		type CommunityId: Parameter + MaxEncodedLen + Copy + From<MembershipIdOf<Self>>;
+		type CommunityId: Parameter + MaxEncodedLen + Copy;
 
 		/// This type represents an unique ID to identify a membership within a
 		/// community
@@ -473,8 +473,10 @@ pub mod pallet {
 		pub fn promote(origin: OriginFor<T>, membership_id: MembershipIdOf<T>) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 
-			let rank = T::MemberMgmt::rank_of(&community_id, &membership_id).ok_or(Error::<T>::NotAMember)?;
-			T::MemberMgmt::set_rank(&community_id, &membership_id, rank.promote_by(ONE))?;
+			let rank = T::MemberMgmt::rank_of(&community_id, &membership_id)
+				.ok_or(Error::<T>::NotAMember)?
+				.promote_by(ONE);
+			T::MemberMgmt::set_rank(&community_id, &membership_id, rank)?;
 
 			Self::deposit_event(Event::MembershipRankUpdated { membership_id, rank });
 			Ok(())

@@ -141,7 +141,7 @@ impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksH
 		COMMUNITY
 	}
 	fn item(i: u16) -> MembershipId {
-		MembershipId(COMMUNITY, i.into())
+		i as MembershipId
 	}
 }
 
@@ -242,7 +242,7 @@ pub struct TracksBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
 impl pallet_referenda_tracks::BenchmarkHelper<Test> for TracksBenchmarkHelper {
 	fn track_id(id: u32) -> TrackIdOf<Test, ()> {
-		CommunityId::new(id.saturated_into())
+		id.saturated_into()
 	}
 }
 
@@ -288,7 +288,7 @@ impl pallet_referenda::Config for Test {
 
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
-	pub const MembershipsManagerCollectionId: CommunityId = CommunityId::new(0);
+	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = COMMUNITY;
 }
@@ -332,10 +332,6 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 		origin.with_decision_method(decision_method);
 
 		origin.into()
-	}
-
-	fn membership_id(community_id: CommunityIdOf<Test>, index: u32) -> MembershipIdOf<Test> {
-		MembershipId(community_id, index)
 	}
 
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
@@ -438,7 +434,7 @@ impl pallet_communities::Config for Test {
 	type BenchmarkHelper = CommunityBenchmarkHelper;
 }
 
-pub const COMMUNITY: CommunityId = CommunityId::new(1);
+pub const COMMUNITY: CommunityId = 1;
 pub const COMMUNITY_ORIGIN: OriginCaller =
 	OriginCaller::Communities(pallet_communities::Origin::<Test>::new(COMMUNITY));
 

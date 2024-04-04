@@ -35,7 +35,7 @@ use ::{
 
 parameter_types! {
   pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
-	pub const MembershipsCollectionId: CommunityId = CommunityId::new(0);
+	pub const MembershipsCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 }
 
@@ -95,7 +95,7 @@ pub struct CommunityBenchmarkHelper;
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 	fn community_id() -> CommunityIdOf<Runtime> {
-		CommunityId::new(1)
+		1
 	}
 	fn community_asset_id() -> AssetIdOf<Runtime> {
 		1u32.into()
@@ -107,10 +107,6 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		let mut origin = Origin::<Runtime>::new(Self::community_id());
 		origin.with_decision_method(decision_method.clone());
 		origin.into()
-	}
-
-	fn membership_id(community_id: CommunityIdOf<Runtime>, index: u32) -> MembershipIdOf<Runtime> {
-		MembershipId(community_id, index)
 	}
 
 	fn initialize_memberships_collection() -> Result<(), BenchmarkError> {

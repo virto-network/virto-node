@@ -51,9 +51,6 @@ impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksH
 		<Runtime as pallet_communities::Config>::BenchmarkHelper::community_id()
 	}
 	fn item(i: u16) -> MembershipId {
-		MembershipId(
-			<Runtime as pallet_communities::Config>::BenchmarkHelper::community_id(),
-			i.into(),
-		)
+		i.into()
 	}
 }

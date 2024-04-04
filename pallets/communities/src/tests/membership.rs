@@ -8,8 +8,8 @@ use virto_common::MembershipId;
 const COMMUNITY_NON_MEMBER: AccountId = AccountId::new([0; 32]);
 const COMMUNITY_MEMBER_1: AccountId = AccountId::new([1; 32]);
 const COMMUNITY_MEMBER_2: AccountId = AccountId::new([2; 32]);
-const MEMBERSHIP_1: MembershipId = MembershipId(COMMUNITY, 1);
-const MEMBERSHIP_2: MembershipId = MembershipId(COMMUNITY, 2);
+const MEMBERSHIP_1: MembershipId = 1;
+const MEMBERSHIP_2: MembershipId = 2;
 
 mod add_member {
 	use super::*;
@@ -59,8 +59,8 @@ mod add_member {
 			// Fails to add a member twice
 			assert_ok!(Communities::add_member(COMMUNITY_ORIGIN.into(), COMMUNITY_MEMBER_1));
 			assert_eq!(
-				Communities::get_memberships(&COMMUNITY_MEMBER_1, COMMUNITY),
-				vec![MEMBERSHIP_1, MEMBERSHIP_2]
+				Communities::get_memberships(COMMUNITY, &COMMUNITY_MEMBER_1),
+				vec![MEMBERSHIP_2, MEMBERSHIP_1]
 			);
 		});
 	}
