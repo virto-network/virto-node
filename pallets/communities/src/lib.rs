@@ -1,9 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 //! # Communities Pallet
 //!
-//! Part of the People Local Interactions Protocol, this pallet enables people
-//! to unite and create local communities that share a common interest or
-//! economic activity. In simpler terms, it can be considered a DAO Factory.
+//! This pallet enables people to form dynamic collectives refered to as
+//! communities. In simpler terms, it can be considered a DAO Factory.
 //!
 //! - [`Call`]
 //! - [`Config`]
@@ -15,7 +14,6 @@
 //! (and its associated account) which can interect with other systems:
 //!
 //! - Community registration and removal.
-//! - Validating a community challenge.
 //! - Enrolling/removing members from a community.
 //! - Promoting/demoting members within the community.
 //! - Voting on proposals to enable community governance.
@@ -25,50 +23,34 @@
 //! - **Community:** An entity comprised of _members_ —each one defined by their
 //!   [`AccountId`][1]— with a given _description_ who can vote on _proposals_
 //!   and actively take decisions on behalf of it. Communities are given a
-//!   _treasury account_ and can issue tokens. Communities can be challenged to
-//!   decide if they should stay active.
+//!   _treasury account_ they can use to hold assets.
 //! - **Community Description:** A set of metadata used to identify a community
 //!   distinctively. Typically, a name, a description and a URL.
-//! - **Community Status:** A community can be either `awaiting`, `active`, or
-//!   `frozen` depending on whether the community has proven via a challenge
-//!   it's actively contributing to the network with infrastructure provisioning
-//!   (i.e. a [collator][3] node) or by depositing funds.
-//! - **Validity Challenge:** A proof that a community is actively contributing
-//!   to the network. It's possible for a trusted origin to manually mark a
-//!   community challenge as passed, effectively changing the status of the
-//!   community to `active`.
-//! - **Admin:** An [`AccountId`][1] registered into the community that is set
-//!   as such. Can call [privileged functions](#privileged-functions) within the
-//!   community.
+//! - **Community Status:** A community can be either `active` or `blocked`.
 //! - **Member:** An [`AccountId`][1] registered into the community as such. Can
 //!   have a rank within it and vote in the community's polls.
 //! - **Member Rank:** Members could have a rank within the community. This can
 //!   determine a voting weight depending on the community's voting mechanism.
-//! - **Proposal:** A poll with an optionally set duration that executes a
-//!   [call][4] dispatch if approved when it's closed.
-//! - **Treasury Account:** A keyless [`AccountId`][1] generated on behalf of
-//!   the community. Can receive [payments][5], transfers, or payment [fees][6].
-//!   It can transfer funds via a privileged call executed by the community
-//!   _admin_ or a call dispatched from a proposal.
-//! - **Voting Method:** Can be either rank weighed, member-counted, or
+//! - **Proposal:** A poll that executes a [call][2] dispatch if approved when
+//!   it's closed.
+//! - **Community Account:** A keyless [`AccountId`][1] generated on behalf of
+//!   the community. Like any regular account can hold balances. It can transfer
+//!   funds via a privileged call executed by the community _admin_ or a call
+//!   dispatched from a proposal.
+//! - **Decision Method:** Can be either rank weighed, member-counted, or
 //!   asset-weighed and determines how the votes of proposals will be tallied.
 //!
 //! ## Lifecycle
 //!
 //! ```ignore
-//! [       ] --> [Awaiting]              --> [Active]            --> [Frozen]      --> [Blocked]
-//! apply_for     set_metadata                set_metadata            set_metadata      unblock
-//!               fulfill_challenge           block                   block
-//!               force_complete_challenge    add_member              thaw
+//! [       ] --> [Pending]               --> [Active]            --> [Blocked]
+//! create        set_metadata                set_metadata            unblock
+//!                                           block                   
+//!                                           add_member              
 //!                                           remove_member
-//!                                           promote_member
-//!                                           demote_member
-//!                                           open_proposal
-//!                                           vote_proposal
-//!                                           close_proposal
-//!                                           set_admin
+//!                                           promote
+//!                                           demote
 //!                                           set_voting_mechanism
-//!                                           freeze
 //! ```
 //!
 //! ## Implementations
@@ -80,20 +62,16 @@
 //! ### Permissionless Functions
 //!
 //! - [`apply_for`][c00]: Registers an appliation as a new community, taking an
-//!   [existential deposit][8] used to create the community account.
+//!   [existential deposit][3] used to create the community account.
 //!
 //! ### Permissioned Functions
 //!
 //! Calling these functions requires being a member of the community.
 //!
-//! - `fulfill_challenge`: Submit the challenge proof to validate the
-//!   contribution status of the community.
 //! - [`add_member`][c02]: Enroll an account as a community member. In theory,
 //!   any community member should be able to add a member. However, this can be
 //!   changed to ensure it is a privileged function.
-//! - `open_proposal`: Creates a proposal to be voted by the community. At
-//! this point, there can only be a single proposal at a time.
-//! - `vote_proposal`: Adds a vote into a community proposal.
+//! - `vote`: Adds a vote into a community proposal.
 //!
 //! ### Privileged Functions
 //!
@@ -108,26 +86,9 @@
 //!   any community member. Also, it shouldn't be possible to arbitrarily remove
 //!   the community admin, as some privileged calls would be impossible execute
 //!   thereafter.
-//! - `promote_member`: Increases the rank of a member in the community. ! -
-//!   `demote_member`: Decreases the rank of a member in the community.
-//! - `issue_token`: Creates a token that is either governance (only one per
-//!   community allowed) or economic. While the first economic token is
-//!   _"free"_," further ones would be subject to network-wide referenda.
-//! - `close_proposal`: Forcefully closes a proposal, dispatching the call when
-//!   approved.
-//! - `set_sufficient_asset`: Marks an [asset][7] issued by the community as
-//!   sufficient. Only one asset at a time can be marked as such.
-//! - `set_admin`: Sets an [`AccountId`][1] of the _admin_ of the community.
-//!   Ensures that the specified account is a member of the community.
-//! - `set_voting_mechanism`: Transfers funds from the treasury account to a
-//!   beneficiary.
-//!
-//! ### Root Functions
-//!
-//! - `force_complete_challenge`: Marks a challenge as passed. This can lead to
-//!   the activation of a community if all challenges are passed.
-//! - `force_increase_economic_token_limit`: Increases the amount of economic
-//!   tokens a community can issue.
+//! - `promote`: Increases the rank of a member in the community.
+//! - `demote`: Decreases the rank of a member in the community.
+//! - `set_decision_method`: Means for a community to make decisions.
 //!
 //! ### Public Functions
 //!
@@ -135,25 +96,16 @@
 //!   value exists for a specified [`ComumunityId`][t00], this means a community
 //!   exists.
 //! - [`metadata`][g01]: Stores the metadata regarding a community.
-//! - [`membership`][g02]: Stores the information of a community (specified by
-//!   its [`CommunityId`][t00]) member (specified by it's [`AccountId`][1]).
-//! - [`members_count`][g03]: Stores the count of community members. This
-//!   simplifies the process of keeping track of members' count.
 //!
 //! <!-- References -->
 //! [1]: `frame_system::Config::AccountId`
-//! [2]: https://h3geo.org/docs/highlights/indexing
-//! [3]: https://docs.substrate.io/reference/glossary/#collator
-//! [4]: https://docs.substrate.io/reference/glossary/#call
-//! [5]: https://github.com/virto-network/virto-node/tree/master/pallets/payments
-//! [6]: https://github.com/virto-network/virto-node/pull/282
-//! [7]: https://paritytech.github.io/substrate/master/pallet_assets/index.html#terminology
-//! [8]: https://docs.substrate.io/reference/glossary/#existential-deposit
+//! [2]: https://docs.substrate.io/reference/glossary/#call
+//! [3]: https://docs.substrate.io/reference/glossary/#existential-deposit
 //!
 //! [t00]: `Config::CommunityId`
 //! [t01]: `types::CommunityMetadata`
 //!
-//! [c00]: `crate::Pallet::apply`
+//! [c00]: `crate::Pallet::create`
 //! [c01]: `crate::Pallet::set_metadata`
 //! [c02]: `crate::Pallet::add_member`
 //! [c03]: `crate::Pallet::remove_member`
@@ -421,7 +373,7 @@ pub mod pallet {
 
 		/// Enroll an account as a community member that receives a membership
 		/// from the available pool of memberships of the community.
-		#[pallet::call_index(2)]
+		#[pallet::call_index(3)]
 		pub fn add_member(origin: OriginFor<T>, who: AccountIdLookupOf<T>) -> DispatchResult {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			let who = T::Lookup::lookup(who)?;
@@ -444,7 +396,7 @@ pub mod pallet {
 		/// arbitrarily by any community member. Also, it shouldn't be possible
 		/// to arbitrarily remove the community admin, as some privileged calls
 		/// would be impossible to execute thereafter.
-		#[pallet::call_index(3)]
+		#[pallet::call_index(4)]
 		pub fn remove_member(
 			origin: OriginFor<T>,
 			who: AccountIdLookupOf<T>,
@@ -504,7 +456,7 @@ pub mod pallet {
 		}
 
 		/// Cast a vote on an on-going referendum
-		#[pallet::call_index(4)]
+		#[pallet::call_index(8)]
 		pub fn vote(
 			origin: OriginFor<T>,
 			membership_id: MembershipIdOf<T>,
@@ -521,8 +473,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		///
-		#[pallet::call_index(8)]
+		/// Remove any previous vote on a given referendum
+		#[pallet::call_index(9)]
 		pub fn remove_vote(
 			origin: OriginFor<T>,
 			membership_id: MembershipIdOf<T>,
@@ -539,7 +491,7 @@ pub mod pallet {
 
 		/// Make previously held or locked funds from a vote available
 		// if the refereundum  has finished
-		#[pallet::call_index(9)]
+		#[pallet::call_index(10)]
 		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
