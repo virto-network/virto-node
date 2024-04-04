@@ -110,7 +110,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			COMMUNITY_B,
 			DecisionMethod::CommunityAsset(COMMUNITY_B_ASSET_ID),
 			&[BOB, CHARLIE],
-			&memberships_of(COMMUNITY_B),
+			memberships_of(COMMUNITY_B),
 			Some(CommunityTrack::get()),
 		)
 		.add_asset(

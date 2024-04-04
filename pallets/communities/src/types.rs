@@ -80,27 +80,35 @@ pub enum Vote<AssetId, AssetBalance, NativeBalance> {
 	Standard(bool),
 }
 
-impl<A, B, N> From<Vote<A, B, N>> for VoteWeight
+impl<A, B, N> Vote<A, B, N>
 where
-	B: UniqueSaturatedInto<VoteWeight>,
-	N: UniqueSaturatedInto<VoteWeight>,
+	B: UniqueSaturatedInto<VoteWeight> + Clone,
+	N: UniqueSaturatedInto<VoteWeight> + Clone,
 {
-	fn from(value: Vote<A, B, N>) -> Self {
-		match value {
-			Vote::AssetBalance(_, _, balance) => balance.saturated_into(),
-			Vote::NativeBalance(_, balance) => balance.saturated_into(),
+	pub fn say(&self) -> bool {
+		*match self {
+			Vote::AssetBalance(say, _, _) => say,
+			Vote::NativeBalance(say, _) => say,
+			Vote::Standard(say) => say,
+		}
+	}
+
+	pub fn weight(&self) -> VoteWeight {
+		match self {
+			Vote::AssetBalance(_, _, balance) => balance.clone().saturated_into(),
+			Vote::NativeBalance(_, balance) => balance.clone().saturated_into(),
 			Vote::Standard(_) => 1,
 		}
 	}
 }
 
-impl<A, B, N> From<Vote<A, B, N>> for bool {
-	fn from(value: Vote<A, B, N>) -> bool {
-		match value {
-			Vote::AssetBalance(say, _, _) => say,
-			Vote::NativeBalance(say, _) => say,
-			Vote::Standard(say) => say,
-		}
+impl<A, B, N> From<&Vote<A, B, N>> for VoteWeight
+where
+	B: UniqueSaturatedInto<VoteWeight> + Clone,
+	N: UniqueSaturatedInto<VoteWeight> + Clone,
+{
+	fn from(vote: &Vote<A, B, N>) -> Self {
+		vote.weight()
 	}
 }
 
