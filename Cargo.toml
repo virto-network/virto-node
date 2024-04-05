@@ -137,6 +137,7 @@ pallet-multisig = { default-features = false, git = "https://github.com/virto-ne
 pallet-nfts = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-preimage = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-proxy = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
+pallet-ranked-collective = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-referenda = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-remark = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-scheduler = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }

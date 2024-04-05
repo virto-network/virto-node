@@ -71,6 +71,9 @@ pub use polkadot_runtime_common::{prod_or_fast, BlockHashCount, SlowAdjustingFee
 
 pub use weights::{BlockExecutionWeight, ExtrinsicBaseWeight};
 
+// Kreivo Governance
+pub mod collective;
+
 // Virto toolchain
 pub mod payments;
 
@@ -196,6 +199,8 @@ construct_runtime!(
 
 		// Governance
 		Treasury: pallet_treasury = 50,
+		KreivoCollective: pallet_ranked_collective::<Instance1> = 51,
+		KreivoReferenda: pallet_referenda::<Instance1> = 52,
 
 		// Virto Tooling
 		Payments: pallet_payments = 60,
@@ -703,6 +708,8 @@ mod benches {
 		[pallet_utility, Utility]
 		[pallet_assets, Assets]
 		[pallet_proxy, Proxy]
+		[pallet_referenda, KreivoReferenda]
+		[pallet_ranked_collective, KreivoCollective]
 		[pallet_payments, Payments]
 		[pallet_communities, Communities]
 		[pallet_referenda_tracks, CommunityTracks]
