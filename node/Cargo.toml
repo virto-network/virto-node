@@ -102,9 +102,25 @@ polkadot-cli = { workspace = true }
 [features]
 default = ["kreivo-runtime"]
 runtime-benchmarks = [
+	"cumulus-primitives-core/runtime-benchmarks",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-benchmarking-cli/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
 	"kreivo-runtime?/runtime-benchmarks",
-	"polkadot-cli/runtime-benchmarks"
+	"pallet-asset-tx-payment/runtime-benchmarks",
+	"parachains-common/runtime-benchmarks",
+	"polkadot-cli/runtime-benchmarks",
+	"polkadot-primitives/runtime-benchmarks",
+	"polkadot-service/runtime-benchmarks",
+	"sc-service/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
-	"kreivo-runtime?/try-runtime"
+	"frame-system/try-runtime",
+	"kreivo-runtime?/try-runtime",
+	"pallet-asset-tx-payment/try-runtime",
+	"polkadot-cli/try-runtime",
+	"polkadot-service/try-runtime",
+	"sp-runtime/try-runtime",
+	"try-runtime-cli/try-runtime",
 ]

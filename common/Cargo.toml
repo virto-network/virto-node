@@ -22,6 +22,7 @@ frame-support = { workspace = true, features = ["std"] }
 [features]
 default = ["std"]
 std = [
+  "bs58/std",
   "cumulus-primitives-core?/std",
   "frame-support?/std",
   "pallet-payments?/std",

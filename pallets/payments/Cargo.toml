@@ -36,22 +36,41 @@ pallet-scheduler= { workspace = true }
 default = ["std"]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
-	"pallet-assets/runtime-benchmarks"
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-assets/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-sudo/runtime-benchmarks",
+	"pallet-preimage/runtime-benchmarks",
+	"pallet-scheduler/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
 std = [
-	"parity-scale-codec/std",
-	"scale-info/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
-	"sp-runtime/std",
+	"log/std",
+	"pallet-assets/std",
 	"pallet-balances/std",
 	"pallet-sudo/std",
-	"pallet-assets/std",
 	"pallet-preimage/std",
 	"pallet-scheduler/std",
-	"sp-std/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"serde/std",
 	"sp-core/std",
 	"sp-io/std",
+	"sp-keystore/std",
+	"sp-runtime/std",
+	"sp-std/std",
 ]
-try-runtime = [ "frame-support/try-runtime" ]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-assets/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-preimage/try-runtime",
+	"pallet-scheduler/try-runtime",
+	"pallet-sudo/try-runtime",
+	"sp-runtime/try-runtime",
+]
