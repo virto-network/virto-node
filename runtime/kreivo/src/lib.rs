@@ -199,9 +199,8 @@ construct_runtime!(
 
 		// Governance
 		Treasury: pallet_treasury = 50,
-		KreivoCollective: pallet_ranked_collective::<Instance3> = 51,
-		KreivoReferenda: pallet_referenda::<Instance3> = 52,
-		KreivoTracks: pallet_referenda_tracks::<Instance3> = 53,
+		KreivoCollective: pallet_ranked_collective::<Instance1> = 51,
+		KreivoReferenda: pallet_referenda::<Instance1> = 52,
 
 		// Virto Tooling
 		Payments: pallet_payments = 60,
@@ -710,7 +709,6 @@ mod benches {
 		[pallet_assets, Assets]
 		[pallet_proxy, Proxy]
 		[pallet_referenda, KreivoReferenda]
-		[pallet_referenda_tracks, KreivoTracks]
 		[pallet_ranked_collective, KreivoCollective]
 		[pallet_payments, Payments]
 		[pallet_communities, Communities]

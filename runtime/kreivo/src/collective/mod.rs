@@ -4,8 +4,9 @@ use frame_system::EnsureRootWithSuccess;
 use sp_core::ConstU16;
 
 pub mod governance;
+pub mod tracks;
 
-pub type KreivoCollectiveInstance = pallet_ranked_collective::Instance3;
+pub type KreivoCollectiveInstance = pallet_ranked_collective::Instance1;
 impl pallet_ranked_collective::Config<KreivoCollectiveInstance> for Runtime {
 	type WeightInfo = pallet_ranked_collective::weights::SubstrateWeight<Self>;
 	type RuntimeEvent = RuntimeEvent;
