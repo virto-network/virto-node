@@ -45,13 +45,13 @@ const CHARLIE: AccountId = AccountId::new([3; 32]);
 
 parameter_types! {
 	pub OriginForCommunityA: Box<OriginCaller> =
-		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_A, &DecisionMethod::Membership).caller().clone());
+		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_A).caller().clone());
 	pub OriginForCommunityB: Box<OriginCaller> =
-		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_B, &DecisionMethod::CommunityAsset(COMMUNITY_B_ASSET_ID)).caller().clone());
+		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_B).caller().clone());
 	pub OriginForCommunityC: Box<OriginCaller> =
-		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_C, &DecisionMethod::NativeToken).caller().clone());
+		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_C).caller().clone());
 	pub OriginForCommunityD: Box<OriginCaller> =
-		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_D, &DecisionMethod::Rank).caller().clone());
+		Box::new(TestEnvBuilder::create_community_origin(&COMMUNITY_D).caller().clone());
 
 	pub CommunityTrack: TrackInfoOf<Test> = TrackInfo {
 		name: s("Community"),

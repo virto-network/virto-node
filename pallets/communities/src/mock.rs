@@ -297,8 +297,8 @@ type MembershipCollection = ItemOf<Nfts, MembershipsManagerCollectionId, Account
 
 #[cfg(feature = "runtime-benchmarks")]
 use crate::{
-	types::{AssetIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, PollIndexOf},
-	BenchmarkHelper, Origin,
+	types::{AssetIdOf, CommunityIdOf, MembershipIdOf, PollIndexOf},
+	BenchmarkHelper,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -325,13 +325,6 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 
 	fn community_desired_size() -> u32 {
 		u8::MAX as u32
-	}
-
-	fn community_origin(decision_method: DecisionMethodFor<Test>) -> OriginFor<Test> {
-		let mut origin = Origin::<Test>::new(Self::community_id());
-		origin.with_decision_method(decision_method);
-
-		origin.into()
 	}
 
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError> {
@@ -546,7 +539,7 @@ impl TestEnvBuilder {
 					.decision_methods
 					.get(community_id)
 					.expect("should include decision_method on add_community");
-				let community_origin: RuntimeOrigin = Self::create_community_origin(community_id, decision_method);
+				let community_origin: RuntimeOrigin = Self::create_community_origin(community_id);
 
 				Communities::create(RuntimeOrigin::root(), community_origin.caller().clone(), *community_id)
 					.expect("can add community");
@@ -618,13 +611,7 @@ impl TestEnvBuilder {
 		)
 	}
 
-	pub fn create_community_origin(
-		community_id: &CommunityId,
-		decision_method: &DecisionMethod<AssetId>,
-	) -> RuntimeOrigin {
-		let mut origin = pallet_communities::Origin::<Test>::new(*community_id);
-		origin.with_decision_method(decision_method.clone());
-
-		origin.into()
+	pub fn create_community_origin(community_id: &CommunityId) -> RuntimeOrigin {
+		pallet_communities::Origin::<Test>::new(*community_id).into()
 	}
 }

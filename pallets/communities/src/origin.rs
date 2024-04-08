@@ -1,5 +1,5 @@
 use crate::{
-	types::{AssetIdOf, CommunityIdOf, CommunityState::Active, MembershipIdOf},
+	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf},
 	CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
@@ -78,7 +78,6 @@ where
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
 pub struct RawOrigin<T: Config> {
 	community_id: CommunityIdOf<T>,
-	method: DecisionMethod<AssetIdOf<T>>,
 	subset: Option<Subset<T>>,
 }
 
@@ -86,7 +85,6 @@ impl<T: Config> RawOrigin<T> {
 	pub const fn new(community_id: CommunityIdOf<T>) -> Self {
 		RawOrigin {
 			community_id,
-			method: DecisionMethod::Membership,
 			subset: None,
 		}
 	}
@@ -95,16 +93,8 @@ impl<T: Config> RawOrigin<T> {
 		self.subset = Some(s);
 	}
 
-	pub fn with_decision_method(&mut self, m: DecisionMethod<AssetIdOf<T>>) {
-		self.method = m;
-	}
-
 	pub fn id(&self) -> CommunityIdOf<T> {
 		self.community_id
-	}
-
-	pub fn decision_method(&self) -> DecisionMethod<AssetIdOf<T>> {
-		self.method.clone()
 	}
 }
 

@@ -105,12 +105,6 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 	fn community_desired_size() -> u32 {
 		u8::MAX.into()
 	}
-	fn community_origin(decision_method: DecisionMethodFor<Runtime>) -> OriginFor<Runtime> {
-		let mut origin = Origin::<Runtime>::new(Self::community_id());
-		origin.with_decision_method(decision_method.clone());
-		origin.into()
-	}
-
 	fn initialize_memberships_collection() -> Result<(), BenchmarkError> {
 		let collection = MembershipsCollectionId::get();
 		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
