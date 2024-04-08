@@ -23,7 +23,7 @@ use ::{
 	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::ItemOf, tokens::nonfungible_v2::Mutate},
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_communities::{
-		types::{CommunityIdOf, DecisionMethodFor, MembershipIdOf, PalletsOriginOf, PollIndexOf},
+		types::{CommunityIdOf, MembershipIdOf, PalletsOriginOf, PollIndexOf},
 		BenchmarkHelper, Origin,
 	},
 	pallet_nfts::Pallet as Nfts,
