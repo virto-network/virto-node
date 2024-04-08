@@ -6,7 +6,7 @@ use self::{
 	origin::DecisionMethod,
 	types::{
 		AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf, PollIndexOf,
-		Vote,
+		RuntimeCallFor, Vote,
 	},
 	Event, HoldReason, Pallet as Communities,
 };
@@ -20,11 +20,11 @@ use frame_support::{
 	BoundedVec,
 };
 use frame_system::{
-	pallet_prelude::{BlockNumberFor, OriginFor, RuntimeCallFor},
+	pallet_prelude::{BlockNumberFor, OriginFor},
 	RawOrigin,
 };
-use sp_runtime::traits::StaticLookup;
-use sp_std::{vec, vec::Vec};
+use sp_runtime::traits::{Hash, StaticLookup};
+use sp_std::{boxed::Box, vec, vec::Vec};
 
 fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
@@ -136,7 +136,7 @@ where
 #[benchmarks(
 	where
 		T: frame_system::Config + crate::Config,
-		RuntimeCallFor<T>: From<crate::Call<T>>,
+		<T as Config>::RuntimeEvent: From<frame_system::Event<T>>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
 )]
@@ -403,6 +403,27 @@ mod benchmarks {
 			T::Balances::balance_frozen(&HoldReason::VoteCasted(0u32).into(), &who),
 			0u32.into()
 		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn dispatch_as_account() -> Result<(), BenchmarkError> {
+		// setup code
+		let (id, origin) = create_community::<T>(RawOrigin::Root.into(), Some(DecisionMethod::NativeToken))?;
+		let remark = b"Hello, world".to_vec();
+
+		#[extrinsic_call]
+		_(
+			origin.into_caller(),
+			Box::new(frame_system::Call::<T>::remark_with_event { remark: remark.clone() }.into()),
+		);
+
+		// verification code
+		let sender = Communities::<T>::community_account(&id);
+		let hash = <T as frame_system::Config>::Hashing::hash(&remark);
+
+		assert_has_event::<T>(frame_system::Event::<T>::Remarked { sender, hash }.into());
 
 		Ok(())
 	}
