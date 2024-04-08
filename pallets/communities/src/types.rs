@@ -149,7 +149,7 @@ impl<T: Config> Tally<T> {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-use {super::Origin, frame_benchmarking::BenchmarkError, frame_system::pallet_prelude::OriginFor};
+use {frame_benchmarking::BenchmarkError, frame_system::pallet_prelude::OriginFor};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub trait BenchmarkHelper<T: Config> {
@@ -162,15 +162,6 @@ pub trait BenchmarkHelper<T: Config> {
 	/// Returns the desired size of the community for
 	/// effects of benchmark testing
 	fn community_desired_size() -> u32;
-
-	/// Returns the origin for the community
-	/// as well as the caller
-	fn community_origin() -> OriginFor<T>
-	where
-		OriginFor<T>: From<Origin<T>>,
-	{
-		Origin::<T>::new(Self::community_id()).into()
-	}
 
 	/// Initializes the membership collection of a community.
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;

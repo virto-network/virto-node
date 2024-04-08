@@ -56,20 +56,15 @@ fn setup_accounts<T: Config>() -> Result<Vec<AccountIdOf<T>>, BenchmarkError> {
 
 fn community_params<T: Config>(
 	maybe_decision_method: Option<DecisionMethodFor<T>>,
-) -> (
-	CommunityIdOf<T>,
-	DecisionMethodFor<T>,
-	T::RuntimeOrigin,
-	PalletsOriginOf<T>,
-)
+) -> (CommunityIdOf<T>, DecisionMethodFor<T>, OriginFor<T>, PalletsOriginOf<T>)
 where
 	OriginFor<T>: From<Origin<T>>,
 {
 	let community_id = T::BenchmarkHelper::community_id();
 
 	let decision_method = maybe_decision_method.unwrap_or(DecisionMethod::Rank);
-	let admin_origin: T::RuntimeOrigin = T::BenchmarkHelper::community_origin();
-	let admin_origin_caller: PalletsOriginOf<T> = admin_origin.clone().into_caller();
+	let admin_origin: OriginFor<T> = Origin::<T>::new(community_id).into();
+	let admin_origin_caller = admin_origin.clone().into_caller();
 
 	(community_id, decision_method, admin_origin, admin_origin_caller)
 }
