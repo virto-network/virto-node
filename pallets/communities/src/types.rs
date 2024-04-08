@@ -163,10 +163,6 @@ pub trait BenchmarkHelper<T: Config> {
 	/// effects of benchmark testing
 	fn community_desired_size() -> u32;
 
-	/// Returns the origin for the community
-	/// as well as the caller
-	fn community_origin(decision_method: DecisionMethodFor<T>) -> OriginFor<T>;
-
 	/// Initializes the membership collection of a community.
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;
 

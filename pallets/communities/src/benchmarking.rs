@@ -8,7 +8,7 @@ use self::{
 		AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf, PollIndexOf,
 		RuntimeCallFor, Vote,
 	},
-	Event, HoldReason, Pallet as Communities,
+	CommunityDecisionMethod, Event, HoldReason, Pallet as Communities,
 };
 use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
@@ -56,17 +56,15 @@ fn setup_accounts<T: Config>() -> Result<Vec<AccountIdOf<T>>, BenchmarkError> {
 
 fn community_params<T: Config>(
 	maybe_decision_method: Option<DecisionMethodFor<T>>,
-) -> (
-	CommunityIdOf<T>,
-	DecisionMethodFor<T>,
-	T::RuntimeOrigin,
-	PalletsOriginOf<T>,
-) {
+) -> (CommunityIdOf<T>, DecisionMethodFor<T>, OriginFor<T>, PalletsOriginOf<T>)
+where
+	OriginFor<T>: From<Origin<T>>,
+{
 	let community_id = T::BenchmarkHelper::community_id();
 
 	let decision_method = maybe_decision_method.unwrap_or(DecisionMethod::Rank);
-	let admin_origin: T::RuntimeOrigin = T::BenchmarkHelper::community_origin(decision_method.clone());
-	let admin_origin_caller: PalletsOriginOf<T> = admin_origin.clone().into_caller();
+	let admin_origin: OriginFor<T> = Origin::<T>::new(community_id).into();
+	let admin_origin_caller = admin_origin.clone().into_caller();
 
 	(community_id, decision_method, admin_origin, admin_origin_caller)
 }
@@ -76,7 +74,10 @@ fn community_params<T: Config>(
 fn create_community<T: Config>(
 	origin: OriginFor<T>,
 	maybe_decision_method: Option<DecisionMethodFor<T>>,
-) -> Result<(CommunityIdOf<T>, OriginFor<T>), BenchmarkError> {
+) -> Result<(CommunityIdOf<T>, OriginFor<T>), BenchmarkError>
+where
+	OriginFor<T>: From<Origin<T>>,
+{
 	T::BenchmarkHelper::initialize_memberships_collection()?;
 	let (community_id, decision_method, admin_origin, admin_origin_caller) =
 		community_params::<T>(maybe_decision_method);
@@ -136,6 +137,7 @@ where
 #[benchmarks(
 	where
 		T: frame_system::Config + crate::Config,
+		OriginFor<T>: From<Origin<T>>,
 		<T as Config>::RuntimeEvent: From<frame_system::Event<T>>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
@@ -177,9 +179,9 @@ mod benchmarks {
 	#[benchmark]
 	fn set_decision_method() -> Result<(), BenchmarkError> {
 		// setup code
-		let (id, _, _, admin_origin) = community_params::<T>(Default::default());
+		let (id, decision_method, _, admin_origin) = community_params::<T>(None);
 		Communities::<T>::create(RawOrigin::Root.into(), admin_origin, id)?;
-		crate::pallet::CommunityDecisionMethod::<T>::set(id, DecisionMethod::Rank);
+		CommunityDecisionMethod::<T>::set(id, decision_method);
 
 		#[extrinsic_call]
 		_(
