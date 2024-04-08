@@ -140,13 +140,15 @@ pub mod pallet {
 	use core::num::NonZeroU8;
 	use fc_traits_memberships::{self as membership, Inspect, Manager, Rank};
 	use frame_support::{
+		dispatch::{DispatchResultWithPostInfo, GetDispatchInfo, PostDispatchInfo},
 		pallet_prelude::*,
-		traits::{fungible, fungibles, EnsureOrigin, Polling},
+		traits::{fungible, fungibles, EnsureOrigin, IsSubType, Polling},
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
-	use sp_runtime::traits::StaticLookup;
-	use types::{PollIndexOf, *};
+	use sp_runtime::traits::{Dispatchable, StaticLookup};
+	use sp_std::prelude::Box;
+	use types::{PollIndexOf, RuntimeCallFor, *};
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
 
 	#[pallet::pallet]
@@ -191,6 +193,15 @@ pub mod pallet {
 			+ fungible::Mutate<Self::AccountId>
 			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeHoldReason>
 			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
+
+		/// The overarching call type.
+		type RuntimeCall: Parameter
+			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ GetDispatchInfo
+			+ From<Call<Self>>
+			+ From<frame_system::Call<Self>>
+			+ IsSubType<Call<Self>>
+			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
@@ -498,6 +509,20 @@ pub mod pallet {
 			let vote = Self::community_vote_of(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
 
 			Self::do_unlock_for_vote(&who, &poll_index, &vote)
+		}
+
+		/// Dispatch a callable as the community account
+		#[pallet::call_index(11)]
+		#[pallet::weight({
+			let di = call.get_dispatch_info();
+			let weight = T::WeightInfo::dispatch_as_account()
+				.saturating_add(T::DbWeight::get().reads_writes(1, 1))
+				.saturating_add(di.weight);
+			(weight, di.class)
+		})]
+		pub fn dispatch_as_account(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			Self::do_dispatch_as_community_account(&community_id, *call)
 		}
 	}
 }

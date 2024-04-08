@@ -44,6 +44,7 @@ pub trait WeightInfo {
 	fn vote() -> Weight;
 	fn remove_vote() -> Weight;
 	fn unlock() -> Weight;
+	fn dispatch_as_account() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -265,6 +266,14 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
+	fn dispatch_as_account() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `1079`
+		//  Estimated: `9147`
+		// Minimum execution time: 128_764_000 picoseconds.
+		Weight::from_parts(37_944_303, 0)
+			.saturating_add(Weight::from_parts(0, 4065))
+	}
 }
 
 // For backwards compatibility and tests
@@ -484,5 +493,23 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_parts(0, 9147))
 			.saturating_add(RocksDbWeight::get().reads(5))
 			.saturating_add(RocksDbWeight::get().writes(3))
+	}
+	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:0)
+	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
+	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
+	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(103), added: 2578, mode: `MaxEncodedLen`)
+	/// Storage: `Balances::Freezes` (r:1 w:1)
+	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(5682), added: 8157, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `Balances::Locks` (r:1 w:0)
+	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode: `MaxEncodedLen`)
+	fn dispatch_as_account() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `1079`
+		//  Estimated: `9147`
+		// Minimum execution time: 128_764_000 picoseconds.
+		Weight::from_parts(37_944_303, 0)
+			.saturating_add(Weight::from_parts(0, 4065))
 	}
 }

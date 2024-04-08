@@ -22,6 +22,7 @@ pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLo
 pub type PalletsOriginOf<T> =
 	<<T as frame_system::Config>::RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
 pub type MembershipIdOf<T> = <T as Config>::MembershipId;
+pub type RuntimeCallFor<T> = <T as Config>::RuntimeCall;
 
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
@@ -148,10 +149,7 @@ impl<T: Config> Tally<T> {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-use {
-	frame_benchmarking::BenchmarkError,
-	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
-};
+use {frame_benchmarking::BenchmarkError, frame_system::pallet_prelude::OriginFor};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub trait BenchmarkHelper<T: Config> {

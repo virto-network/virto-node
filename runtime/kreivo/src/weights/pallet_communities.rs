@@ -251,4 +251,15 @@ impl<T: frame_system::Config> pallet_communities::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
+	/// Storage: `Communities::CommunityDecisionMethod` (r:0 w:1)
+	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(36), added: 2511, mode: `MaxEncodedLen`)
+	fn dispatch_as_account() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 21_543_000 picoseconds.
+		Weight::from_parts(23_007_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }

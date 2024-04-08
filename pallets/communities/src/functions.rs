@@ -2,19 +2,23 @@ use crate::{
 	origin::DecisionMethod,
 	types::{
 		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, ConstSizedField, MembershipIdOf, PalletsOriginOf,
-		PollIndexOf, Tally, Vote, VoteOf, VoteWeight,
+		PollIndexOf, RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
 	},
 	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Metadata, Pallet,
 };
 use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
+	dispatch::PostDispatchInfo,
 	fail,
 	pallet_prelude::*,
 	traits::{
 		fungible::MutateFreeze as FunMutateFreeze, fungibles::MutateHold as FunsMutateHold, tokens::Precision, Polling,
 	},
 };
-use sp_runtime::{traits::AccountIdConversion, TokenError};
+use sp_runtime::{
+	traits::{AccountIdConversion, Dispatchable},
+	DispatchResultWithInfo, TokenError,
+};
 use sp_std::vec::Vec;
 
 impl<T: Config> Pallet<T> {
@@ -188,6 +192,17 @@ impl<T: Config> Pallet<T> {
 			Vote::NativeBalance(..) => T::Balances::thaw(&reason, who),
 			_ => Err(Error::<T>::NoLocksInPlace.into()),
 		}
+	}
+
+	pub(crate) fn do_dispatch_as_community_account(
+		community_id: &CommunityIdOf<T>,
+		call: RuntimeCallFor<T>,
+	) -> DispatchResultWithInfo<PostDispatchInfo> {
+		let community_account = Self::community_account(community_id);
+		let signer = frame_system::RawOrigin::Signed(community_account);
+
+		let post = call.dispatch(signer.into()).map_err(|e| e.error)?;
+		Ok(post)
 	}
 }
 

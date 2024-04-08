@@ -426,6 +426,7 @@ impl pallet_communities::Config for Test {
 	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 
+	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type WeightInfo = WeightInfo;
