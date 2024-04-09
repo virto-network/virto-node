@@ -1,6 +1,7 @@
 use super::*;
 
 use pallet_communities::origin::AsSignedByCommunity;
+use pallet_ranked_collective::{EnsureMember, TallyOf, Votes};
 use parachains_common::kusama::currency::QUID;
 use sp_core::ConstU128;
 
@@ -20,12 +21,13 @@ impl pallet_referenda::Config<KreivoReferendaInstance> for Runtime {
 	type Scheduler = Scheduler;
 	type Currency = Balances;
 	// Communities can submit proposals.
-	type SubmitOrigin = AsEnsureOriginWithArg<AsSignedByCommunity<Self>>;
+	type SubmitOrigin =
+		AsEnsureOriginWithArg<EitherOf<EnsureMember<Runtime, KreivoCollectiveInstance, 1>, AsSignedByCommunity<Self>>>;
 	type CancelOrigin = EnsureRoot<AccountId>;
 	type KillOrigin = EnsureRoot<AccountId>;
 	type Slash = ();
-	type Votes = pallet_ranked_collective::Votes;
-	type Tally = pallet_ranked_collective::TallyOf<Runtime, KreivoCollectiveInstance>;
+	type Votes = Votes;
+	type Tally = TallyOf<Runtime, KreivoCollectiveInstance>;
 	type SubmissionDeposit = ConstU128<0>;
 	type MaxQueued = ConstU32<10>;
 	type UndecidingTimeout = ConstU32<{ 2 * DAYS }>;
