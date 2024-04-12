@@ -64,7 +64,6 @@ pub fn kreivo_rococo_chain_spec_local() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 		],
-		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		KREIVO_PARA_ID.into(),
 	))
 	.build()
@@ -114,7 +113,6 @@ pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 		],
-		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		KREIVO_PARA_ID.into(),
 	))
 	.build()
@@ -166,7 +164,6 @@ pub fn local_testnet_config() -> ChainSpec {
 			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 		],
-		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		KREIVO_PARA_ID.into(),
 	))
 	.with_protocol_id(DEFAULT_PROTOCOL_ID)
@@ -181,7 +178,6 @@ pub fn kreivo_kusama_chain_spec() -> ChainSpec {
 fn testnet_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
-	root: AccountId,
 	id: ParaId,
 ) -> serde_json::Value {
 	serde_json::json!({
@@ -210,6 +206,5 @@ fn testnet_genesis(
 		"polkadotXcm": {
 			"safeXcmVersion": Some(SAFE_XCM_VERSION),
 		},
-		"sudo": { "key": Some(root) }
 	})
 }
