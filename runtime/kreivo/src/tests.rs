@@ -33,7 +33,7 @@ fn runtime_sanity_call_does_not_exceed_1kb() {
 	// TransactionPayment: pallet_transaction_payment = 11
 	assert_call_size!(pallet_transaction_payment);
 	// Burner: pallet_burner = 12
-	assert_call_size!(pallet_burner);
+	// assert_call_size!(pallet_burner);
 	// Assets: pallet_assets::<Instance1> = 13
 	assert_call_size!(pallet_assets, pallet_assets::Instance1);
 	// AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 14
@@ -59,7 +59,7 @@ fn runtime_sanity_call_does_not_exceed_1kb() {
 	// // AssetRegistry: pallet_asset_registry = 34
 	// assert_call_size!(pallet_asset_registry);
 	// Sudo: pallet_sudo = 40
-	assert_call_size!(pallet_sudo);
+	// assert_call_size!(pallet_sudo);
 	// Multisig: pallet_multisig = 42
 	assert_call_size!(pallet_multisig);
 	// Utility: pallet_utility = 43

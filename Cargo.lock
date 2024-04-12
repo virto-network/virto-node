@@ -4678,7 +4678,7 @@ checksum = "c33070833c9ee02266356de0c43f723152bd38bd96ddf52c82b3af10c9138b28"
 
 [[package]]
 name = "kreivo-runtime"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
@@ -4706,7 +4706,6 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
- "pallet-burner",
  "pallet-collator-selection",
  "pallet-communities",
  "pallet-message-queue",
@@ -4719,12 +4718,12 @@ dependencies = [
  "pallet-referenda",
  "pallet-scheduler",
  "pallet-session",
- "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
  "pallet-utility",
+ "pallet-vesting",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
  "parachains-common",
@@ -6464,26 +6463,6 @@ dependencies = [
  "scale-info",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std 8.0.0",
-]
-
-[[package]]
-name = "pallet-burner"
-version = "0.1.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-balances",
- "pallet-sudo",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-keystore",
  "sp-runtime",
  "sp-std 8.0.0",
 ]
@@ -13791,7 +13770,7 @@ dependencies = [
 
 [[package]]
 name = "virto-node"
-version = "0.9.1"
+version = "0.10.0"
 dependencies = [
  "assert_cmd",
  "async-trait",

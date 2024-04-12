@@ -1,7 +1,7 @@
 [package]
 name = "kreivo-runtime"
 description = "Kreivo Runtime"
-version = "0.9.1"
+version = "0.10.0"
 authors = ['Virto Team <contact@virto.team>']
 license = "GPL-3.0-only"
 homepage = 'https://github.com/virto-network/virto-node'
@@ -22,7 +22,6 @@ scale-info = { workspace = true, features = ["derive"] }
 smallvec = { workspace = true }
 
 # Local
-pallet-burner = { workspace = true }
 pallet-payments = { workspace = true }
 pallet-communities = { workspace = true }
 
@@ -53,11 +52,11 @@ pallet-ranked-collective = { workspace = true }
 pallet-referenda = { workspace = true }
 pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
-pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
+pallet-vesting = { workspace = true }
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-consensus-aura = { workspace = true }
@@ -129,7 +128,6 @@ std = [
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
-	"pallet-burner/std",
 	"pallet-communities/std",
 	"pallet-collator-selection/std",
 	"pallet-message-queue/std",
@@ -143,7 +141,6 @@ std = [
 	"pallet-referenda-tracks/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",
-	"pallet-sudo/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -193,7 +190,6 @@ runtime-benchmarks = [
 	"pallet-asset-tx-payment/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
-	"pallet-burner/runtime-benchmarks",
 	"pallet-communities/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
@@ -206,7 +202,6 @@ runtime-benchmarks = [
 	"pallet-referenda/runtime-benchmarks",
 	"pallet-referenda-tracks/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
-	"pallet-sudo/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
@@ -235,7 +230,6 @@ try-runtime = [
 	"pallet-aura/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
-	"pallet-burner/try-runtime",
 	"pallet-communities/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-message-queue/try-runtime",
@@ -249,7 +243,6 @@ try-runtime = [
 	"pallet-referenda-tracks/try-runtime",
 	"pallet-scheduler/try-runtime",
 	"pallet-session/try-runtime",
-	"pallet-sudo/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",

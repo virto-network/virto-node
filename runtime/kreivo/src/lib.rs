@@ -45,7 +45,7 @@ use frame_support::{
 		fungibles,
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
 		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOf, EitherOfDiverse,
-		EnsureOriginWithArg, LinearStoragePrice, NeverEnsureOrigin, TransformOrigin,
+		EnsureOriginWithArg, LinearStoragePrice, NeverEnsureOrigin, TransformOrigin, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	BoundedVec, PalletId,
@@ -141,10 +141,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("kreivo-parachain"),
 	impl_name: create_runtime_str!("kreivo-parachain"),
 	authoring_version: 1,
-	spec_version: 104,
+	spec_version: 105,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 4,
+	transaction_version: 5,
 	state_version: 1,
 };
 
@@ -172,9 +172,9 @@ construct_runtime!(
 		// Monetary stuff.
 		Balances: pallet_balances = 10,
 		TransactionPayment: pallet_transaction_payment = 11,
-		Burner: pallet_burner = 12,
 		Assets: pallet_assets::<Instance1> = 13,
 		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 14,
+		Vesting: pallet_vesting = 15,
 
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship = 20,
@@ -190,7 +190,6 @@ construct_runtime!(
 		MessageQueue: pallet_message_queue = 33,
 
 		// Utils
-		Sudo: pallet_sudo = 40,
 		Multisig: pallet_multisig = 42,
 		Utility: pallet_utility = 43,
 		Proxy: pallet_proxy = 44,
@@ -421,19 +420,6 @@ parameter_types! {
 	pub const StakingAdminBodyId: BodyId = BodyId::Defense;
 }
 
-parameter_types! {
-	pub const BurnerPalletId: PalletId = PalletId(*b"burner00");
-}
-
-impl pallet_burner::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BurnDestination = ();
-	type BurnOrigin = frame_system::EnsureRoot<Self::AccountId>;
-	type PalletId = BurnerPalletId;
-	type WeightInfo = weights::pallet_burner::WeightInfo<Runtime>;
-}
-
 /// We allow root and the StakingAdmin to execute privileged collator selection
 /// operations.
 pub type CollatorSelectionUpdateOrigin =
@@ -453,12 +439,6 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = ();
-}
-
-impl pallet_sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -693,6 +673,22 @@ impl pallet_asset_tx_payment::Config for Runtime {
 	>;
 }
 
+parameter_types! {
+	pub const MinVestedTransfer: Balance = 100 * CENTS;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
+}
+
+impl pallet_vesting::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
+	const MAX_VESTING_SCHEDULES: u32 = 28;
+}
+
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
 	frame_benchmarking::define_benchmarks!(
@@ -702,9 +698,9 @@ mod benches {
 		[pallet_timestamp, Timestamp]
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
-		[pallet_burner, Burner]
 		[pallet_treasury, Treasury]
 		[pallet_multisig, Multisig]
+		[pallet_vesting, Vesting]
 		[pallet_utility, Utility]
 		[pallet_assets, Assets]
 		[pallet_proxy, Proxy]
