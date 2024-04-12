@@ -149,6 +149,7 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "
 pallet-treasury = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-uniques = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 pallet-utility = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
+pallet-vesting = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
 
 # Cumulus client dependencies
 cumulus-client-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }

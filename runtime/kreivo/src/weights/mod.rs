@@ -20,7 +20,6 @@
 pub mod block_weights;
 pub mod extrinsic_weights;
 pub mod pallet_assets;
-pub mod pallet_burner;
 pub mod pallet_communities;
 pub mod pallet_payments;
 pub mod pallet_proxy;
