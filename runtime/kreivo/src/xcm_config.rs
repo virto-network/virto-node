@@ -29,6 +29,9 @@ use xcm_builder::{
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
 
+mod plurality_community;
+use plurality_community::*;
+
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub const RelayNetwork: Option<NetworkId> = None;
@@ -53,6 +56,8 @@ pub type LocationToAccountId = (
 	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
+	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
+	PluralityConvertsToCommunityAccountId,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
