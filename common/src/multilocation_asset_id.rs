@@ -11,17 +11,19 @@ use {
 )]
 pub enum FungibleAssetLocation {
 	Here(u32),
-	Sibling {
-		id: u16,
-		pallet: u8,
-		index: u32,
-	},
-	External {
-		network: NetworkId,
-		id: u16,
-		pallet: u8,
-		index: u32,
-	},
+	Sibling(Para),
+	External { network: NetworkId, child: Option<Para> },
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(
+	feature = "runtime",
+	derive(Encode, Decode, Serialize, Deserialize, MaxEncodedLen, TypeInfo)
+)]
+pub struct Para {
+	id: u16,
+	pallet: u8,
+	index: u32,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -49,7 +51,7 @@ impl From<u32> for FungibleAssetLocation {
 
 #[cfg(feature = "runtime")]
 pub mod runtime {
-	use super::FungibleAssetLocation;
+	use super::{FungibleAssetLocation, Para};
 	use cumulus_primitives_core::MultiLocation;
 	use sp_runtime::traits::MaybeEquivalence;
 	use xcm::v3::{
@@ -86,22 +88,31 @@ pub mod runtime {
 			match *value {
 				MultiLocation {
 					parents: 2,
+					interior: Junctions::X1(GlobalConsensus(network)),
+				} => Some(FungibleAssetLocation::External {
+					network: network.try_into().ok()?,
+					child: None,
+				}),
+				MultiLocation {
+					parents: 2,
 					interior:
 						Junctions::X4(GlobalConsensus(network), Parachain(id), PalletInstance(pallet), GeneralIndex(index)),
 				} => Some(FungibleAssetLocation::External {
 					network: network.try_into().ok()?,
-					id: id.try_into().ok()?,
-					pallet,
-					index: index.try_into().ok()?,
+					child: Some(Para {
+						id: id.try_into().ok()?,
+						pallet,
+						index: index.try_into().ok()?,
+					}),
 				}),
 				MultiLocation {
 					parents: 1,
 					interior: Junctions::X3(Parachain(id), PalletInstance(pallet), GeneralIndex(index)),
-				} => Some(FungibleAssetLocation::Sibling {
+				} => Some(FungibleAssetLocation::Sibling(Para {
 					id: id.try_into().ok()?,
 					pallet,
 					index: index.try_into().ok()?,
-				}),
+				})),
 				MultiLocation {
 					parents: 0,
 					interior: Junctions::X2(PalletInstance(13), GeneralIndex(index)),
@@ -118,15 +129,17 @@ pub mod runtime {
 					parents: 0,
 					interior: Junctions::X2(PalletInstance(13), GeneralIndex(index.into())),
 				}),
-				FungibleAssetLocation::Sibling { id, pallet, index } => Some(MultiLocation {
+				FungibleAssetLocation::Sibling(Para { id, pallet, index }) => Some(MultiLocation {
 					parents: 1,
 					interior: Junctions::X3(Parachain(id.into()), PalletInstance(pallet), GeneralIndex(index.into())),
 				}),
+				FungibleAssetLocation::External { network, child: None } => Some(MultiLocation {
+					parents: 2,
+					interior: Junctions::X1(GlobalConsensus(network.into())),
+				}),
 				FungibleAssetLocation::External {
 					network,
-					id,
-					pallet,
-					index,
+					child: Some(Para { id, pallet, index }),
 				} => Some(MultiLocation {
 					parents: 2,
 					interior: Junctions::X4(
