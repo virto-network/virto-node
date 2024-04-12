@@ -8,7 +8,7 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
 };
-use sp_runtime::Permill;
+use sp_runtime::{traits::TryConvert, Permill};
 
 pub struct EnsureCommunity<T>(PhantomData<T>);
 
@@ -115,6 +115,22 @@ pub enum DecisionMethod<AssetId> {
 	NativeToken,
 	CommunityAsset(AssetId),
 	Rank,
+}
+
+#[cfg(feature = "xcm")]
+impl<T> TryConvert<T::RuntimeOrigin, xcm::v3::MultiLocation> for RawOrigin<T>
+where
+	T: Config,
+	T::RuntimeOrigin: Into<Result<RawOrigin<T>, T::RuntimeOrigin>>,
+	xcm::v3::Junction: TryFrom<RawOrigin<T>>,
+{
+	fn try_convert(o: T::RuntimeOrigin) -> Result<xcm::v3::MultiLocation, T::RuntimeOrigin> {
+		let Ok(community @ RawOrigin { .. }) = o.clone().into() else {
+			return Err(o);
+		};
+		let j = xcm::v3::Junction::try_from(community).map_err(|_| o)?;
+		Ok(j.into())
+	}
 }
 
 #[cfg(feature = "xcm")]
