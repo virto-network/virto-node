@@ -4,7 +4,7 @@ use frame_support::{
 	pallet_prelude::{EnsureOrigin, PhantomData},
 	traits::OriginTrait,
 };
-use pallet_communities::origin::EnsureCommunity;
+use pallet_communities::{origin::EnsureCommunity, types::RuntimeOriginFor};
 use sp_runtime::traits::AccountIdConversion;
 use virto_common::{CommunityId, MembershipId};
 
@@ -41,14 +41,15 @@ parameter_types! {
 
 pub struct EnsureCommunityAccountId<T>(PhantomData<T>);
 
-impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureCommunityAccountId<T>
+impl<T> EnsureOrigin<RuntimeOriginFor<T>> for EnsureCommunityAccountId<T>
 where
-	T::RuntimeOrigin: OriginTrait + From<frame_system::RawOrigin<T::AccountId>> + From<pallet_communities::Origin<T>>,
+	RuntimeOriginFor<T>:
+		OriginTrait + From<frame_system::RawOrigin<T::AccountId>> + From<pallet_communities::Origin<T>>,
 	T: pallet_communities::Config,
 {
 	type Success = T::CommunityId;
 
-	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+	fn try_origin(o: RuntimeOriginFor<T>) -> Result<Self::Success, RuntimeOriginFor<T>> {
 		match o.clone().into() {
 			Ok(frame_system::RawOrigin::Signed(account_id)) => {
 				let (_, community_id) = PalletId::try_from_sub_account(&account_id).ok_or(o.clone())?;
@@ -59,7 +60,7 @@ where
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+	fn try_successful_origin() -> Result<RuntimeOriginFor<T>, ()> {
 		Ok(Origin::new(T::BenchmarkHelper::community_id()).into())
 	}
 }
@@ -78,6 +79,7 @@ impl pallet_communities::Config for Runtime {
 	type Balances = Balances;
 
 	type RuntimeCall = RuntimeCall;
+	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = crate::weights::pallet_communities::WeightInfo<Runtime>;

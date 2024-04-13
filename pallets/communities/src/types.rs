@@ -19,10 +19,10 @@ pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>, NativeBalanceOf<T>>;
 pub type DecisionMethodFor<T> = DecisionMethod<AssetIdOf<T>>;
 pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
-pub type PalletsOriginOf<T> =
-	<<T as frame_system::Config>::RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
+pub type PalletsOriginOf<T> = <<T as Config>::RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
 pub type MembershipIdOf<T> = <T as Config>::MembershipId;
 pub type RuntimeCallFor<T> = <T as Config>::RuntimeCall;
+pub type RuntimeOriginFor<T> = <T as Config>::RuntimeOrigin;
 
 pub type SizedField<S> = BoundedVec<u8, S>;
 pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;

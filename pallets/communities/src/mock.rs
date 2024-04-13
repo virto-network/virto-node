@@ -420,6 +420,7 @@ impl pallet_communities::Config for Test {
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 
 	type RuntimeCall = RuntimeCall;
+	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type WeightInfo = WeightInfo;
