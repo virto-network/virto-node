@@ -56,7 +56,7 @@ pub type LocationToAccountId = (
 	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
-	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
+	// Plurality origins convert to community AccountId via the `Communities::community_account`.
 	PluralityConvertsToCommunityAccountId,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
