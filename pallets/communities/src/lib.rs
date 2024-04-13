@@ -542,11 +542,11 @@ pub mod pallet {
 		// 	(weight, di.class)
 		// })]
 		// // #[cfg(any(test, feature = "testnet"))]
-		// pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
-		// 	let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-		// 	let origin = crate::Origin::<T>::new(community_id);
-		// 	let post = call.dispatch(origin.into()).map_err(|e| e.error)?;
-		// 	Ok(post)
+		// pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>)
+		// -> DispatchResultWithPostInfo { 	let community_id =
+		// T::MemberMgmtOrigin::ensure_origin(origin)?; 	let origin =
+		// crate::Origin::<T>::new(community_id); 	let post =
+		// call.dispatch(origin.into()).map_err(|e| e.error)?; 	Ok(post)
 		// }
 	}
 }
