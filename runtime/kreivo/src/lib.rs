@@ -21,7 +21,7 @@ use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::traits::Verify;
+use sp_runtime::traits::{LookupError, StaticLookup, Verify};
 pub use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentityLookup},
@@ -32,6 +32,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use virto_common::CommunityId;
 pub use virto_common::FungibleAssetLocation;
 
 use frame_support::{
@@ -95,7 +96,7 @@ pub use parachains_common::{
 pub use runtime_common::impls::{AssetsToBlockAuthor, DealWithFees};
 
 /// The address format for describing accounts.
-pub type Address = MultiAddress<AccountId, ()>;
+pub type Address = MultiAddress<AccountId, CommunityId>;
 
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -242,11 +243,28 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 2;
 }
 
+pub struct CommunityLookup;
+impl StaticLookup for CommunityLookup {
+	type Source = Address;
+	type Target = AccountId;
+	fn lookup(s: Self::Source) -> Result<Self::Target, LookupError> {
+		match s {
+			MultiAddress::Id(i) => Ok(i),
+			MultiAddress::Index(i) => Ok(Communities::community_account(&i)),
+			_ => Err(LookupError),
+		}
+	}
+	fn unlookup(t: Self::Target) -> Self::Source {
+		MultiAddress::Id(t)
+	}
+}
+
 // Configure FRAME pallets to include in runtime.
 #[derive_impl(frame_system::config_preludes::ParaChainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Runtime {
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
+	type Lookup = CommunityLookup;
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	type Block = Block;
