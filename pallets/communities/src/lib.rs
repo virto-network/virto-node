@@ -532,21 +532,21 @@ pub mod pallet {
 			Self::do_dispatch_as_community_account(&community_id, *call)
 		}
 
-		/// Dispatch a callable as the community account
-		#[cfg(any(test, feature = "testnet"))]
-		#[pallet::call_index(12)]
-		#[pallet::weight({
-			let di = call.get_dispatch_info();
-			let weight = T::WeightInfo::dispatch_as_account()
-				.saturating_add(T::DbWeight::get().reads_writes(1, 1))
-				.saturating_add(di.weight);
-			(weight, di.class)
-		})]
-		pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
-			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-			let origin = crate::Origin::<T>::new(community_id);
-			let post = call.dispatch(origin.into()).map_err(|e| e.error)?;
-			Ok(post)
-		}
+		// /// Dispatch a callable as the community account
+		// #[pallet::call_index(12)]
+		// #[pallet::weight({
+		// 	let di = call.get_dispatch_info();
+		// 	let weight = T::WeightInfo::dispatch_as_account()
+		// 		.saturating_add(T::DbWeight::get().reads_writes(1, 1))
+		// 		.saturating_add(di.weight);
+		// 	(weight, di.class)
+		// })]
+		// // #[cfg(any(test, feature = "testnet"))]
+		// pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
+		// 	let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+		// 	let origin = crate::Origin::<T>::new(community_id);
+		// 	let post = call.dispatch(origin.into()).map_err(|e| e.error)?;
+		// 	Ok(post)
+		// }
 	}
 }
