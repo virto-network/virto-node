@@ -533,6 +533,7 @@ pub mod pallet {
 		}
 
 		/// Dispatch a callable as the community account
+		#[cfg(any(test, feature = "testnet"))]
 		#[pallet::call_index(12)]
 		#[pallet::weight({
 			let di = call.get_dispatch_info();
@@ -543,7 +544,9 @@ pub mod pallet {
 		})]
 		pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-			Self::do_dispatch_as_community_origin(&community_id, *call)
+			let origin = crate::Origin::<T>::new(community_id);
+			let post = call.dispatch(origin.into()).map_err(|e| e.error)?;
+			Ok(post)
 		}
 	}
 }

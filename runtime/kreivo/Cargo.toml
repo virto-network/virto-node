@@ -253,3 +253,7 @@ try-runtime = [
 	"runtime-common/try-runtime",
 	"sp-runtime/try-runtime",
 ]
+
+testnet = [
+	"pallet-communities/testnet"
+]

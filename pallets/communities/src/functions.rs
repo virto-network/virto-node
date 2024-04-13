@@ -204,16 +204,6 @@ impl<T: Config> Pallet<T> {
 		let post = call.dispatch(signer.into()).map_err(|e| e.error)?;
 		Ok(post)
 	}
-
-	pub(crate) fn do_dispatch_as_community_origin(
-		community_id: &CommunityIdOf<T>,
-		call: RuntimeCallFor<T>,
-	) -> DispatchResultWithInfo<PostDispatchInfo> {
-		let signer = crate::Origin::<T>::new(*community_id);
-
-		let post = call.dispatch(signer.into()).map_err(|e| e.error)?;
-		Ok(post)
-	}
 }
 
 impl<T: Config> Tally<T> {

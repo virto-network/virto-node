@@ -40,7 +40,8 @@ pallet-scheduler = { workspace = true }
 virto-common = { workspace = true, default-features = false, features = ["runtime"] }
 
 [features]
-default = ["std", "xcm"]
+default = ["std", "xcm", "testnet"]
+testnet = []
 std = [
 	"frame-benchmarking?/std",
 	"frame-support/std",
