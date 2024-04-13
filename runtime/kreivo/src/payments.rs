@@ -29,8 +29,8 @@ impl pallet_payments::BenchmarkHelper<AccountId, FungibleAssetLocation, Balance>
 pub struct KreivoFeeHandler;
 
 const MANDATORY_FEE: bool = true;
-pub const SYSTEM_FEE: u8 = 2;
-pub const SYSTEM_FEE_PERCENTAGE: Percent = Percent::from_percent(SYSTEM_FEE);
+pub const SENDER_FEE: Percent = Percent::from_percent(1);
+pub const BENEFICIARY_FEE: Percent = Percent::from_percent(3);
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
 
 impl FeeHandler<Runtime> for KreivoFeeHandler {
@@ -44,12 +44,12 @@ impl FeeHandler<Runtime> for KreivoFeeHandler {
 		let min = <Assets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
 		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
 			TreasuryAccount::get(),
-			min.max(SYSTEM_FEE_PERCENTAGE.mul_floor(*amount)),
+			min.max(SENDER_FEE.mul_floor(*amount)),
 			MANDATORY_FEE,
 		)];
 		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
 			TreasuryAccount::get(),
-			min.max(SYSTEM_FEE_PERCENTAGE.mul_floor(*amount)),
+			min.max(BENEFICIARY_FEE.mul_floor(*amount)),
 			MANDATORY_FEE,
 		)];
 
