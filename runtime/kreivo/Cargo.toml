@@ -23,7 +23,7 @@ smallvec = { workspace = true }
 
 # Local
 pallet-payments = { workspace = true }
-pallet-communities = { workspace = true }
+pallet-communities = { workspace = true, features = ["xcm"] }
 
 # Local: Common
 virto-common = { workspace = true, default-features = false, features = ["runtime"] }
@@ -252,4 +252,8 @@ try-runtime = [
 	"polkadot-runtime-common/try-runtime",
 	"runtime-common/try-runtime",
 	"sp-runtime/try-runtime",
+]
+
+testnet = [
+	"pallet-communities/testnet"
 ]

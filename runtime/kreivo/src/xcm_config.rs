@@ -1,10 +1,9 @@
-use virto_common::AsFungibleAssetLocation;
-
 use super::{
 	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, FungibleAssetLocation, KreivoAssetsInstance,
 	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury,
 	WeightToFee, XcmpQueue,
 };
+use virto_common::AsFungibleAssetLocation;
 
 use crate::constants::locations::STATEMINE_PARA_ID;
 use frame_support::{
@@ -24,11 +23,14 @@ use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, ConvertedConcreteId,
 	CurrencyAdapter, EnsureXcmOrigin, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, StartsWith, TakeWeightCredit,
-	UsingComponents, WeightInfoBounds, WithComputedOrigin,
+	SignedAccountId32AsNative, SovereignSignedViaLocation, StartsWith, TakeWeightCredit, UsingComponents,
+	WeightInfoBounds, WithComputedOrigin,
 };
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
+
+mod plurality_community;
+use plurality_community::*;
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -54,6 +56,8 @@ pub type LocationToAccountId = (
 	ParentIsPreset<AccountId>,
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
+	// Plurality origins convert to community AccountId via the `Communities::community_account`.
+	PluralityConvertsToCommunityAccountId,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
@@ -230,8 +234,8 @@ impl xcm_executor::Config for XcmConfig {
 	type Aliasers = Nothing;
 }
 
-/// No local origins on this chain are allowed to dispatch XCM sends/executions.
-pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
+/// Only communities are allowed to dispatch xcm messages
+pub type ConvertCommunityOrigin = pallet_communities::Origin<Runtime>;
 
 /// The means for routing XCM messages which are not for local execution into
 /// the right message queues.
@@ -244,9 +248,9 @@ pub type XcmRouter = (
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ConvertCommunityOrigin>;
 	type XcmRouter = XcmRouter;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
+	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ConvertCommunityOrigin>;
 	type XcmExecuteFilter = Nothing;
 	// ^ Disable dispatchable execute on the XCM pallet.
 	type XcmExecutor = XcmExecutor<XcmConfig>;

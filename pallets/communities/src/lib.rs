@@ -142,13 +142,13 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::{DispatchResultWithPostInfo, GetDispatchInfo, PostDispatchInfo},
 		pallet_prelude::*,
-		traits::{fungible, fungibles, EnsureOrigin, IsSubType, Polling},
+		traits::{fungible, fungibles, EnsureOrigin, IsSubType, OriginTrait, Polling},
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{OriginFor, *};
 	use sp_runtime::traits::{Dispatchable, StaticLookup};
 	use sp_std::prelude::Box;
-	use types::{PollIndexOf, RuntimeCallFor, *};
+	use types::{PollIndexOf, RuntimeCallFor, RuntimeOriginFor, *};
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
 
 	#[pallet::pallet]
@@ -196,12 +196,19 @@ pub mod pallet {
 
 		/// The overarching call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ Dispatchable<RuntimeOrigin = RuntimeOriginFor<Self>, PostInfo = PostDispatchInfo>
 			+ GetDispatchInfo
 			+ From<Call<Self>>
 			+ From<frame_system::Call<Self>>
 			+ IsSubType<Call<Self>>
 			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
+
+		/// The `RuntimeOrigin` type used by dispatchable calls.
+		type RuntimeOrigin: Into<Result<frame_system::Origin<Self>, RuntimeOriginFor<Self>>>
+			+ From<frame_system::Origin<Self>>
+			+ From<Origin<Self>>
+			+ Clone
+			+ OriginTrait<Call = RuntimeCallFor<Self>, AccountId = Self::AccountId>;
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
@@ -523,6 +530,23 @@ pub mod pallet {
 		pub fn dispatch_as_account(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
 			Self::do_dispatch_as_community_account(&community_id, *call)
+		}
+
+		/// Dispatch a callable as the community account
+		#[cfg(any(test, feature = "testnet"))]
+		#[pallet::call_index(12)]
+		#[pallet::weight({
+			let di = call.get_dispatch_info();
+			let weight = T::WeightInfo::dispatch_as_account()
+				.saturating_add(T::DbWeight::get().reads_writes(1, 1))
+				.saturating_add(di.weight);
+			(weight, di.class)
+		})]
+		pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
+			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
+			let origin = crate::Origin::<T>::new(community_id);
+			let post = call.dispatch(origin.into()).map_err(|e| e.error)?;
+			Ok(post)
 		}
 	}
 }

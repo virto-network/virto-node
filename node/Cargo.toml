@@ -101,6 +101,9 @@ polkadot-cli = { workspace = true }
 
 [features]
 default = ["kreivo-runtime"]
+testnet = [
+	"kreivo-runtime?/testnet"
+]
 runtime-benchmarks = [
 	"cumulus-primitives-core/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",

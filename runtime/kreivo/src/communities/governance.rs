@@ -50,7 +50,7 @@ impl pallet_referenda_tracks::Config<CommunityTracksInstance> for Runtime {
 
 pub struct EnsureCommunityMember<T, I: 'static = ()>(PhantomData<T>, PhantomData<I>);
 
-impl<T, I> EnsureOriginWithArg<T::RuntimeOrigin, PalletsOriginOf<T>> for EnsureCommunityMember<T, I>
+impl<T, I> EnsureOriginWithArg<RuntimeOriginFor<T>, PalletsOriginOf<T>> for EnsureCommunityMember<T, I>
 where
 	T: pallet_communities::Config + pallet_referenda::Config<I>,
 	T::Tracks: TracksInfo<
@@ -62,7 +62,10 @@ where
 {
 	type Success = T::AccountId;
 
-	fn try_origin(o: T::RuntimeOrigin, track_origin: &PalletsOriginOf<T>) -> Result<Self::Success, T::RuntimeOrigin> {
+	fn try_origin(
+		o: RuntimeOriginFor<T>,
+		track_origin: &PalletsOriginOf<T>,
+	) -> Result<Self::Success, RuntimeOriginFor<T>> {
 		use fc_traits_memberships::Inspect;
 		use frame_system::RawOrigin::Signed;
 		let community_id = T::Tracks::track_for(track_origin).map_err(|_| o.clone())?;
@@ -80,7 +83,7 @@ where
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin(_track_origin: &PalletsOriginOf<T>) -> Result<T::RuntimeOrigin, ()> {
+	fn try_successful_origin(_track_origin: &PalletsOriginOf<T>) -> Result<RuntimeOriginFor<T>, ()> {
 		todo!()
 	}
 }

@@ -1,5 +1,5 @@
 use crate::{
-	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf},
+	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf, RuntimeOriginFor},
 	CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
@@ -8,18 +8,18 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
 };
-use sp_runtime::Permill;
+use sp_runtime::{traits::TryConvert, Permill};
 
 pub struct EnsureCommunity<T>(PhantomData<T>);
 
-impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureCommunity<T>
+impl<T> EnsureOrigin<RuntimeOriginFor<T>> for EnsureCommunity<T>
 where
-	T::RuntimeOrigin: OriginTrait + Into<Result<RawOrigin<T>, T::RuntimeOrigin>> + From<RawOrigin<T>>,
+	RuntimeOriginFor<T>: OriginTrait + Into<Result<RawOrigin<T>, RuntimeOriginFor<T>>> + From<RawOrigin<T>>,
 	T: Config,
 {
 	type Success = T::CommunityId;
 
-	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+	fn try_origin(o: RuntimeOriginFor<T>) -> Result<Self::Success, RuntimeOriginFor<T>> {
 		use frame_system::RawOrigin::{None, Root};
 		if matches!(o.as_system_ref(), Some(Root) | Some(None)) {
 			return Err(o);
@@ -37,7 +37,7 @@ where
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+	fn try_successful_origin() -> Result<RuntimeOriginFor<T>, ()> {
 		use crate::BenchmarkHelper;
 		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
 	}
@@ -45,14 +45,17 @@ where
 
 pub struct EnsureMember<T>(PhantomData<T>);
 
-impl<T> EnsureOriginWithArg<T::RuntimeOrigin, CommunityIdOf<T>> for EnsureMember<T>
+impl<T> EnsureOriginWithArg<RuntimeOriginFor<T>, CommunityIdOf<T>> for EnsureMember<T>
 where
 	T: Config,
-	T::RuntimeOrigin: OriginTrait + From<frame_system::Origin<T>>,
+	RuntimeOriginFor<T>: OriginTrait + From<frame_system::Origin<T>>,
 {
 	type Success = ();
 
-	fn try_origin(o: T::RuntimeOrigin, community_id: &CommunityIdOf<T>) -> Result<Self::Success, T::RuntimeOrigin> {
+	fn try_origin(
+		o: RuntimeOriginFor<T>,
+		community_id: &CommunityIdOf<T>,
+	) -> Result<Self::Success, RuntimeOriginFor<T>> {
 		use frame_system::RawOrigin::Signed;
 
 		match o.clone().into() {
@@ -68,7 +71,7 @@ where
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin(_community_id: &CommunityIdOf<T>) -> Result<T::RuntimeOrigin, ()> {
+	fn try_successful_origin(_community_id: &CommunityIdOf<T>) -> Result<RuntimeOriginFor<T>, ()> {
 		todo!("Find an account that is a member of this community");
 	}
 }
@@ -115,6 +118,22 @@ pub enum DecisionMethod<AssetId> {
 	NativeToken,
 	CommunityAsset(AssetId),
 	Rank,
+}
+
+#[cfg(feature = "xcm")]
+impl<T> TryConvert<RuntimeOriginFor<T>, xcm::v3::MultiLocation> for RawOrigin<T>
+where
+	T: Config,
+	RuntimeOriginFor<T>: Into<Result<RawOrigin<T>, RuntimeOriginFor<T>>>,
+	xcm::v3::Junction: TryFrom<RawOrigin<T>>,
+{
+	fn try_convert(o: RuntimeOriginFor<T>) -> Result<xcm::v3::MultiLocation, RuntimeOriginFor<T>> {
+		let Ok(community @ RawOrigin { .. }) = o.clone().into() else {
+			return Err(o);
+		};
+		let j = xcm::v3::Junction::try_from(community).map_err(|_| o)?;
+		Ok(j.into())
+	}
 }
 
 #[cfg(feature = "xcm")]
