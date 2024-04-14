@@ -235,10 +235,13 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 /// Only communities are allowed to dispatch xcm messages
-pub type ConvertCommunityOrigin = pallet_communities::Origin<Runtime>;
+pub type CanSendXcmMessages = pallet_communities::Origin<Runtime>;
 
 /// Only signed origins are allowed to execute xcm transactions
-pub type SignedOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>;
+pub type CanExecuteXcmTransactions = (
+	pallet_communities::Origin<Runtime>,
+	SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>,
+);
 
 /// The means for routing XCM messages which are not for local execution into
 /// the right message queues.
@@ -251,9 +254,9 @@ pub type XcmRouter = (
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ConvertCommunityOrigin>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, CanSendXcmMessages>;
 	type XcmRouter = XcmRouter;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, SignedOriginToLocation>;
+	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, CanExecuteXcmTransactions>;
 	type XcmExecuteFilter = Nothing;
 	// ^ Disable dispatchable execute on the XCM pallet.
 	type XcmExecutor = XcmExecutor<XcmConfig>;
