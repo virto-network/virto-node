@@ -26,7 +26,9 @@ use frame_system::{
 use sp_runtime::traits::{Hash, StaticLookup};
 use sp_std::{boxed::Box, vec, vec::Vec};
 
-fn assert_has_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
+type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
+
+fn assert_has_event<T: Config>(generic_event: RuntimeEventFor<T>) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
 
@@ -138,6 +140,7 @@ where
 	where
 		T: frame_system::Config + crate::Config,
 		OriginFor<T>: From<Origin<T>>,
+		RuntimeEventFor<T>: From<frame_system::Event<T>>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
 )]
