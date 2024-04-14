@@ -208,7 +208,7 @@ pub mod pallet {
 			+ From<frame_system::Origin<Self>>
 			+ From<Origin<Self>>
 			+ Clone
-			+ OriginTrait<Call = RuntimeCallFor<Self>, AccountId = Self::AccountId>;
+			+ OriginTrait<Call = RuntimeCallFor<Self>, AccountId = Self::AccountId, PalletsOrigin = PalletsOriginOf<Self>>;
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
