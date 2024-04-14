@@ -64,7 +64,7 @@ where
 
 	let decision_method = maybe_decision_method.unwrap_or(DecisionMethod::Rank);
 	let admin_origin: OriginFor<T> = Origin::<T>::new(community_id).into();
-	let admin_origin_caller = admin_origin.clone().into_caller();
+	let admin_origin_caller: PalletsOriginOf<T> = admin_origin.clone().into_caller();
 
 	(community_id, decision_method, admin_origin, admin_origin_caller)
 }
@@ -138,7 +138,6 @@ where
 	where
 		T: frame_system::Config + crate::Config,
 		OriginFor<T>: From<Origin<T>>,
-		<T as Config>::RuntimeEvent: From<frame_system::Event<T>>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
 )]

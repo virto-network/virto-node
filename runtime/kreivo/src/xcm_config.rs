@@ -23,8 +23,8 @@ use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, ConvertedConcreteId,
 	CurrencyAdapter, EnsureXcmOrigin, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SovereignSignedViaLocation, StartsWith, TakeWeightCredit, UsingComponents,
-	WeightInfoBounds, WithComputedOrigin,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, StartsWith, TakeWeightCredit,
+	UsingComponents, WeightInfoBounds, WithComputedOrigin,
 };
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
@@ -235,7 +235,13 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 /// Only communities are allowed to dispatch xcm messages
-pub type ConvertCommunityOrigin = pallet_communities::Origin<Runtime>;
+pub type CanSendXcmMessages = pallet_communities::Origin<Runtime>;
+
+/// Only signed origins are allowed to execute xcm transactions
+pub type CanExecuteXcmTransactions = (
+	pallet_communities::Origin<Runtime>,
+	SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>,
+);
 
 /// The means for routing XCM messages which are not for local execution into
 /// the right message queues.
@@ -248,9 +254,9 @@ pub type XcmRouter = (
 
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ConvertCommunityOrigin>;
+	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, CanSendXcmMessages>;
 	type XcmRouter = XcmRouter;
-	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ConvertCommunityOrigin>;
+	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, CanExecuteXcmTransactions>;
 	type XcmExecuteFilter = Nothing;
 	// ^ Disable dispatchable execute on the XCM pallet.
 	type XcmExecutor = XcmExecutor<XcmConfig>;
