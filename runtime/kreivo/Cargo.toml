@@ -24,6 +24,7 @@ smallvec = { workspace = true }
 # Local
 pallet-payments = { workspace = true }
 pallet-communities = { workspace = true, features = ["xcm"] }
+pallet-communities-manager = { workspace = true }
 
 # Local: Common
 virto-common = { workspace = true, default-features = false, features = ["runtime"] }

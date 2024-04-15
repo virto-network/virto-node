@@ -1,0 +1,74 @@
+[package]
+name = "pallet-communities-manager"
+version = "0.1.0"
+authors = ["Virto Team<contact@virto.team>"]
+description = "This pallet helps with all the necesary steps to correctly setup a community."
+license = "MIT-0"
+homepage = 'https://github.com/virto-network/virto-node'
+repository = 'https://github.com/virto-network/virto-node'
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-benchmarking = { workspace = true, optional = true }
+frame-support =  { workspace = true }
+frame-system = { workspace = true }
+pallet-communities = { workspace = true }
+pallet-nfts = { workspace = true }
+pallet-referenda-tracks = { workspace = true }
+
+log = { workspace = true }
+
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive"] }
+
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+
+[dev-dependencies]
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+
+pallet-balances = { workspace = true }
+virto-common = { workspace = true, default-features = false, features = ["runtime"] }
+
+[features]
+default = ["std", "testnet"]
+testnet = []
+std = [
+	"frame-benchmarking?/std",
+	"frame-support/std",
+	"frame-system/std",
+	"log/std",
+	"pallet-balances/std",
+	"pallet-communities/std",
+	"pallet-nfts/std",
+	"pallet-referenda-tracks/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-core/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"virto-common/std",
+]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-communities/runtime-benchmarks",
+	"pallet-nfts/runtime-benchmarks",
+	"pallet-referenda-tracks/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+]
+try-runtime = [
+	"frame-support/try-runtime",
+	"frame-system/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-nfts/try-runtime",
+	"pallet-referenda-tracks/try-runtime",
+	"sp-runtime/try-runtime",
+]
