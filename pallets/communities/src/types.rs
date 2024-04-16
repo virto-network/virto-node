@@ -25,9 +25,6 @@ pub type MembershipIdOf<T> = <T as Config>::MembershipId;
 pub type RuntimeCallFor<T> = <T as Config>::RuntimeCall;
 pub type RuntimeOriginFor<T> = <T as Config>::RuntimeOrigin;
 
-pub type SizedField<S> = BoundedVec<u8, S>;
-pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
-
 #[cfg(feature = "runtime-benchmarks")]
 pub type BenchmarkHelperOf<T> = <T as Config>::BenchmarkHelper;
 
@@ -55,18 +52,6 @@ pub enum CommunityState {
 	/// The community is blocked, typically as a result of a restriction imposed
 	/// by violating the norms of the network.
 	Blocked,
-}
-
-/// The CommunityMetadata struct stores some descriptive information about
-/// the community.
-#[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub struct CommunityMetadata {
-	/// The name of the community
-	pub name: ConstSizedField<64>,
-	/// A short description of the community
-	pub description: ConstSizedField<256>,
-	/// The main URL that can lead to information about the community
-	pub main_url: ConstSizedField<256>,
 }
 
 // Governance

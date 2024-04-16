@@ -1,10 +1,10 @@
 use crate::{
 	origin::DecisionMethod,
 	types::{
-		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, ConstSizedField, MembershipIdOf, PalletsOriginOf,
-		PollIndexOf, RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
+		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, MembershipIdOf, PalletsOriginOf, PollIndexOf,
+		RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
 	},
-	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Metadata, Pallet,
+	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Pallet,
 };
 use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
@@ -62,25 +62,6 @@ impl<T: Config> Pallet<T> {
 		frame_system::Pallet::<T>::inc_providers(&Self::community_account(community_id));
 
 		Ok(())
-	}
-
-	pub(crate) fn do_set_metadata(
-		community_id: &CommunityIdOf<T>,
-		name: &Option<ConstSizedField<64>>,
-		description: Option<ConstSizedField<256>>,
-		url: Option<ConstSizedField<256>>,
-	) {
-		Metadata::<T>::mutate(community_id, |metadata| {
-			if let Some(name) = name {
-				metadata.name = name.clone();
-			}
-			if let Some(desc) = description {
-				metadata.description = desc;
-			}
-			if let Some(url) = url {
-				metadata.main_url = url;
-			}
-		})
 	}
 
 	pub(crate) fn do_vote(

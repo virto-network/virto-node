@@ -77,9 +77,6 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - [`set_metadata`][c01]: Sets some [`CommunityMetadata`][t01] to describe
-//!   the
-//! community.
 //! - [`remove_member`][c03]: Removes an account as a community member. While
 //!   enrolling a member into the community can be an action taken by any
 //!   member, the decision to remove a member should not be taken arbitrarily by
@@ -250,12 +247,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(super) type CommunityIdFor<T> = StorageMap<_, Blake2_128Concat, PalletsOriginOf<T>, CommunityIdOf<T>>;
 
-	/// Stores the metadata regarding a community.
-	#[pallet::storage]
-	#[pallet::getter(fn metadata)]
-	pub(super) type Metadata<T: Config> =
-		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
-
 	/// Stores the decision method for a community
 	#[pallet::storage]
 	pub(super) type CommunityDecisionMethod<T> =
@@ -276,12 +267,6 @@ pub mod pallet {
 		CommunityCreated {
 			id: T::CommunityId,
 			origin: PalletsOriginOf<T>,
-		},
-		/// Some [`CommmuniMetadata`][`types::CommunityMetadata`] has been set
-		/// for a community.
-		MetadataSet {
-			id: T::CommunityId,
-			name: Option<ConstSizedField<64>>,
 		},
 		DecisionMethodSet {
 			id: T::CommunityId,
@@ -359,31 +344,6 @@ pub mod pallet {
 				id: community_id,
 				origin: admin_origin,
 			});
-			Ok(())
-		}
-
-		/// Sets some [`CommunityMetadata`][11] to describe the
-		/// community.
-		///
-		/// [11]: `types::CommunityMetadata`
-		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_metadata(
-				name.as_ref().map(|x| x.len() as u32).unwrap_or(0),
-				description.as_ref().map(|x| x.len() as u32).unwrap_or(0),
-				url.as_ref().map(|x| x.len() as u32).unwrap_or(0),
-		))]
-		pub fn set_metadata(
-			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			name: Option<ConstSizedField<64>>,
-			description: Option<ConstSizedField<256>>,
-			url: Option<ConstSizedField<256>>,
-		) -> DispatchResult {
-			T::CommunityMgmtOrigin::ensure_origin(origin)?;
-
-			Self::do_set_metadata(&community_id, &name, description, url);
-			Self::deposit_event(Event::MetadataSet { id: community_id, name });
-
 			Ok(())
 		}
 

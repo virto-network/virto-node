@@ -76,9 +76,7 @@ Calling these functions requires being a member of the community.
 
 These functions can be called either by the community _admin_ or
 dispatched through an approved proposal. !
-- [`set_metadata`][c01]: Sets some [`CommunityMetadata`][t01] to describe
-  the
-community.
+
 - [`remove_member`][c03]: Removes an account as a community member. While
   enrolling a member into the community can be an action taken by any
   member, the decision to remove a member should not be taken arbitrarily by
@@ -102,13 +100,9 @@ community.
 [3]: https://docs.substrate.io/reference/glossary/#existential-deposit
 
 [t00]: `Config::CommunityId`
-[t01]: `types::CommunityMetadata`
 [c00]: `crate::Pallet::create`
-[c01]: `crate::Pallet::set_metadata`
 [c02]: `crate::Pallet::add_member`
 [c03]: `crate::Pallet::remove_member`
 
 [g00]: `crate::Pallet::community`
 [g01]: `crate::Pallet::metadata`
-[g02]: `crate::Pallet::membership`
-[g03]: `crate::Pallet::members_count`

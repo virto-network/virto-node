@@ -12,12 +12,9 @@ use self::{
 };
 use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
-use frame_support::{
-	traits::{
-		fungible::{InspectFreeze, Mutate},
-		OriginTrait,
-	},
-	BoundedVec,
+use frame_support::traits::{
+	fungible::{InspectFreeze, Mutate},
+	OriginTrait,
 };
 use frame_system::{
 	pallet_prelude::{BlockNumberFor, OriginFor},
@@ -157,25 +154,6 @@ mod benchmarks {
 
 		// verification code
 		assert_has_event::<T>(Event::CommunityCreated { id, origin }.into());
-	}
-
-	#[benchmark]
-	fn set_metadata(n: Linear<1, 64>, d: Linear<1, 256>, u: Linear<1, 256>) -> Result<(), BenchmarkError> {
-		// setup code
-		let (id, _, _, admin_origin) = community_params::<T>(None);
-		Communities::<T>::create(RawOrigin::Root.into(), admin_origin, id)?;
-
-		let name = Some(BoundedVec::truncate_from(vec![0u8; n as usize]));
-		let description = Some(BoundedVec::truncate_from(vec![0u8; d as usize]));
-		let url = Some(BoundedVec::truncate_from(vec![0u8; u as usize]));
-
-		#[extrinsic_call]
-		_(RawOrigin::Root, id, name.clone(), description.clone(), url.clone());
-
-		// verification code
-		assert_has_event::<T>(Event::MetadataSet { id, name }.into());
-
-		Ok(())
 	}
 
 	#[benchmark]
