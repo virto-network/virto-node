@@ -42,6 +42,7 @@ parameter_types! {
 	pub AssetsPalletLocation: Location =
 		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
 	pub UniversalLocation: InteriorLocation = [
+		GlobalConsensus(NetworkId::Polkadot),
 		GlobalConsensus(NetworkId::Kusama),
 		Parachain(ParachainInfo::parachain_id().into()),
 	].into();
@@ -68,7 +69,7 @@ pub type LocationToAccountId = (
 pub type LocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
 	FungibleAssetLocation,
 	Balance,
-	StartsWith<AssetHubLocation>,
+	(StartsWith<AssetHubLocation>, StartsWith<PolkadotLocation>),
 	AsFungibleAssetLocation,
 	JustTry,
 >;
@@ -168,7 +169,8 @@ pub type Barrier = (
 pub type AssetTransactors = (FungibleTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub AssetHubLocation: Location = Location::new(1, [Junction::Parachain(ASSET_HUB_ID)]);
+	pub AssetHubLocation: Location = Location::new(1, [Parachain(ASSET_HUB_ID)]);
+	pub PolkadotLocation: Location = Location::new(2, [GlobalConsensus(NetworkId::Polkadot)]);
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
@@ -208,7 +210,11 @@ pub type Traders = (
 	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ResolveTo<TreasuryAccount, Balances>>,
 );
 
-pub type Reserves = (NativeAsset, ReserveAssetsFrom<AssetHubLocation>);
+pub type Reserves = (
+	NativeAsset,
+	ReserveAssetsFrom<AssetHubLocation>,
+	ReserveAssetsFrom<PolkadotLocation>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
