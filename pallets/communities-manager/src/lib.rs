@@ -13,12 +13,19 @@ pub(crate) mod mock;
 pub mod weights;
 pub use weights::*;
 
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::OriginTrait};
 use frame_system::pallet_prelude::OriginFor;
-use pallet_communities::types::{
-	AccountIdLookupOf, CommunityIdOf, ConstSizedField, DecisionMethodFor, PalletsOriginOf,
+use pallet_communities::{
+	types::{AccountIdLookupOf, CommunityIdOf, DecisionMethodFor, PalletsOriginOf, RuntimeOriginFor},
+	Origin as CommunityOrigin,
 };
 use pallet_referenda_tracks::TrackInfoOf;
+use {
+	frame_support::traits::nonfungibles_v2::{
+		Create as CollectionsCreate, InspectEnumerable, Mutate as CollectionMutate,
+	},
+	pallet_nfts::{CollectionConfig, ItemConfig, ItemSettings, MintSettings, MintType::Issuer},
+};
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -28,7 +35,11 @@ pub mod pallet {
 	/// depends.
 	#[pallet::config]
 	pub trait Config<I: 'static = ()>:
-		frame_system::Config + pallet_communities::Config + pallet_nfts::Config<I> + pallet_referenda_tracks::Config<I>
+		frame_system::Config
+		+ pallet_communities::Config
+		+ pallet_nfts::Config<I, CollectionId = CommunityIdOf<Self>>
+		+ pallet_referenda_tracks::Config<I, TrackId = CommunityIdOf<Self>>
+		+ pallet_referenda::Config<I>
 	{
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
@@ -73,51 +84,83 @@ pub mod pallet {
 	// state changes. These functions materialize as "extrinsics", which are often
 	// compared to transactions. Dispatchable functions must be annotated with a
 	// weight and must return a DispatchResult.
-	#[pallet::call(weight(<T as Config>::WeightInfo))]
+	#[pallet::call(weight(<T as Config<I>>::WeightInfo))]
 	impl<T: Config<I>, I: 'static> Pallet<T, I> {
 		#[pallet::call_index(0)]
 		pub fn register(
 			origin: OriginFor<T>,
+			community_id: CommunityIdOf<T>,
 			first_member: AccountIdLookupOf<T>,
-			maybe_id: Option<CommunityIdOf<T>>,
 			maybe_admin_origin: Option<PalletsOriginOf<T>>,
 			maybe_decision_method: Option<DecisionMethodFor<T>>,
 			maybe_track_info: Option<TrackInfoOf<T, I>>,
 		) -> DispatchResult {
 			// This implies depositing (Deposit (Hold | -> Treasury))
-			let lowest_community_id_available = todo!("calculate this");
-			let community_id = maybe_id.unwrap_or(lowest_community_id_available);
-			let community_origin = pallet_communities::Origin::<T>::new(community_id);
-			let admin_origin = maybe_admin_origin.unwrap_or(community_origin);
+			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();
+			let admin_origin = maybe_admin_origin.unwrap_or(community_origin.clone().into_caller());
 
-			pallet_communities::Pallet::<T>::register(community_id, admin_origin)?;
+			// pallet_communities::Pallet::<T>::register(community_id, admin_origin)?;
 
 			if let Some(decision_method) = maybe_decision_method {
-				pallet_communities::Pallet::<T>::set_decision_method(admin_origin, decision_method)?;
+				pallet_communities::Pallet::<T>::set_decision_method(
+					admin_origin.into(),
+					community_id,
+					decision_method,
+				)?;
 			}
 
 			let community_account = pallet_communities::Pallet::<T>::community_account(&community_id);
 
 			// Create the community memberships collection.
-			pallet_nfts::Pallet::<T, I>::create(Origin.into(), community_id, community_account)?;
+			pallet_nfts::Pallet::<T, I>::create_collection_with_id(
+				community_id,
+				&community_account,
+				&community_account,
+				&CollectionConfig {
+					mint_settings: MintSettings {
+						mint_type: Issuer,
+						..Default::default()
+					},
+					settings: Default::default(),
+					max_supply: Default::default(),
+				},
+			)?;
 
 			// Mint the first membership for the community]
-			let item_id = todo!("calculate this");
+			let item_id = {
+				let items = pallet_nfts::Pallet::<T, I>::items(&community_id);
+				items.reduce(||)
+			};
+
 			pallet_nfts::Pallet::<T, I>::mint_into(
-				Origin.into(),
-				T::MembershipsMgmtCollection::get(),
-				item_id,
-				community_account,
+				&T::MembershipsMgmtCollection::get(),
+				&item_id,
+				&community_account,
+				&ItemConfig {
+					settings: ItemSettings::all_enabled(),
+				},
+				true,
 			)?;
 
-			pallet_communities::Pallet::<T>::add_member(admin_origin, first_member)?;
+			pallet_communities::Pallet::<T>::add_member(admin_origin.into(), first_member)?;
 
 			pallet_referenda_tracks::Pallet::<T, I>::insert(
-				Origin.into(),
+				Origin::<T, I>.into(),
+				community_id.into(),
 				maybe_track_info.unwrap_or(TrackInfoOf::<T, I> {
-					// TODO: add missing fields
+					name: todo!(),
+					max_deciding: todo!(),
+					decision_deposit: todo!(),
+					prepare_period: todo!(),
+					decision_period: todo!(),
+					confirm_period: todo!(),
+					min_enactment_period: todo!(),
+					min_approval: todo!(),
+					min_support: todo!(),
 				}),
-			)?;
+				community_origin.clone().into_caller(),
+			)
+			.map_err(|e| e.error)?;
 
 			Self::deposit_event(Event::<T, I>::CommunityCreated {
 				id: community_id,
@@ -128,19 +171,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		pub fn set_metadata(
-			origin: OriginFor<T>,
-			name: Option<ConstSizedField<64>>,
-			description: Option<ConstSizedField<256>>,
-			url: Option<ConstSizedField<256>>,
-		) -> DispatchResult {
-			todo!("implement this")
-			// Deposit (Hold)
-			// Communities::set_metadata(name, description, url)
-		}
-
-		#[pallet::call_index(2)]
-		pub fn configure_track(origin: OriginFor<T>, track_details: TrackInfoOf<T>) -> DispatchResult {
+		pub fn configure_track(origin: OriginFor<T>, track_details: TrackInfoOf<T, I>) -> DispatchResult {
 			todo!("implement")
 		}
 	}

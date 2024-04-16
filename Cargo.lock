@@ -6585,6 +6585,7 @@ dependencies = [
  "pallet-balances",
  "pallet-communities",
  "pallet-nfts",
+ "pallet-referenda",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
