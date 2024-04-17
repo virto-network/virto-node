@@ -373,7 +373,7 @@ mod vote {
 				ext.execute_with(|| {
 					// For now, this community will vote membership-based
 					assert_ok!(Communities::set_decision_method(
-						RuntimeOrigin::root(),
+						TestEnvBuilder::create_community_origin(&COMMUNITY_C),
 						COMMUNITY_C,
 						DecisionMethod::Membership
 					));

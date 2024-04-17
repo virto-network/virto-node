@@ -1,8 +1,8 @@
 use crate::{
 	origin::DecisionMethod,
 	types::{
-		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, MembershipIdOf, PalletsOriginOf, PollIndexOf,
-		RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
+		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
+		PollIndexOf, RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
 	},
 	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Pallet,
 };
@@ -12,7 +12,8 @@ use frame_support::{
 	fail,
 	pallet_prelude::*,
 	traits::{
-		fungible::MutateFreeze as FunMutateFreeze, fungibles::MutateHold as FunsMutateHold, tokens::Precision, Polling,
+		fungible::Mutate, fungible::MutateFreeze as FunMutateFreeze, fungibles::MutateHold as FunsMutateHold,
+		tokens::Precision, Polling,
 	},
 };
 use sp_runtime::{
@@ -28,7 +29,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn community_exists(community_id: &T::CommunityId) -> bool {
-		Self::community(community_id).is_some()
+		Info::<T>::contains_key(community_id)
 	}
 
 	pub fn is_member(community_id: &T::CommunityId, who: &AccountIdOf<T>) -> bool {
@@ -49,13 +50,31 @@ impl<T: Config> Pallet<T> {
 		Info::<T>::mutate(community_id, |c| c.as_mut().map(|c| c.state = state));
 	}
 
+	pub fn register(
+		admin: &PalletsOriginOf<T>,
+		community_id: &CommunityIdOf<T>,
+		maybe_deposit: Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>,
+	) -> DispatchResult {
+		if let Some((deposit, depositor, depositee)) = maybe_deposit {
+			T::Balances::transfer(
+				&depositor,
+				&depositee,
+				deposit,
+				frame_support::traits::tokens::Preservation::Preserve,
+			)?;
+		}
+
+		Self::do_register_community(admin, community_id)
+	}
+
 	/// Stores an initial info about the community
 	/// Sets the caller as the community admin, the initial community state
 	/// to its default value(awaiting)
 	pub(crate) fn do_register_community(admin: &PalletsOriginOf<T>, community_id: &T::CommunityId) -> DispatchResult {
-		if Self::community_exists(community_id) {
-			fail!(Error::<T>::CommunityAlreadyExists);
-		}
+		ensure!(
+			!Self::community_exists(community_id),
+			Error::<T>::CommunityAlreadyExists
+		);
 
 		CommunityIdFor::<T>::insert(admin, community_id);
 		Info::<T>::insert(community_id, CommunityInfo::default());

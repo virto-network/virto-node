@@ -291,6 +291,7 @@ parameter_types! {
 	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = COMMUNITY;
+	pub const NoDepositOnRootRegistration: Option<(Balance, AccountId, AccountId)> = None;
 }
 
 type MembershipCollection = ItemOf<Nfts, MembershipsManagerCollectionId, AccountId>;
@@ -416,7 +417,8 @@ impl pallet_communities::Config for Test {
 	type MemberMgmt = Nfts;
 	type Polls = Referenda;
 
-	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
+	type CreateOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 
 	type RuntimeCall = RuntimeCall;
@@ -545,7 +547,7 @@ impl TestEnvBuilder {
 				Communities::create(RuntimeOrigin::root(), community_origin.caller().clone(), *community_id)
 					.expect("can add community");
 
-				Communities::set_decision_method(RuntimeOrigin::root(), *community_id, decision_method.clone())
+				Communities::set_decision_method(community_origin.clone(), *community_id, decision_method.clone())
 					.expect("can set decision info");
 
 				let mut members = self.members.iter().filter(|(cid, _)| cid == community_id);

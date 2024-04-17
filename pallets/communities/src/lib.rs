@@ -167,8 +167,13 @@ pub mod pallet {
 			+ membership::Manager<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
 			+ membership::Rank<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
 
-		/// Origin authorized to manage the state of a community
-		type CommunityMgmtOrigin: EnsureOrigin<OriginFor<Self>>;
+		type CreateOrigin: EnsureOrigin<
+			OriginFor<Self>,
+			Success = Option<(NativeBalanceOf<Self>, AccountIdOf<Self>, AccountIdOf<Self>)>,
+		>;
+
+		/// Origin authorized to administer an active community
+		type AdminOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
 
 		/// Origin authorized to manage memeberships of an active community
 		type MemberMgmtOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
@@ -240,7 +245,6 @@ pub mod pallet {
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
 	/// community exists.
 	#[pallet::storage]
-	#[pallet::getter(fn community)]
 	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo>;
 
 	/// List of origins and how they map to communities
@@ -265,6 +269,10 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// A [`Commmunity`][`types::Community`] has been created.
 		CommunityCreated {
+			id: T::CommunityId,
+			origin: PalletsOriginOf<T>,
+		},
+		AdminOriginSet {
 			id: T::CommunityId,
 			origin: PalletsOriginOf<T>,
 		},
@@ -337,10 +345,30 @@ pub mod pallet {
 			admin_origin: PalletsOriginOf<T>,
 			community_id: T::CommunityId,
 		) -> DispatchResult {
-			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
-			Self::do_register_community(&admin_origin, &community_id)?;
+			Self::register(&admin_origin, &community_id, maybe_deposit)?;
 			Self::deposit_event(Event::CommunityCreated {
+				id: community_id,
+				origin: admin_origin,
+			});
+			Ok(())
+		}
+
+		/// Creates a new community managed by the given origin
+		#[pallet::call_index(1)]
+		pub fn set_admin_origin(origin: OriginFor<T>, admin_origin: PalletsOriginOf<T>) -> DispatchResult {
+			let community_id = T::AdminOrigin::ensure_origin(origin.clone())?;
+
+			ensure!(
+				CommunityIdFor::<T>::get(origin.clone().caller()) == Some(community_id),
+				DispatchError::BadOrigin
+			);
+
+			CommunityIdFor::<T>::remove(origin.caller());
+			CommunityIdFor::<T>::insert(admin_origin.clone(), community_id);
+
+			Self::deposit_event(Event::AdminOriginSet {
 				id: community_id,
 				origin: admin_origin,
 			});
@@ -426,7 +454,7 @@ pub mod pallet {
 			community_id: T::CommunityId,
 			decision_method: DecisionMethodFor<T>,
 		) -> DispatchResult {
-			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			CommunityDecisionMethod::<T>::set(community_id, decision_method);
 
 			Self::deposit_event(Event::DecisionMethodSet { id: community_id });

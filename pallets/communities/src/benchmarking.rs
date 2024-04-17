@@ -82,7 +82,7 @@ where
 		community_params::<T>(maybe_decision_method);
 
 	Pallet::<T>::create(origin.clone(), admin_origin_caller, community_id)?;
-	Pallet::<T>::set_decision_method(origin, community_id, decision_method)?;
+	Pallet::<T>::set_decision_method(admin_origin.clone(), community_id, decision_method)?;
 
 	Ok((community_id, admin_origin))
 }
@@ -136,7 +136,7 @@ where
 #[benchmarks(
 	where
 		T: frame_system::Config + crate::Config,
-		OriginFor<T>: From<Origin<T>>,
+		OriginFor<T>: From<Origin<T>> + From<frame_system::Origin<T>>,
 		RuntimeEventFor<T>: From<frame_system::Event<T>>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
@@ -157,15 +157,42 @@ mod benchmarks {
 	}
 
 	#[benchmark]
+	fn set_admin_origin() -> Result<(), BenchmarkError> {
+		// setup code
+		let (id, _, _, community_origin) = community_params::<T>(None);
+
+		let community_account = Communities::<T>::community_account(&id);
+		let signed_origin: <T as Config>::RuntimeOrigin = RawOrigin::Signed(community_account.clone()).into();
+		let signed_origin_caller: PalletsOriginOf<T> = signed_origin.into_caller();
+
+		Communities::<T>::create(RawOrigin::Root.into(), signed_origin_caller, id)?;
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(community_account), community_origin.clone());
+
+		// verification code
+		assert_eq!(CommunityIdFor::<T>::get(community_origin.clone()), Some(id));
+		assert_has_event::<T>(
+			Event::AdminOriginSet {
+				id,
+				origin: community_origin,
+			}
+			.into(),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
 	fn set_decision_method() -> Result<(), BenchmarkError> {
 		// setup code
 		let (id, decision_method, _, admin_origin) = community_params::<T>(None);
-		Communities::<T>::create(RawOrigin::Root.into(), admin_origin, id)?;
+		Communities::<T>::create(RawOrigin::Root.into(), admin_origin.clone(), id)?;
 		CommunityDecisionMethod::<T>::set(id, decision_method);
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Root,
+			admin_origin,
 			id,
 			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id()),
 		);

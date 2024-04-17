@@ -68,7 +68,8 @@ where
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
 
-	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
+	type CreateOrigin = EnsureRoot<AccountId>;
+	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
 	type MemberMgmt = CommunityMemberships;
 	type MembershipId = MembershipId;

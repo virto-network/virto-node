@@ -21,10 +21,7 @@ fn weights() {
 		// Examples: call available weight functions with various parameters (as applicable) to gauge weight usage in
 		// comparison to limits
 		("create", SubstrateWeight::<Test>::create()),
-		(
-			"set_metadata (64, 256, 63)",
-			SubstrateWeight::<Test>::set_metadata(64, 256, 64),
-		),
+		("set_admin_origin", SubstrateWeight::<Test>::set_admin_origin()),
 		("set_decision_method", SubstrateWeight::<Test>::set_decision_method()),
 		("add_member", SubstrateWeight::<Test>::add_member()),
 		("remove_member", SubstrateWeight::<Test>::remove_member()),

@@ -34,12 +34,12 @@ use core::marker::PhantomData;
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
 	fn create() -> Weight;
-	fn set_metadata(n: u32, d: u32, u: u32) -> Weight;
 	fn add_member() -> Weight;
+	fn set_admin_origin () -> Weight;
+	fn set_decision_method () -> Weight;
 	fn promote() -> Weight;
 	fn demote() -> Weight;
 	fn remove_member() -> Weight;
-	fn set_decision_method () -> Weight;
 	fn vote() -> Weight;
 	fn remove_vote() -> Weight;
 	fn unlock() -> Weight;
@@ -70,7 +70,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// The range of component `n` is `[1, 64]`.
 	/// The range of component `d` is `[1, 256]`.
 	/// The range of component `u` is `[1, 256]`.
-	fn set_metadata(_n: u32, d: u32, u: u32, ) -> Weight {
+	fn set_admin_origin() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `75`
 		//  Estimated: `4065`
@@ -78,9 +78,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(37_081_339, 0)
 			.saturating_add(Weight::from_parts(0, 4065))
 			// Standard Error: 1_334
-			.saturating_add(Weight::from_parts(4_526, 0).saturating_mul(d.into()))
-			// Standard Error: 1_334
-			.saturating_add(Weight::from_parts(2_575, 0).saturating_mul(u.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -291,7 +288,7 @@ impl WeightInfo for () {
 	/// The range of component `n` is `[1, 64]`.
 	/// The range of component `d` is `[1, 256]`.
 	/// The range of component `u` is `[1, 256]`.
-	fn set_metadata(_n: u32, d: u32, u: u32, ) -> Weight {
+	fn set_admin_origin() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `75`
 		//  Estimated: `4065`
@@ -299,9 +296,6 @@ impl WeightInfo for () {
 		Weight::from_parts(37_081_339, 0)
 			.saturating_add(Weight::from_parts(0, 4065))
 			// Standard Error: 1_334
-			.saturating_add(Weight::from_parts(4_526, 0).saturating_mul(d.into()))
-			// Standard Error: 1_334
-			.saturating_add(Weight::from_parts(2_575, 0).saturating_mul(u.into()))
 			.saturating_add(RocksDbWeight::get().reads(1))
 			.saturating_add(RocksDbWeight::get().writes(1))
 	}
