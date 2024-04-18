@@ -143,11 +143,18 @@ pub trait BenchmarkHelper<T: Config> {
 	fn community_id() -> CommunityIdOf<T>;
 
 	/// Returns the ID of the community to use in benchmarks
-	fn community_asset_id() -> AssetIdOf<T>;
+	fn community_asset_id() -> AssetIdOf<T>
+	where
+		AssetIdOf<T>: From<u32>
+	{
+		1u32.into()
+	}
 
 	/// Returns the desired size of the community for
 	/// effects of benchmark testing
-	fn community_desired_size() -> u32;
+	fn community_desired_size() -> u32 {
+		u8::MAX as u32
+	}
 
 	/// Initializes the membership collection of a community.
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;

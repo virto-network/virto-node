@@ -5,8 +5,8 @@ use super::*;
 use self::{
 	origin::DecisionMethod,
 	types::{
-		AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf, PollIndexOf,
-		RuntimeCallFor, Vote,
+		AccountIdOf, AssetIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
+		PollIndexOf, RuntimeCallFor, Vote,
 	},
 	CommunityDecisionMethod, Event, HoldReason, Pallet as Communities,
 };
@@ -138,6 +138,7 @@ where
 		T: frame_system::Config + crate::Config,
 		OriginFor<T>: From<Origin<T>> + From<frame_system::Origin<T>>,
 		RuntimeEventFor<T>: From<frame_system::Event<T>>,
+		AssetIdOf<T>: From<u32>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
 )]
