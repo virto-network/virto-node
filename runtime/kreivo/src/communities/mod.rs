@@ -4,6 +4,7 @@ use frame_support::{
 	pallet_prelude::{EnsureOrigin, PhantomData},
 	traits::OriginTrait,
 };
+use frame_system::EnsureRootWithSuccess;
 use pallet_communities::{origin::EnsureCommunity, types::RuntimeOriginFor};
 use sp_runtime::traits::AccountIdConversion;
 use virto_common::{CommunityId, MembershipId};
@@ -37,6 +38,7 @@ parameter_types! {
   pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
 	pub const MembershipsCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
+	pub const NoDepositOnRootRegistration: Option<(Balance, AccountId, AccountId)> = None;
 }
 
 pub struct EnsureCommunityAccountId<T>(PhantomData<T>);
@@ -67,8 +69,7 @@ where
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
-
-	type CreateOrigin = EnsureRoot<AccountId>;
+	type CreateOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
 	type MemberMgmt = CommunityMemberships;
