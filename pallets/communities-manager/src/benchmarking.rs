@@ -20,7 +20,7 @@ fn assert_has_event<T: Config>(generic_event: RuntimeEventFor<T>) {
 where
 	RuntimeEventFor<T>: From<pallet_communities::Event<T>>,
 	BlockNumberFor<T>: From<u32>,
-	CommunityIdOf<T>: From<u16>
+	CommunityIdOf<T>: From<u16>,
 )]
 mod benchmarks {
 	use super::*;

@@ -19,11 +19,9 @@ fn weights() {
 
 	let mut total = Weight::zero();
 
-	for (function, weight) in vec![
-		// Examples: call available weight functions with various parameters (as applicable) to gauge weight usage in
-		// comparison to limits
-		("register", SubstrateWeight::<Test>::register()),
-	] {
+	let calls = vec![("register", SubstrateWeight::<Test>::register())];
+
+	for (function, weight) in calls {
 		println!("{function}: {weight:?}",);
 		println!(
 			"\tpercentage of max extrinsic weight: {:.2}% (ref_time), {:.2}% (proof_size)",
