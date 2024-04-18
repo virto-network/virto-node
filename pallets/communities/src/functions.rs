@@ -80,6 +80,11 @@ impl<T: Config> Pallet<T> {
 		Info::<T>::insert(community_id, CommunityInfo::default());
 		frame_system::Pallet::<T>::inc_providers(&Self::community_account(community_id));
 
+		Self::deposit_event(crate::Event::CommunityCreated {
+			id: *community_id,
+			origin: admin.clone(),
+		});
+
 		Ok(())
 	}
 

@@ -127,8 +127,11 @@ mod functions;
 mod impls;
 
 pub mod types;
+pub use types::*;
+
 pub mod weights;
 pub use weights::*;
+
 pub mod origin;
 
 #[frame_support::pallet]
@@ -142,10 +145,10 @@ pub mod pallet {
 		traits::{fungible, fungibles, EnsureOrigin, IsSubType, OriginTrait, Polling},
 		Blake2_128Concat, Parameter,
 	};
-	use frame_system::pallet_prelude::{OriginFor, *};
+	use frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
 	use sp_runtime::traits::{Dispatchable, StaticLookup};
 	use sp_std::prelude::Box;
-	use types::{PollIndexOf, RuntimeCallFor, RuntimeOriginFor, *};
+
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
 
 	#[pallet::pallet]
@@ -348,10 +351,6 @@ pub mod pallet {
 			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
 			Self::register(&admin_origin, &community_id, maybe_deposit)?;
-			Self::deposit_event(Event::CommunityCreated {
-				id: community_id,
-				origin: admin_origin,
-			});
 			Ok(())
 		}
 
