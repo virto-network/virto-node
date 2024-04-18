@@ -145,7 +145,7 @@ pub trait BenchmarkHelper<T: Config> {
 	/// Returns the ID of the community to use in benchmarks
 	fn community_asset_id() -> AssetIdOf<T>
 	where
-		AssetIdOf<T>: From<u32>
+		AssetIdOf<T>: From<u32>,
 	{
 		1u32.into()
 	}
