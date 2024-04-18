@@ -8,7 +8,9 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
 };
-use sp_runtime::{traits::TryConvert, Permill};
+#[cfg(feature = "xcm")]
+use sp_runtime::traits::TryConvert;
+use sp_runtime::Permill;
 
 pub struct EnsureCommunity<T>(PhantomData<T>);
 
