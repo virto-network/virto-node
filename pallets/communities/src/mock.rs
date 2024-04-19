@@ -21,7 +21,7 @@ pub use virto_common::{CommunityId, MembershipId};
 
 use crate::{
 	self as pallet_communities,
-	origin::{DecisionMethod, EnsureCommunity},
+	origin::{DecisionMethod, EnsureCommunity, EnsureCreateOrigin},
 	types::{Tally, VoteWeight},
 };
 
@@ -291,7 +291,6 @@ parameter_types! {
 	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = COMMUNITY;
-	pub const NoDepositOnRootRegistration: Option<(Balance, AccountId, AccountId)> = None;
 }
 
 type MembershipCollection = ItemOf<Nfts, MembershipsManagerCollectionId, AccountId>;
@@ -417,7 +416,8 @@ impl pallet_communities::Config for Test {
 	type MemberMgmt = Nfts;
 	type Polls = Referenda;
 
-	type CreateOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	type CreateOrigin =
+		EnsureCreateOrigin<Test, EnsureRoot<AccountId>, EnsureSigned<AccountId>, RootAccount, ConstU128<10>>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 

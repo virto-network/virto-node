@@ -1,6 +1,6 @@
 use crate::{
 	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf, RuntimeOriginFor},
-	CommunityIdFor, Config, Info, Pallet,
+	AccountIdOf, CommunityIdFor, Config, Info, NativeBalanceOf, Pallet,
 };
 use core::marker::PhantomData;
 use fc_traits_memberships::Inspect;
@@ -42,6 +42,36 @@ where
 	fn try_successful_origin() -> Result<RuntimeOriginFor<T>, ()> {
 		use crate::BenchmarkHelper;
 		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
+	}
+}
+
+pub struct EnsureCreateOrigin<T, R, P, D, A>(PhantomData<(T, R, P, D, A)>);
+
+impl<OuterOrigin, T, Root, Permissionless, Destination, Amount> EnsureOrigin<OuterOrigin>
+	for EnsureCreateOrigin<T, Root, Permissionless, Destination, Amount>
+where
+	OuterOrigin: From<frame_system::Origin<T>> + Clone,
+	T: Config,
+	Root: EnsureOrigin<OuterOrigin>,
+	Permissionless: EnsureOrigin<OuterOrigin, Success = AccountIdOf<T>>,
+	Destination: Get<AccountIdOf<T>>,
+	Amount: Get<NativeBalanceOf<T>>,
+{
+	type Success = Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>;
+
+	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
+		match Root::try_origin(o.clone()) {
+			Ok(_) => Ok(None),
+			_ => match Permissionless::try_origin(o.clone()) {
+				Ok(sender) => Ok(Some((Amount::get(), sender, Destination::get()))),
+				_ => Err(o),
+			},
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<OuterOrigin, ()> {
+		Ok(frame_system::Origin::<T>::Root.into())
 	}
 }
 
