@@ -1,15 +1,9 @@
 use super::*;
 
-use frame_support::{
-	pallet_prelude::{EnsureOrigin, PhantomData},
-	traits::OriginTrait,
-};
-use frame_system::EnsureSigned;
-use pallet_communities::{
-	origin::{EnsureCommunity, EnsureCreateOrigin},
-	types::RuntimeOriginFor,
-};
-use sp_runtime::traits::AccountIdConversion;
+use frame_support::traits::TryMapSuccess;
+use frame_system::{EnsureRootWithSuccess, EnsureSigned};
+use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
+use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
 pub mod governance;
@@ -38,49 +32,28 @@ use ::{
 };
 
 parameter_types! {
-  pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
+	pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
 	pub const MembershipsCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
-	pub const CommunityDepositAmount: Balance = UNITS;
+	pub const CommunityDepositAmount: Balance = UNITS / 2;
+	pub const NoPay: Option<(Balance, AccountId, AccountId)> = None;
 }
 
-pub struct EnsureCommunityAccountId<T>(PhantomData<T>);
-
-impl<T> EnsureOrigin<RuntimeOriginFor<T>> for EnsureCommunityAccountId<T>
-where
-	RuntimeOriginFor<T>:
-		OriginTrait + From<frame_system::RawOrigin<T::AccountId>> + From<pallet_communities::Origin<T>>,
-	T: pallet_communities::Config,
-{
-	type Success = T::CommunityId;
-
-	fn try_origin(o: RuntimeOriginFor<T>) -> Result<Self::Success, RuntimeOriginFor<T>> {
-		match o.clone().into() {
-			Ok(frame_system::RawOrigin::Signed(account_id)) => {
-				let (_, community_id) = PalletId::try_from_sub_account(&account_id).ok_or(o.clone())?;
-				Ok(community_id)
-			}
-			_ => Err(o),
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<RuntimeOriginFor<T>, ()> {
-		Ok(Origin::new(T::BenchmarkHelper::community_id()).into())
-	}
+morph_types! {
+	pub type AccountToCommunityId: TryMorph = |a: AccountId| -> Result<CommunityId, ()> {
+		PalletId::try_from_sub_account(&a).map(|(_, id)| id).ok_or(())
+	};
 }
+type EnsureCommunityAccount = TryMapSuccess<EnsureSigned<AccountId>, AccountToCommunityId>;
+
+type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
+type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, TreasuryAccount>;
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
-	type CreateOrigin = EnsureCreateOrigin<
-		Self,
-		EnsureRoot<AccountId>,
-		EnsureSigned<AccountId>,
-		TreasuryAccount,
-		CommunityDepositAmount,
-	>;
-	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
-	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
+	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
+	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
+	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmt = CommunityMemberships;
 	type MembershipId = MembershipId;
 

@@ -3,9 +3,12 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16,
-		ConstU32, ConstU64, EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint, OriginTrait,
+		ConstU32, ConstU64, EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint,
 	},
-	weights::{constants::WEIGHT_REF_TIME_PER_NANOS, constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
+	weights::{
+		constants::{WEIGHT_REF_TIME_PER_NANOS, WEIGHT_REF_TIME_PER_SECOND},
+		Weight,
+	},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
@@ -21,7 +24,7 @@ pub use virto_common::{CommunityId, MembershipId};
 
 use crate::{
 	self as pallet_communities,
-	origin::{DecisionMethod, EnsureCommunity, EnsureCreateOrigin},
+	origin::{DecisionMethod, EnsureCommunity, EnsureSignedPays},
 	types::{Tally, VoteWeight},
 };
 
@@ -406,6 +409,12 @@ impl BenchmarkHelper<Test> for CommunityBenchmarkHelper {
 	}
 }
 
+parameter_types! {
+	pub const NoPay: Option<(Balance, AccountId, AccountId)> = None;
+}
+type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
+type AnyoneElsePays = EnsureSignedPays<Test, ConstU128<10>, RootAccount>;
+
 impl pallet_communities::Config for Test {
 	type PalletId = CommunitiesPalletId;
 	type CommunityId = CommunityId;
@@ -416,8 +425,7 @@ impl pallet_communities::Config for Test {
 	type MemberMgmt = Nfts;
 	type Polls = Referenda;
 
-	type CreateOrigin =
-		EnsureCreateOrigin<Test, EnsureRoot<AccountId>, EnsureSigned<AccountId>, RootAccount, ConstU128<10>>;
+	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 
@@ -544,7 +552,7 @@ impl TestEnvBuilder {
 					.expect("should include decision_method on add_community");
 				let community_origin: RuntimeOrigin = Self::create_community_origin(community_id);
 
-				Communities::create(RuntimeOrigin::root(), community_origin.caller().clone(), *community_id)
+				Communities::create(RuntimeOrigin::root(), community_origin.caller.clone(), *community_id)
 					.expect("can add community");
 
 				Communities::set_decision_method(community_origin.clone(), *community_id, decision_method.clone())
@@ -575,7 +583,7 @@ impl TestEnvBuilder {
 						RuntimeOrigin::root(),
 						*community_id,
 						track_info.clone(),
-						community_origin.caller().clone(),
+						community_origin.caller.clone(),
 					)
 					.expect("can add track");
 				}
