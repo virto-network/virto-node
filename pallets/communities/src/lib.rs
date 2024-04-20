@@ -357,6 +357,11 @@ pub mod pallet {
 			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
 			Self::register(&admin_origin, &community_id, maybe_deposit)?;
+
+			Self::deposit_event(crate::Event::CommunityCreated {
+				id: community_id,
+				origin: admin_origin,
+			});
 			Ok(())
 		}
 

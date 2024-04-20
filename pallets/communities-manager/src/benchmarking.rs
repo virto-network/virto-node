@@ -1,14 +1,11 @@
 //! Benchmarking setup for pallet-communities
-#![cfg(feature = "runtime-benchmarks")]
 use super::*;
 
 use frame_benchmarking::v2::*;
-
-use self::Pallet as CommunitiesManager;
+use Pallet as CommunitiesManager;
 
 use frame_system::RawOrigin;
-use pallet_referenda::Curve;
-use sp_runtime::{str_array as s, traits::StaticLookup, Perbill};
+use sp_runtime::traits::StaticLookup;
 
 type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
 
@@ -37,39 +34,14 @@ mod benchmarks {
 		_(
 			RawOrigin::Root,
 			community_id,
-			TrackInfo {
-				name: s("Test Track"),
-				max_deciding: 1,
-				decision_deposit: 0u32.into(),
-				prepare_period: 1u32.into(),
-				decision_period: 2u32.into(),
-				confirm_period: 1u32.into(),
-				min_enactment_period: 1u32.into(),
-				min_approval: pallet_referenda::Curve::LinearDecreasing {
-					length: Perbill::one(),
-					floor: Perbill::zero(),
-					ceil: Perbill::one(),
-				},
-				min_support: Curve::LinearDecreasing {
-					length: Perbill::one(),
-					floor: Perbill::zero(),
-					ceil: Perbill::one(),
-				},
-			},
+			BoundedVec::truncate_from(b"Test Community".into()),
 			Some(admin_origin_caller.clone()),
 			None,
 			Some(T::Lookup::unlookup(first_member)),
 		);
 
 		// verification code
-		assert_has_event::<T>(
-			pallet_communities::Event::<T>::CommunityCreated {
-				id: community_id,
-				origin: admin_origin_caller,
-			}
-			.into(),
-		);
-		assert_has_event::<T>(crate::Event::<T>::CommunityRegistered { id: community_id }.into());
+		assert_has_event::<T>(Event::<T>::CommunityRegistered { id: community_id }.into());
 	}
 
 	impl_benchmark_test_suite!(
