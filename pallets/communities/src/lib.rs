@@ -191,6 +191,7 @@ pub mod pallet {
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId>
+			+ fungibles::hold::Inspect<Self::AccountId, Reason = Self::RuntimeHoldReason>
 			+ fungibles::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
 
 		/// Type represents interactions between fungible tokens (native token)
@@ -241,7 +242,7 @@ pub mod pallet {
 	#[pallet::composite_enum]
 	pub enum HoldReason {
 		// A vote has been casted on a poll
-		VoteCasted(u32),
+		VoteCasted,
 	}
 
 	/// Stores the basic information of the community. If a value exists for a
@@ -261,9 +262,14 @@ pub mod pallet {
 
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
-	#[pallet::getter(fn community_vote_of)]
-	pub(super) type CommunityVotes<T> =
-		StorageDoubleMap<_, Blake2_128Concat, AccountIdOf<T>, Blake2_128Concat, PollIndexOf<T>, VoteOf<T>>;
+	pub(super) type CommunityVotes<T> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		PollIndexOf<T>,
+		Blake2_128Concat,
+		MembershipIdOf<T>,
+		(VoteOf<T>, AccountIdOf<T>),
+	>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
@@ -455,7 +461,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
 			CommunityDecisionMethod::<T>::set(community_id, decision_method);
-
 			Self::deposit_event(Event::DecisionMethodSet { id: community_id });
 			Ok(())
 		}
@@ -469,7 +474,12 @@ pub mod pallet {
 			vote: VoteOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_vote(&who, membership_id, poll_index, &vote)?;
+
+			if CommunityVotes::<T>::get(poll_index, membership_id).is_some() {
+				Self::try_remove_vote(&who, membership_id, poll_index)?;
+			}
+
+			Self::try_vote(&who, membership_id, poll_index, &vote)?;
 			Self::deposit_event(Event::<T>::VoteCasted {
 				who: who.clone(),
 				poll_index,
@@ -486,7 +496,7 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_remove_vote(&who, membership_id, poll_index)?;
+			Self::try_remove_vote(&who, membership_id, poll_index)?;
 			Self::deposit_event(Event::<T>::VoteRemoved {
 				who: who.clone(),
 				poll_index,
@@ -497,12 +507,15 @@ pub mod pallet {
 		/// Make previously held or locked funds from a vote available
 		// if the refereundum  has finished
 		#[pallet::call_index(10)]
-		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
+		pub fn unlock(
+			origin: OriginFor<T>,
+			membership_id: MembershipIdOf<T>,
+			#[pallet::compact] poll_index: PollIndexOf<T>,
+		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
-			let vote = Self::community_vote_of(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
-
-			Self::do_unlock_for_vote(&who, &poll_index, &vote)
+			CommunityVotes::<T>::remove(poll_index, membership_id);
+			Self::do_unlock(&who, membership_id, poll_index)
 		}
 
 		/// Dispatch a callable as the community account
@@ -535,5 +548,20 @@ pub mod pallet {
 		// crate::Origin::<T>::new(community_id); 	let post =
 		// call.dispatch(origin.into()).map_err(|e| e.error)?; 	Ok(post)
 		// }
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_idle(_: BlockNumberFor<T>, _: Weight) -> Weight {
+			let max_members = u16::MAX as u32;
+
+			if let Some((i, _)) = CommunityVotes::<T>::iter_keys().find(|(i, _)| T::Polls::as_ongoing(*i).is_none()) {
+				match CommunityVotes::<T>::clear_prefix(i, max_members, None) {
+					_ => Weight::zero(),
+				}
+			} else {
+				Weight::zero()
+			}
+		}
 	}
 }

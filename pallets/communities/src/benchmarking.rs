@@ -399,18 +399,18 @@ mod benchmarks {
 		)?;
 
 		assert_eq!(
-			T::Balances::balance_frozen(&HoldReason::VoteCasted(0u32).into(), &who),
+			T::Balances::balance_frozen(&HoldReason::VoteCasted.into(), &who),
 			1u32.into()
 		);
 
 		T::BenchmarkHelper::finish_poll(index)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(who.clone()), 0u32);
+		_(RawOrigin::Signed(who.clone()), membership_id, 0u32);
 
 		// verification code
 		assert_eq!(
-			T::Balances::balance_frozen(&HoldReason::VoteCasted(0u32).into(), &who),
+			T::Balances::balance_frozen(&HoldReason::VoteCasted.into(), &who),
 			0u32.into()
 		);
 

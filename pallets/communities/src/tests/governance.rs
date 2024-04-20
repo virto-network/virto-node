@@ -259,6 +259,64 @@ mod vote {
 				);
 			});
 		}
+
+		#[test]
+		fn transferring_memberships_does_not_lead_to_double_voting() {
+			new_test_ext().execute_with(|| {
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(ALICE),
+					membership(COMMUNITY_A, 1),
+					0,
+					Vote::Standard(true)
+				));
+
+				System::assert_last_event(
+					crate::Event::VoteCasted {
+						who: ALICE,
+						poll_index: 0,
+						vote: Vote::Standard(true),
+					}
+					.into(),
+				);
+
+				assert_ok!(Nfts::transfer(
+					RuntimeOrigin::signed(ALICE),
+					COMMUNITY_A,
+					membership(COMMUNITY_A, 1),
+					BOB
+				));
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					membership(COMMUNITY_A, 1),
+					0,
+					Vote::Standard(true)
+				));
+
+				System::assert_last_event(
+					crate::Event::VoteCasted {
+						who: BOB,
+						poll_index: 0,
+						vote: Vote::Standard(true),
+					}
+					.into(),
+				);
+
+				use frame_support::traits::Polling;
+				assert_eq!(
+					Referenda::as_ongoing(0),
+					Some((
+						Tally {
+							ayes: 1,
+							bare_ayes: 1,
+							nays: 0,
+							..Default::default()
+						},
+						COMMUNITY_A
+					))
+				);
+			});
+		}
 	}
 
 	mod membership {
@@ -1086,27 +1144,8 @@ mod unlock {
 		new_test_ext().execute_with(|| {
 			// Since BOB never casted a vote, a lock wasn't put in place
 			assert_noop!(
-				Communities::unlock(RuntimeOrigin::signed(BOB), 1),
+				Communities::unlock(RuntimeOrigin::signed(BOB), membership(COMMUNITY_C, 2), 1),
 				Error::AlreadyOngoing
-			);
-		});
-	}
-
-	#[test]
-	fn fails_if_no_locks_in_place() {
-		new_test_ext().execute_with(|| {
-			tick_blocks(6);
-
-			// Since BOB never casted a vote, a lock wasn't put in place
-			assert_noop!(
-				Communities::unlock(RuntimeOrigin::signed(BOB), 1),
-				Error::NoLocksInPlace
-			);
-
-			// Since CHARLIE never casted a vote, a freeze wasn't put in place
-			assert_noop!(
-				Communities::unlock(RuntimeOrigin::signed(CHARLIE), 2),
-				Error::NoLocksInPlace
 			);
 		});
 	}
@@ -1130,9 +1169,17 @@ mod unlock {
 
 			tick_blocks(6);
 
-			assert_ok!(Communities::unlock(RuntimeOrigin::signed(BOB), 1));
+			assert_ok!(Communities::unlock(
+				RuntimeOrigin::signed(BOB),
+				membership(COMMUNITY_C, 2),
+				1
+			));
 
-			assert_ok!(Communities::unlock(RuntimeOrigin::signed(CHARLIE), 2));
+			assert_ok!(Communities::unlock(
+				RuntimeOrigin::signed(CHARLIE),
+				membership(COMMUNITY_D, 3),
+				2
+			));
 		});
 	}
 }

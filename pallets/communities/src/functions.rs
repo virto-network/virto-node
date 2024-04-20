@@ -4,7 +4,8 @@ use crate::{
 		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
 		PollIndexOf, RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
 	},
-	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Pallet,
+	AssetBalanceOf, AssetIdOf, CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason,
+	Info, Pallet,
 };
 use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
@@ -12,15 +13,17 @@ use frame_support::{
 	fail,
 	pallet_prelude::*,
 	traits::{
-		fungible::Mutate, fungible::MutateFreeze as FunMutateFreeze, fungibles::MutateHold as FunsMutateHold,
-		tokens::Precision, Polling,
+		fungible::{Mutate, MutateFreeze},
+		fungibles::{InspectHold, MutateHold},
+		tokens::Precision,
+		Polling,
 	},
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, Dispatchable},
 	DispatchResultWithInfo, TokenError,
 };
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 impl<T: Config> Pallet<T> {
 	#[inline]
@@ -88,16 +91,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn do_vote(
+	pub(crate) fn try_vote(
 		who: &AccountIdOf<T>,
 		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 		vote: &VoteOf<T>,
 	) -> DispatchResult {
 		ensure!(VoteWeight::from(vote).gt(&0), TokenError::BelowMinimum);
-		let Some(community_id) = T::MemberMgmt::check_membership(who, &membership_id) else {
-			fail!(Error::<T>::NotAMember);
-		};
+		let community_id = T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
@@ -111,11 +112,6 @@ impl<T: Config> Pallet<T> {
 					.into(),
 				_ => 1,
 			};
-			if let Some(vote) = Self::community_vote_of(who, poll_index) {
-				Self::do_unlock_for_vote(who, &poll_index, &vote)?;
-				let vote_weight = VoteWeight::from(&vote);
-				tally.remove_vote(vote.say(), vote_multiplier * vote_weight, vote_weight);
-			}
 
 			let say = *match (vote, decision_method) {
 				(Vote::AssetBalance(say, asset, ..), DecisionMethod::CommunityAsset(a)) if *asset == a => say,
@@ -127,76 +123,89 @@ impl<T: Config> Pallet<T> {
 			let vote_weight = VoteWeight::from(vote);
 			tally.add_vote(say, vote_multiplier * vote_weight, vote_weight);
 
-			Self::do_lock_for_vote(who, &poll_index, vote)
+			CommunityVotes::<T>::insert(poll_index, membership_id, (vote, who));
+			Self::update_locks(who)
 		})
 	}
 
-	pub(crate) fn do_remove_vote(
+	pub(crate) fn try_remove_vote(
 		who: &AccountIdOf<T>,
 		membership_id: MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
-		let Some(community_id) = T::MemberMgmt::check_membership(who, &membership_id) else {
-			fail!(Error::<T>::NotAMember);
-		};
+		let community_id = T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let Some((tally, class)) = poll_status.ensure_ongoing() else {
 				fail!(Error::<T>::NotOngoing);
 			};
 			ensure!(community_id == class, Error::<T>::InvalidTrack);
-			let vote = Self::community_vote_of(who, poll_index).ok_or(Error::<T>::NoVoteCasted)?;
 
+			let (vote, _) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
 			let vote_multiplier = match CommunityDecisionMethod::<T>::get(community_id) {
 				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
 					.unwrap_or_default()
 					.into(),
 				_ => 1,
 			};
+
 			let vote_weight = VoteWeight::from(&vote);
 			tally.remove_vote(vote.say(), vote_multiplier * vote_weight, vote_weight);
 
-			let reason = HoldReason::VoteCasted(poll_index).into();
-			CommunityVotes::<T>::remove(who, poll_index);
-
-			match vote {
-				Vote::AssetBalance(_, asset_id, amount) => {
-					T::Assets::release(asset_id.clone(), &reason, who, amount, Precision::BestEffort).map(|_| ())
-				}
-				Vote::NativeBalance(..) => T::Balances::thaw(&reason, who),
-				_ => Ok(()),
-			}
+			CommunityVotes::<T>::remove(poll_index, membership_id);
+			Self::update_locks(who)
 		})
 	}
 
-	fn do_lock_for_vote(who: &AccountIdOf<T>, poll_index: &PollIndexOf<T>, vote: &VoteOf<T>) -> DispatchResult {
-		let reason = HoldReason::VoteCasted(*poll_index).into();
-		CommunityVotes::<T>::insert(who, poll_index, vote.clone());
-
-		match vote {
-			Vote::AssetBalance(_, asset_id, amount) => T::Assets::hold(asset_id.clone(), &reason, who, *amount),
-			Vote::NativeBalance(_, amount) => {
-				T::Balances::set_frozen(&reason, who, *amount, frame_support::traits::tokens::Fortitude::Polite)
-			}
-			_ => Ok(()),
-		}
+	pub(crate) fn do_unlock(
+		who: &AccountIdOf<T>,
+		membership_id: MembershipIdOf<T>,
+		poll_index: PollIndexOf<T>,
+	) -> DispatchResult {
+		T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
+		CommunityVotes::<T>::remove(poll_index, membership_id);
+		Self::update_locks(who)
 	}
 
-	pub(crate) fn do_unlock_for_vote(
-		who: &AccountIdOf<T>,
-		poll_index: &PollIndexOf<T>,
-		vote: &VoteOf<T>,
-	) -> DispatchResult {
-		let reason = HoldReason::VoteCasted(*poll_index).into();
-		CommunityVotes::<T>::remove(who, poll_index);
+	pub(crate) fn update_locks(who: &AccountIdOf<T>) -> DispatchResult {
+		use sp_runtime::traits::Zero;
+		let reason = HoldReason::VoteCasted.into();
 
-		match vote {
-			Vote::AssetBalance(_, asset_id, amount) => {
-				T::Assets::release(asset_id.clone(), &reason, who, *amount, Precision::BestEffort).map(|_| ())
+		let mut assets_locked_amount: Vec<(AssetIdOf<T>, AssetBalanceOf<T>)> = vec![];
+		let mut native_locked_amount: NativeBalanceOf<T> = Zero::zero();
+
+		for (locked_vote, _) in CommunityVotes::<T>::iter_values().filter(|(_, voter)| voter == who) {
+			match locked_vote {
+				Vote::AssetBalance(_, asset_id, amount) => {
+					if let Some((_, locked_amount)) =
+						assets_locked_amount.iter_mut().find(|(asset, _)| asset == &asset_id)
+					{
+						*locked_amount = (*locked_amount).max(amount);
+					} else {
+						assets_locked_amount.push((asset_id.clone(), amount));
+					}
+				}
+				Vote::NativeBalance(_, amount) => native_locked_amount = native_locked_amount.max(amount),
+				_ => (),
 			}
-			Vote::NativeBalance(..) => T::Balances::thaw(&reason, who),
-			_ => Err(Error::<T>::NoLocksInPlace.into()),
 		}
+
+		for (asset, amount) in assets_locked_amount.iter() {
+			let held_balance = T::Assets::balance_on_hold(asset.clone(), &reason, who);
+			if held_balance.gt(&Zero::zero()) {
+				T::Assets::release(asset.clone(), &reason, who, held_balance, Precision::Exact)?;
+			}
+			T::Assets::hold(asset.clone(), &reason, who, *amount)?;
+		}
+
+		T::Balances::set_frozen(
+			&reason,
+			who,
+			native_locked_amount,
+			frame_support::traits::tokens::Fortitude::Polite,
+		)?;
+
+		Ok(())
 	}
 
 	pub(crate) fn do_dispatch_as_community_account(

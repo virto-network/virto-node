@@ -27,6 +27,7 @@ sp-std = { workspace = true }
 xcm = { workspace = true, optional = true }
 
 [dev-dependencies]
+env_logger = "0.11"
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 
