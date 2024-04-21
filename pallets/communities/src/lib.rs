@@ -566,10 +566,9 @@ pub mod pallet {
 
 			if let Some((i, _)) = CommunityVotes::<T>::iter_keys().find(|(i, _)| T::Polls::as_ongoing(*i).is_none()) {
 				let _ = CommunityVotes::<T>::clear_prefix(i, max_members, None);
-				Weight::zero()
-			} else {
-				Weight::zero()
 			}
+
+			Weight::zero()
 		}
 	}
 }
