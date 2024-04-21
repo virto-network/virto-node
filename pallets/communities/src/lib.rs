@@ -271,6 +271,11 @@ pub mod pallet {
 		(VoteOf<T>, AccountIdOf<T>),
 	>;
 
+	/// Stores the list of votes for a community.
+	#[pallet::storage]
+	pub(super) type CommunityVoteLocks<T> =
+		StorageDoubleMap<_, Blake2_128Concat, AccountIdOf<T>, Blake2_128Concat, PollIndexOf<T>, VoteOf<T>>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
@@ -514,7 +519,6 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
-			CommunityVotes::<T>::remove(poll_index, membership_id);
 			Self::do_unlock(&who, membership_id, poll_index)
 		}
 

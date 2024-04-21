@@ -1,12 +1,4 @@
-use crate::{
-	origin::DecisionMethod,
-	types::{
-		AccountIdOf, CommunityIdOf, CommunityInfo, CommunityState, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
-		PollIndexOf, RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
-	},
-	AssetBalanceOf, AssetIdOf, CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason,
-	Info, Pallet,
-};
+use super::{origin::DecisionMethod, *};
 use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
 	dispatch::PostDispatchInfo,
@@ -124,6 +116,7 @@ impl<T: Config> Pallet<T> {
 			tally.add_vote(say, vote_multiplier * vote_weight, vote_weight);
 
 			CommunityVotes::<T>::insert(poll_index, membership_id, (vote, who));
+			CommunityVoteLocks::<T>::insert(who, poll_index, vote);
 			Self::update_locks(who)
 		})
 	}
@@ -136,12 +129,10 @@ impl<T: Config> Pallet<T> {
 		let community_id = T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 
 		T::Polls::try_access_poll(poll_index, |poll_status| {
-			let Some((tally, class)) = poll_status.ensure_ongoing() else {
-				fail!(Error::<T>::NotOngoing);
-			};
+			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
 			ensure!(community_id == class, Error::<T>::InvalidTrack);
 
-			let (vote, _) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
+			let (vote, voter) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
 			let vote_multiplier = match CommunityDecisionMethod::<T>::get(community_id) {
 				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
 					.unwrap_or_default()
@@ -152,8 +143,9 @@ impl<T: Config> Pallet<T> {
 			let vote_weight = VoteWeight::from(&vote);
 			tally.remove_vote(vote.say(), vote_multiplier * vote_weight, vote_weight);
 
+			CommunityVoteLocks::<T>::remove(voter.clone(), poll_index);
 			CommunityVotes::<T>::remove(poll_index, membership_id);
-			Self::update_locks(who)
+			Self::update_locks(&voter)
 		})
 	}
 
@@ -163,6 +155,7 @@ impl<T: Config> Pallet<T> {
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
 		T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
+		CommunityVoteLocks::<T>::remove(who, poll_index);
 		CommunityVotes::<T>::remove(poll_index, membership_id);
 		Self::update_locks(who)
 	}
@@ -174,7 +167,7 @@ impl<T: Config> Pallet<T> {
 		let mut assets_locked_amount: Vec<(AssetIdOf<T>, AssetBalanceOf<T>)> = vec![];
 		let mut native_locked_amount: NativeBalanceOf<T> = Zero::zero();
 
-		for (locked_vote, _) in CommunityVotes::<T>::iter_values().filter(|(_, voter)| voter == who) {
+		for locked_vote in CommunityVoteLocks::<T>::iter_prefix_values(who) {
 			match locked_vote {
 				Vote::AssetBalance(_, asset_id, amount) => {
 					if let Some((_, locked_amount)) =
