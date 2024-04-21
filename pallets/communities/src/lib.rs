@@ -362,6 +362,11 @@ pub mod pallet {
 			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
 			Self::register(&admin_origin, &community_id, maybe_deposit)?;
+
+			Self::deposit_event(crate::Event::CommunityCreated {
+				id: community_id,
+				origin: admin_origin,
+			});
 			Ok(())
 		}
 
@@ -560,9 +565,8 @@ pub mod pallet {
 			let max_members = u16::MAX as u32;
 
 			if let Some((i, _)) = CommunityVotes::<T>::iter_keys().find(|(i, _)| T::Polls::as_ongoing(*i).is_none()) {
-				match CommunityVotes::<T>::clear_prefix(i, max_members, None) {
-					_ => Weight::zero(),
-				}
+				let _ = CommunityVotes::<T>::clear_prefix(i, max_members, None);
+				Weight::zero()
 			} else {
 				Weight::zero()
 			}

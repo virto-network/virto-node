@@ -26,14 +26,18 @@ use pallet_communities::{
 	},
 	Origin as CommunityOrigin,
 };
-use pallet_nfts::{CollectionConfig, MintSettings, MintType::Issuer};
+use pallet_nfts::CollectionConfig;
 use pallet_referenda::{TrackInfo, TracksInfo};
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use sp_runtime::str_array;
+
 	use super::*;
+
+	type CommunityName = BoundedVec<u8, ConstU32<25>>;
 
 	/// Configure the pallet by specifying the parameters and types on which it
 	/// depends.
@@ -82,6 +86,8 @@ pub mod pallet {
 	// Errors inform users that something worked or went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Community name didn't contain valid utf8 characters
+		InvalidCommunityName,
 		/// It was not possible to register the community
 		CannotRegister,
 	}
@@ -96,16 +102,18 @@ pub mod pallet {
 		pub fn register(
 			origin: OriginFor<T>,
 			community_id: CommunityIdOf<T>,
-			track_info: TrackInfoOf<T>,
+			name: CommunityName,
 			maybe_admin_origin: Option<PalletsOriginOf<T>>,
 			maybe_decision_method: Option<DecisionMethodFor<T>>,
 			_maybe_first_member: Option<AccountIdLookupOf<T>>,
 		) -> DispatchResult {
 			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
-			// This implies depositing (Deposit (Hold | -> Treasury))
+			let community_name = core::str::from_utf8(&name).map_err(|_| Error::<T>::InvalidCommunityName)?;
 			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();
 			let admin_origin = maybe_admin_origin.unwrap_or(community_origin.clone().into_caller());
+			// Register first to check if community exists
+			pallet_communities::Pallet::<T>::register(&admin_origin, &community_id, maybe_deposit)?;
 
 			if let Some(decision_method) = maybe_decision_method {
 				pallet_communities::Pallet::<T>::set_decision_method(
@@ -114,8 +122,6 @@ pub mod pallet {
 					decision_method,
 				)?;
 			}
-
-			pallet_communities::Pallet::<T>::register(&admin_origin, &community_id, maybe_deposit)?;
 
 			let community_account = pallet_communities::Pallet::<T>::community_account(&community_id);
 
@@ -127,26 +133,46 @@ pub mod pallet {
 				&CollectionConfig {
 					settings: Default::default(),
 					max_supply: None,
-					mint_settings: MintSettings {
-						mint_type: Issuer,
-						price: None,
-						start_block: None,
-						end_block: None,
-						default_item_settings: Default::default(),
-					},
+					mint_settings: Default::default(),
 				},
 			)?;
 
 			// Create governance track for community
-			T::Tracks::insert(community_id, track_info, community_origin.into_caller())?;
-
+			T::Tracks::insert(
+				community_id,
+				Self::default_tack(community_name),
+				community_origin.into_caller(),
+			)?;
 			// Induct community at Kreivo Governance with rank 1
 			T::RankedCollective::induct(&community_account)?;
-			T::RankedCollective::promote(&community_account)?;
 
 			Self::deposit_event(Event::<T>::CommunityRegistered { id: community_id });
-
 			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn default_tack(name: &str) -> TrackInfoOf<T> {
+			use sp_runtime::Perbill;
+			TrackInfo {
+				name: str_array(name),
+				max_deciding: 1,
+				decision_deposit: 0u8.into(),
+				prepare_period: 1u8.into(),
+				decision_period: u8::MAX.into(),
+				confirm_period: 1u8.into(),
+				min_enactment_period: 1u8.into(),
+				min_approval: pallet_referenda::Curve::LinearDecreasing {
+					length: Perbill::from_percent(100),
+					floor: Perbill::from_percent(50),
+					ceil: Perbill::from_percent(100),
+				},
+				min_support: pallet_referenda::Curve::LinearDecreasing {
+					length: Perbill::from_percent(100),
+					floor: Perbill::from_percent(0),
+					ceil: Perbill::from_percent(50),
+				},
+			}
 		}
 	}
 }

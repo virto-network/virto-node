@@ -1,16 +1,17 @@
 use crate::{
 	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf, RuntimeOriginFor},
-	AccountIdOf, CommunityIdFor, Config, Info, NativeBalanceOf, Pallet,
+	AccountIdOf, CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
 use fc_traits_memberships::Inspect;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
+	traits::{membership::GenericRank, EnsureOriginWithArg, MapSuccess, OriginTrait},
 };
+use frame_system::EnsureSigned;
 #[cfg(feature = "xcm")]
 use sp_runtime::traits::TryConvert;
-use sp_runtime::Permill;
+use sp_runtime::{morph_types, Permill};
 
 pub struct EnsureCommunity<T>(PhantomData<T>);
 
@@ -45,35 +46,18 @@ where
 	}
 }
 
-pub struct EnsureCreateOrigin<T, R, P, D, A>(PhantomData<(T, R, P, D, A)>);
-
-impl<OuterOrigin, T, Root, Permissionless, Destination, Amount> EnsureOrigin<OuterOrigin>
-	for EnsureCreateOrigin<T, Root, Permissionless, Destination, Amount>
-where
-	OuterOrigin: From<frame_system::Origin<T>> + Clone,
-	T: Config,
-	Root: EnsureOrigin<OuterOrigin>,
-	Permissionless: EnsureOrigin<OuterOrigin, Success = AccountIdOf<T>>,
-	Destination: Get<AccountIdOf<T>>,
-	Amount: Get<NativeBalanceOf<T>>,
-{
-	type Success = Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>;
-
-	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
-		match Root::try_origin(o.clone()) {
-			Ok(_) => Ok(None),
-			_ => match Permissionless::try_origin(o.clone()) {
-				Ok(sender) => Ok(Some((Amount::get(), sender, Destination::get()))),
-				_ => Err(o),
-			},
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<OuterOrigin, ()> {
-		Ok(frame_system::Origin::<T>::Root.into())
-	}
+morph_types! {
+	pub type PaymentForCreate<
+		AccountId,
+		GetAmount: TypedGet,
+		GetReceiver: TypedGet<Type = AccountId>
+	>: Morph = |sender: AccountId| -> Option<(GetAmount::Type, AccountId, GetReceiver::Type)> {
+		Some((GetAmount::get(), sender, GetReceiver::get()))
+	};
 }
+
+pub type EnsureSignedPays<T, Amount, Beneficiary> =
+	MapSuccess<EnsureSigned<AccountIdOf<T>>, PaymentForCreate<AccountIdOf<T>, Amount, Beneficiary>>;
 
 pub struct EnsureMember<T>(PhantomData<T>);
 

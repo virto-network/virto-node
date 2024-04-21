@@ -45,11 +45,19 @@ impl<T: Config> Pallet<T> {
 		Info::<T>::mutate(community_id, |c| c.as_mut().map(|c| c.state = state));
 	}
 
+	/// Stores an initial info about the community
+	/// Sets the caller as the community admin, the initial community state
+	/// to its default value(awaiting)
 	pub fn register(
 		admin: &PalletsOriginOf<T>,
 		community_id: &CommunityIdOf<T>,
 		maybe_deposit: Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>,
 	) -> DispatchResult {
+		ensure!(
+			!Self::community_exists(community_id),
+			Error::<T>::CommunityAlreadyExists
+		);
+
 		if let Some((deposit, depositor, depositee)) = maybe_deposit {
 			T::Balances::transfer(
 				&depositor,
@@ -59,26 +67,9 @@ impl<T: Config> Pallet<T> {
 			)?;
 		}
 
-		Self::do_register_community(admin, community_id)
-	}
-
-	/// Stores an initial info about the community
-	/// Sets the caller as the community admin, the initial community state
-	/// to its default value(awaiting)
-	pub(crate) fn do_register_community(admin: &PalletsOriginOf<T>, community_id: &T::CommunityId) -> DispatchResult {
-		ensure!(
-			!Self::community_exists(community_id),
-			Error::<T>::CommunityAlreadyExists
-		);
-
 		CommunityIdFor::<T>::insert(admin, community_id);
 		Info::<T>::insert(community_id, CommunityInfo::default());
 		frame_system::Pallet::<T>::inc_providers(&Self::community_account(community_id));
-
-		Self::deposit_event(crate::Event::CommunityCreated {
-			id: *community_id,
-			origin: admin.clone(),
-		});
 
 		Ok(())
 	}
