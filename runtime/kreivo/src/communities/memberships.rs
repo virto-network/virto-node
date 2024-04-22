@@ -18,8 +18,8 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type CreateOrigin = EnsureRootWithSuccess<AccountId, TreasuryAccount>;
 	type Locker = ();
 
-	type CollectionDeposit = NftsCollectionDeposit;
-	type ItemDeposit = NftsItemDeposit;
+	type CollectionDeposit = ();
+	type ItemDeposit = ();
 	type MetadataDepositBase = NftsMetadataDepositBase;
 	type AttributeDepositBase = NftsAttributeDepositBase;
 	type DepositPerByte = NftsDepositPerByte;
