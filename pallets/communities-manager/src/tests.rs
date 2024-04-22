@@ -1,5 +1,7 @@
-use super::*;
-use crate::weights::{SubstrateWeight, WeightInfo};
+use crate::{
+	mock::*,
+	weights::{SubstrateWeight, WeightInfo},
+};
 use frame_support::weights::Weight;
 
 #[test]
@@ -17,21 +19,9 @@ fn weights() {
 
 	let mut total = Weight::zero();
 
-	for (function, weight) in vec![
-		// Examples: call available weight functions with various parameters (as applicable) to gauge weight usage in
-		// comparison to limits
-		("create", SubstrateWeight::<Test>::create()),
-		("set_admin_origin", SubstrateWeight::<Test>::set_admin_origin()),
-		("set_decision_method", SubstrateWeight::<Test>::set_decision_method()),
-		("add_member", SubstrateWeight::<Test>::add_member()),
-		("remove_member", SubstrateWeight::<Test>::remove_member()),
-		("promote", SubstrateWeight::<Test>::promote()),
-		("demote", SubstrateWeight::<Test>::demote()),
-		("vote", SubstrateWeight::<Test>::vote()),
-		("remove_vote", SubstrateWeight::<Test>::remove_vote()),
-		("unlock", SubstrateWeight::<Test>::unlock()),
-		("dispatch_as_account", SubstrateWeight::<Test>::dispatch_as_account()),
-	] {
+	let calls = vec![("register", SubstrateWeight::<Test>::register())];
+
+	for (function, weight) in calls {
 		println!("{function}: {weight:?}",);
 		println!(
 			"\tpercentage of max extrinsic weight: {:.2}% (ref_time), {:.2}% (proof_size)",

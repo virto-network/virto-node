@@ -1,14 +1,17 @@
 use crate::{
 	types::{CommunityIdOf, CommunityState::Active, MembershipIdOf, RuntimeOriginFor},
-	CommunityIdFor, Config, Info, Pallet,
+	AccountIdOf, CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
 use fc_traits_memberships::Inspect;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{membership::GenericRank, EnsureOriginWithArg, OriginTrait},
+	traits::{membership::GenericRank, EnsureOriginWithArg, MapSuccess, OriginTrait},
 };
-use sp_runtime::{traits::TryConvert, Permill};
+use frame_system::EnsureSigned;
+#[cfg(feature = "xcm")]
+use sp_runtime::traits::TryConvert;
+use sp_runtime::{morph_types, Permill};
 
 pub struct EnsureCommunity<T>(PhantomData<T>);
 
@@ -42,6 +45,19 @@ where
 		Ok(RawOrigin::new(T::BenchmarkHelper::community_id()).into())
 	}
 }
+
+morph_types! {
+	pub type PaymentForCreate<
+		AccountId,
+		GetAmount: TypedGet,
+		GetReceiver: TypedGet<Type = AccountId>
+	>: Morph = |sender: AccountId| -> Option<(GetAmount::Type, AccountId, GetReceiver::Type)> {
+		Some((GetAmount::get(), sender, GetReceiver::get()))
+	};
+}
+
+pub type EnsureSignedPays<T, Amount, Beneficiary> =
+	MapSuccess<EnsureSigned<AccountIdOf<T>>, PaymentForCreate<AccountIdOf<T>, Amount, Beneficiary>>;
 
 pub struct EnsureMember<T>(PhantomData<T>);
 

@@ -5,19 +5,16 @@ use super::*;
 use self::{
 	origin::DecisionMethod,
 	types::{
-		AccountIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf, PollIndexOf,
-		RuntimeCallFor, Vote,
+		AccountIdOf, AssetIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
+		PollIndexOf, RuntimeCallFor, Vote,
 	},
 	CommunityDecisionMethod, Event, HoldReason, Pallet as Communities,
 };
 use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
-use frame_support::{
-	traits::{
-		fungible::{InspectFreeze, Mutate},
-		OriginTrait,
-	},
-	BoundedVec,
+use frame_support::traits::{
+	fungible::{InspectFreeze, Mutate},
+	OriginTrait,
 };
 use frame_system::{
 	pallet_prelude::{BlockNumberFor, OriginFor},
@@ -85,7 +82,7 @@ where
 		community_params::<T>(maybe_decision_method);
 
 	Pallet::<T>::create(origin.clone(), admin_origin_caller, community_id)?;
-	Pallet::<T>::set_decision_method(origin, community_id, decision_method)?;
+	Pallet::<T>::set_decision_method(admin_origin.clone(), community_id, decision_method)?;
 
 	Ok((community_id, admin_origin))
 }
@@ -139,8 +136,9 @@ where
 #[benchmarks(
 	where
 		T: frame_system::Config + crate::Config,
-		OriginFor<T>: From<Origin<T>>,
+		OriginFor<T>: From<Origin<T>> + From<frame_system::Origin<T>>,
 		RuntimeEventFor<T>: From<frame_system::Event<T>>,
+		AssetIdOf<T>: From<u32>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
 )]
@@ -160,20 +158,28 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn set_metadata(n: Linear<1, 64>, d: Linear<1, 256>, u: Linear<1, 256>) -> Result<(), BenchmarkError> {
+	fn set_admin_origin() -> Result<(), BenchmarkError> {
 		// setup code
-		let (id, _, _, admin_origin) = community_params::<T>(None);
-		Communities::<T>::create(RawOrigin::Root.into(), admin_origin, id)?;
+		let (id, _, _, community_origin) = community_params::<T>(None);
 
-		let name = Some(BoundedVec::truncate_from(vec![0u8; n as usize]));
-		let description = Some(BoundedVec::truncate_from(vec![0u8; d as usize]));
-		let url = Some(BoundedVec::truncate_from(vec![0u8; u as usize]));
+		let community_account = Communities::<T>::community_account(&id);
+		let signed_origin: <T as Config>::RuntimeOrigin = RawOrigin::Signed(community_account.clone()).into();
+		let signed_origin_caller: PalletsOriginOf<T> = signed_origin.into_caller();
+
+		Communities::<T>::create(RawOrigin::Root.into(), signed_origin_caller, id)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Root, id, name.clone(), description.clone(), url.clone());
+		_(RawOrigin::Signed(community_account), community_origin.clone());
 
 		// verification code
-		assert_has_event::<T>(Event::MetadataSet { id, name }.into());
+		assert_eq!(CommunityIdFor::<T>::get(community_origin.clone()), Some(id));
+		assert_has_event::<T>(
+			Event::AdminOriginSet {
+				id,
+				origin: community_origin,
+			}
+			.into(),
+		);
 
 		Ok(())
 	}
@@ -182,12 +188,12 @@ mod benchmarks {
 	fn set_decision_method() -> Result<(), BenchmarkError> {
 		// setup code
 		let (id, decision_method, _, admin_origin) = community_params::<T>(None);
-		Communities::<T>::create(RawOrigin::Root.into(), admin_origin, id)?;
+		Communities::<T>::create(RawOrigin::Root.into(), admin_origin.clone(), id)?;
 		CommunityDecisionMethod::<T>::set(id, decision_method);
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Root,
+			admin_origin,
 			id,
 			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id()),
 		);
@@ -393,7 +399,7 @@ mod benchmarks {
 		)?;
 
 		assert_eq!(
-			T::Balances::balance_frozen(&HoldReason::VoteCasted(0u32).into(), &who),
+			T::Balances::balance_frozen(&HoldReason::VoteCasted.into(), &who),
 			1u32.into()
 		);
 
@@ -404,7 +410,7 @@ mod benchmarks {
 
 		// verification code
 		assert_eq!(
-			T::Balances::balance_frozen(&HoldReason::VoteCasted(0u32).into(), &who),
+			T::Balances::balance_frozen(&HoldReason::VoteCasted.into(), &who),
 			0u32.into()
 		);
 

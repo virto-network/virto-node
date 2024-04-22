@@ -142,10 +142,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("kreivo-parachain"),
 	impl_name: create_runtime_str!("kreivo-parachain"),
 	authoring_version: 1,
-	spec_version: 107,
+	spec_version: 108,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 5,
+	transaction_version: 6,
 	state_version: 1,
 };
 
@@ -210,6 +210,7 @@ construct_runtime!(
 		CommunityTracks: pallet_referenda_tracks::<Instance2> = 72,
 		CommunityReferenda: pallet_referenda::<Instance2> = 73,
 		CommunityMemberships: pallet_nfts::<Instance2> = 74,
+		CommunitiesManager: pallet_communities_manager = 75,
 	}
 );
 
@@ -728,6 +729,7 @@ mod benches {
 		[pallet_communities, Communities]
 		[pallet_referenda_tracks, CommunityTracks]
 		[pallet_referenda, CommunityReferenda]
+		[pallet_communities_manager, CommunitiesManager]
 		[pallet_nfts, CommunityMemberships]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.

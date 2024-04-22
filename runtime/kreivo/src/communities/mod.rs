@@ -1,11 +1,9 @@
 use super::*;
 
-use frame_support::{
-	pallet_prelude::{EnsureOrigin, PhantomData},
-	traits::OriginTrait,
-};
-use pallet_communities::{origin::EnsureCommunity, types::RuntimeOriginFor};
-use sp_runtime::traits::AccountIdConversion;
+use frame_support::traits::TryMapSuccess;
+use frame_system::{EnsureRootWithSuccess, EnsureSigned};
+use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
+use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
 pub mod governance;
@@ -18,13 +16,13 @@ use self::{
 };
 
 #[cfg(feature = "runtime-benchmarks")]
-use ::{
+use {
 	frame_benchmarking::BenchmarkError,
 	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::ItemOf, tokens::nonfungible_v2::Mutate},
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_communities::{
 		types::{CommunityIdOf, MembershipIdOf, PalletsOriginOf, PollIndexOf},
-		BenchmarkHelper, Origin,
+		BenchmarkHelper,
 	},
 	pallet_nfts::Pallet as Nfts,
 	pallet_referenda::{BoundedCallOf, Curve, Pallet as Referenda, TrackInfo},
@@ -34,42 +32,28 @@ use ::{
 };
 
 parameter_types! {
-  pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
+	pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
 	pub const MembershipsCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
+	pub const CommunityDepositAmount: Balance = UNITS / 2;
+	pub const NoPay: Option<(Balance, AccountId, AccountId)> = None;
 }
 
-pub struct EnsureCommunityAccountId<T>(PhantomData<T>);
-
-impl<T> EnsureOrigin<RuntimeOriginFor<T>> for EnsureCommunityAccountId<T>
-where
-	RuntimeOriginFor<T>:
-		OriginTrait + From<frame_system::RawOrigin<T::AccountId>> + From<pallet_communities::Origin<T>>,
-	T: pallet_communities::Config,
-{
-	type Success = T::CommunityId;
-
-	fn try_origin(o: RuntimeOriginFor<T>) -> Result<Self::Success, RuntimeOriginFor<T>> {
-		match o.clone().into() {
-			Ok(frame_system::RawOrigin::Signed(account_id)) => {
-				let (_, community_id) = PalletId::try_from_sub_account(&account_id).ok_or(o.clone())?;
-				Ok(community_id)
-			}
-			_ => Err(o),
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<RuntimeOriginFor<T>, ()> {
-		Ok(Origin::new(T::BenchmarkHelper::community_id()).into())
-	}
+morph_types! {
+	pub type AccountToCommunityId: TryMorph = |a: AccountId| -> Result<CommunityId, ()> {
+		PalletId::try_from_sub_account(&a).map(|(_, id)| id).ok_or(())
+	};
 }
+type EnsureCommunityAccount = TryMapSuccess<EnsureSigned<AccountId>, AccountToCommunityId>;
+
+type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
+type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, TreasuryAccount>;
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
-
-	type CommunityMgmtOrigin = EnsureRoot<AccountId>;
-	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccountId<Self>>;
+	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
+	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
+	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmt = CommunityMemberships;
 	type MembershipId = MembershipId;
 
@@ -88,6 +72,14 @@ impl pallet_communities::Config for Runtime {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
+}
+
+impl pallet_communities_manager::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type CreateCollection = CommunityMemberships;
+	type Tracks = CommunityTracks;
+	type RankedCollective = KreivoCollective;
+	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -124,13 +116,6 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		let community_id = Self::community_id();
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
 
-		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&community_account,
-			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::AttributeDepositBase::get() +
-				// Deposit for membership_member_count attribute
-				<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::DepositPerByte::get() * 27
-		)?;
-
 		Nfts::<Runtime, CommunityMembershipsInstance>::do_create_collection(
 			community_id,
 			community_account.clone(),
@@ -151,22 +136,6 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 		membership_id: MembershipIdOf<Runtime>,
 	) -> Result<(), BenchmarkError> {
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
-
-		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&TreasuryAccount::get(),
-			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::ItemDeposit::get()
-		)?;
-
-		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&community_account,
-			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::ItemDeposit::get()
-		)?;
-		<<Runtime as pallet_communities::Config>::Balances as frame_support::traits::fungible::Mutate<AccountId>>::mint_into(
-			&community_account,
-			<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::AttributeDepositBase::get() +
-				// Deposit for membership_member_rank attribute
-				<Runtime as pallet_nfts::Config::<CommunityMembershipsInstance>>::DepositPerByte::get() * 26
-		)?;
 
 		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
 

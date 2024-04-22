@@ -259,6 +259,64 @@ mod vote {
 				);
 			});
 		}
+
+		#[test]
+		fn transferring_memberships_does_not_lead_to_double_voting() {
+			new_test_ext().execute_with(|| {
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(ALICE),
+					membership(COMMUNITY_A, 1),
+					0,
+					Vote::Standard(true)
+				));
+
+				System::assert_last_event(
+					crate::Event::VoteCasted {
+						who: ALICE,
+						poll_index: 0,
+						vote: Vote::Standard(true),
+					}
+					.into(),
+				);
+
+				assert_ok!(Nfts::transfer(
+					RuntimeOrigin::signed(ALICE),
+					COMMUNITY_A,
+					membership(COMMUNITY_A, 1),
+					BOB
+				));
+
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					membership(COMMUNITY_A, 1),
+					0,
+					Vote::Standard(true)
+				));
+
+				System::assert_last_event(
+					crate::Event::VoteCasted {
+						who: BOB,
+						poll_index: 0,
+						vote: Vote::Standard(true),
+					}
+					.into(),
+				);
+
+				use frame_support::traits::Polling;
+				assert_eq!(
+					Referenda::as_ongoing(0),
+					Some((
+						Tally {
+							ayes: 1,
+							bare_ayes: 1,
+							nays: 0,
+							..Default::default()
+						},
+						COMMUNITY_A
+					))
+				);
+			});
+		}
 	}
 
 	mod membership {
@@ -373,7 +431,7 @@ mod vote {
 				ext.execute_with(|| {
 					// For now, this community will vote membership-based
 					assert_ok!(Communities::set_decision_method(
-						RuntimeOrigin::root(),
+						TestEnvBuilder::create_community_origin(&COMMUNITY_C),
 						COMMUNITY_C,
 						DecisionMethod::Membership
 					));
@@ -909,7 +967,6 @@ mod vote {
 
 				tick_blocks(2);
 
-				dbg!(System::events());
 				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 3 }.into());
 			});
 		}
@@ -1088,25 +1145,6 @@ mod unlock {
 			assert_noop!(
 				Communities::unlock(RuntimeOrigin::signed(BOB), 1),
 				Error::AlreadyOngoing
-			);
-		});
-	}
-
-	#[test]
-	fn fails_if_no_locks_in_place() {
-		new_test_ext().execute_with(|| {
-			tick_blocks(6);
-
-			// Since BOB never casted a vote, a lock wasn't put in place
-			assert_noop!(
-				Communities::unlock(RuntimeOrigin::signed(BOB), 1),
-				Error::NoLocksInPlace
-			);
-
-			// Since CHARLIE never casted a vote, a freeze wasn't put in place
-			assert_noop!(
-				Communities::unlock(RuntimeOrigin::signed(CHARLIE), 2),
-				Error::NoLocksInPlace
 			);
 		});
 	}

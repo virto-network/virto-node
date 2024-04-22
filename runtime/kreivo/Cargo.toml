@@ -1,7 +1,7 @@
 [package]
 name = "kreivo-runtime"
 description = "Kreivo Runtime"
-version = "0.10.2"
+version = "0.11.0"
 authors = ['Virto Team <contact@virto.team>']
 license = "GPL-3.0-only"
 homepage = 'https://github.com/virto-network/virto-node'
@@ -24,6 +24,7 @@ smallvec = { workspace = true }
 # Local
 pallet-payments = { workspace = true }
 pallet-communities = { workspace = true, features = ["xcm"] }
+pallet-communities-manager = { workspace = true }
 
 # Local: Common
 virto-common = { workspace = true, default-features = false, features = ["runtime"] }
@@ -128,6 +129,7 @@ std = [
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
+	"pallet-communities-manager/std",
 	"pallet-communities/std",
 	"pallet-collator-selection/std",
 	"pallet-message-queue/std",
@@ -190,6 +192,7 @@ runtime-benchmarks = [
 	"pallet-asset-tx-payment/runtime-benchmarks",
 	"pallet-assets/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
+	"pallet-communities-manager/runtime-benchmarks",
 	"pallet-communities/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
@@ -230,6 +233,7 @@ try-runtime = [
 	"pallet-aura/try-runtime",
 	"pallet-authorship/try-runtime",
 	"pallet-balances/try-runtime",
+	"pallet-communities-manager/try-runtime",
 	"pallet-communities/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-message-queue/try-runtime",

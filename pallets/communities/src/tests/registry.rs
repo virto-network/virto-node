@@ -1,14 +1,13 @@
 use super::*;
-use crate::{
-	types::{CommunityInfo, CommunityMetadata},
-	Event, Info,
-};
+use crate::{types::CommunityInfo, Event, Info};
 use frame_support::assert_noop;
 use frame_system::RawOrigin::Root;
-use sp_runtime::{BoundedVec, DispatchError};
 
 mod create {
 	use super::*;
+
+	const COMMUNITY_B: CommunityId = 2;
+	const COMMUNITY_B_ORIGIN: OriginCaller = OriginCaller::Communities(crate::Origin::<Test>::new(COMMUNITY_B));
 
 	#[test]
 	fn fails_if_community_already_exists() {
@@ -36,69 +35,27 @@ mod create {
 			);
 		});
 	}
-}
-
-mod set_metadata {
-	use super::*;
 
 	#[test]
-	fn fails_if_bad_origin() {
+	fn takes_deposit_if_permissionlessly_creating_community() {
 		new_test_ext(&[], &[]).execute_with(|| {
-			// Fail if trying to call from unsigned origin
-			assert_noop!(
-				Communities::set_metadata(RuntimeOrigin::none(), COMMUNITY, None, None, None),
-				DispatchError::BadOrigin
-			);
+			const ALICE: AccountId = AccountId::new([1; 32]);
+			assert_ok!(Balances::force_set_balance(RuntimeOrigin::root(), ALICE, 15));
 
-			// Fail if trying to call from non-admin
-			const NON_ADMIN: AccountId = AccountId::new([0; 32]);
-			assert_noop!(
-				Communities::set_metadata(RuntimeOrigin::signed(NON_ADMIN), COMMUNITY, None, None, None),
-				DispatchError::BadOrigin
-			);
-		});
-	}
-
-	#[test]
-	fn works_inserts_default_metadata() {
-		new_test_ext(&[], &[]).execute_with(|| {
-			assert_ok!(Communities::set_metadata(
-				Root.into(),
-				COMMUNITY,
-				Some(BoundedVec::truncate_from(b"Virto Network".to_vec())),
-				None,
-				None,
+			assert_ok!(Communities::create(
+				RuntimeOrigin::signed(ALICE),
+				COMMUNITY_B_ORIGIN,
+				COMMUNITY_B
 			));
 
-			let community_metadata = Communities::metadata(COMMUNITY);
-
-			assert_eq!(
-				community_metadata,
-				crate::types::CommunityMetadata {
-					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
-					description: BoundedVec::new(),
-					main_url: BoundedVec::new(),
+			System::assert_has_event(
+				Event::CommunityCreated {
+					id: COMMUNITY_B,
+					origin: COMMUNITY_B_ORIGIN,
 				}
+				.into(),
 			);
-
-			assert_ok!(Communities::set_metadata(
-				Root.into(),
-				COMMUNITY,
-				None,
-				Some(BoundedVec::truncate_from(b"A community of awesome builders".to_vec())),
-				None,
-			));
-
-			let community_metadata = Communities::metadata(COMMUNITY);
-
-			assert_eq!(
-				community_metadata,
-				CommunityMetadata {
-					name: BoundedVec::truncate_from(b"Virto Network".to_vec()),
-					description: BoundedVec::truncate_from(b"A community of awesome builders".to_vec()),
-					main_url: BoundedVec::new(),
-				}
-			);
+			assert_eq!(Balances::free_balance(ALICE), 5);
 		});
 	}
 }

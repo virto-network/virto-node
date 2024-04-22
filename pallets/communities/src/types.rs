@@ -25,9 +25,6 @@ pub type MembershipIdOf<T> = <T as Config>::MembershipId;
 pub type RuntimeCallFor<T> = <T as Config>::RuntimeCall;
 pub type RuntimeOriginFor<T> = <T as Config>::RuntimeOrigin;
 
-pub type SizedField<S> = BoundedVec<u8, S>;
-pub type ConstSizedField<const S: u32> = SizedField<ConstU32<S>>;
-
 #[cfg(feature = "runtime-benchmarks")]
 pub type BenchmarkHelperOf<T> = <T as Config>::BenchmarkHelper;
 
@@ -57,20 +54,7 @@ pub enum CommunityState {
 	Blocked,
 }
 
-/// The CommunityMetadata struct stores some descriptive information about
-/// the community.
-#[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub struct CommunityMetadata {
-	/// The name of the community
-	pub name: ConstSizedField<64>,
-	/// A short description of the community
-	pub description: ConstSizedField<256>,
-	/// The main URL that can lead to information about the community
-	pub main_url: ConstSizedField<256>,
-}
-
 // Governance
-
 pub type VoteWeight = u32;
 
 ///
@@ -149,6 +133,11 @@ impl<T: Config> Tally<T> {
 	}
 }
 
+pub enum LockUpdateType {
+	Add,
+	Remove,
+}
+
 #[cfg(feature = "runtime-benchmarks")]
 use {frame_benchmarking::BenchmarkError, frame_system::pallet_prelude::OriginFor};
 
@@ -158,11 +147,18 @@ pub trait BenchmarkHelper<T: Config> {
 	fn community_id() -> CommunityIdOf<T>;
 
 	/// Returns the ID of the community to use in benchmarks
-	fn community_asset_id() -> AssetIdOf<T>;
+	fn community_asset_id() -> AssetIdOf<T>
+	where
+		AssetIdOf<T>: From<u32>,
+	{
+		1u32.into()
+	}
 
 	/// Returns the desired size of the community for
 	/// effects of benchmark testing
-	fn community_desired_size() -> u32;
+	fn community_desired_size() -> u32 {
+		u8::MAX as u32
+	}
 
 	/// Initializes the membership collection of a community.
 	fn initialize_memberships_collection() -> Result<(), frame_benchmarking::BenchmarkError>;

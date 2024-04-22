@@ -77,9 +77,6 @@
 //!
 //! These functions can be called either by the community _admin_ or
 //! dispatched through an approved proposal. !
-//! - [`set_metadata`][c01]: Sets some [`CommunityMetadata`][t01] to describe
-//!   the
-//! community.
 //! - [`remove_member`][c03]: Removes an account as a community member. While
 //!   enrolling a member into the community can be an action taken by any
 //!   member, the decision to remove a member should not be taken arbitrarily by
@@ -130,8 +127,11 @@ mod functions;
 mod impls;
 
 pub mod types;
+pub use types::*;
+
 pub mod weights;
 pub use weights::*;
+
 pub mod origin;
 
 #[frame_support::pallet]
@@ -145,10 +145,10 @@ pub mod pallet {
 		traits::{fungible, fungibles, EnsureOrigin, IsSubType, OriginTrait, Polling},
 		Blake2_128Concat, Parameter,
 	};
-	use frame_system::pallet_prelude::{OriginFor, *};
+	use frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
 	use sp_runtime::traits::{Dispatchable, StaticLookup};
 	use sp_std::prelude::Box;
-	use types::{PollIndexOf, RuntimeCallFor, RuntimeOriginFor, *};
+
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
 
 	#[pallet::pallet]
@@ -170,8 +170,13 @@ pub mod pallet {
 			+ membership::Manager<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
 			+ membership::Rank<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
 
-		/// Origin authorized to manage the state of a community
-		type CommunityMgmtOrigin: EnsureOrigin<OriginFor<Self>>;
+		type CreateOrigin: EnsureOrigin<
+			OriginFor<Self>,
+			Success = Option<(NativeBalanceOf<Self>, AccountIdOf<Self>, AccountIdOf<Self>)>,
+		>;
+
+		/// Origin authorized to administer an active community
+		type AdminOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
 
 		/// Origin authorized to manage memeberships of an active community
 		type MemberMgmtOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
@@ -186,6 +191,7 @@ pub mod pallet {
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId>
+			+ fungibles::hold::Inspect<Self::AccountId, Reason = Self::RuntimeHoldReason>
 			+ fungibles::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
 
 		/// Type represents interactions between fungible tokens (native token)
@@ -236,25 +242,18 @@ pub mod pallet {
 	#[pallet::composite_enum]
 	pub enum HoldReason {
 		// A vote has been casted on a poll
-		VoteCasted(u32),
+		VoteCasted,
 	}
 
 	/// Stores the basic information of the community. If a value exists for a
 	/// specified [`ComumunityId`][`Config::CommunityId`], this means a
 	/// community exists.
 	#[pallet::storage]
-	#[pallet::getter(fn community)]
 	pub(super) type Info<T> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityInfo>;
 
 	/// List of origins and how they map to communities
 	#[pallet::storage]
 	pub(super) type CommunityIdFor<T> = StorageMap<_, Blake2_128Concat, PalletsOriginOf<T>, CommunityIdOf<T>>;
-
-	/// Stores the metadata regarding a community.
-	#[pallet::storage]
-	#[pallet::getter(fn metadata)]
-	pub(super) type Metadata<T: Config> =
-		StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, CommunityMetadata, ValueQuery>;
 
 	/// Stores the decision method for a community
 	#[pallet::storage]
@@ -263,8 +262,18 @@ pub mod pallet {
 
 	/// Stores the list of votes for a community.
 	#[pallet::storage]
-	#[pallet::getter(fn community_vote_of)]
-	pub(super) type CommunityVotes<T> =
+	pub(super) type CommunityVotes<T> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		PollIndexOf<T>,
+		Blake2_128Concat,
+		MembershipIdOf<T>,
+		(VoteOf<T>, AccountIdOf<T>),
+	>;
+
+	/// Stores the list of votes for a community.
+	#[pallet::storage]
+	pub(super) type CommunityVoteLocks<T> =
 		StorageDoubleMap<_, Blake2_128Concat, AccountIdOf<T>, Blake2_128Concat, PollIndexOf<T>, VoteOf<T>>;
 
 	// Pallets use events to inform users when important changes are made.
@@ -277,11 +286,9 @@ pub mod pallet {
 			id: T::CommunityId,
 			origin: PalletsOriginOf<T>,
 		},
-		/// Some [`CommmuniMetadata`][`types::CommunityMetadata`] has been set
-		/// for a community.
-		MetadataSet {
+		AdminOriginSet {
 			id: T::CommunityId,
-			name: Option<ConstSizedField<64>>,
+			origin: PalletsOriginOf<T>,
 		},
 		DecisionMethodSet {
 			id: T::CommunityId,
@@ -352,38 +359,34 @@ pub mod pallet {
 			admin_origin: PalletsOriginOf<T>,
 			community_id: T::CommunityId,
 		) -> DispatchResult {
-			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
-			Self::do_register_community(&admin_origin, &community_id)?;
-			Self::deposit_event(Event::CommunityCreated {
+			Self::register(&admin_origin, &community_id, maybe_deposit)?;
+
+			Self::deposit_event(crate::Event::CommunityCreated {
 				id: community_id,
 				origin: admin_origin,
 			});
 			Ok(())
 		}
 
-		/// Sets some [`CommunityMetadata`][11] to describe the
-		/// community.
-		///
-		/// [11]: `types::CommunityMetadata`
+		/// Creates a new community managed by the given origin
 		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_metadata(
-				name.as_ref().map(|x| x.len() as u32).unwrap_or(0),
-				description.as_ref().map(|x| x.len() as u32).unwrap_or(0),
-				url.as_ref().map(|x| x.len() as u32).unwrap_or(0),
-		))]
-		pub fn set_metadata(
-			origin: OriginFor<T>,
-			community_id: T::CommunityId,
-			name: Option<ConstSizedField<64>>,
-			description: Option<ConstSizedField<256>>,
-			url: Option<ConstSizedField<256>>,
-		) -> DispatchResult {
-			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+		pub fn set_admin_origin(origin: OriginFor<T>, admin_origin: PalletsOriginOf<T>) -> DispatchResult {
+			let community_id = T::AdminOrigin::ensure_origin(origin.clone())?;
 
-			Self::do_set_metadata(&community_id, &name, description, url);
-			Self::deposit_event(Event::MetadataSet { id: community_id, name });
+			ensure!(
+				CommunityIdFor::<T>::get(origin.clone().caller()) == Some(community_id),
+				DispatchError::BadOrigin
+			);
 
+			CommunityIdFor::<T>::remove(origin.caller());
+			CommunityIdFor::<T>::insert(admin_origin.clone(), community_id);
+
+			Self::deposit_event(Event::AdminOriginSet {
+				id: community_id,
+				origin: admin_origin,
+			});
 			Ok(())
 		}
 
@@ -466,9 +469,8 @@ pub mod pallet {
 			community_id: T::CommunityId,
 			decision_method: DecisionMethodFor<T>,
 		) -> DispatchResult {
-			T::CommunityMgmtOrigin::ensure_origin(origin)?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			CommunityDecisionMethod::<T>::set(community_id, decision_method);
-
 			Self::deposit_event(Event::DecisionMethodSet { id: community_id });
 			Ok(())
 		}
@@ -482,7 +484,12 @@ pub mod pallet {
 			vote: VoteOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_vote(&who, membership_id, poll_index, &vote)?;
+
+			if CommunityVotes::<T>::get(poll_index, membership_id).is_some() {
+				Self::try_remove_vote(&who, membership_id, poll_index)?;
+			}
+
+			Self::try_vote(&who, membership_id, poll_index, &vote)?;
 			Self::deposit_event(Event::<T>::VoteCasted {
 				who: who.clone(),
 				poll_index,
@@ -499,7 +506,7 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_remove_vote(&who, membership_id, poll_index)?;
+			Self::try_remove_vote(&who, membership_id, poll_index)?;
 			Self::deposit_event(Event::<T>::VoteRemoved {
 				who: who.clone(),
 				poll_index,
@@ -513,9 +520,8 @@ pub mod pallet {
 		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
-			let vote = Self::community_vote_of(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
-
-			Self::do_unlock_for_vote(&who, &poll_index, &vote)
+			let vote = CommunityVoteLocks::<T>::get(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
+			Self::update_locks(&who, poll_index, &vote, LockUpdateType::Remove)
 		}
 
 		/// Dispatch a callable as the community account

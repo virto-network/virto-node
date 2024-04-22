@@ -51,6 +51,7 @@ pallet-asset-registry = { default-features = false, path = "pallets/asset-regist
 pallet-burner = { default-features = false, path = "pallets/burner" }
 pallet-payments = { default-features = false, path = "pallets/payments" }
 pallet-communities = { default-features = false, path = "pallets/communities" }
+pallet-communities-manager = { default-features = false, path = "pallets/communities-manager" }
 
 virto-common = { default-features = false, path = "common" }
 runtime-common =  { default-features = false, path = "runtime/common" }
@@ -58,7 +59,8 @@ kusama-runtime-constants = { default-features = false, path = "runtime/kusama-ru
 
 # Frame Contrib
 fc-traits-memberships = { git = "https://github.com/virto-network/frame-contrib", branch = "main", default-features = false }
-pallet-referenda-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "main", package="fc-pallet-referenda-tracks", default-features = false }
+fc-traits-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "feature/trait-tracks", default-features = false }
+pallet-referenda-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "feature/trait-tracks", package="fc-pallet-referenda-tracks", default-features = false }
 
 # Substrate std
 try-runtime-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.5.0" }
