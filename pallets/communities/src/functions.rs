@@ -192,11 +192,8 @@ impl<T: Config> Pallet<T> {
 				let mut amount_to_freeze: NativeBalanceOf<T> = Zero::zero();
 
 				for locked_vote in CommunityVoteLocks::<T>::iter_prefix_values(who) {
-					match locked_vote {
-						Vote::NativeBalance(_, amount) => {
-							amount_to_freeze = amount_to_freeze.max(amount);
-						}
-						_ => {}
+					if let Vote::NativeBalance(_, amount) = locked_vote {
+						amount_to_freeze = amount_to_freeze.max(amount)
 					}
 				}
 
