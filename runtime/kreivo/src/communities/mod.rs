@@ -16,13 +16,13 @@ use self::{
 };
 
 #[cfg(feature = "runtime-benchmarks")]
-use ::{
+use {
 	frame_benchmarking::BenchmarkError,
 	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::ItemOf, tokens::nonfungible_v2::Mutate},
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_communities::{
 		types::{CommunityIdOf, MembershipIdOf, PalletsOriginOf, PollIndexOf},
-		BenchmarkHelper, Origin,
+		BenchmarkHelper,
 	},
 	pallet_nfts::Pallet as Nfts,
 	pallet_referenda::{BoundedCallOf, Curve, Pallet as Referenda, TrackInfo},
@@ -72,6 +72,14 @@ impl pallet_communities::Config for Runtime {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
+}
+
+impl pallet_communities_manager::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type CreateCollection = CommunityMemberships;
+	type Tracks = CommunityTracks;
+	type RankedCollective = KreivoCollective;
+	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

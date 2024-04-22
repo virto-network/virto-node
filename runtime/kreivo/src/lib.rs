@@ -210,6 +210,7 @@ construct_runtime!(
 		CommunityTracks: pallet_referenda_tracks::<Instance2> = 72,
 		CommunityReferenda: pallet_referenda::<Instance2> = 73,
 		CommunityMemberships: pallet_nfts::<Instance2> = 74,
+		CommunitiesManager: pallet_communities_manager = 75,
 	}
 );
 
@@ -728,6 +729,7 @@ mod benches {
 		[pallet_communities, Communities]
 		[pallet_referenda_tracks, CommunityTracks]
 		[pallet_referenda, CommunityReferenda]
+		[pallet_communities_manager, CommunitiesManager]
 		[pallet_nfts, CommunityMemberships]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.
