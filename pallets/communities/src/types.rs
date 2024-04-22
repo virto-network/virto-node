@@ -55,7 +55,6 @@ pub enum CommunityState {
 }
 
 // Governance
-
 pub type VoteWeight = u32;
 
 ///
@@ -132,6 +131,11 @@ impl<T: Config> Tally<T> {
 			}
 		}
 	}
+}
+
+pub enum LockUpdateType {
+	Add,
+	Remove,
 }
 
 #[cfg(feature = "runtime-benchmarks")]

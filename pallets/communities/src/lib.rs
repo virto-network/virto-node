@@ -523,8 +523,9 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			T::MemberMgmt::check_membership(&who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
-			Self::do_unlock(&who, membership_id, poll_index)
+			Self::do_unlock(membership_id, poll_index)
 		}
 
 		/// Dispatch a callable as the community account
@@ -557,18 +558,5 @@ pub mod pallet {
 		// crate::Origin::<T>::new(community_id); 	let post =
 		// call.dispatch(origin.into()).map_err(|e| e.error)?; 	Ok(post)
 		// }
-	}
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_idle(_: BlockNumberFor<T>, _: Weight) -> Weight {
-			let max_members = u16::MAX as u32;
-
-			if let Some((i, _)) = CommunityVotes::<T>::iter_keys().find(|(i, _)| T::Polls::as_ongoing(*i).is_none()) {
-				let _ = CommunityVotes::<T>::clear_prefix(i, max_members, None);
-			}
-
-			Weight::zero()
-		}
 	}
 }

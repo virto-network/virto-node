@@ -107,8 +107,7 @@ impl<T: Config> Pallet<T> {
 			tally.add_vote(say, vote_multiplier * vote_weight, vote_weight);
 
 			CommunityVotes::<T>::insert(poll_index, membership_id, (vote, who));
-			CommunityVoteLocks::<T>::insert(who, poll_index, vote);
-			Self::update_locks(who)
+			Self::update_locks(who, poll_index, vote, LockUpdateType::Add)
 		})
 	}
 
@@ -123,7 +122,7 @@ impl<T: Config> Pallet<T> {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
 			ensure!(community_id == class, Error::<T>::InvalidTrack);
 
-			let (vote, voter) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
+			let (vote, _) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
 			let vote_multiplier = match CommunityDecisionMethod::<T>::get(community_id) {
 				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
 					.unwrap_or_default()
@@ -134,29 +133,38 @@ impl<T: Config> Pallet<T> {
 			let vote_weight = VoteWeight::from(&vote);
 			tally.remove_vote(vote.say(), vote_multiplier * vote_weight, vote_weight);
 
-			CommunityVoteLocks::<T>::remove(voter.clone(), poll_index);
-			CommunityVotes::<T>::remove(poll_index, membership_id);
-			Self::update_locks(&voter)
+			Self::do_unlock(membership_id, poll_index)
 		})
 	}
 
-	pub(crate) fn do_unlock(
-		who: &AccountIdOf<T>,
-		membership_id: MembershipIdOf<T>,
-		poll_index: PollIndexOf<T>,
-	) -> DispatchResult {
-		T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
-		CommunityVoteLocks::<T>::remove(who, poll_index);
+	pub(crate) fn do_unlock(membership_id: MembershipIdOf<T>, poll_index: PollIndexOf<T>) -> DispatchResult {
+		let (vote, voter) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
 		CommunityVotes::<T>::remove(poll_index, membership_id);
-		Self::update_locks(who)
+		Self::update_locks(&voter, poll_index, &vote, LockUpdateType::Remove)
 	}
 
-	pub(crate) fn update_locks(who: &AccountIdOf<T>) -> DispatchResult {
+	pub(crate) fn update_locks(
+		who: &AccountIdOf<T>,
+		poll_index: PollIndexOf<T>,
+		vote: &VoteOf<T>,
+		update_type: LockUpdateType,
+	) -> DispatchResult {
 		use sp_runtime::traits::Zero;
 		let reason = HoldReason::VoteCasted.into();
 
+		// 1. Define locks
 		let mut assets_locked_amount: Vec<(AssetIdOf<T>, AssetBalanceOf<T>)> = vec![];
 		let mut native_locked_amount: NativeBalanceOf<T> = Zero::zero();
+
+		// 1a. Define possibly asset to void
+		if let Vote::AssetBalance(_, asset_id, _) = vote {
+			assets_locked_amount.push((asset_id.clone(), Zero::zero()));
+		}
+
+		match update_type {
+			LockUpdateType::Add => CommunityVoteLocks::<T>::insert(who, poll_index, vote),
+			LockUpdateType::Remove => CommunityVoteLocks::<T>::remove(who, poll_index),
+		}
 
 		for locked_vote in CommunityVoteLocks::<T>::iter_prefix_values(who) {
 			match locked_vote {
@@ -174,6 +182,7 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
+		// 3. Apply locks
 		for (asset, amount) in assets_locked_amount.iter() {
 			let held_balance = T::Assets::balance_on_hold(asset.clone(), &reason, who);
 			if held_balance.gt(&Zero::zero()) {
