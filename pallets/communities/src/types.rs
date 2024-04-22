@@ -133,6 +133,7 @@ impl<T: Config> Tally<T> {
 	}
 }
 
+#[derive(PartialEq)]
 pub enum LockUpdateType {
 	Add,
 	Remove,
