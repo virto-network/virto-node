@@ -59,8 +59,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `56`
 		//  Estimated: `3593`
-		// Minimum execution time: 61_614_000 picoseconds.
-		Weight::from_parts(69_046_000, 0)
+		// Minimum execution time: 58_161_000 picoseconds.
+		Weight::from_parts(69_157_000, 0)
 			.saturating_add(Weight::from_parts(0, 3593))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(3))
@@ -73,8 +73,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `122`
 		//  Estimated: `4087`
-		// Minimum execution time: 65_300_000 picoseconds.
-		Weight::from_parts(69_683_000, 0)
+		// Minimum execution time: 57_556_000 picoseconds.
+		Weight::from_parts(59_165_000, 0)
 			.saturating_add(Weight::from_parts(0, 4087))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
@@ -87,8 +87,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`
-		// Minimum execution time: 39_560_000 picoseconds.
-		Weight::from_parts(43_691_000, 0)
+		// Minimum execution time: 33_456_000 picoseconds.
+		Weight::from_parts(37_220_000, 0)
 			.saturating_add(Weight::from_parts(0, 3484))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
@@ -119,8 +119,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `880`
 		//  Estimated: `9846`
-		// Minimum execution time: 350_162_000 picoseconds.
-		Weight::from_parts(380_032_000, 0)
+		// Minimum execution time: 346_154_000 picoseconds.
+		Weight::from_parts(389_196_000, 0)
 			.saturating_add(Weight::from_parts(0, 9846))
 			.saturating_add(T::DbWeight::get().reads(13))
 			.saturating_add(T::DbWeight::get().writes(13))
@@ -149,8 +149,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `1006`
 		//  Estimated: `12798`
-		// Minimum execution time: 379_940_000 picoseconds.
-		Weight::from_parts(408_854_000, 0)
+		// Minimum execution time: 372_760_000 picoseconds.
+		Weight::from_parts(383_094_000, 0)
 			.saturating_add(Weight::from_parts(0, 12798))
 			.saturating_add(T::DbWeight::get().reads(10))
 			.saturating_add(T::DbWeight::get().writes(10))
@@ -165,8 +165,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `717`
 		//  Estimated: `6894`
-		// Minimum execution time: 203_916_000 picoseconds.
-		Weight::from_parts(208_036_000, 0)
+		// Minimum execution time: 138_465_000 picoseconds.
+		Weight::from_parts(216_155_000, 0)
 			.saturating_add(Weight::from_parts(0, 6894))
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(3))
@@ -181,69 +181,59 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `755`
 		//  Estimated: `6894`
-		// Minimum execution time: 195_421_000 picoseconds.
-		Weight::from_parts(213_713_000, 0)
+		// Minimum execution time: 178_550_000 picoseconds.
+		Weight::from_parts(224_353_000, 0)
 			.saturating_add(Weight::from_parts(0, 6894))
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
-	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
-	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(108), added: 2583, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityMemberships::Account` (r:1 w:0)
 	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:1)
-	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
 	/// Storage: `Communities::CommunityDecisionMethod` (r:1 w:0)
 	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(37), added: 2512, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::Attribute` (r:1 w:0)
-	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
+	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
+	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(108), added: 2583, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:1)
+	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
 	/// Storage: `Communities::CommunityVoteLocks` (r:2 w:1)
 	/// Proof: `Communities::CommunityVoteLocks` (`max_values`: None, `max_size`: Some(104), added: 2579, mode: `MaxEncodedLen`)
-	/// Storage: `System::Account` (r:1 w:1)
+	/// Storage: `Assets::Holds` (r:1 w:1)
+	/// Proof: `Assets::Holds` (`max_values`: None, `max_size`: Some(983), added: 3458, mode: `MaxEncodedLen`)
+	/// Storage: `Assets::Asset` (r:1 w:1)
+	/// Proof: `Assets::Asset` (`max_values`: None, `max_size`: Some(224), added: 2699, mode: `MaxEncodedLen`)
+	/// Storage: `Assets::Account` (r:1 w:1)
+	/// Proof: `Assets::Account` (`max_values`: None, `max_size`: Some(148), added: 2623, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:0)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Freezes` (r:1 w:1)
-	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(4658), added: 7133, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Locks` (r:1 w:0)
-	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode: `MaxEncodedLen`)
-	/// Storage: `Scheduler::Agenda` (r:2 w:2)
-	/// Proof: `Scheduler::Agenda` (`max_values`: None, `max_size`: Some(155814), added: 158289, mode: `MaxEncodedLen`)
 	fn vote() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `3440`
-		//  Estimated: `317568`
-		// Minimum execution time: 401_943_000 picoseconds.
-		Weight::from_parts(421_485_000, 0)
-			.saturating_add(Weight::from_parts(0, 317568))
-			.saturating_add(T::DbWeight::get().reads(12))
-			.saturating_add(T::DbWeight::get().writes(7))
+		//  Measured:  `3035`
+		//  Estimated: `6148`
+		// Minimum execution time: 374_166_000 picoseconds.
+		Weight::from_parts(521_406_000, 0)
+			.saturating_add(Weight::from_parts(0, 6148))
+			.saturating_add(T::DbWeight::get().reads(10))
+			.saturating_add(T::DbWeight::get().writes(6))
 	}
 	/// Storage: `CommunityMemberships::Account` (r:1 w:0)
 	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
+	/// Storage: `Communities::CommunityDecisionMethod` (r:1 w:0)
+	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(37), added: 2512, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:1)
 	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
 	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
 	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(108), added: 2583, mode: `MaxEncodedLen`)
-	/// Storage: `Communities::CommunityDecisionMethod` (r:1 w:0)
-	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(37), added: 2512, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityMemberships::Attribute` (r:1 w:0)
 	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
-	/// Storage: `Communities::CommunityVoteLocks` (r:2 w:1)
-	/// Proof: `Communities::CommunityVoteLocks` (`max_values`: None, `max_size`: Some(104), added: 2579, mode: `MaxEncodedLen`)
-	/// Storage: `System::Account` (r:1 w:1)
-	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Freezes` (r:1 w:1)
-	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(4658), added: 7133, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Locks` (r:1 w:0)
-	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode: `MaxEncodedLen`)
 	fn remove_vote() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `3539`
-		//  Estimated: `8123`
-		// Minimum execution time: 227_921_000 picoseconds.
-		Weight::from_parts(315_697_000, 0)
-			.saturating_add(Weight::from_parts(0, 8123))
-			.saturating_add(T::DbWeight::get().reads(10))
-			.saturating_add(T::DbWeight::get().writes(5))
+		//  Measured:  `2898`
+		//  Estimated: `4365`
+		// Minimum execution time: 186_847_000 picoseconds.
+		Weight::from_parts(249_529_000, 0)
+			.saturating_add(Weight::from_parts(0, 4365))
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:0)
 	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
@@ -259,8 +249,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `1082`
 		//  Estimated: `8123`
-		// Minimum execution time: 154_383_000 picoseconds.
-		Weight::from_parts(214_346_000, 0)
+		// Minimum execution time: 204_012_000 picoseconds.
+		Weight::from_parts(219_951_000, 0)
 			.saturating_add(Weight::from_parts(0, 8123))
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(3))
@@ -271,8 +261,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`
-		// Minimum execution time: 33_022_000 picoseconds.
-		Weight::from_parts(55_259_000, 0)
+		// Minimum execution time: 48_041_000 picoseconds.
+		Weight::from_parts(51_107_000, 0)
 			.saturating_add(Weight::from_parts(0, 3484))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
@@ -290,8 +280,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `56`
 		//  Estimated: `3593`
-		// Minimum execution time: 61_614_000 picoseconds.
-		Weight::from_parts(69_046_000, 0)
+		// Minimum execution time: 58_161_000 picoseconds.
+		Weight::from_parts(69_157_000, 0)
 			.saturating_add(Weight::from_parts(0, 3593))
 			.saturating_add(RocksDbWeight::get().reads(2))
 			.saturating_add(RocksDbWeight::get().writes(3))
@@ -304,8 +294,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `122`
 		//  Estimated: `4087`
-		// Minimum execution time: 65_300_000 picoseconds.
-		Weight::from_parts(69_683_000, 0)
+		// Minimum execution time: 57_556_000 picoseconds.
+		Weight::from_parts(59_165_000, 0)
 			.saturating_add(Weight::from_parts(0, 4087))
 			.saturating_add(RocksDbWeight::get().reads(2))
 			.saturating_add(RocksDbWeight::get().writes(2))
@@ -318,8 +308,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`
-		// Minimum execution time: 39_560_000 picoseconds.
-		Weight::from_parts(43_691_000, 0)
+		// Minimum execution time: 33_456_000 picoseconds.
+		Weight::from_parts(37_220_000, 0)
 			.saturating_add(Weight::from_parts(0, 3484))
 			.saturating_add(RocksDbWeight::get().reads(1))
 			.saturating_add(RocksDbWeight::get().writes(1))
@@ -350,8 +340,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `880`
 		//  Estimated: `9846`
-		// Minimum execution time: 350_162_000 picoseconds.
-		Weight::from_parts(380_032_000, 0)
+		// Minimum execution time: 346_154_000 picoseconds.
+		Weight::from_parts(389_196_000, 0)
 			.saturating_add(Weight::from_parts(0, 9846))
 			.saturating_add(RocksDbWeight::get().reads(13))
 			.saturating_add(RocksDbWeight::get().writes(13))
@@ -380,8 +370,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `1006`
 		//  Estimated: `12798`
-		// Minimum execution time: 379_940_000 picoseconds.
-		Weight::from_parts(408_854_000, 0)
+		// Minimum execution time: 372_760_000 picoseconds.
+		Weight::from_parts(383_094_000, 0)
 			.saturating_add(Weight::from_parts(0, 12798))
 			.saturating_add(RocksDbWeight::get().reads(10))
 			.saturating_add(RocksDbWeight::get().writes(10))
@@ -396,8 +386,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `717`
 		//  Estimated: `6894`
-		// Minimum execution time: 203_916_000 picoseconds.
-		Weight::from_parts(208_036_000, 0)
+		// Minimum execution time: 138_465_000 picoseconds.
+		Weight::from_parts(216_155_000, 0)
 			.saturating_add(Weight::from_parts(0, 6894))
 			.saturating_add(RocksDbWeight::get().reads(4))
 			.saturating_add(RocksDbWeight::get().writes(3))
@@ -412,69 +402,59 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `755`
 		//  Estimated: `6894`
-		// Minimum execution time: 195_421_000 picoseconds.
-		Weight::from_parts(213_713_000, 0)
+		// Minimum execution time: 178_550_000 picoseconds.
+		Weight::from_parts(224_353_000, 0)
 			.saturating_add(Weight::from_parts(0, 6894))
 			.saturating_add(RocksDbWeight::get().reads(4))
 			.saturating_add(RocksDbWeight::get().writes(3))
 	}
-	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
-	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(108), added: 2583, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityMemberships::Account` (r:1 w:0)
 	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:1)
-	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
 	/// Storage: `Communities::CommunityDecisionMethod` (r:1 w:0)
 	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(37), added: 2512, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::Attribute` (r:1 w:0)
-	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
+	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
+	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(108), added: 2583, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:1)
+	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
 	/// Storage: `Communities::CommunityVoteLocks` (r:2 w:1)
 	/// Proof: `Communities::CommunityVoteLocks` (`max_values`: None, `max_size`: Some(104), added: 2579, mode: `MaxEncodedLen`)
-	/// Storage: `System::Account` (r:1 w:1)
+	/// Storage: `Assets::Holds` (r:1 w:1)
+	/// Proof: `Assets::Holds` (`max_values`: None, `max_size`: Some(983), added: 3458, mode: `MaxEncodedLen`)
+	/// Storage: `Assets::Asset` (r:1 w:1)
+	/// Proof: `Assets::Asset` (`max_values`: None, `max_size`: Some(224), added: 2699, mode: `MaxEncodedLen`)
+	/// Storage: `Assets::Account` (r:1 w:1)
+	/// Proof: `Assets::Account` (`max_values`: None, `max_size`: Some(148), added: 2623, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:0)
 	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Freezes` (r:1 w:1)
-	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(4658), added: 7133, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Locks` (r:1 w:0)
-	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode: `MaxEncodedLen`)
-	/// Storage: `Scheduler::Agenda` (r:2 w:2)
-	/// Proof: `Scheduler::Agenda` (`max_values`: None, `max_size`: Some(155814), added: 158289, mode: `MaxEncodedLen`)
 	fn vote() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `3440`
-		//  Estimated: `317568`
-		// Minimum execution time: 401_943_000 picoseconds.
-		Weight::from_parts(421_485_000, 0)
-			.saturating_add(Weight::from_parts(0, 317568))
-			.saturating_add(RocksDbWeight::get().reads(12))
-			.saturating_add(RocksDbWeight::get().writes(7))
+		//  Measured:  `3035`
+		//  Estimated: `6148`
+		// Minimum execution time: 374_166_000 picoseconds.
+		Weight::from_parts(521_406_000, 0)
+			.saturating_add(Weight::from_parts(0, 6148))
+			.saturating_add(RocksDbWeight::get().reads(10))
+			.saturating_add(RocksDbWeight::get().writes(6))
 	}
 	/// Storage: `CommunityMemberships::Account` (r:1 w:0)
 	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
+	/// Storage: `Communities::CommunityDecisionMethod` (r:1 w:0)
+	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(37), added: 2512, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:1)
 	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
 	/// Storage: `Communities::CommunityVotes` (r:1 w:1)
 	/// Proof: `Communities::CommunityVotes` (`max_values`: None, `max_size`: Some(108), added: 2583, mode: `MaxEncodedLen`)
-	/// Storage: `Communities::CommunityDecisionMethod` (r:1 w:0)
-	/// Proof: `Communities::CommunityDecisionMethod` (`max_values`: None, `max_size`: Some(37), added: 2512, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityMemberships::Attribute` (r:1 w:0)
 	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
-	/// Storage: `Communities::CommunityVoteLocks` (r:2 w:1)
-	/// Proof: `Communities::CommunityVoteLocks` (`max_values`: None, `max_size`: Some(104), added: 2579, mode: `MaxEncodedLen`)
-	/// Storage: `System::Account` (r:1 w:1)
-	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Freezes` (r:1 w:1)
-	/// Proof: `Balances::Freezes` (`max_values`: None, `max_size`: Some(4658), added: 7133, mode: `MaxEncodedLen`)
-	/// Storage: `Balances::Locks` (r:1 w:0)
-	/// Proof: `Balances::Locks` (`max_values`: None, `max_size`: Some(1299), added: 3774, mode: `MaxEncodedLen`)
 	fn remove_vote() -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `3539`
-		//  Estimated: `8123`
-		// Minimum execution time: 227_921_000 picoseconds.
-		Weight::from_parts(315_697_000, 0)
-			.saturating_add(Weight::from_parts(0, 8123))
-			.saturating_add(RocksDbWeight::get().reads(10))
-			.saturating_add(RocksDbWeight::get().writes(5))
+		//  Measured:  `2898`
+		//  Estimated: `4365`
+		// Minimum execution time: 186_847_000 picoseconds.
+		Weight::from_parts(249_529_000, 0)
+			.saturating_add(Weight::from_parts(0, 4365))
+			.saturating_add(RocksDbWeight::get().reads(5))
+			.saturating_add(RocksDbWeight::get().writes(2))
 	}
 	/// Storage: `CommunityReferenda::ReferendumInfoFor` (r:1 w:0)
 	/// Proof: `CommunityReferenda::ReferendumInfoFor` (`max_values`: None, `max_size`: Some(900), added: 3375, mode: `MaxEncodedLen`)
@@ -490,8 +470,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `1082`
 		//  Estimated: `8123`
-		// Minimum execution time: 154_383_000 picoseconds.
-		Weight::from_parts(214_346_000, 0)
+		// Minimum execution time: 204_012_000 picoseconds.
+		Weight::from_parts(219_951_000, 0)
 			.saturating_add(Weight::from_parts(0, 8123))
 			.saturating_add(RocksDbWeight::get().reads(6))
 			.saturating_add(RocksDbWeight::get().writes(3))
@@ -502,8 +482,8 @@ impl WeightInfo for () {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`
-		// Minimum execution time: 33_022_000 picoseconds.
-		Weight::from_parts(55_259_000, 0)
+		// Minimum execution time: 48_041_000 picoseconds.
+		Weight::from_parts(51_107_000, 0)
 			.saturating_add(Weight::from_parts(0, 3484))
 			.saturating_add(RocksDbWeight::get().reads(1))
 	}
