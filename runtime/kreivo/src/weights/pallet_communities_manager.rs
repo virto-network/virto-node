@@ -4,7 +4,7 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2024-04-22, STEPS: `50`, REPEAT: `20`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
-//! HOSTNAME: `PABLOANDRES.local`, CPU: `<UNKNOWN>`
+//! HOSTNAME: `virto-builder`, CPU: `Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `Some("kreivo-local")`, DB CACHE: 1024
 
 // Executed Command:
@@ -67,8 +67,8 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 		// Proof Size summary in bytes:
 		//  Measured:  `278`
 		//  Estimated: `132561`
-		// Minimum execution time: 54_000_000 picoseconds.
-		Weight::from_parts(61_000_000, 0)
+		// Minimum execution time: 117_045_000 picoseconds.
+		Weight::from_parts(166_053_000, 0)
 			.saturating_add(Weight::from_parts(0, 132561))
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(14))
