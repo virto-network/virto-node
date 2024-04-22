@@ -122,7 +122,7 @@ impl<T: Config> Pallet<T> {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
 			ensure!(community_id == class, Error::<T>::InvalidTrack);
 
-			let (vote, _) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
+			let (vote, voter) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
 			let vote_multiplier = match CommunityDecisionMethod::<T>::get(community_id) {
 				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
 					.unwrap_or_default()
@@ -133,14 +133,9 @@ impl<T: Config> Pallet<T> {
 			let vote_weight = VoteWeight::from(&vote);
 			tally.remove_vote(vote.say(), vote_multiplier * vote_weight, vote_weight);
 
-			Self::do_unlock(membership_id, poll_index)
+			CommunityVotes::<T>::remove(poll_index, membership_id);
+			Self::update_locks(&voter, poll_index, &vote, LockUpdateType::Remove)
 		})
-	}
-
-	pub(crate) fn do_unlock(membership_id: MembershipIdOf<T>, poll_index: PollIndexOf<T>) -> DispatchResult {
-		let (vote, voter) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
-		CommunityVotes::<T>::remove(poll_index, membership_id);
-		Self::update_locks(&voter, poll_index, &vote, LockUpdateType::Remove)
 	}
 
 	pub(crate) fn update_locks(

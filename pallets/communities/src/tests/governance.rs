@@ -967,7 +967,6 @@ mod vote {
 
 				tick_blocks(2);
 
-				dbg!(System::events());
 				System::assert_has_event(pallet_referenda::Event::<Test>::ConfirmStarted { index: 3 }.into());
 			});
 		}
@@ -1144,7 +1143,7 @@ mod unlock {
 		new_test_ext().execute_with(|| {
 			// Since BOB never casted a vote, a lock wasn't put in place
 			assert_noop!(
-				Communities::unlock(RuntimeOrigin::signed(BOB), membership(COMMUNITY_C, 2), 1),
+				Communities::unlock(RuntimeOrigin::signed(BOB), 1),
 				Error::AlreadyOngoing
 			);
 		});
@@ -1169,17 +1168,9 @@ mod unlock {
 
 			tick_blocks(6);
 
-			assert_ok!(Communities::unlock(
-				RuntimeOrigin::signed(BOB),
-				membership(COMMUNITY_C, 2),
-				1
-			));
+			assert_ok!(Communities::unlock(RuntimeOrigin::signed(BOB), 1));
 
-			assert_ok!(Communities::unlock(
-				RuntimeOrigin::signed(CHARLIE),
-				membership(COMMUNITY_D, 3),
-				2
-			));
+			assert_ok!(Communities::unlock(RuntimeOrigin::signed(CHARLIE), 2));
 		});
 	}
 }

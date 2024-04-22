@@ -517,15 +517,11 @@ pub mod pallet {
 		/// Make previously held or locked funds from a vote available
 		// if the refereundum  has finished
 		#[pallet::call_index(10)]
-		pub fn unlock(
-			origin: OriginFor<T>,
-			membership_id: MembershipIdOf<T>,
-			#[pallet::compact] poll_index: PollIndexOf<T>,
-		) -> DispatchResult {
+		pub fn unlock(origin: OriginFor<T>, #[pallet::compact] poll_index: PollIndexOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			T::MemberMgmt::check_membership(&who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 			ensure!(T::Polls::as_ongoing(poll_index).is_none(), Error::<T>::AlreadyOngoing);
-			Self::do_unlock(membership_id, poll_index)
+			let vote = CommunityVoteLocks::<T>::get(&who, poll_index).ok_or(Error::<T>::NoLocksInPlace)?;
+			Self::update_locks(&who, poll_index, &vote, LockUpdateType::Remove)
 		}
 
 		/// Dispatch a callable as the community account

@@ -406,7 +406,7 @@ mod benchmarks {
 		T::BenchmarkHelper::finish_poll(index)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(who.clone()), membership_id, 0u32);
+		_(RawOrigin::Signed(who.clone()), 0u32);
 
 		// verification code
 		assert_eq!(
