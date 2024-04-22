@@ -13,7 +13,7 @@ use frame_support::{
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, Dispatchable},
-	DispatchResultWithInfo, TokenError,
+	DispatchResultWithInfo,
 };
 use sp_std::vec::Vec;
 
@@ -75,29 +75,26 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn try_vote(
+		community_id: &CommunityIdOf<T>,
+		decision_method: &DecisionMethodFor<T>,
 		who: &AccountIdOf<T>,
-		membership_id: MembershipIdOf<T>,
+		membership_id: &MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 		vote: &VoteOf<T>,
 	) -> DispatchResult {
-		ensure!(VoteWeight::from(vote).gt(&0), TokenError::BelowMinimum);
-		let community_id = T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
-
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
-			ensure!(community_id == class, Error::<T>::InvalidTrack);
-
-			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
+			ensure!(community_id == &class, Error::<T>::InvalidTrack);
 
 			let vote_multiplier = match CommunityDecisionMethod::<T>::get(community_id) {
-				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
+				DecisionMethod::Rank => T::MemberMgmt::rank_of(community_id, membership_id)
 					.unwrap_or_default()
 					.into(),
 				_ => 1,
 			};
 
 			let say = *match (vote, decision_method) {
-				(Vote::AssetBalance(say, asset, ..), DecisionMethod::CommunityAsset(a)) if *asset == a => say,
+				(Vote::AssetBalance(say, asset, ..), DecisionMethod::CommunityAsset(a)) if asset == a => say,
 				(Vote::NativeBalance(say, ..), DecisionMethod::NativeToken)
 				| (Vote::Standard(say), DecisionMethod::Membership | DecisionMethod::Rank) => say,
 				_ => fail!(Error::<T>::InvalidVoteType),
@@ -112,19 +109,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn try_remove_vote(
-		who: &AccountIdOf<T>,
-		membership_id: MembershipIdOf<T>,
+		community_id: &CommunityIdOf<T>,
+		decision_method: &DecisionMethodFor<T>,
+		membership_id: &MembershipIdOf<T>,
 		poll_index: PollIndexOf<T>,
 	) -> DispatchResult {
-		let community_id = T::MemberMgmt::check_membership(who, &membership_id).ok_or(Error::<T>::NotAMember)?;
-
 		T::Polls::try_access_poll(poll_index, |poll_status| {
 			let (tally, class) = poll_status.ensure_ongoing().ok_or(Error::<T>::NotOngoing)?;
-			ensure!(community_id == class, Error::<T>::InvalidTrack);
+			ensure!(community_id == &class, Error::<T>::InvalidTrack);
 
 			let (vote, voter) = CommunityVotes::<T>::get(poll_index, membership_id).ok_or(Error::<T>::NoVoteCasted)?;
-			let vote_multiplier = match CommunityDecisionMethod::<T>::get(community_id) {
-				DecisionMethod::Rank => T::MemberMgmt::rank_of(&community_id, &membership_id)
+			let vote_multiplier = match decision_method {
+				DecisionMethod::Rank => T::MemberMgmt::rank_of(community_id, membership_id)
 					.unwrap_or_default()
 					.into(),
 				_ => 1,
@@ -147,9 +143,12 @@ impl<T: Config> Pallet<T> {
 		use sp_runtime::traits::Zero;
 		let reason = HoldReason::VoteCasted.into();
 
-		match update_type {
-			LockUpdateType::Add => CommunityVoteLocks::<T>::insert(who, poll_index, vote.clone()),
-			LockUpdateType::Remove => CommunityVoteLocks::<T>::remove(who, poll_index),
+		match vote.clone() {
+			Vote::AssetBalance(..) | Vote::NativeBalance(..) => match update_type {
+				LockUpdateType::Add => CommunityVoteLocks::<T>::insert(who, poll_index, vote.clone()),
+				LockUpdateType::Remove => CommunityVoteLocks::<T>::remove(who, poll_index),
+			},
+			_ => (),
 		}
 
 		match vote {
@@ -177,7 +176,7 @@ impl<T: Config> Pallet<T> {
 						Vote::AssetBalance(_, asset, amount) if &asset == asset_id => {
 							amount_to_hold = amount_to_hold.max(amount);
 						}
-						_ => {}
+						_ => (),
 					}
 				}
 
@@ -204,7 +203,7 @@ impl<T: Config> Pallet<T> {
 					frame_support::traits::tokens::Fortitude::Polite,
 				)?;
 			}
-			_ => {}
+			_ => (),
 		}
 
 		Ok(())

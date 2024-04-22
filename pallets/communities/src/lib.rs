@@ -146,7 +146,10 @@ pub mod pallet {
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
-	use sp_runtime::traits::{Dispatchable, StaticLookup};
+	use sp_runtime::{
+		traits::{Dispatchable, StaticLookup},
+		TokenError,
+	};
 	use sp_std::prelude::Box;
 
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
@@ -191,6 +194,8 @@ pub mod pallet {
 
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId>
+			+ fungibles::Mutate<Self::AccountId>
+			+ fungibles::Create<Self::AccountId>
 			+ fungibles::hold::Inspect<Self::AccountId, Reason = Self::RuntimeHoldReason>
 			+ fungibles::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
 
@@ -483,13 +488,14 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 			vote: VoteOf<T>,
 		) -> DispatchResult {
+			ensure!(VoteWeight::from(&vote).gt(&0), TokenError::BelowMinimum);
 			let who = ensure_signed(origin)?;
-
-			if CommunityVotes::<T>::get(poll_index, membership_id).is_some() {
-				Self::try_remove_vote(&who, membership_id, poll_index)?;
+			let community_id = T::MemberMgmt::check_membership(&who, &membership_id).ok_or(Error::<T>::NotAMember)?;
+			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
+			if CommunityVotes::<T>::contains_key(poll_index, membership_id) {
+				Self::try_remove_vote(&community_id, &decision_method, &membership_id, poll_index)?;
 			}
-
-			Self::try_vote(&who, membership_id, poll_index, &vote)?;
+			Self::try_vote(&community_id, &decision_method, &who, &membership_id, poll_index, &vote)?;
 			Self::deposit_event(Event::<T>::VoteCasted {
 				who: who.clone(),
 				poll_index,
@@ -506,7 +512,9 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::try_remove_vote(&who, membership_id, poll_index)?;
+			let community_id = T::MemberMgmt::check_membership(&who, &membership_id).ok_or(Error::<T>::NotAMember)?;
+			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
+			Self::try_remove_vote(&community_id, &decision_method, &membership_id, poll_index)?;
 			Self::deposit_event(Event::<T>::VoteRemoved {
 				who: who.clone(),
 				poll_index,
