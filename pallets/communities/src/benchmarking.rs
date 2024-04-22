@@ -14,6 +14,7 @@ use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
 use frame_support::traits::{
 	fungible::{InspectFreeze, Mutate},
+	fungibles::{Create, Mutate as FunsMutate},
 	OriginTrait,
 };
 use frame_system::{
@@ -138,6 +139,7 @@ where
 		T: frame_system::Config + crate::Config,
 		OriginFor<T>: From<Origin<T>> + From<frame_system::Origin<T>>,
 		RuntimeEventFor<T>: From<frame_system::Event<T>>,
+		AssetBalanceOf<T>: From<u128>,
 		AssetIdOf<T>: From<u32>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
@@ -312,7 +314,10 @@ mod benchmarks {
 	#[benchmark]
 	fn vote() -> Result<(), BenchmarkError> {
 		// setup code
-		let (id, origin) = create_community::<T>(RawOrigin::Root.into(), None)?;
+		let (id, origin) = create_community::<T>(
+			RawOrigin::Root.into(),
+			Some(DecisionMethodFor::<T>::CommunityAsset(1u32.into())),
+		)?;
 		let members = setup_members::<T>(origin.clone(), id)?;
 
 		let (who, membership_id) = members
@@ -320,14 +325,26 @@ mod benchmarks {
 			.expect("desired size of community to be equal or greather than 1")
 			.clone();
 
+		let community_account = Communities::<T>::community_account(&id);
+
+		T::Assets::create(1u32.into(), community_account, false, 1u128.into())?;
+		T::Assets::mint_into(1u32.into(), &who, 4u128.into())?;
+
 		prepare_track_and_prepare_poll::<T>(origin.into_caller(), who.clone())?;
+
+		Communities::<T>::vote(
+			RawOrigin::Signed(who.clone()).into(),
+			membership_id,
+			0u32,
+			Vote::AssetBalance(true, 1u32.into(), 1u128.into()),
+		)?;
 
 		#[extrinsic_call]
 		_(
 			RawOrigin::Signed(who.clone()),
 			membership_id,
 			0u32,
-			Vote::Standard(true),
+			Vote::AssetBalance(true, 1u32.into(), 2u128.into()),
 		);
 
 		// verification code
@@ -335,7 +352,7 @@ mod benchmarks {
 			Event::VoteCasted {
 				who: who.clone(),
 				poll_index: 0u32,
-				vote: Vote::Standard(true),
+				vote: Vote::AssetBalance(true, 1u32.into(), 2u32.into()),
 			}
 			.into(),
 		);
