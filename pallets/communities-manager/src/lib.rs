@@ -20,10 +20,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 use pallet_communities::{
-	types::{
-		AccountIdLookupOf, AccountIdOf, CommunityIdOf, DecisionMethodFor, NativeBalanceOf, PalletsOriginOf,
-		RuntimeOriginFor,
-	},
+	types::{AccountIdOf, CommunityIdOf, DecisionMethodFor, NativeBalanceOf, PalletsOriginOf, RuntimeOriginFor},
 	Origin as CommunityOrigin,
 };
 use pallet_nfts::CollectionConfig;
@@ -105,7 +102,8 @@ pub mod pallet {
 			name: CommunityName,
 			maybe_admin_origin: Option<PalletsOriginOf<T>>,
 			maybe_decision_method: Option<DecisionMethodFor<T>>,
-			_maybe_first_member: Option<AccountIdLookupOf<T>>,
+			maybe_track_info: Option<TrackInfoOf<T>>,
+			// _maybe_first_member: Option<AccountIdLookupOf<T>>,
 		) -> DispatchResult {
 			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
 
@@ -140,7 +138,7 @@ pub mod pallet {
 			// Create governance track for community
 			T::Tracks::insert(
 				community_id,
-				Self::default_tack(community_name),
+				maybe_track_info.unwrap_or_else(|| Self::default_tack(community_name)),
 				community_origin.into_caller(),
 			)?;
 			// Induct community at Kreivo Governance with rank 1
