@@ -1,11 +1,13 @@
 use crate::origin::DecisionMethod;
 use crate::{CommunityDecisionMethod, Config};
 use fc_traits_memberships::{Inspect, Rank};
-use frame_support::pallet_prelude::*;
-use frame_support::traits::{
-	fungible::{self, Inspect as FunInspect},
-	fungibles::{self, Inspect as FunsInspect},
-	Polling,
+use frame_support::{
+	pallet_prelude::*,
+	traits::{
+		fungible::{self, Inspect as FunInspect},
+		fungibles::{self, Inspect as FunsInspect},
+		Bounded, Polling,
+	},
 };
 use sp_runtime::traits::{StaticLookup, UniqueSaturatedInto};
 use sp_runtime::SaturatedConversion;
@@ -24,6 +26,7 @@ pub type PalletsOriginOf<T> =
 pub type MembershipIdOf<T> = <T as Config>::MembershipId;
 pub type RuntimeCallFor<T> = <T as Config>::RuntimeCall;
 pub type RuntimeOriginFor<T> = <T as Config>::RuntimeOrigin;
+pub type BoundedCallOf<T> = Bounded<<T as Config>::RuntimeCall, <T as frame_system::Config>::Hashing>;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub type BenchmarkHelperOf<T> = <T as Config>::BenchmarkHelper;

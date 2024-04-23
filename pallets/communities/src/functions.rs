@@ -1,4 +1,16 @@
+// <<<<<<< Updated upstream
+use self::types::BoundedCallOf;
 use super::{origin::DecisionMethod, *};
+// =======
+// use crate::{
+// 	origin::DecisionMethod,
+// 	types::{
+// 		AccountIdOf, BoundedCallOf, CommunityIdOf, CommunityInfo, CommunityState, ConstSizedField, MembershipIdOf,
+// 		PalletsOriginOf, PollIndexOf, RuntimeCallFor, Tally, Vote, VoteOf, VoteWeight,
+// 	},
+// 	CommunityDecisionMethod, CommunityIdFor, CommunityVotes, Config, Error, HoldReason, Info, Metadata, Pallet,
+// };
+// >>>>>>> Stashed changes
 use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
 	dispatch::PostDispatchInfo,
@@ -198,11 +210,12 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_dispatch_as_community_account(
 		community_id: &CommunityIdOf<T>,
-		call: RuntimeCallFor<T>,
+		call: BoundedCallOf<T>,
 	) -> DispatchResultWithInfo<PostDispatchInfo> {
 		let community_account = Self::community_account(community_id);
 		let signer = frame_system::RawOrigin::Signed(community_account);
 
+		let _ = T::Preimages::realize(call);
 		let post = call.dispatch(signer.into()).map_err(|e| e.error)?;
 		Ok(post)
 	}

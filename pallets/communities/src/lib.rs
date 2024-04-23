@@ -142,12 +142,11 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::{DispatchResultWithPostInfo, GetDispatchInfo, PostDispatchInfo},
 		pallet_prelude::*,
-		traits::{fungible, fungibles, EnsureOrigin, IsSubType, OriginTrait, Polling},
+		traits::{fungible, fungibles, EnsureOrigin, IsSubType, OriginTrait, Polling, QueryPreimage},
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
 	use sp_runtime::traits::{Dispatchable, StaticLookup};
-	use sp_std::prelude::Box;
 
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
 
@@ -199,6 +198,9 @@ pub mod pallet {
 			+ fungible::Mutate<Self::AccountId>
 			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeHoldReason>
 			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
+
+		/// Fetch calls that a Community can dispatch with its account
+		type Preimages: QueryPreimage;
 
 		/// The overarching call type.
 		type RuntimeCall: Parameter
@@ -526,16 +528,9 @@ pub mod pallet {
 
 		/// Dispatch a callable as the community account
 		#[pallet::call_index(11)]
-		#[pallet::weight({
-			let di = call.get_dispatch_info();
-			let weight = T::WeightInfo::dispatch_as_account()
-				.saturating_add(T::DbWeight::get().reads_writes(1, 1))
-				.saturating_add(di.weight);
-			(weight, di.class)
-		})]
-		pub fn dispatch_as_account(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>) -> DispatchResultWithPostInfo {
+		pub fn dispatch_as_account(origin: OriginFor<T>, call: BoundedCallOf<T>) -> DispatchResultWithPostInfo {
 			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-			Self::do_dispatch_as_community_account(&community_id, *call)
+			Self::do_dispatch_as_community_account(&community_id, call)
 		}
 
 		// /// Dispatch a callable as the community account
