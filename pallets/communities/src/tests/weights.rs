@@ -30,7 +30,7 @@ fn weights() {
 		("vote", SubstrateWeight::<Test>::vote()),
 		("remove_vote", SubstrateWeight::<Test>::remove_vote()),
 		("unlock", SubstrateWeight::<Test>::unlock()),
-		("dispatch_as_account", SubstrateWeight::<Test>::dispatch_as_account()),
+		("dispatch_as", SubstrateWeight::<Test>::dispatch_as()),
 	] {
 		println!("{function}: {weight:?}",);
 		println!(

@@ -17,7 +17,9 @@ pub struct EnsureCommunity<T>(PhantomData<T>);
 
 impl<T> EnsureOrigin<RuntimeOriginFor<T>> for EnsureCommunity<T>
 where
-	RuntimeOriginFor<T>: OriginTrait + Into<Result<RawOrigin<T>, RuntimeOriginFor<T>>> + From<RawOrigin<T>>,
+	RuntimeOriginFor<T>: OriginTrait
+		+ Into<Result<RawOrigin<CommunityIdOf<T>, MembershipIdOf<T>>, RuntimeOriginFor<T>>>
+		+ From<RawOrigin<CommunityIdOf<T>, MembershipIdOf<T>>>,
 	T: Config,
 {
 	type Success = T::CommunityId;
@@ -95,32 +97,33 @@ where
 /// Origin to represent the voice of a community or a subset of its members
 /// as well as the voting preference of said group.
 #[derive(TypeInfo, Encode, Decode, MaxEncodedLen, Clone, Eq, PartialEq, Debug)]
-pub struct RawOrigin<T: Config> {
-	community_id: CommunityIdOf<T>,
-	subset: Option<Subset<T>>,
+pub struct RawOrigin<CommunityId, MembershipId> {
+	community_id: CommunityId,
+	subset: Option<Subset<MembershipId>>,
 }
 
-impl<T: Config> RawOrigin<T> {
-	pub const fn new(community_id: CommunityIdOf<T>) -> Self {
+impl<CommunityId: Clone, MembershipId> RawOrigin<CommunityId, MembershipId> {
+	pub const fn new(community_id: CommunityId) -> Self {
 		RawOrigin {
 			community_id,
 			subset: None,
 		}
 	}
 
-	pub fn with_subset(&mut self, s: Subset<T>) {
+	pub fn with_subset(&mut self, s: Subset<MembershipId>) {
 		self.subset = Some(s);
 	}
 
-	pub fn id(&self) -> CommunityIdOf<T> {
-		self.community_id
+	pub fn id(&self) -> CommunityId {
+		self.community_id.clone()
 	}
 }
 
 /// Subsets of the community can also have a voice
 #[derive(Clone, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub enum Subset<T: Config> {
-	Member(MembershipIdOf<T>),
+pub enum Subset<MembershipId> {
+	Named([u8; 4]),
+	Member(MembershipId),
 	Members { count: u32 },
 	Fraction(Permill),
 	AtLeastRank(GenericRank),
@@ -137,13 +140,13 @@ pub enum DecisionMethod<AssetId> {
 }
 
 #[cfg(feature = "xcm")]
-impl<T> TryConvert<RuntimeOriginFor<T>, xcm::v3::MultiLocation> for RawOrigin<T>
+impl<RuntimeOrigin, CommunityId, MembershipId> TryConvert<RuntimeOrigin, xcm::v3::MultiLocation>
+	for RawOrigin<CommunityId, MembershipId>
 where
-	T: Config,
-	RuntimeOriginFor<T>: Into<Result<RawOrigin<T>, RuntimeOriginFor<T>>>,
-	xcm::v3::Junction: TryFrom<RawOrigin<T>>,
+	RuntimeOrigin: Clone + Into<Result<RawOrigin<CommunityId, MembershipId>, RuntimeOrigin>>,
+	xcm::v3::Junction: TryFrom<RawOrigin<CommunityId, MembershipId>>,
 {
-	fn try_convert(o: RuntimeOriginFor<T>) -> Result<xcm::v3::MultiLocation, RuntimeOriginFor<T>> {
+	fn try_convert(o: RuntimeOrigin) -> Result<xcm::v3::MultiLocation, RuntimeOrigin> {
 		let Ok(community @ RawOrigin { .. }) = o.clone().into() else {
 			return Err(o);
 		};
@@ -153,14 +156,13 @@ where
 }
 
 #[cfg(feature = "xcm")]
-impl<T> TryFrom<RawOrigin<T>> for xcm::v3::Junction
+impl<C, M> TryFrom<RawOrigin<C, M>> for xcm::v3::Junction
 where
-	T: Config,
-	u32: From<CommunityIdOf<T>>,
+	u32: From<C>,
 {
 	type Error = ();
 
-	fn try_from(o: RawOrigin<T>) -> Result<Self, Self::Error> {
+	fn try_from(o: RawOrigin<C, M>) -> Result<Self, Self::Error> {
 		use xcm::v3::{BodyId, BodyPart, Junction::Plurality};
 		let part = match o.subset {
 			None => BodyPart::Voice,
@@ -180,10 +182,9 @@ where
 }
 
 #[cfg(feature = "xcm")]
-impl<T: Config> TryFrom<xcm::v3::Junction> for RawOrigin<T>
+impl<C, M> TryFrom<xcm::v3::Junction> for RawOrigin<C, M>
 where
-	T: Config,
-	T::CommunityId: From<u32> + From<u64>,
+	C: From<u32> + From<u64> + Clone,
 {
 	type Error = ();
 
@@ -212,10 +213,10 @@ impl<T, OuterOrigin> EnsureOrigin<OuterOrigin> for AsSignedByCommunity<T>
 where
 	OuterOrigin: OriginTrait
 		+ From<frame_system::RawOrigin<T::AccountId>>
-		+ From<RawOrigin<T>>
+		+ From<RawOrigin<CommunityIdOf<T>, MembershipIdOf<T>>>
 		+ Clone
 		+ Into<Result<frame_system::RawOrigin<T::AccountId>, OuterOrigin>>
-		+ Into<Result<RawOrigin<T>, OuterOrigin>>,
+		+ Into<Result<RawOrigin<CommunityIdOf<T>, MembershipIdOf<T>>, OuterOrigin>>,
 	T: Config,
 {
 	type Success = T::AccountId;

@@ -1,4 +1,4 @@
-use crate::origin::DecisionMethod;
+use crate::origin::{DecisionMethod, RawOrigin};
 use crate::{CommunityDecisionMethod, Config};
 use fc_traits_memberships::{Inspect, Rank};
 use frame_support::{
@@ -139,6 +139,13 @@ impl<T: Config> Tally<T> {
 pub enum LockUpdateType {
 	Add,
 	Remove,
+}
+
+/// Target within the community the management origin can impersonate
+#[derive(Clone, Debug, Decode, Encode, MaxEncodedLen, PartialEq, TypeInfo)]
+pub enum DispatchTarget<C, M> {
+	Account(Option<u8>),
+	Origin(RawOrigin<C, M>),
 }
 
 #[cfg(feature = "runtime-benchmarks")]

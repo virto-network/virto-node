@@ -180,6 +180,9 @@ pub mod pallet {
 		/// Origin authorized to manage memeberships of an active community
 		type MemberMgmtOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
 
+		/// Origin authorized to dispatch calls as an account or origin of a community
+		type DispatchOrigin: EnsureOrigin<OriginFor<Self>, Success = Self::CommunityId>;
+
 		type Polls: Polling<
 			Tally<Self>,
 			Class = CommunityIdOf<Self>,
@@ -200,7 +203,7 @@ pub mod pallet {
 			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
 
 		/// Fetch calls that a Community can dispatch with its account
-		type Preimages: QueryPreimage;
+		type Preimages: QueryPreimage<H = Self::Hashing>;
 
 		/// The overarching call type.
 		type RuntimeCall: Parameter
@@ -238,7 +241,7 @@ pub mod pallet {
 
 	/// The origin of the pallet
 	#[pallet::origin]
-	pub type Origin<T> = origin::RawOrigin<T>;
+	pub type Origin<T> = origin::RawOrigin<CommunityIdOf<T>, MembershipIdOf<T>>;
 
 	/// A reason for the pallet communities placing a hold on funds.
 	#[pallet::composite_enum]
@@ -528,26 +531,13 @@ pub mod pallet {
 
 		/// Dispatch a callable as the community account
 		#[pallet::call_index(11)]
-		pub fn dispatch_as_account(origin: OriginFor<T>, call: BoundedCallOf<T>) -> DispatchResultWithPostInfo {
-			let community_id = T::MemberMgmtOrigin::ensure_origin(origin)?;
-			Self::do_dispatch_as_community_account(&community_id, call)
+		pub fn dispatch_as(
+			origin: OriginFor<T>,
+			target: DispatchTarget<CommunityIdOf<T>, MembershipIdOf<T>>,
+			call: BoundedCallOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let community_id = T::DispatchOrigin::ensure_origin(origin)?;
+			Self::do_dispatch_as(&community_id, call)
 		}
-
-		// /// Dispatch a callable as the community account
-		// #[pallet::call_index(12)]
-		// #[pallet::weight({
-		// 	let di = call.get_dispatch_info();
-		// 	let weight = T::WeightInfo::dispatch_as_account()
-		// 		.saturating_add(T::DbWeight::get().reads_writes(1, 1))
-		// 		.saturating_add(di.weight);
-		// 	(weight, di.class)
-		// })]
-		// // #[cfg(any(test, feature = "testnet"))]
-		// pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>)
-		// -> DispatchResultWithPostInfo { 	let community_id =
-		// T::MemberMgmtOrigin::ensure_origin(origin)?; 	let origin =
-		// crate::Origin::<T>::new(community_id); 	let post =
-		// call.dispatch(origin.into()).map_err(|e| e.error)?; 	Ok(post)
-		// }
 	}
 }

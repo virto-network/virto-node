@@ -424,10 +424,12 @@ impl pallet_communities::Config for Test {
 	type Balances = Balances;
 	type MemberMgmt = Nfts;
 	type Polls = Referenda;
+	type Preimages = Preimage;
 
 	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
+	type DispatchOrigin = EnsureCommunity<Self>;
 
 	type RuntimeCall = RuntimeCall;
 	type RuntimeOrigin = RuntimeOrigin;

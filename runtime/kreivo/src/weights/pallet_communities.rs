@@ -253,7 +253,7 @@ impl<T: frame_system::Config> pallet_communities::WeightInfo for WeightInfo<T> {
 	}
 	/// Storage: `Communities::Info` (r:1 w:0)
 	/// Proof: `Communities::Info` (`max_values`: None, `max_size`: Some(19), added: 2494, mode: `MaxEncodedLen`)
-	fn dispatch_as_account() -> Weight {
+	fn dispatch_as() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`

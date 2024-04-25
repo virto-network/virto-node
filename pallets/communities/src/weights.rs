@@ -43,7 +43,7 @@ pub trait WeightInfo {
 	fn vote() -> Weight;
 	fn remove_vote() -> Weight;
 	fn unlock() -> Weight;
-	fn dispatch_as_account() -> Weight;
+	fn dispatch_as() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -254,7 +254,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 	/// Storage: `Communities::Info` (r:1 w:0)
 	/// Proof: `Communities::Info` (`max_values`: None, `max_size`: Some(19), added: 2494, mode: `MaxEncodedLen`)
-	fn dispatch_as_account() -> Weight {
+	fn dispatch_as() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`
@@ -472,7 +472,7 @@ impl WeightInfo for () {
 	}
 	/// Storage: `Communities::Info` (r:1 w:0)
 	/// Proof: `Communities::Info` (`max_values`: None, `max_size`: Some(19), added: 2494, mode: `MaxEncodedLen`)
-	fn dispatch_as_account() -> Weight {
+	fn dispatch_as() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `115`
 		//  Estimated: `3484`

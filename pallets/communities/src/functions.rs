@@ -20,14 +20,14 @@ use frame_support::{
 		fungible::{Mutate, MutateFreeze},
 		fungibles::{InspectHold, MutateHold},
 		tokens::Precision,
-		Polling,
+		Polling, QueryPreimage,
 	},
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, Dispatchable},
 	DispatchResultWithInfo, TokenError,
 };
-use sp_std::{vec, vec::Vec};
+use sp_std::vec::Vec;
 
 impl<T: Config> Pallet<T> {
 	#[inline]
@@ -208,14 +208,14 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn do_dispatch_as_community_account(
+	pub(crate) fn do_dispatch_as(
 		community_id: &CommunityIdOf<T>,
 		call: BoundedCallOf<T>,
 	) -> DispatchResultWithInfo<PostDispatchInfo> {
 		let community_account = Self::community_account(community_id);
 		let signer = frame_system::RawOrigin::Signed(community_account);
 
-		let _ = T::Preimages::realize(call);
+		let (call, _) = T::Preimages::realize(&call)?;
 		let post = call.dispatch(signer.into()).map_err(|e| e.error)?;
 		Ok(post)
 	}
