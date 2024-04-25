@@ -5,7 +5,6 @@ use frame_benchmarking::v2::*;
 
 use frame_support::traits::fungible::Mutate;
 use frame_system::RawOrigin;
-use sp_runtime::traits::StaticLookup;
 
 type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
 
@@ -49,7 +48,7 @@ mod benchmarks {
 			BoundedVec::truncate_from(b"Test Community".into()),
 			Some(admin_origin_caller.clone()),
 			None,
-			Some(T::Lookup::unlookup(first_member)),
+			None,
 		);
 
 		// verification code
