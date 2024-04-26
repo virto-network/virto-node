@@ -34,7 +34,7 @@ use plurality_community::*;
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: Option<NetworkId> = None;
+	pub const RelayNetwork: Option<NetworkId> = Some(NetworkId::Kusama);
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub CheckAccount: (AccountId, MintLocation) = (PolkadotXcm::check_account(), MintLocation::Local);
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
@@ -58,6 +58,8 @@ pub type LocationToAccountId = (
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Plurality origins convert to community AccountId via the `Communities::community_account`.
 	PluralityConvertsToCommunityAccountId,
+	// For incoming relay `Account32` origins, alias directly to `AccountId`.
+	AccountId32FromRelay<RelayNetwork, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
