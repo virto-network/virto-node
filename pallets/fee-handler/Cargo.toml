@@ -1,0 +1,46 @@
+[package]
+name = "pallet-fee-handler"
+version = "0.1.0"
+authors = ['Virto Team <contact@virto.team>']
+license = "GPL-3.0-only"
+homepage = 'https://github.com/virto-network/virto-node'
+repository = 'https://github.com/virto-network/virto-node'
+edition = "2021"
+description = "Frame component to make flexible payments of fees."
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+parity-scale-codec = { workspace = true, features = [ "derive" ] }
+scale-info = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+log = { workspace = true }
+
+[dev-dependencies]
+pallet-balances = { workspace = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+	"frame-benchmarking/runtime-benchmarks",
+]
+std = [
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"sp-runtime/std",
+	"pallet-balances/std",
+	"sp-std/std",
+	"sp-core/std",
+	"sp-io/std",
+]
+try-runtime = ["frame-support/try-runtime"]
