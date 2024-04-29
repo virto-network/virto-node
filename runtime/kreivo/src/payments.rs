@@ -4,6 +4,7 @@ use frame_support::traits::EitherOf;
 use frame_system::EnsureSigned;
 use pallet_communities::origin::AsSignedByCommunity;
 use parity_scale_codec::Encode;
+use sp_runtime::traits::AccountIdConversion;
 
 parameter_types! {
 	pub const MaxRemarkLength: u8 = 50;
@@ -28,7 +29,6 @@ impl pallet_payments::BenchmarkHelper<AccountId, FungibleAssetLocation, Balance>
 
 pub struct KreivoFeeHandler;
 
-const MANDATORY_FEE: bool = true;
 pub const SENDER_FEE: Percent = Percent::from_percent(1);
 pub const BENEFICIARY_FEE: Percent = Percent::from_percent(3);
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
@@ -36,21 +36,32 @@ pub const INCENTIVE_PERCENTAGE: u8 = 10;
 impl FeeHandler<Runtime> for KreivoFeeHandler {
 	fn apply_fees(
 		asset: &AssetIdOf<Runtime>,
-		_sender: &AccountId,
-		_beneficiary: &AccountId,
+		sender: &AccountId,
+		beneficiary: &AccountId,
 		amount: &Balance,
 		_remark: Option<&[u8]>,
 	) -> Fees<Runtime> {
 		let min = <Assets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
+
+		let is_sender_paying_fees:bool = match PalletId::try_from_sub_account::<CommunityId>(sender) {
+			Some((pallet_id, _)) if pallet_id == crate::communities::CommunityPalletId::get() => true,
+			_ => false
+		};
+
+		let is_beneficiary_paying_fees:bool = match PalletId::try_from_sub_account::<CommunityId>(beneficiary) {
+			Some((pallet_id, _)) if pallet_id == crate::communities::CommunityPalletId::get() => true,
+			_ => false
+		};
+
 		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
 			TreasuryAccount::get(),
 			min.max(SENDER_FEE.mul_floor(*amount)),
-			MANDATORY_FEE,
+			is_sender_paying_fees,
 		)];
 		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
 			TreasuryAccount::get(),
 			min.max(BENEFICIARY_FEE.mul_floor(*amount)),
-			MANDATORY_FEE,
+			is_beneficiary_paying_fees,
 		)];
 
 		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(sender_fee).unwrap();
