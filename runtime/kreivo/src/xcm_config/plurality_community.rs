@@ -8,7 +8,6 @@ use xcm_executor::traits::ConvertLocation;
 pub struct PluralityConvertsToCommunityAccountId;
 impl ConvertLocation<AccountId> for PluralityConvertsToCommunityAccountId {
 	fn convert_location(location: &MultiLocation) -> Option<AccountId> {
-		log::trace!("Attempting to convert {:?} into AccountId if plurality", location);
 		match location {
 			MultiLocation {
 				parents: 0,
@@ -18,5 +17,26 @@ impl ConvertLocation<AccountId> for PluralityConvertsToCommunityAccountId {
 			} => Some(Communities::community_account(&(*id).saturated_into())),
 			_ => None,
 		}
+	}
+}
+
+pub struct AccountId32FromRelay<Network, AccountId>(PhantomData<(Network, AccountId)>);
+impl<Network: Get<Option<NetworkId>>, AccountId: From<[u8; 32]> + Into<[u8; 32]> + Clone> ConvertLocation<AccountId>
+	for AccountId32FromRelay<Network, AccountId>
+{
+	fn convert_location(location: &MultiLocation) -> Option<AccountId> {
+		let id = match location {
+			MultiLocation {
+				parents: 1,
+				interior: X1(AccountId32 { id, network: None }),
+			} => id,
+			MultiLocation {
+				parents: 1,
+				interior: X1(AccountId32 { id, network }),
+			} if *network == Network::get() => id,
+			_ => return None,
+		};
+
+		Some((*id).into())
 	}
 }
