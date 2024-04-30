@@ -141,7 +141,7 @@ pub mod pallet {
 				maybe_track_info.unwrap_or_else(|| Self::default_tack(community_name)),
 				community_origin.into_caller(),
 			)?;
-			// Induct community at Kreivo Governance with rank 1
+			// Induct community at Kreivo Governance with rank 0
 			T::RankedCollective::induct(&community_account)?;
 
 			Self::deposit_event(Event::<T>::CommunityRegistered { id: community_id });
