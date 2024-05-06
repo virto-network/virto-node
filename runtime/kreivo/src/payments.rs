@@ -32,6 +32,7 @@ pub struct KreivoFeeHandler;
 pub const SENDER_FEE: Percent = Percent::from_percent(1);
 pub const BENEFICIARY_FEE: Percent = Percent::from_percent(3);
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
+const MANDATORY_FEE: bool = true;
 
 impl FeeHandler<Runtime> for KreivoFeeHandler {
 	fn apply_fees(
@@ -43,29 +44,31 @@ impl FeeHandler<Runtime> for KreivoFeeHandler {
 	) -> Fees<Runtime> {
 		let min = <Assets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
 
-		let is_sender_paying_fees:bool = match PalletId::try_from_sub_account::<CommunityId>(sender) {
-			Some((pallet_id, _)) if pallet_id == crate::communities::CommunityPalletId::get() => true,
-			_ => false
+		let mut response_sender: Vec<Fee<Runtime>> = vec![];
+		let mut response_beneficiary: Vec<Fee<Runtime>> = vec![];
+
+		let pallet_id = crate::communities::CommunityPalletId::get();
+
+		match PalletId::try_from_sub_account::<CommunityId>(sender) {
+			Some((inner_sender_pallet_id, _community_id)) => if pallet_id == inner_sender_pallet_id {},
+			_ => response_sender.push((
+				TreasuryAccount::get(),
+				min.max(SENDER_FEE.mul_floor(*amount)),
+				MANDATORY_FEE,
+			)),
 		};
 
-		let is_beneficiary_paying_fees:bool = match PalletId::try_from_sub_account::<CommunityId>(beneficiary) {
-			Some((pallet_id, _)) if pallet_id == crate::communities::CommunityPalletId::get() => true,
-			_ => false
+		match PalletId::try_from_sub_account::<CommunityId>(beneficiary) {
+			Some((inner_beneficiary_pallet_id, _community_id)) => if pallet_id == inner_beneficiary_pallet_id {},
+			_ => response_beneficiary.push((
+				TreasuryAccount::get(),
+				min.max(SENDER_FEE.mul_floor(*amount)),
+				MANDATORY_FEE,
+			)),
 		};
 
-		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			TreasuryAccount::get(),
-			min.max(SENDER_FEE.mul_floor(*amount)),
-			is_sender_paying_fees,
-		)];
-		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			TreasuryAccount::get(),
-			min.max(BENEFICIARY_FEE.mul_floor(*amount)),
-			is_beneficiary_paying_fees,
-		)];
-
-		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(sender_fee).unwrap();
-		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(beneficiary_fee).unwrap();
+		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(response_sender).unwrap();
+		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(response_beneficiary).unwrap();
 
 		Fees {
 			sender_pays,
