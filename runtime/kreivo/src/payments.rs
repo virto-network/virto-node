@@ -29,10 +29,10 @@ impl pallet_payments::BenchmarkHelper<AccountId, FungibleAssetLocation, Balance>
 
 pub struct KreivoFeeHandler;
 
+const MANDATORY_FEE: bool = true;
 pub const SENDER_FEE: Percent = Percent::from_percent(1);
 pub const BENEFICIARY_FEE: Percent = Percent::from_percent(3);
 pub const INCENTIVE_PERCENTAGE: u8 = 10;
-const MANDATORY_FEE: bool = true;
 
 impl FeeHandler<Runtime> for KreivoFeeHandler {
 	fn apply_fees(
@@ -43,36 +43,23 @@ impl FeeHandler<Runtime> for KreivoFeeHandler {
 		_remark: Option<&[u8]>,
 	) -> Fees<Runtime> {
 		let min = <Assets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
-
-		let mut response_sender: Vec<Fee<Runtime>> = vec![];
-		let mut response_beneficiary: Vec<Fee<Runtime>> = vec![];
-
 		let pallet_id = crate::communities::CommunityPalletId::get();
+		let default_fee = |fee: Percent| (TreasuryAccount::get(), min.max(fee.mul_floor(*amount)), MANDATORY_FEE);
+		let is_community =
+			|who| matches!(PalletId::try_from_sub_account::<CommunityId>(who), Some((pid, _)) if pallet_id == pid );
 
-		match PalletId::try_from_sub_account::<CommunityId>(sender) {
-			Some((inner_sender_pallet_id, _community_id)) => if pallet_id == inner_sender_pallet_id {},
-			_ => response_sender.push((
-				TreasuryAccount::get(),
-				min.max(SENDER_FEE.mul_floor(*amount)),
-				MANDATORY_FEE,
-			)),
-		};
+		let mut sender_fees = vec![];
+		let mut beneficiary_fees = vec![];
 
-		match PalletId::try_from_sub_account::<CommunityId>(beneficiary) {
-			Some((inner_beneficiary_pallet_id, _community_id)) => if pallet_id == inner_beneficiary_pallet_id {},
-			_ => response_beneficiary.push((
-				TreasuryAccount::get(),
-				min.max(SENDER_FEE.mul_floor(*amount)),
-				MANDATORY_FEE,
-			)),
-		};
-
-		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(response_sender).unwrap();
-		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(response_beneficiary).unwrap();
-
+		if !is_community(sender) {
+			sender_fees.push(default_fee(SENDER_FEE))
+		}
+		if !is_community(beneficiary) {
+			beneficiary_fees.push(default_fee(BENEFICIARY_FEE))
+		}
 		Fees {
-			sender_pays,
-			beneficiary_pays,
+			sender_pays: BoundedVec::try_from(sender_fees).unwrap(),
+			beneficiary_pays: BoundedVec::try_from(beneficiary_fees).unwrap(),
 		}
 	}
 }
