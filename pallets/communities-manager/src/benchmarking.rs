@@ -5,6 +5,7 @@ use frame_benchmarking::v2::*;
 
 use frame_support::traits::fungible::Mutate;
 use frame_system::RawOrigin;
+use sp_runtime::SaturatedConversion;
 
 type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
 
@@ -58,7 +59,7 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn create_memberships() -> Result<(), BenchmarkError> {
+	fn create_memberships(q: Linear<1, 1024>) -> Result<(), BenchmarkError> {
 		// setup code
 		T::CreateCollection::create_collection_with_id(
 			T::MembershipsManagerCollectionId::get(),
@@ -74,7 +75,7 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(
 			RawOrigin::Root,
-			u16::MAX.into(),
+			q.saturated_into(),
 			100u32.into(),
 			300_000_000_000u128.into(),
 		);
@@ -83,7 +84,7 @@ mod benchmarks {
 		assert_has_event::<T>(
 			Event::<T>::MembershipsCreated {
 				starting_at: 100u32.into(),
-				amount: u16::MAX.into(),
+				amount: q.saturated_into(),
 			}
 			.into(),
 		);

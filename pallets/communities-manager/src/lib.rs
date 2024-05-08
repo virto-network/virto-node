@@ -176,11 +176,12 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::weight(<T as Config>::WeightInfo::create_memberships(*amount))]
 		#[pallet::call_index(1)]
 		pub fn create_memberships(
 			origin: OriginFor<T>,
-			#[pallet::compact] amount: u32,
-			#[pallet::compact] starting_at: <T as Config>::MembershipId,
+			amount: u16,
+			starting_at: <T as Config>::MembershipId,
 			#[pallet::compact] price: NativeBalanceOf<T>,
 		) -> DispatchResult {
 			T::CreateMembershipsOrigin::ensure_origin(origin)?;

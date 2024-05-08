@@ -74,7 +74,7 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 			.saturating_add(T::DbWeight::get().writes(14))
 	}
 	
-	fn create_memberships() -> Weight {
+	fn create_memberships(_: u16, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `278`
 		//  Estimated: `132561`

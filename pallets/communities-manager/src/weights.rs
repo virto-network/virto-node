@@ -8,7 +8,7 @@ use core::marker::PhantomData;
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
 	fn register() -> Weight;
-	fn create_memberships() -> Weight;
+	fn create_memberships(q: u16, ) -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -53,7 +53,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(14))
 	}
 	
-	fn create_memberships() -> Weight {
+	fn create_memberships(_: u16, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `278`
 		//  Estimated: `132561`
@@ -105,7 +105,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(14))
 	}
 	
-	fn create_memberships() -> Weight {
+	fn create_memberships(_: u16, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `278`
 		//  Estimated: `132561`
