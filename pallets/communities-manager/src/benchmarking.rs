@@ -5,6 +5,7 @@ use frame_benchmarking::v2::*;
 
 use frame_support::traits::fungible::Mutate;
 use frame_system::RawOrigin;
+use sp_runtime::SaturatedConversion;
 
 type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
 
@@ -27,6 +28,7 @@ where
 	NativeBalanceOf<T>: From<u128>,
 	BlockNumberFor<T>: From<u32>,
 	CommunityIdOf<T>: From<u16>,
+	<T as Config>::MembershipId: From<u32>,
 )]
 mod benchmarks {
 	use super::*;
@@ -53,6 +55,39 @@ mod benchmarks {
 
 		// verification code
 		assert_has_event::<T>(Event::<T>::CommunityRegistered { id: community_id }.into());
+		Ok(())
+	}
+
+	#[benchmark]
+	fn create_memberships(q: Linear<1, 1024>) -> Result<(), BenchmarkError> {
+		// setup code
+		T::CreateCollection::create_collection_with_id(
+			T::MembershipsManagerCollectionId::get(),
+			&T::MembershipsManagerOwner::get(),
+			&T::MembershipsManagerOwner::get(),
+			&pallet_nfts::CollectionConfig {
+				settings: Default::default(),
+				max_supply: None,
+				mint_settings: Default::default(),
+			},
+		)?;
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			q.saturated_into(),
+			100u32.into(),
+			300_000_000_000u128.into(),
+		);
+
+		// verification code
+		assert_has_event::<T>(
+			Event::<T>::MembershipsCreated {
+				starting_at: 100u32.into(),
+				amount: q.saturated_into(),
+			}
+			.into(),
+		);
 		Ok(())
 	}
 

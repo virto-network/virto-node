@@ -18,7 +18,7 @@ use self::{
 #[cfg(feature = "runtime-benchmarks")]
 use {
 	frame_benchmarking::BenchmarkError,
-	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::ItemOf, tokens::nonfungible_v2::Mutate},
+	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::Mutate},
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_communities::{
 		types::{CommunityIdOf, MembershipIdOf, PalletsOriginOf, PollIndexOf},
@@ -79,11 +79,19 @@ impl pallet_communities_manager::Config for Runtime {
 	type CreateCollection = CommunityMemberships;
 	type Tracks = CommunityTracks;
 	type RankedCollective = KreivoCollective;
+
+	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
+	type MembershipId = MembershipId;
+	type MembershipsManagerOwner = TreasuryAccount;
+	type MembershipsManagerCollectionId = MembershipsCollectionId;
+	type CreateMemberships = CommunityMemberships;
+
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-type MembershipCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
+type MembershipCollection =
+	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;

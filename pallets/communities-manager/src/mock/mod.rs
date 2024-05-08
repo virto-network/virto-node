@@ -235,9 +235,18 @@ impl pallet_communities::Config for Test {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	// Types to support community creation
 	type CreateCollection = Memberships;
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
+	// Types to support memberships creation
+	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
+	type MembershipId = MembershipId;
+
+	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
+	type MembershipsManagerOwner = RootAccount;
+	type CreateMemberships = Memberships;
+
 	type WeightInfo = WeightInfo;
 }
 
