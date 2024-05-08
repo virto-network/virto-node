@@ -90,7 +90,8 @@ impl pallet_communities_manager::Config for Runtime {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-type MembershipCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
+type MembershipCollection =
+	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
