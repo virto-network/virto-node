@@ -1,6 +1,6 @@
 use super::*;
 
-use frame_support::traits::TryMapSuccess;
+use frame_support::traits::{tokens::nonfungible_v2::ItemOf, TryMapSuccess};
 use frame_system::{EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
