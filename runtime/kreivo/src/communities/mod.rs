@@ -79,7 +79,16 @@ impl pallet_communities_manager::Config for Runtime {
 	type CreateCollection = CommunityMemberships;
 	type Tracks = CommunityTracks;
 	type RankedCollective = KreivoCollective;
+
+	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
+	type MembershipId = MembershipId;
+	type MembershipsManagerOwner = TreasuryAccount;
+	type MembershipsManager = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
+
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type MembershipsManagerCollectionId = MembershipsCollectionId;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
