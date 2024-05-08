@@ -115,6 +115,8 @@ pub mod pallet {
 		InvalidCommunityName,
 		/// It was not possible to register the community
 		CannotRegister,
+		/// The amount of memberships to create exceeds the limit of 1024
+		CreatingTooManyMemberships,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -184,6 +186,7 @@ pub mod pallet {
 			starting_at: <T as Config>::MembershipId,
 			#[pallet::compact] price: NativeBalanceOf<T>,
 		) -> DispatchResult {
+			ensure!(amount <= 1024u16, Error::<T>::CreatingTooManyMemberships);
 			T::CreateMembershipsOrigin::ensure_origin(origin)?;
 
 			let mut id = starting_at.clone();
