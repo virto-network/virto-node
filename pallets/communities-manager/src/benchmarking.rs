@@ -78,7 +78,7 @@ mod benchmarks {
 		assert_has_event::<T>(
 			Event::<T>::MembershipsCreated {
 				starting_at: 100u32.into(),
-				amount: 100,
+				amount: u16::MAX.into(),
 			}
 			.into(),
 		);
