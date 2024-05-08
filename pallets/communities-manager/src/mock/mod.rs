@@ -3,8 +3,7 @@ use super::*;
 use frame_support::{
 	parameter_types,
 	traits::{
-		nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf,
-		EqualPrivilegeOnly, Everything,
+		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, Everything,
 	},
 	PalletId,
 };
