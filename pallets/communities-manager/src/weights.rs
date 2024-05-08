@@ -8,6 +8,7 @@ use core::marker::PhantomData;
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
 	fn register() -> Weight;
+	fn create_memberships() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -51,6 +52,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(7))
 			.saturating_add(T::DbWeight::get().writes(14))
 	}
+	
+	fn create_memberships() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `278`
+		//  Estimated: `132561`
+		// Minimum execution time: 117_045_000 picoseconds.
+		Weight::from_parts(166_053_000, 0)
+			.saturating_add(Weight::from_parts(0, 132561))
+			.saturating_add(T::DbWeight::get().reads(7))
+			.saturating_add(T::DbWeight::get().writes(14))
+	}
 }
 
 impl WeightInfo for () {
@@ -83,6 +95,17 @@ impl WeightInfo for () {
 	/// Storage: `CommunityMemberships::CollectionAccount` (r:0 w:1)
 	/// Proof: `CommunityMemberships::CollectionAccount` (`max_values`: None, `max_size`: Some(66), added: 2541, mode: `MaxEncodedLen`)
 	fn register() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `278`
+		//  Estimated: `132561`
+		// Minimum execution time: 117_045_000 picoseconds.
+		Weight::from_parts(166_053_000, 0)
+			.saturating_add(Weight::from_parts(0, 132561))
+			.saturating_add(RocksDbWeight::get().reads(7))
+			.saturating_add(RocksDbWeight::get().writes(14))
+	}
+	
+	fn create_memberships() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `278`
 		//  Estimated: `132561`

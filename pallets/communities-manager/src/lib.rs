@@ -16,21 +16,26 @@ pub use weights::*;
 use fc_traits_tracks::MutateTracks;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{nonfungibles_v2::Create, OriginTrait, RankedMembers},
+	traits::{
+		nonfungible_v2::Mutate as ItemMutate, nonfungibles_v2::Create as CollectionCreate, Incrementable, OriginTrait,
+		RankedMembers,
+	},
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 use pallet_communities::{
 	types::{AccountIdOf, CommunityIdOf, DecisionMethodFor, NativeBalanceOf, PalletsOriginOf, RuntimeOriginFor},
 	Origin as CommunityOrigin,
 };
-use pallet_nfts::CollectionConfig;
+use pallet_nfts::{CollectionConfig, ItemConfig};
 use pallet_referenda::{TrackInfo, TracksInfo};
+use parity_scale_codec::Decode;
+use sp_runtime::{str_array, traits::Get};
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use sp_runtime::str_array;
+	use parity_scale_codec::HasCompact;
 
 	use super::*;
 
@@ -44,7 +49,7 @@ pub mod pallet {
 		/// definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		type CreateCollection: Create<
+		type CreateCollection: CollectionCreate<
 			AccountIdOf<Self>,
 			CollectionConfig<NativeBalanceOf<Self>, BlockNumberFor<Self>, CommunityIdOf<Self>>,
 			CollectionId = CommunityIdOf<Self>,
@@ -63,8 +68,20 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
-		// #[cfg(feature = "runtime-benchmarks")]
-		// type BenchmarkHelper: BenchmarkHelper<Self>;
+		type CreateMembershipsOrigin: EnsureOrigin<OriginFor<Self>>;
+
+		type MembershipId: Parameter + Decode + Incrementable + HasCompact;
+
+		type MembershipsManagerOwner: Get<AccountIdOf<Self>>;
+
+		type MembershipsManager: ItemMutate<
+			AccountIdOf<Self>,
+			ItemConfig = ItemConfig,
+			ItemId = <Self as Config>::MembershipId,
+		>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		type MembershipsManagerCollectionId: Get<CommunityIdOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -78,6 +95,11 @@ pub mod pallet {
 		/// The community with [`CommmunityId`](pallet_communities::CommunityId)
 		/// has been created.
 		CommunityRegistered { id: T::CommunityId },
+		/// The
+		MembershipsCreated {
+			starting_at: <T as Config>::MembershipId,
+			amount: u32,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -145,6 +167,35 @@ pub mod pallet {
 			T::RankedCollective::induct(&community_account)?;
 
 			Self::deposit_event(Event::<T>::CommunityRegistered { id: community_id });
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
+		pub fn create_memberships(
+			origin: OriginFor<T>,
+			#[pallet::compact] amount: u32,
+			#[pallet::compact] starting_at: <T as Config>::MembershipId,
+		) -> DispatchResult {
+			T::CreateMembershipsOrigin::ensure_origin(origin)?;
+
+			let mut id = starting_at.clone();
+			let mut minted = 0u32;
+			for _ in 0..amount {
+				T::MembershipsManager::mint_into(&id, &T::MembershipsManagerOwner::get(), &Default::default(), true)?;
+				if let Some(next_id) = id.increment() {
+					id = next_id;
+					minted += 1;
+				} else {
+					break;
+				}
+			}
+
+			// TODO: set price???
+
+			Self::deposit_event(Event::<T>::MembershipsCreated {
+				starting_at,
+				amount: minted,
+			});
 			Ok(())
 		}
 	}

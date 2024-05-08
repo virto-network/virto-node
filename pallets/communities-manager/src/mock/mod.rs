@@ -3,7 +3,8 @@ use super::*;
 use frame_support::{
 	parameter_types,
 	traits::{
-		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, Everything,
+		nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf,
+		EqualPrivilegeOnly, Everything,
 	},
 	PalletId,
 };
@@ -235,10 +236,20 @@ impl pallet_communities::Config for Test {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	// Types to support community creation
 	type CreateCollection = Memberships;
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
+	// Types to support memberships creation
+	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
+	type MembershipId = MembershipId;
+	type MembershipsManagerOwner = RootAccount;
+	type MembershipsManager = ItemOf<Memberships, MembershipsManagerCollectionId, AccountId>;
+
 	type WeightInfo = WeightInfo;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
 }
 
 #[allow(dead_code)]

@@ -27,6 +27,7 @@ where
 	NativeBalanceOf<T>: From<u128>,
 	BlockNumberFor<T>: From<u32>,
 	CommunityIdOf<T>: From<u16>,
+	<T as Config>::MembershipId: From<u32>,
 )]
 mod benchmarks {
 	use super::*;
@@ -53,6 +54,34 @@ mod benchmarks {
 
 		// verification code
 		assert_has_event::<T>(Event::<T>::CommunityRegistered { id: community_id }.into());
+		Ok(())
+	}
+
+	#[benchmark]
+	fn create_memberships() -> Result<(), BenchmarkError> {
+		// setup code
+		T::CreateCollection::create_collection_with_id(
+			T::MembershipsManagerCollectionId::get(),
+			&T::MembershipsManagerOwner::get(),
+			&T::MembershipsManagerOwner::get(),
+			&pallet_nfts::CollectionConfig {
+				settings: Default::default(),
+				max_supply: None,
+				mint_settings: Default::default(),
+			},
+		)?;
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, u16::MAX.into(), 100u32.into());
+
+		// verification code
+		assert_has_event::<T>(
+			Event::<T>::MembershipsCreated {
+				starting_at: 100u32.into(),
+				amount: 100,
+			}
+			.into(),
+		);
 		Ok(())
 	}
 
