@@ -17,8 +17,9 @@ use fc_traits_tracks::MutateTracks;
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		nonfungible_v2::Mutate as ItemMutate, nonfungibles_v2::Create as CollectionCreate, Incrementable, OriginTrait,
-		RankedMembers,
+		nonfungibles_v2::Mutate as ItemMutate,
+		nonfungibles_v2::{Create as CollectionCreate, Trading},
+		Incrementable, OriginTrait, RankedMembers,
 	},
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
@@ -72,16 +73,21 @@ pub mod pallet {
 
 		type MembershipId: Parameter + Decode + Incrementable + HasCompact;
 
+		type MembershipsManagerCollectionId: Get<CommunityIdOf<Self>>;
+
 		type MembershipsManagerOwner: Get<AccountIdOf<Self>>;
 
-		type MembershipsManager: ItemMutate<
-			AccountIdOf<Self>,
-			ItemConfig = ItemConfig,
-			ItemId = <Self as Config>::MembershipId,
-		>;
-
-		#[cfg(feature = "runtime-benchmarks")]
-		type MembershipsManagerCollectionId: Get<CommunityIdOf<Self>>;
+		type CreateMemberships: ItemMutate<
+				AccountIdOf<Self>,
+				ItemConfig = ItemConfig,
+				CollectionId = CommunityIdOf<Self>,
+				ItemId = <Self as Config>::MembershipId,
+			> + Trading<
+				AccountIdOf<Self>,
+				NativeBalanceOf<Self>,
+				CollectionId = CommunityIdOf<Self>,
+				ItemId = <Self as Config>::MembershipId,
+			>;
 	}
 
 	#[pallet::pallet]
@@ -175,13 +181,28 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			#[pallet::compact] amount: u32,
 			#[pallet::compact] starting_at: <T as Config>::MembershipId,
+			#[pallet::compact] price: NativeBalanceOf<T>,
 		) -> DispatchResult {
 			T::CreateMembershipsOrigin::ensure_origin(origin)?;
 
 			let mut id = starting_at.clone();
 			let mut minted = 0u32;
 			for _ in 0..amount {
-				T::MembershipsManager::mint_into(&id, &T::MembershipsManagerOwner::get(), &Default::default(), true)?;
+				T::CreateMemberships::mint_into(
+					&T::MembershipsManagerCollectionId::get(),
+					&id,
+					&T::MembershipsManagerOwner::get(),
+					&Default::default(),
+					true,
+				)?;
+
+				T::CreateMemberships::set_price(
+					&T::MembershipsManagerCollectionId::get(),
+					&id,
+					&T::MembershipsManagerOwner::get(),
+					Some(price.clone()),
+					None,
+				)?;
 				if let Some(next_id) = id.increment() {
 					id = next_id;
 					minted += 1;
@@ -189,8 +210,6 @@ pub mod pallet {
 					break;
 				}
 			}
-
-			// TODO: set price???
 
 			Self::deposit_event(Event::<T>::MembershipsCreated {
 				starting_at,

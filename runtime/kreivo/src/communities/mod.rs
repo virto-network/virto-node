@@ -1,6 +1,6 @@
 use super::*;
 
-use frame_support::traits::{tokens::nonfungible_v2::ItemOf, TryMapSuccess};
+use frame_support::traits::TryMapSuccess;
 use frame_system::{EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
@@ -83,12 +83,10 @@ impl pallet_communities_manager::Config for Runtime {
 	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
 	type MembershipId = MembershipId;
 	type MembershipsManagerOwner = TreasuryAccount;
-	type MembershipsManager = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
+	type MembershipsManagerCollectionId = MembershipsCollectionId;
+	type CreateMemberships = CommunityMemberships;
 
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
-
-	#[cfg(feature = "runtime-benchmarks")]
-	type MembershipsManagerCollectionId = MembershipsCollectionId;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

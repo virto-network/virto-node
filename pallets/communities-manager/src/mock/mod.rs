@@ -3,8 +3,7 @@ use super::*;
 use frame_support::{
 	parameter_types,
 	traits::{
-		nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf,
-		EqualPrivilegeOnly, Everything,
+		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, Everything,
 	},
 	PalletId,
 };
@@ -243,13 +242,12 @@ impl Config for Test {
 	// Types to support memberships creation
 	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
 	type MembershipId = MembershipId;
+
+	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
 	type MembershipsManagerOwner = RootAccount;
-	type MembershipsManager = ItemOf<Memberships, MembershipsManagerCollectionId, AccountId>;
+	type CreateMemberships = Memberships;
 
 	type WeightInfo = WeightInfo;
-
-	#[cfg(feature = "runtime-benchmarks")]
-	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
 }
 
 #[allow(dead_code)]

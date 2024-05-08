@@ -72,7 +72,12 @@ mod benchmarks {
 		)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Root, u16::MAX.into(), 100u32.into());
+		_(
+			RawOrigin::Root,
+			u16::MAX.into(),
+			100u32.into(),
+			300_000_000_000u128.into(),
+		);
 
 		// verification code
 		assert_has_event::<T>(
