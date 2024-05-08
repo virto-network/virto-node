@@ -200,7 +200,7 @@ pub mod pallet {
 					&T::MembershipsManagerCollectionId::get(),
 					&id,
 					&T::MembershipsManagerOwner::get(),
-					Some(price.clone()),
+					Some(price),
 					None,
 				)?;
 				if let Some(next_id) = id.increment() {
