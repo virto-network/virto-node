@@ -29,8 +29,8 @@ use xcm_builder::{
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
 
-mod plurality_community;
-use plurality_community::*;
+mod communities;
+use communities::*;
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -237,7 +237,10 @@ impl xcm_executor::Config for XcmConfig {
 }
 
 /// Only communities are allowed to dispatch xcm messages
-pub type CanSendXcmMessages = pallet_communities::Origin<Runtime>;
+pub type CanSendXcmMessages = (
+	pallet_communities::Origin<Runtime>,
+	SignedByCommunityToPlurality<Runtime>,
+);
 
 /// Only signed origins are allowed to execute xcm transactions
 pub type CanExecuteXcmTransactions = (
@@ -257,8 +260,8 @@ pub type XcmRouter = (
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, CanSendXcmMessages>;
-	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, CanExecuteXcmTransactions>;
+	type XcmRouter = XcmRouter;
 	type XcmExecuteFilter = Nothing;
 	// ^ Disable dispatchable execute on the XCM pallet.
 	type XcmExecutor = XcmExecutor<XcmConfig>;

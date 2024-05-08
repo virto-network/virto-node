@@ -1,7 +1,13 @@
 use super::*;
 
 use crate::Communities;
-use sp_runtime::SaturatedConversion;
+use core::marker::PhantomData;
+use frame_support::{traits::OriginTrait, PalletId};
+use pallet_communities::AccountIdOf;
+use sp_runtime::{
+	traits::{AccountIdConversion, TryConvert},
+	SaturatedConversion,
+};
 use xcm::v3::{BodyId, Junction::Plurality};
 use xcm_executor::traits::ConvertLocation;
 
@@ -38,5 +44,25 @@ impl<Network: Get<Option<NetworkId>>, AccountId: From<[u8; 32]> + Into<[u8; 32]>
 		};
 
 		Some((*id).into())
+	}
+}
+
+pub struct SignedByCommunityToPlurality<T>(PhantomData<T>);
+impl<T, OuterOrigin> TryConvert<OuterOrigin, xcm::v3::MultiLocation> for SignedByCommunityToPlurality<T>
+where
+	OuterOrigin: OriginTrait<AccountId = AccountIdOf<T>> + Clone,
+	T: pallet_communities::Config,
+	xcm::v3::Junction: TryFrom<pallet_communities::Origin<T>>,
+{
+	fn try_convert(o: OuterOrigin) -> Result<xcm::v3::MultiLocation, OuterOrigin> {
+		let Some(account_id) = o.clone().into_signer() else {
+			return Err(o.clone());
+		};
+		let Some((_, community_id)) = PalletId::try_from_sub_account(&account_id) else {
+			return Err(o.clone());
+		};
+		let origin = pallet_communities::Origin::<T>::new(community_id);
+		let j = xcm::v3::Junction::try_from(origin).map_err(|_| o)?;
+		Ok(j.into())
 	}
 }
