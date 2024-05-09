@@ -86,7 +86,7 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1023)
 	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
 	/// The range of component `q` is `[1, 1024]`.
-	fn create_memberships(q: u32, ) -> Weight {
+	fn create_memberships(q: u16, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `368`
 		//  Estimated: `3547 + q * (3334 ±0)`
