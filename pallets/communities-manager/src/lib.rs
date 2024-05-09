@@ -69,6 +69,11 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
+		type RegisterOrigin: EnsureOrigin<
+			OriginFor<Self>,
+			Success = Option<(NativeBalanceOf<Self>, AccountIdOf<Self>, AccountIdOf<Self>)>,
+		>;
+
 		type CreateMembershipsOrigin: EnsureOrigin<OriginFor<Self>>;
 
 		type MembershipId: Parameter + Decode + Incrementable + HasCompact;
@@ -135,7 +140,7 @@ pub mod pallet {
 			maybe_track_info: Option<TrackInfoOf<T>>,
 			// _maybe_first_member: Option<AccountIdLookupOf<T>>,
 		) -> DispatchResult {
-			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
+			let maybe_deposit = T::RegisterOrigin::ensure_origin(origin)?;
 
 			let community_name = core::str::from_utf8(&name).map_err(|_| Error::<T>::InvalidCommunityName)?;
 			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();

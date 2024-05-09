@@ -7,7 +7,7 @@ use frame_support::{
 	},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
+use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
 use parity_scale_codec::Compact;
 use sp_core::H256;
@@ -175,12 +175,13 @@ impl pallet_referenda_tracks::Config for Test {
 	type BenchmarkHelper = TracksBenchmarkHelper;
 }
 
+type Deposit = Option<(Balance, AccountId, AccountId)>;
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = 1;
-	pub const NoDepositOnRootRegistration: Option<(Balance, AccountId, AccountId)> = None;
+	pub const NoDepositOnRootRegistration: Deposit = None;
 }
 
 impl pallet_nfts::Config for Test {
@@ -221,7 +222,7 @@ impl pallet_communities::Config for Test {
 	type Balances = Balances;
 	type MemberMgmt = Memberships;
 	type Polls = Referenda;
-	type CreateOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	type CreateOrigin = EnsureNever<Deposit>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 	type RuntimeCall = RuntimeCall;
@@ -239,6 +240,7 @@ impl Config for Test {
 	type CreateCollection = Memberships;
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
+	type RegisterOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
 	// Types to support memberships creation
 	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
 	type MembershipId = MembershipId;

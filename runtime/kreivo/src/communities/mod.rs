@@ -1,7 +1,7 @@
 use super::*;
 
 use frame_support::traits::TryMapSuccess;
-use frame_system::{EnsureRootWithSuccess, EnsureSigned};
+use frame_system::{EnsureNever, EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
@@ -31,12 +31,14 @@ use {
 	sp_runtime::Perbill,
 };
 
+type CreationPayment = Option<(Balance, AccountId, AccountId)>;
+
 parameter_types! {
 	pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
 	pub const MembershipsCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const CommunityDepositAmount: Balance = UNITS / 2;
-	pub const NoPay: Option<(Balance, AccountId, AccountId)> = None;
+	pub const NoPay: CreationPayment = None;
 }
 
 morph_types! {
@@ -51,7 +53,7 @@ type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, Treasury
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
-	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
+	type CreateOrigin = EnsureNever<CreationPayment>;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmt = CommunityMemberships;
@@ -79,6 +81,7 @@ impl pallet_communities_manager::Config for Runtime {
 	type CreateCollection = CommunityMemberships;
 	type Tracks = CommunityTracks;
 	type RankedCollective = KreivoCollective;
+	type RegisterOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
 
 	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
 	type MembershipId = MembershipId;
