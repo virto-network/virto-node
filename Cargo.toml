@@ -58,7 +58,7 @@ runtime-common =  { default-features = false, path = "runtime/common" }
 kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }
 
 # Frame Contrib
-fc-traits-memberships = { git = "https://github.com/virto-network/frame-contrib", branch = "main", default-features = false }
+fc-traits-memberships = { git = "https://github.com/virto-network/frame-contrib", branch = "trait-memberships-move-assigned-memberships-to-special-account", default-features = false }
 fc-traits-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "main", default-features = false }
 pallet-referenda-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "main", package="fc-pallet-referenda-tracks", default-features = false }
 
