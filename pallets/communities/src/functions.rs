@@ -57,6 +57,7 @@ impl<T: Config> Pallet<T> {
 			!Self::community_exists(community_id),
 			Error::<T>::CommunityAlreadyExists
 		);
+		ensure!(!CommunityIdFor::<T>::contains_key(admin), Error::<T>::AlreadyAdmin);
 
 		if let Some((deposit, depositor, depositee)) = maybe_deposit {
 			T::Balances::transfer(

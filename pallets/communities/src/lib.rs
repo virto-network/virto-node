@@ -349,6 +349,8 @@ pub mod pallet {
 		NoVoteCasted,
 		/// The poll
 		NoLocksInPlace,
+		/// The origin already controls another community
+		AlreadyAdmin,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
