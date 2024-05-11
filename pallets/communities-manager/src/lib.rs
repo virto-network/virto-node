@@ -30,7 +30,10 @@ use pallet_communities::{
 use pallet_nfts::{CollectionConfig, ItemConfig};
 use pallet_referenda::{TrackInfo, TracksInfo};
 use parity_scale_codec::Decode;
-use sp_runtime::{str_array, traits::Get};
+use sp_runtime::{
+	str_array,
+	traits::{Get, StaticLookup},
+};
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
@@ -135,7 +138,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			community_id: CommunityIdOf<T>,
 			name: CommunityName,
-			maybe_admin_origin: Option<PalletsOriginOf<T>>,
+			first_admin: pallet_communities::AccountIdLookupOf<T>,
 			maybe_decision_method: Option<DecisionMethodFor<T>>,
 			maybe_track_info: Option<TrackInfoOf<T>>,
 			// _maybe_first_member: Option<AccountIdLookupOf<T>>,
@@ -143,14 +146,16 @@ pub mod pallet {
 			let maybe_deposit = T::RegisterOrigin::ensure_origin(origin)?;
 
 			let community_name = core::str::from_utf8(&name).map_err(|_| Error::<T>::InvalidCommunityName)?;
-			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();
-			let admin_origin = maybe_admin_origin.unwrap_or(community_origin.clone().into_caller());
+
+			let first_admin_account_id = T::Lookup::lookup(first_admin)?;
+			let admin_origin = frame_system::Origin::<T>::Signed(first_admin_account_id);
+
 			// Register first to check if community exists
-			pallet_communities::Pallet::<T>::register(&admin_origin, &community_id, maybe_deposit)?;
+			pallet_communities::Pallet::<T>::register(&admin_origin.clone().into(), &community_id, maybe_deposit)?;
 
 			if let Some(decision_method) = maybe_decision_method {
 				pallet_communities::Pallet::<T>::set_decision_method(
-					admin_origin.clone().into(),
+					admin_origin.into(),
 					community_id,
 					decision_method,
 				)?;
@@ -171,6 +176,7 @@ pub mod pallet {
 			)?;
 
 			// Create governance track for community
+			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();
 			T::Tracks::insert(
 				community_id,
 				maybe_track_info.unwrap_or_else(|| Self::default_tack(community_name)),
