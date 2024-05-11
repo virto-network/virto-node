@@ -14,9 +14,9 @@ impl pallet_referenda::Config<KreivoReferendaInstance> for Runtime {
 	type Scheduler = Scheduler;
 	type Currency = Balances;
 	type SubmitOrigin = EnsureSigned<AccountId>;
-	type CancelOrigin = EnsureRoot<AccountId>;
-	type KillOrigin = EnsureRoot<AccountId>;
-	type Slash = ();
+	type CancelOrigin = ReferendumCanceller;
+	type KillOrigin = ReferendumKiller;
+	type Slash = Treasury;
 	type Votes = Votes;
 	type Tally = TallyOf<Runtime, KreivoCollectiveInstance>;
 	type SubmissionDeposit = ConstU128<{ UNITS }>;

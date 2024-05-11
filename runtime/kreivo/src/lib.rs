@@ -11,12 +11,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod tests;
 
 pub mod constants;
+pub mod governance;
 pub mod impls;
 mod weights;
 pub mod xcm_config;
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use cumulus_primitives_core::{AggregateMessageOrigin, Concrete, ParaId};
+use governance::pallet_custom_origins;
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_api::impl_runtime_apis;
@@ -169,6 +171,7 @@ construct_runtime!(
 		ParachainSystem: cumulus_pallet_parachain_system = 1,
 		Timestamp: pallet_timestamp = 2,
 		ParachainInfo: parachain_info = 3,
+		Origins: pallet_custom_origins = 4,
 
 		// Monetary stuff.
 		Balances: pallet_balances = 10,
@@ -243,6 +246,8 @@ parameter_types! {
 		.build_or_panic();
 	pub const SS58Prefix: u16 = 2;
 }
+
+impl pallet_custom_origins::Config for Runtime {}
 
 pub struct CommunityLookup;
 impl StaticLookup for CommunityLookup {
