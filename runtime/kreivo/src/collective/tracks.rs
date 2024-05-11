@@ -23,7 +23,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 				info: pallet_referenda::TrackInfo {
 					name: s("Root"),
 					max_deciding: 1,
-					decision_deposit: UNITS,
+					decision_deposit: 10 * UNITS,
 					prepare_period: 15 * MINUTES,
 					decision_period: 4 * DAYS,
 					confirm_period: 15 * MINUTES,
