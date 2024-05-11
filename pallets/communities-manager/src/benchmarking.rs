@@ -40,15 +40,14 @@ mod benchmarks {
 		setup_account::<T>(&first_member)?;
 
 		let community_id: CommunityIdOf<T> = 1.into();
-		let admin_origin: RuntimeOriginFor<T> = frame_system::Origin::<T>::Signed(first_member.clone()).into();
-		let admin_origin_caller: PalletsOriginOf<T> = admin_origin.into_caller();
+		let first_admin = T::Lookup::unlookup(first_member.clone());
 
 		#[extrinsic_call]
 		_(
 			RawOrigin::Root,
 			community_id,
 			BoundedVec::truncate_from(b"Test Community".into()),
-			Some(admin_origin_caller.clone()),
+			first_admin,
 			None,
 			None,
 		);
