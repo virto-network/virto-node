@@ -1,4 +1,3 @@
-use crate::origin::DecisionMethod;
 use crate::{CommunityDecisionMethod, Config};
 use fc_traits_memberships::{Inspect, Rank};
 use frame_support::pallet_prelude::*;
@@ -16,7 +15,7 @@ pub type NativeBalanceOf<T> = <<T as Config>::Balances as fungible::Inspect<Acco
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type CommunityIdOf<T> = <T as Config>::CommunityId;
 pub type VoteOf<T> = Vote<AssetIdOf<T>, AssetBalanceOf<T>, NativeBalanceOf<T>>;
-pub type DecisionMethodFor<T> = DecisionMethod<AssetIdOf<T>>;
+pub type DecisionMethodFor<T> = DecisionMethod<AssetIdOf<T>, AssetBalanceOf<T>>;
 pub type PollIndexOf<T> = <<T as Config>::Polls as Polling<Tally<T>>>::Index;
 pub type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
 pub type PalletsOriginOf<T> =
@@ -52,6 +51,16 @@ pub enum CommunityState {
 	/// The community is blocked, typically as a result of a restriction imposed
 	/// by violating the norms of the network.
 	Blocked,
+}
+
+/// The mechanism used by the community or one of its subsets to make decisions
+#[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
+pub enum DecisionMethod<AssetId, MinVote> {
+	#[default]
+	Membership,
+	NativeToken,
+	CommunityAsset(AssetId, MinVote),
+	Rank,
 }
 
 // Governance
@@ -126,7 +135,7 @@ impl<T: Config> Tally<T> {
 			DecisionMethod::Membership => T::MemberMgmt::members_total(&community_id),
 			DecisionMethod::Rank => T::MemberMgmt::ranks_total(&community_id),
 			DecisionMethod::NativeToken => T::Balances::total_issuance().saturated_into::<VoteWeight>(),
-			DecisionMethod::CommunityAsset(asset_id) => {
+			DecisionMethod::CommunityAsset(asset_id, _) => {
 				T::Assets::total_issuance(asset_id).saturated_into::<VoteWeight>()
 			}
 		}

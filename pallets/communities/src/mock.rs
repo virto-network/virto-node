@@ -24,8 +24,9 @@ pub use virto_common::{CommunityId, MembershipId};
 
 use crate::{
 	self as pallet_communities,
-	origin::{DecisionMethod, EnsureCommunity, EnsureSignedPays},
+	origin::{EnsureCommunity, EnsureSignedPays},
 	types::{Tally, VoteWeight},
+	DecisionMethod,
 };
 
 // Weights constants
@@ -455,7 +456,7 @@ pub(crate) struct TestEnvBuilder {
 	assets_config: AssetsConfig,
 	balances: Vec<(AccountId, Balance)>,
 	communities: Vec<CommunityId>,
-	decision_methods: sp_std::collections::btree_map::BTreeMap<CommunityId, DecisionMethod<AssetId>>,
+	decision_methods: sp_std::collections::btree_map::BTreeMap<CommunityId, DecisionMethod<AssetId, Balance>>,
 	members: Vec<(CommunityId, AccountId)>,
 	memberships: Vec<(CommunityId, MembershipId)>,
 	tracks: Vec<(TrackIdOf<Test, ()>, TrackInfoOf<Test>)>,
@@ -498,7 +499,7 @@ impl TestEnvBuilder {
 	pub(crate) fn add_community(
 		mut self,
 		community_id: CommunityId,
-		decision_method: DecisionMethod<AssetId>,
+		decision_method: DecisionMethod<AssetId, Balance>,
 		members: &[AccountId],
 		memberships: &[MembershipId],
 		maybe_track: Option<TrackInfoOf<Test>>,
