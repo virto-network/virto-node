@@ -14,6 +14,7 @@ use self::{
 	governance::{CommunityReferendaInstance, CommunityTracksInstance},
 	memberships::CommunityMembershipsInstance,
 };
+use pallet_custom_origins::CreateMemberships;
 
 #[cfg(feature = "runtime-benchmarks")]
 use {
@@ -83,7 +84,7 @@ impl pallet_communities_manager::Config for Runtime {
 	type RankedCollective = KreivoCollective;
 	type RegisterOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
 
-	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
+	type CreateMembershipsOrigin = EitherOf<EnsureRoot<AccountId>, CreateMemberships>;
 	type MembershipId = MembershipId;
 	type MembershipsManagerOwner = TreasuryAccount;
 	type MembershipsManagerCollectionId = MembershipsCollectionId;

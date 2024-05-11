@@ -5,6 +5,7 @@ use pallet_ranked_collective::Rank;
 use sp_core::ConstU16;
 use sp_runtime::traits::Convert;
 
+pub use pallet_custom_origins::*;
 pub mod governance;
 pub mod tracks;
 
