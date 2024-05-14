@@ -1,4 +1,4 @@
-use super::{origin::DecisionMethod, *};
+use super::*;
 use fc_traits_memberships::{GenericRank, Inspect, Rank};
 use frame_support::{
 	dispatch::PostDispatchInfo,
@@ -95,7 +95,10 @@ impl<T: Config> Pallet<T> {
 			};
 
 			let say = *match (vote, decision_method) {
-				(Vote::AssetBalance(say, asset, ..), DecisionMethod::CommunityAsset(a)) if asset == a => say,
+				(Vote::AssetBalance(say, asset, amount), DecisionMethod::CommunityAsset(a, min)) if asset == a => {
+					ensure!(amount >= min, Error::<T>::VoteBelowMinimum);
+					say
+				}
 				(Vote::NativeBalance(say, ..), DecisionMethod::NativeToken)
 				| (Vote::Standard(say), DecisionMethod::Membership | DecisionMethod::Rank) => say,
 				_ => fail!(Error::<T>::InvalidVoteType),

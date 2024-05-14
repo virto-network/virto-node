@@ -6,9 +6,8 @@ use parity_scale_codec::Encode;
 use sp_runtime::{str_array as s, BoundedVec, TokenError};
 
 use crate::{
-	origin::DecisionMethod,
 	types::{Tally, Vote},
-	Call,
+	Call, DecisionMethod,
 };
 use frame_support::assert_noop;
 use pallet_referenda::TrackInfo;
@@ -108,7 +107,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 		// Community-asset based
 		.add_community(
 			COMMUNITY_B,
-			DecisionMethod::CommunityAsset(COMMUNITY_B_ASSET_ID),
+			DecisionMethod::CommunityAsset(COMMUNITY_B_ASSET_ID, 10),
 			&[BOB, CHARLIE],
 			memberships_of(COMMUNITY_B),
 			Some(CommunityTrack::get()),
@@ -119,7 +118,7 @@ fn new_test_ext() -> sp_io::TestExternalities {
 			true,
 			1,
 			None,
-			Some(vec![(BOB, 10), (CHARLIE, 10)]),
+			Some(vec![(BOB, 50), (CHARLIE, 50)]),
 		)
 		// Native-asset based
 		.add_community(
@@ -210,7 +209,7 @@ mod vote {
 						1,
 						Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 0)
 					),
-					TokenError::BelowMinimum
+					Error::VoteBelowMinimum
 				);
 			});
 		}
@@ -537,10 +536,31 @@ mod vote {
 						RuntimeOrigin::signed(CHARLIE),
 						membership(COMMUNITY_B, 2),
 						1,
-						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 10)
+						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 50)
 					),
 					TokenError::FundsUnavailable
 				);
+			});
+		}
+
+		#[test]
+		fn fails_if_asset_vote_weight_is_under_minimum() {
+			new_test_ext().execute_with(|| {
+				assert_noop!(
+					Communities::vote(
+						RuntimeOrigin::signed(BOB),
+						membership(COMMUNITY_B, 1),
+						1,
+						Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 9)
+					),
+					Error::VoteBelowMinimum
+				);
+				assert_ok!(Communities::vote(
+					RuntimeOrigin::signed(BOB),
+					membership(COMMUNITY_B, 1),
+					1,
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 10)
+				));
 			});
 		}
 
@@ -552,7 +572,7 @@ mod vote {
 					COMMUNITY_B_ASSET_ID,
 					&pallet_preimage::HoldReason::Preimage.into(),
 					&CHARLIE,
-					6,
+					40,
 				));
 
 				// Before voting, the poll is ongoing
@@ -561,7 +581,7 @@ mod vote {
 						RuntimeOrigin::signed(CHARLIE),
 						membership(COMMUNITY_B, 2),
 						1,
-						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 5)
+						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 15)
 					),
 					TokenError::FundsUnavailable
 				);
@@ -589,7 +609,7 @@ mod vote {
 					RuntimeOrigin::signed(BOB),
 					membership(COMMUNITY_B, 1),
 					1,
-					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 30)
 				));
 
 				tick_block();
@@ -598,7 +618,7 @@ mod vote {
 					RuntimeOrigin::signed(CHARLIE),
 					membership(COMMUNITY_B, 2),
 					1,
-					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 30)
 				));
 
 				tick_block();
@@ -611,9 +631,9 @@ mod vote {
 					pallet_referenda::Event::<Test>::Confirmed {
 						index: 1,
 						tally: Tally {
-							ayes: 12,
+							ayes: 60,
 							nays: 0,
-							bare_ayes: 12,
+							bare_ayes: 60,
 							..Default::default()
 						},
 					}
@@ -643,7 +663,7 @@ mod vote {
 					RuntimeOrigin::signed(BOB),
 					membership(COMMUNITY_B, 1),
 					1,
-					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 2)
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 12)
 				));
 
 				tick_block();
@@ -652,7 +672,7 @@ mod vote {
 					RuntimeOrigin::signed(CHARLIE),
 					membership(COMMUNITY_B, 2),
 					1,
-					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 1)
+					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 11)
 				));
 
 				tick_blocks(4);
@@ -665,9 +685,9 @@ mod vote {
 					pallet_referenda::Event::<Test>::Confirmed {
 						index: 1,
 						tally: Tally {
-							ayes: 2,
-							nays: 1,
-							bare_ayes: 2,
+							ayes: 12,
+							nays: 11,
+							bare_ayes: 12,
 							..Default::default()
 						},
 					}
@@ -699,7 +719,7 @@ mod vote {
 					RuntimeOrigin::signed(CHARLIE),
 					membership(COMMUNITY_B, 2),
 					1,
-					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 6)
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 11)
 				));
 
 				tick_block();
@@ -708,7 +728,7 @@ mod vote {
 					RuntimeOrigin::signed(BOB),
 					membership(COMMUNITY_B, 1),
 					1,
-					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 7)
+					Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 12)
 				));
 
 				tick_block();
@@ -717,7 +737,7 @@ mod vote {
 					RuntimeOrigin::signed(CHARLIE),
 					membership(COMMUNITY_B, 2),
 					1,
-					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 8)
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 13)
 				));
 
 				tick_blocks(3);
@@ -726,9 +746,9 @@ mod vote {
 					pallet_referenda::Event::<Test>::Confirmed {
 						index: 1,
 						tally: Tally {
-							ayes: 8,
-							nays: 7,
-							bare_ayes: 8,
+							ayes: 13,
+							nays: 12,
+							bare_ayes: 13,
 							..Default::default()
 						},
 					}
@@ -1156,7 +1176,7 @@ mod unlock {
 				RuntimeOrigin::signed(BOB),
 				membership(COMMUNITY_B, 1),
 				1,
-				Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 9)
+				Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 15)
 			));
 
 			assert_ok!(Communities::vote(

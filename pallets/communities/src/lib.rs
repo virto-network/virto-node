@@ -146,10 +146,8 @@ pub mod pallet {
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
-	use sp_runtime::{
-		traits::{Dispatchable, StaticLookup},
-		TokenError,
-	};
+	use sp_runtime::traits::AccountIdConversion;
+	use sp_runtime::traits::{Dispatchable, StaticLookup};
 	use sp_std::prelude::Box;
 
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
@@ -193,7 +191,7 @@ pub mod pallet {
 		>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
-		type Assets: fungibles::Inspect<Self::AccountId>
+		type Assets: fungibles::Inspect<Self::AccountId, Balance = NativeBalanceOf<Self>>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Create<Self::AccountId>
 			+ fungibles::hold::Inspect<Self::AccountId, Reason = Self::RuntimeHoldReason>
@@ -351,6 +349,8 @@ pub mod pallet {
 		NoLocksInPlace,
 		/// The origin already controls another community
 		AlreadyAdmin,
+		/// The vote is below the minimum requried
+		VoteBelowMinimum,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -477,6 +477,15 @@ pub mod pallet {
 			decision_method: DecisionMethodFor<T>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
+			if let DecisionMethod::CommunityAsset(ref asset, min_vote) = decision_method {
+				// best effort attemt to create the asset if it doesn't exist
+				let _ = <T::Assets as fungibles::Create<T::AccountId>>::create(
+					asset.clone(),
+					T::PalletId::get().into_account_truncating(),
+					false,
+					min_vote,
+				);
+			}
 			CommunityDecisionMethod::<T>::set(community_id, decision_method);
 			Self::deposit_event(Event::DecisionMethodSet { id: community_id });
 			Ok(())
@@ -490,7 +499,7 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 			vote: VoteOf<T>,
 		) -> DispatchResult {
-			ensure!(VoteWeight::from(&vote).gt(&0), TokenError::BelowMinimum);
+			ensure!(VoteWeight::from(&vote).gt(&0), Error::<T>::VoteBelowMinimum);
 			let who = ensure_signed(origin)?;
 			let community_id = T::MemberMgmt::check_membership(&who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 			let decision_method = CommunityDecisionMethod::<T>::get(community_id);

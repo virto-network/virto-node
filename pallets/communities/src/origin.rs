@@ -126,16 +126,6 @@ pub enum Subset<T: Config> {
 	AtLeastRank(GenericRank),
 }
 
-/// The mechanism used by the community or one of its subsets to make decisions
-#[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub enum DecisionMethod<AssetId> {
-	#[default]
-	Membership,
-	NativeToken,
-	CommunityAsset(AssetId),
-	Rank,
-}
-
 #[cfg(feature = "xcm")]
 impl<T> TryConvert<RuntimeOriginFor<T>, xcm::v3::MultiLocation> for RawOrigin<T>
 where
