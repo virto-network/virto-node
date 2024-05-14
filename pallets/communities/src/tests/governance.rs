@@ -551,7 +551,7 @@ mod vote {
 						RuntimeOrigin::signed(BOB),
 						membership(COMMUNITY_B, 1),
 						1,
-						Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 10)
+						Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 9)
 					),
 					Error::VoteBelowMinimum
 				);
@@ -559,7 +559,7 @@ mod vote {
 					RuntimeOrigin::signed(BOB),
 					membership(COMMUNITY_B, 1),
 					1,
-					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 11)
+					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 10)
 				));
 			});
 		}

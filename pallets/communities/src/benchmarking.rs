@@ -3,18 +3,17 @@
 use super::*;
 
 use self::{
-	origin::DecisionMethod,
 	types::{
 		AccountIdOf, AssetIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
 		PollIndexOf, RuntimeCallFor, Vote,
 	},
-	CommunityDecisionMethod, Event, HoldReason, Pallet as Communities,
+	CommunityDecisionMethod, DecisionMethod, Event, HoldReason, Pallet as Communities,
 };
 use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
 use frame_support::traits::{
 	fungible::{InspectFreeze, Mutate},
-	fungibles::{Create, Mutate as FunsMutate},
+	fungibles::Mutate as FunsMutate,
 	OriginTrait,
 };
 use frame_system::{
@@ -197,7 +196,7 @@ mod benchmarks {
 		_(
 			admin_origin,
 			id,
-			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id()),
+			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id(), 10u128.into()),
 		);
 
 		// verification code
@@ -316,7 +315,7 @@ mod benchmarks {
 		// setup code
 		let (id, origin) = create_community::<T>(
 			RawOrigin::Root.into(),
-			Some(DecisionMethodFor::<T>::CommunityAsset(1u32.into())),
+			Some(DecisionMethodFor::<T>::CommunityAsset(1u32.into(), 1u128.into())),
 		)?;
 		let members = setup_members::<T>(origin.clone(), id)?;
 
@@ -325,9 +324,6 @@ mod benchmarks {
 			.expect("desired size of community to be equal or greather than 1")
 			.clone();
 
-		let community_account = Communities::<T>::community_account(&id);
-
-		T::Assets::create(1u32.into(), community_account, false, 1u128.into())?;
 		T::Assets::mint_into(1u32.into(), &who, 4u128.into())?;
 
 		prepare_track_and_prepare_poll::<T>(origin.into_caller(), who.clone())?;
