@@ -25,6 +25,7 @@ smallvec = { workspace = true }
 pallet-payments = { workspace = true }
 pallet-communities = { workspace = true, features = ["xcm"] }
 pallet-communities-manager = { workspace = true }
+pallet-fee-handler = { workspace = true }
 
 # Local: Common
 virto-common = { workspace = true, default-features = false, features = ["runtime"] }
@@ -132,6 +133,7 @@ std = [
 	"pallet-communities-manager/std",
 	"pallet-communities/std",
 	"pallet-collator-selection/std",
+	"pallet-fee-handler/std",
 	"pallet-message-queue/std",
 	"pallet-multisig/std",
 	"pallet-nfts/std",
@@ -195,6 +197,7 @@ runtime-benchmarks = [
 	"pallet-communities-manager/runtime-benchmarks",
 	"pallet-communities/runtime-benchmarks",
 	"pallet-collator-selection/runtime-benchmarks",
+	"pallet-fee-handler/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-nfts/runtime-benchmarks",
@@ -236,6 +239,7 @@ try-runtime = [
 	"pallet-communities-manager/try-runtime",
 	"pallet-communities/try-runtime",
 	"pallet-collator-selection/try-runtime",
+	"pallet-fee-handler/try-runtime",
 	"pallet-message-queue/try-runtime",
 	"pallet-nfts/try-runtime",
 	"pallet-multisig/try-runtime",

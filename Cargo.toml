@@ -52,6 +52,7 @@ pallet-burner = { default-features = false, path = "pallets/burner" }
 pallet-payments = { default-features = false, path = "pallets/payments" }
 pallet-communities = { default-features = false, path = "pallets/communities" }
 pallet-communities-manager = { default-features = false, path = "pallets/communities-manager" }
+pallet-fee-handler = { default-features = false, path = "pallets/fee-handler" }
 
 virto-common = { default-features = false, path = "common" }
 runtime-common =  { default-features = false, path = "runtime/common" }

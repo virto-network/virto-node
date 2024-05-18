@@ -4726,6 +4726,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-communities",
  "pallet-communities-manager",
+ "pallet-fee-handler",
  "pallet-message-queue",
  "pallet-multisig",
  "pallet-nfts",
@@ -6722,6 +6723,30 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std 8.0.0",
+]
+
+[[package]]
+name = "pallet-fee-handler"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-payments",
+ "pallet-preimage",
+ "pallet-scheduler",
+ "pallet-sudo",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
  "sp-std 8.0.0",
 ]
 
