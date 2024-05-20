@@ -22,6 +22,7 @@ frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 log = { workspace = true }
 pallet-payments = {workspace=true}
+pallet-communities = { workspace=true}
 
 [dev-dependencies]
 serde = { workspace = true }

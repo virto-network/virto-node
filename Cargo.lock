@@ -6736,6 +6736,7 @@ dependencies = [
  "log",
  "pallet-assets",
  "pallet-balances",
+ "pallet-communities",
  "pallet-payments",
  "pallet-preimage",
  "pallet-scheduler",
