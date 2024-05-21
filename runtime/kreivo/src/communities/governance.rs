@@ -5,14 +5,13 @@ use pallet_communities::RuntimeOriginFor;
 use sp_std::marker::PhantomData;
 
 use pallet_referenda::{BalanceOf, PalletsOriginOf, TrackIdOf, TracksInfo};
-use parachains_common::kusama::currency::QUID;
 
 pub type CommunityTracksInstance = pallet_referenda_tracks::Instance2;
 pub type CommunityReferendaInstance = pallet_referenda::Instance2;
 
 parameter_types! {
 	pub const AlarmInterval: BlockNumber = 1;
-	pub const SubmissionDeposit: Balance = QUID;
+	pub const SubmissionDeposit: Balance = 0;
 	pub const UndecidingTimeout: BlockNumber = 14 * DAYS;
 }
 
