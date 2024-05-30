@@ -125,5 +125,4 @@ try-runtime = [
 	"polkadot-cli/try-runtime",
 	"polkadot-service/try-runtime",
 	"sp-runtime/try-runtime",
-	"try-runtime-cli/try-runtime",
 ]
