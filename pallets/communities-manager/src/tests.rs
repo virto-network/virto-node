@@ -22,8 +22,8 @@ fn weights() {
 	let calls = vec![
 		("register", SubstrateWeight::<Test>::register()),
 		(
-			"create_memberships(100)",
-			SubstrateWeight::<Test>::create_memberships(100),
+			"create_memberships(1024)",
+			SubstrateWeight::<Test>::create_memberships(1024),
 		),
 	];
 
