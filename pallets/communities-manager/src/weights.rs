@@ -8,7 +8,7 @@ use core::marker::PhantomData;
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
 	fn register() -> Weight;
-	fn create_memberships(q: u16, ) -> Weight;
+	fn create_memberships(q: u32, ) -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -65,7 +65,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1023)
 	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
 	/// The range of component `q` is `[1, 1024]`.
-	fn create_memberships(q: u16, ) -> Weight {
+	fn create_memberships(q: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `368`
 		//  Estimated: `3547 + q * (3334 ±0)`
@@ -134,7 +134,7 @@ impl WeightInfo for () {
 	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1023)
 	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
 	/// The range of component `q` is `[1, 1024]`.
-	fn create_memberships(q: u16, ) -> Weight {
+	fn create_memberships(q: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `368`
 		//  Estimated: `3547 + q * (3334 ±0)`
