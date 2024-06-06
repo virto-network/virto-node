@@ -166,10 +166,12 @@ pub mod pallet {
 		/// community
 		type MembershipId: Parameter + MaxEncodedLen + Copy;
 
+		type ItemConfig: Default;
+
 		/// Means to manage memberships of a community
 		type MemberMgmt: membership::Inspect<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
-			+ membership::Manager<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
-			+ membership::Rank<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
+			+ membership::Manager<Self::AccountId, Self::ItemConfig, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
+			+ membership::Rank<Self::AccountId, Self::ItemConfig, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
 
 		type CreateOrigin: EnsureOrigin<
 			OriginFor<Self>,
@@ -566,7 +568,6 @@ pub mod pallet {
 		// 		.saturating_add(di.weight);
 		// 	(weight, di.class)
 		// })]
-		// // #[cfg(any(test, feature = "testnet"))]
 		// pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>)
 		// -> DispatchResultWithPostInfo { 	let community_id =
 		// T::MemberMgmtOrigin::ensure_origin(origin)?; 	let origin =

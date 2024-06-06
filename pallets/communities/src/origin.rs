@@ -3,10 +3,10 @@ use crate::{
 	AccountIdOf, CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
-use fc_traits_memberships::Inspect;
+use fc_traits_memberships::{GenericRank, Inspect};
 use frame_support::{
 	pallet_prelude::*,
-	traits::{membership::GenericRank, EnsureOriginWithArg, MapSuccess, OriginTrait},
+	traits::{EnsureOriginWithArg, MapSuccess, OriginTrait},
 };
 use frame_system::EnsureSigned;
 #[cfg(feature = "xcm")]

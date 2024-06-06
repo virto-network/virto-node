@@ -423,6 +423,7 @@ impl pallet_communities::Config for Test {
 
 	type Assets = Assets;
 	type Balances = Balances;
+	type ItemConfig = pallet_nfts::ItemConfigOf<Test>;
 	type MemberMgmt = Nfts;
 	type Polls = Referenda;
 
