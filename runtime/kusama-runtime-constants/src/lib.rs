@@ -98,7 +98,8 @@ pub mod fee {
 
 /// System Parachains.
 pub mod system_parachain {
-	use xcm::latest::prelude::*;
+	use polkadot_primitives::Id;
+	use xcm_builder::IsChildSystemParachain;
 
 	/// Asset Hub parachain ID.
 	pub const ASSET_HUB_ID: u32 = 1000;
@@ -106,20 +107,12 @@ pub mod system_parachain {
 	pub const ENCOINTER_ID: u32 = 1001;
 	/// Bridge Hub parachain ID.
 	pub const BRIDGE_HUB_ID: u32 = 1002;
+	/// People parachain ID.
+	pub const PEOPLE_ID: u32 = 1004;
+	/// Brokerage parachain ID.
+	pub const CORETIME_ID: u32 = 1005;
 
-	frame_support::match_types! {
-		// System parachains from Kusama point of view.
-		pub type SystemParachains: impl Contains<MultiLocation> = {
-			MultiLocation {
-				parents: 0,
-				interior: X1(Parachain(
-					ASSET_HUB_ID |
-					ENCOINTER_ID |
-					BRIDGE_HUB_ID
-				)),
-			}
-		};
-	}
+	pub type SystemParachains = IsChildSystemParachain<Id>;
 }
 
 /// Kusama Treasury pallet instance.
