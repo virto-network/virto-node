@@ -220,6 +220,7 @@ impl pallet_communities::Config for Test {
 	type MembershipId = MembershipId;
 	type Assets = Assets;
 	type Balances = Balances;
+	type ItemConfig = pallet_nfts::ItemConfigOf<Test>;
 	type MemberMgmt = Memberships;
 	type Polls = Referenda;
 	type CreateOrigin = EnsureNever<Deposit>;
