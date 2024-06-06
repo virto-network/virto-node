@@ -3152,7 +3152,7 @@ dependencies = [
 [[package]]
 name = "fc-pallet-referenda-tracks"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=upgrade/migrate-to-polkadot-v1.12.0#6f6198c0581ef2eb5290a9c43ab12308671aa879"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#241b7e140e0c060558b5d01acdd60da2c7ed3530"
 dependencies = [
  "fc-traits-tracks",
  "frame-benchmarking",
@@ -3171,7 +3171,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-memberships"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=upgrade/migrate-to-polkadot-v1.12.0#6f6198c0581ef2eb5290a9c43ab12308671aa879"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#241b7e140e0c060558b5d01acdd60da2c7ed3530"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3181,7 +3181,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-tracks"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=upgrade/migrate-to-polkadot-v1.12.0#6f6198c0581ef2eb5290a9c43ab12308671aa879"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#241b7e140e0c060558b5d01acdd60da2c7ed3530"
 dependencies = [
  "frame-support",
  "pallet-referenda",

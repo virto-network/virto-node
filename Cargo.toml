@@ -56,9 +56,9 @@
 	kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }
 
 	# Frame Contrib
-	fc-traits-memberships = { git = "https://github.com/virto-network/frame-contrib", branch = "upgrade/migrate-to-polkadot-v1.12.0", default-features = false }
-	fc-traits-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "upgrade/migrate-to-polkadot-v1.12.0", default-features = false }
-	pallet-referenda-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "upgrade/migrate-to-polkadot-v1.12.0", package = "fc-pallet-referenda-tracks", default-features = false }
+	fc-traits-memberships = { git = "https://github.com/virto-network/frame-contrib", branch = "main", default-features = false }
+	fc-traits-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "main", default-features = false }
+	pallet-referenda-tracks = { git = "https://github.com/virto-network/frame-contrib", branch = "main", package = "fc-pallet-referenda-tracks", default-features = false }
 
 	# Substrate std
 	frame-benchmarking-cli = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
