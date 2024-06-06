@@ -23,7 +23,7 @@ use frame_support::traits::{
 use pallet_asset_tx_payment::HandleCredit;
 use sp_runtime::traits::MaybeEquivalence;
 use sp_std::marker::PhantomData;
-use xcm::latest::MultiLocation;
+use xcm::latest::Location;
 
 // TODO - Create and import XCM common types
 //use xcm::latest::{AssetId, Fungibility::Fungible, MultiAsset, MultiLocation};
@@ -75,22 +75,22 @@ where
 }
 
 pub struct AsAssetMultiLocation<AssetId, AssetIdInfoGetter>(PhantomData<(AssetId, AssetIdInfoGetter)>);
-impl<AssetId, AssetIdInfoGetter> MaybeEquivalence<MultiLocation, AssetId>
+impl<AssetId, AssetIdInfoGetter> MaybeEquivalence<Location, AssetId>
 	for AsAssetMultiLocation<AssetId, AssetIdInfoGetter>
 where
 	AssetId: Clone,
 	AssetIdInfoGetter: AssetMultiLocationGetter<AssetId>,
 {
-	fn convert(asset_multi_location: &MultiLocation) -> Option<AssetId> {
+	fn convert(asset_multi_location: &Location) -> Option<AssetId> {
 		AssetIdInfoGetter::get_asset_id(asset_multi_location)
 	}
 
-	fn convert_back(asset_id: &AssetId) -> Option<MultiLocation> {
+	fn convert_back(asset_id: &AssetId) -> Option<Location> {
 		AssetIdInfoGetter::get_asset_multi_location(asset_id.clone())
 	}
 }
 
 pub trait AssetMultiLocationGetter<AssetId> {
-	fn get_asset_multi_location(asset_id: AssetId) -> Option<MultiLocation>;
-	fn get_asset_id(asset_multi_location: &MultiLocation) -> Option<AssetId>;
+	fn get_asset_multi_location(asset_id: AssetId) -> Option<Location>;
+	fn get_asset_id(asset_multi_location: &Location) -> Option<AssetId>;
 }
