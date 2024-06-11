@@ -52,11 +52,10 @@ impl From<u32> for FungibleAssetLocation {
 #[cfg(feature = "runtime")]
 pub mod runtime {
 	use super::{FungibleAssetLocation, Para};
-	use cumulus_primitives_core::MultiLocation;
 	use sp_runtime::traits::MaybeEquivalence;
 	use xcm::v3::{
 		Junction::{GeneralIndex, GlobalConsensus, PalletInstance, Parachain},
-		Junctions, NetworkId,
+		Junctions, MultiLocation, NetworkId,
 	};
 
 	impl TryFrom<NetworkId> for super::NetworkId {
