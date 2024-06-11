@@ -27,7 +27,7 @@ use pallet_communities::{
 	types::{AccountIdOf, CommunityIdOf, DecisionMethodFor, NativeBalanceOf, PalletsOriginOf, RuntimeOriginFor},
 	Origin as CommunityOrigin,
 };
-use pallet_nfts::{CollectionConfig};
+use pallet_nfts::CollectionConfig;
 use pallet_referenda::{TrackInfo, TracksInfo};
 use parity_scale_codec::Decode;
 use sp_runtime::{

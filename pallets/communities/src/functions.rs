@@ -145,7 +145,6 @@ impl<T: Config> Pallet<T> {
 		update_type: LockUpdateType,
 	) -> DispatchResult {
 		use sp_runtime::traits::Zero;
-		let reason = HoldReason::VoteCasted.into();
 
 		match vote.clone() {
 			Vote::AssetBalance(..) | Vote::NativeBalance(..) => match update_type {
@@ -158,18 +157,29 @@ impl<T: Config> Pallet<T> {
 		match vote {
 			// Add a new lock for Vote::AssetBalance
 			Vote::AssetBalance(_, asset_id, amount) if update_type == LockUpdateType::Add => {
-				let held_amount = T::Assets::balance_on_hold(asset_id.clone(), &reason, who);
+				let held_amount = T::Assets::balance_on_hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who);
 				if amount > &held_amount {
 					if held_amount.gt(&Zero::zero()) {
-						T::Assets::release(asset_id.clone(), &reason, who, held_amount, Precision::Exact)?;
+						T::Assets::release(
+							asset_id.clone(),
+							&HoldReason::VoteCasted.into(),
+							who,
+							held_amount,
+							Precision::Exact,
+						)?;
 					}
-					T::Assets::hold(asset_id.clone(), &reason, who, *amount)?;
+					T::Assets::hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who, *amount)?;
 				}
 			}
 			// Add a new lock for Vote::NativeBalance
 			Vote::NativeBalance(_, amount) if update_type == LockUpdateType::Add => {
-				let amount = T::Balances::balance_frozen(&reason, who).max(*amount);
-				T::Balances::set_frozen(&reason, who, amount, frame_support::traits::tokens::Fortitude::Polite)?;
+				let amount = T::Balances::balance_frozen(&FreezeReason::VoteCasted.into(), who).max(*amount);
+				T::Balances::set_frozen(
+					&FreezeReason::VoteCasted.into(),
+					who,
+					amount,
+					frame_support::traits::tokens::Fortitude::Polite,
+				)?;
 			}
 			// Add an existing lock for Vote::AssetBalance
 			Vote::AssetBalance(_, asset_id, _) if update_type == LockUpdateType::Remove => {
@@ -184,11 +194,17 @@ impl<T: Config> Pallet<T> {
 					}
 				}
 
-				let held_amount = T::Assets::balance_on_hold(asset_id.clone(), &reason, who);
+				let held_amount = T::Assets::balance_on_hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who);
 				if held_amount.gt(&Zero::zero()) {
-					T::Assets::release(asset_id.clone(), &reason, who, held_amount, Precision::Exact)?;
+					T::Assets::release(
+						asset_id.clone(),
+						&HoldReason::VoteCasted.into(),
+						who,
+						held_amount,
+						Precision::Exact,
+					)?;
 				}
-				T::Assets::hold(asset_id.clone(), &reason, who, amount_to_hold)?;
+				T::Assets::hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who, amount_to_hold)?;
 			}
 			// Remove an existing lock for Vote::NativeBalance
 			Vote::NativeBalance(_, _) if update_type == LockUpdateType::Remove => {
@@ -201,7 +217,7 @@ impl<T: Config> Pallet<T> {
 				}
 
 				T::Balances::set_frozen(
-					&reason,
+					&FreezeReason::VoteCasted.into(),
 					who,
 					amount_to_freeze,
 					frame_support::traits::tokens::Fortitude::Polite,

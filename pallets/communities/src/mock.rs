@@ -1,9 +1,10 @@
 use frame_support::{
+	derive_impl,
 	dispatch::DispatchResult,
 	parameter_types,
 	traits::{
-		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU128, ConstU16,
-		ConstU32, ConstU64, EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint,
+		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU32, ConstU64,
+		EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint,
 	},
 	weights::{
 		constants::{WEIGHT_REF_TIME_PER_NANOS, WEIGHT_REF_TIME_PER_SECOND},
@@ -14,10 +15,9 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_referenda::{TrackIdOf, TrackInfoOf, TracksInfo};
 use parity_scale_codec::Compact;
-use sp_core::H256;
 use sp_io::TestExternalities;
 use sp_runtime::{
-	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
+	traits::{Convert, IdentifyAccount, IdentityLookup, Verify},
 	BuildStorage, MultiSignature, Perbill,
 };
 pub use virto_common::{CommunityId, MembershipId};
@@ -26,7 +26,7 @@ use crate::{
 	self as pallet_communities,
 	origin::{EnsureCommunity, EnsureSignedPays},
 	types::{Tally, VoteWeight},
-	DecisionMethod,
+	Config, DecisionMethod,
 };
 
 // Weights constants
@@ -35,10 +35,12 @@ use crate::{
 pub const MAX_BLOCK_REF_TIME: u64 = WEIGHT_REF_TIME_PER_SECOND.saturating_div(2); // https://github.com/paritytech/cumulus/blob/98e68bd54257b4039a5d5b734816f4a1b7c83a9d/parachain-template/runtime/src/lib.rs#L221
 pub const MAX_BLOCK_POV_SIZE: u64 = 5 * 1024 * 1024; // https://github.com/paritytech/polkadot/blob/ba1f65493d91d4ab1787af2fd6fe880f1da90586/primitives/src/v4/mod.rs#L384
 pub const MAX_BLOCK_WEIGHT: Weight = Weight::from_parts(MAX_BLOCK_REF_TIME, MAX_BLOCK_POV_SIZE);
+
 // max extrinsics: 75% of block
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75); // https://github.com/paritytech/cumulus/blob/d20c4283fe85df0c1ef8cb7c9eb7c09abbcbfa31/parachain-template/runtime/src/lib.rs#L218
-																	  // max extrinsic: max total extrinsics less average on_initialize ratio and less
-																	  // base extrinsic weight
+
+// max extrinsic: max total extrinsics less average on_initialize ratio and less
+// base extrinsic weight
 pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(5); // https://github.com/paritytech/cumulus/blob/d20c4283fe85df0c1ef8cb7c9eb7c09abbcbfa31/parachain-template/runtime/src/lib.rs#L214
 pub const BASE_EXTRINSIC: Weight = Weight::from_parts(WEIGHT_REF_TIME_PER_NANOS.saturating_mul(125_000), 0); // https://github.com/paritytech/cumulus/blob/d20c4283fe85df0c1ef8cb7c9eb7c09abbcbfa31/parachain-template/runtime/src/weights/extrinsic_weights.rs#L26
 
@@ -47,7 +49,7 @@ type WeightInfo = ();
 
 pub type AccountPublic = <MultiSignature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
-pub type Balance = u128;
+pub type Balance = u64;
 pub type AssetId = u32;
 
 // Configure a mock runtime to test the pallet.
@@ -66,74 +68,34 @@ frame_support::construct_runtime!(
 	}
 );
 
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeCall = RuntimeCall;
-	type Nonce = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Block = Block;
-	type RuntimeEvent = RuntimeEvent;
-	type BlockHashCount = ConstU64<250>;
-	type Version = ();
-	type PalletInfo = PalletInfo;
+	type AccountId = AccountId;
+	type Lookup = IdentityLookup<AccountId>;
 	type AccountData = pallet_balances::AccountData<Balance>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ConstU16<42>;
-	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 // Monetary operations
+#[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
+impl pallet_balances::Config for Test {
+	type ExistentialDeposit = ConstU64<1>;
+	type AccountStore = System;
+	type FreezeIdentifier = RuntimeFreezeReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
+}
 
+#[derive_impl(pallet_assets::config_preludes::TestDefaultConfig as pallet_assets::DefaultConfig)]
 impl pallet_assets::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = AssetId;
 	type AssetIdParameter = Compact<AssetId>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
-	type AssetDeposit = ConstU128<100>;
-	type AssetAccountDeposit = ConstU128<1>;
-	type MetadataDepositBase = ConstU128<10>;
-	type MetadataDepositPerByte = ConstU128<1>;
-	type ApprovalDeposit = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
 	type Freezer = ();
-	type Extra = ();
-	type CallbackHandle = ();
-	type WeightInfo = WeightInfo;
-	type RemoveItemsLimit = ConstU32<1000>;
+	type RemoveItemsLimit = ConstU32<5>;
 	type RuntimeHoldReason = RuntimeHoldReason;
-	type MaxHolds = ConstU32<10>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
-}
-
-impl pallet_balances::Config for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type RuntimeEvent = RuntimeEvent;
-	type ExistentialDeposit = ConstU128<1>;
-	type AccountStore = System;
-	type WeightInfo = WeightInfo;
-	type MaxLocks = ConstU32<10>;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type RuntimeHoldReason = RuntimeHoldReason;
-	type RuntimeFreezeReason = RuntimeFreezeReason;
-	type FreezeIdentifier = RuntimeHoldReason;
-	type MaxHolds = ConstU32<10>;
-	type MaxFreezes = ConstU32<10>;
 }
 
 // Memberships
@@ -189,8 +151,8 @@ parameter_types! {
 	pub const MaxScheduledPerBlock: u32 = 512;
 }
 pub struct ConvertDeposit;
-impl Convert<Footprint, u128> for ConvertDeposit {
-	fn convert(a: Footprint) -> u128 {
+impl Convert<Footprint, u64> for ConvertDeposit {
+	fn convert(a: Footprint) -> u64 {
 		(a.count * 2 + a.size).into()
 	}
 }
@@ -280,7 +242,7 @@ impl pallet_referenda::Config for Test {
 	type Slash = ();
 	type Votes = VoteWeight;
 	type Tally = Tally<Test>;
-	type SubmissionDeposit = ConstU128<2>;
+	type SubmissionDeposit = ConstU64<2>;
 	type MaxQueued = ConstU32<3>;
 	type UndecidingTimeout = ConstU64<20>;
 	type AlarmInterval = AlarmInterval;
@@ -414,16 +376,16 @@ parameter_types! {
 	pub const NoPay: Option<(Balance, AccountId, AccountId)> = None;
 }
 type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
-type AnyoneElsePays = EnsureSignedPays<Test, ConstU128<10>, RootAccount>;
+type AnyoneElsePays = EnsureSignedPays<Test, ConstU64<10>, RootAccount>;
 
-impl pallet_communities::Config for Test {
+impl Config for Test {
 	type PalletId = CommunitiesPalletId;
 	type CommunityId = CommunityId;
 	type MembershipId = MembershipId;
 
 	type Assets = Assets;
 	type Balances = Balances;
-	type ItemConfig = pallet_nfts::ItemConfigOf<Test>;
+	type ItemConfig = pallet_nfts::ItemConfig;
 	type MemberMgmt = Nfts;
 	type Polls = Referenda;
 
@@ -435,6 +397,7 @@ impl pallet_communities::Config for Test {
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type WeightInfo = WeightInfo;
 
 	#[cfg(feature = "runtime-benchmarks")]
