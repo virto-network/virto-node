@@ -153,7 +153,7 @@ parameter_types! {
 pub struct ConvertDeposit;
 impl Convert<Footprint, u64> for ConvertDeposit {
 	fn convert(a: Footprint) -> u64 {
-		(a.count * 2 + a.size).into()
+		(a.count * 2 + a.size)
 	}
 }
 

@@ -985,7 +985,6 @@ impl_runtime_apis! {
 			use xcm_config::RelayLocation;
 			use pallet_xcm_benchmarks::asset_instance_from;
 
-
 			parameter_types! {
 				pub ExistentialDepositAsset: Option<Asset> = Some((
 					RelayLocation::get(),
