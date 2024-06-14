@@ -138,16 +138,17 @@ parameter_types! {
 pub struct ParentOrParentsExecutivePlurality;
 impl Contains<Location> for ParentOrParentsExecutivePlurality {
 	fn contains(t: &Location) -> bool {
-		match t.unpack() {
+		matches!(
+			t.unpack(),
 			(1, [])
-			| (
-				1,
-				[Plurality {
-					id: BodyId::Executive, ..
-				}],
-			) => true,
-			_ => false,
-		}
+				| (
+					1,
+					[Plurality {
+						id: BodyId::Executive,
+						..
+					}],
+				),
+		)
 	}
 }
 
