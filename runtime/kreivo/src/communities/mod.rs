@@ -73,6 +73,9 @@ impl pallet_communities::Config for Runtime {
 
 	type PalletId = CommunityPalletId;
 
+	type ItemConfig = pallet_nfts::ItemConfig;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
+
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
 }

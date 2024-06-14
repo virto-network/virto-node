@@ -5,7 +5,7 @@ use super::{
 };
 use virto_common::AsFungibleAssetLocation;
 
-use crate::constants::locations::STATEMINE_PARA_ID;
+use crate::constants::locations::ASSET_HUB_ID;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{ConstU32, ContainsPair, Everything, Get, Nothing, PalletInfoAccess},
@@ -15,16 +15,16 @@ use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::xcm_config::AssetFeeAsExistentialDepositMultiplier;
 use polkadot_parachain_primitives::primitives::Sibling;
-use runtime_common::impls::DealWithFees;
+use runtime_common::impls::DealWithFungibleFees;
 use sp_runtime::traits::ConvertInto;
 use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, ConvertedConcreteId,
-	CurrencyAdapter, EnsureXcmOrigin, FungiblesAdapter, IsConcrete, LocalMint, MintLocation, NativeAsset,
-	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, StartsWith, TakeWeightCredit,
-	UsingComponents, WeightInfoBounds, WithComputedOrigin,
+	EnsureXcmOrigin, FrameTransactionalProcessor, FungibleAdapter, FungiblesAdapter, IsConcrete, LocalMint,
+	MintLocation, NativeAsset, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
+	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
+	StartsWith, TakeWeightCredit, UsingComponents, WeightInfoBounds, WithComputedOrigin,
 };
 use xcm_executor::traits::JustTry;
 use xcm_executor::XcmExecutor;
@@ -33,21 +33,21 @@ mod communities;
 use communities::*;
 
 parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayLocation: Location = Location::parent();
 	pub const RelayNetwork: Option<NetworkId> = Some(NetworkId::Kusama);
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub CheckAccount: (AccountId, MintLocation) = (PolkadotXcm::check_account(), MintLocation::Local);
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
-	pub AssetsPalletLocation: MultiLocation =
+	pub AssetsPalletLocation: Location =
 		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
-	pub UniversalLocation: InteriorMultiLocation = (
+	pub UniversalLocation: InteriorLocation = [
 		GlobalConsensus(NetworkId::Kusama),
 		Parachain(ParachainInfo::parachain_id().into()),
-	).into();
+	].into();
 
 }
 
-/// Type for specifying how a `MultiLocation` can be converted into an
+/// Type for specifying how a `Location` can be converted into an
 /// `AccountId`. This is used when determining ownership of accounts for asset
 /// transacting and when attempting to use XCM `Transact` in order to determine
 /// the dispatch Origin.
@@ -64,7 +64,7 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
-pub type MultiLocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
+pub type LocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
 	FungibleAssetLocation,
 	Balance,
 	StartsWith<AssetHubLocation>,
@@ -79,7 +79,7 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this currency when it is a registered fungible asset matching the given location or name
 	// Assets not found in AssetRegistry will not be used
 	ConvertedConcreteId<FungibleAssetLocation, Balance, AsFungibleAssetLocation, JustTry>,
-	// Convert an XCM MultiLocation into a local account id:
+	// Convert an XCM Location into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
@@ -91,12 +91,12 @@ pub type FungiblesTransactor = FungiblesAdapter<
 >;
 
 /// Means for transacting the native currency on this chain.
-pub type CurrencyTransactor = CurrencyAdapter<
+pub type FungibleTransactor = FungibleAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	IsConcrete<RelayLocation>,
-	// Convert an XCM MultiLocation into a local account id:
+	// Convert an XCM Location into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
@@ -135,9 +135,9 @@ parameter_types! {
 }
 
 match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
+	pub type ParentOrParentsExecutivePlurality: impl Contains<Location> = {
+		Location::new(1, []) |
+		Location::new(1, [Plurality { id: BodyId::Executive, .. }])
 	};
 }
 
@@ -154,14 +154,14 @@ pub type Barrier = (
 	>,
 );
 
-pub type AssetTransactors = (CurrencyTransactor, FungiblesTransactor);
+pub type AssetTransactors = (FungibleTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub AssetHubLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID)));
+	pub AssetHubLocation: Location = (1, [Junction::Parachain(ASSET_HUB_ID)]).into();
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
-fn matches_prefix(prefix: &MultiLocation, loc: &MultiLocation) -> bool {
+fn matches_prefix(prefix: &Location, loc: &Location) -> bool {
 	prefix.parent_count() == loc.parent_count()
 		&& loc.len() >= prefix.len()
 		&& prefix
@@ -171,15 +171,14 @@ fn matches_prefix(prefix: &MultiLocation, loc: &MultiLocation) -> bool {
 			.all(|(prefix_junction, junction)| prefix_junction == junction)
 }
 pub struct ReserveAssetsFrom<T>(PhantomData<T>);
-impl<T: Get<MultiLocation>> ContainsPair<MultiAsset, MultiLocation> for ReserveAssetsFrom<T> {
-	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+impl<T: Get<Location>> ContainsPair<Asset, Location> for ReserveAssetsFrom<T> {
+	fn contains(asset: &Asset, origin: &Location) -> bool {
 		let prefix = T::get();
 		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", prefix, origin);
 		&prefix == origin
 			&& match asset {
-				MultiAsset {
-					id: xcm::latest::AssetId::Concrete(asset_loc),
-					fun: Fungible(_a),
+				Asset {
+					id: AssetId(asset_loc), ..
 				} => matches_prefix(&prefix, asset_loc),
 				_ => false,
 			}
@@ -197,12 +196,12 @@ pub type Traders = (
 	cumulus_primitives_utility::TakeFirstAssetTrader<
 		AccountId,
 		AssetFeeAsExistentialDepositMultiplierFeeCharger,
-		MultiLocationConvertedConcreteId,
+		LocationConvertedConcreteId,
 		Assets,
 		cumulus_primitives_utility::XcmFeesTo32ByteAccount<FungiblesTransactor, AccountId, XcmAssetFeesReceiver>,
 	>,
 	// Everything else
-	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFees<Runtime>>,
+	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFungibleFees<Runtime>>,
 );
 
 pub type Reserves = (NativeAsset, ReserveAssetsFrom<AssetHubLocation>);
@@ -215,7 +214,8 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = Reserves;
-	type IsTeleporter = (); // Teleporting is disabled.
+	// Teleporting is disabled.
+	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = WeightInfoBounds<crate::weights::xcm::KreivoXcmWeight<RuntimeCall>, RuntimeCall, MaxInstructions>;
@@ -234,6 +234,11 @@ impl xcm_executor::Config for XcmConfig {
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
 	type Aliasers = Nothing;
+	type TransactionalProcessor = FrameTransactionalProcessor;
+	type HrmpNewChannelOpenRequestHandler = ();
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = ();
 }
 
 /// Only communities are allowed to dispatch xcm messages
