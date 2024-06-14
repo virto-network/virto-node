@@ -1,21 +1,22 @@
 use super::{
 	AccountId, AllPalletsWithSystem, Assets, Balance, Balances, FungibleAssetLocation, KreivoAssetsInstance,
 	ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury,
-	WeightToFee, XcmpQueue,
+	TreasuryAccount, WeightToFee, XcmpQueue,
 };
 use virto_common::AsFungibleAssetLocation;
 
 use crate::constants::locations::ASSET_HUB_ID;
 use frame_support::{
-	match_types, parameter_types,
-	traits::{ConstU32, ContainsPair, Everything, Get, Nothing, PalletInfoAccess},
+	parameter_types,
+	traits::{
+		tokens::imbalance::ResolveTo, ConstU32, Contains, ContainsPair, Everything, Get, Nothing, PalletInfoAccess,
+	},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::xcm_config::AssetFeeAsExistentialDepositMultiplier;
 use polkadot_parachain_primitives::primitives::Sibling;
-use runtime_common::impls::DealWithFungibleFees;
 use sp_runtime::traits::ConvertInto;
 use sp_std::marker::PhantomData;
 use xcm::latest::prelude::*;
@@ -134,11 +135,20 @@ parameter_types! {
 	pub XcmAssetFeesReceiver: AccountId = Treasury::account_id();
 }
 
-match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<Location> = {
-		Location::new(1, []) |
-		Location::new(1, [Plurality { id: BodyId::Executive, .. }])
-	};
+pub struct ParentOrParentsExecutivePlurality;
+impl Contains<Location> for ParentOrParentsExecutivePlurality {
+	fn contains(t: &Location) -> bool {
+		match t.unpack() {
+			(1, [])
+			| (
+				1,
+				[Plurality {
+					id: BodyId::Executive, ..
+				}],
+			) => true,
+			_ => false,
+		}
+	}
 }
 
 pub type Barrier = (
@@ -157,7 +167,7 @@ pub type Barrier = (
 pub type AssetTransactors = (FungibleTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub AssetHubLocation: Location = (1, [Junction::Parachain(ASSET_HUB_ID)]).into();
+	pub AssetHubLocation: Location = Location::new(1, [Junction::Parachain(ASSET_HUB_ID)]);
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
@@ -171,17 +181,10 @@ fn matches_prefix(prefix: &Location, loc: &Location) -> bool {
 			.all(|(prefix_junction, junction)| prefix_junction == junction)
 }
 pub struct ReserveAssetsFrom<T>(PhantomData<T>);
-impl<T: Get<Location>> ContainsPair<Asset, Location> for ReserveAssetsFrom<T> {
+impl<Prefix: Get<Location>> ContainsPair<Asset, Location> for ReserveAssetsFrom<Prefix> {
 	fn contains(asset: &Asset, origin: &Location) -> bool {
-		let prefix = T::get();
-		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", prefix, origin);
-		&prefix == origin
-			&& match asset {
-				Asset {
-					id: AssetId(asset_loc), ..
-				} => matches_prefix(&prefix, asset_loc),
-				_ => false,
-			}
+		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", Prefix::get(), origin);
+		&Prefix::get() == origin && matches_prefix(&Prefix::get(), &asset.id.0)
 	}
 }
 
@@ -201,7 +204,7 @@ pub type Traders = (
 		cumulus_primitives_utility::XcmFeesTo32ByteAccount<FungiblesTransactor, AccountId, XcmAssetFeesReceiver>,
 	>,
 	// Everything else
-	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, DealWithFungibleFees<Runtime>>,
+	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ResolveTo<TreasuryAccount, Balances>>,
 );
 
 pub type Reserves = (NativeAsset, ReserveAssetsFrom<AssetHubLocation>);

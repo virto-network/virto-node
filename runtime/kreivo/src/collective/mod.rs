@@ -54,6 +54,7 @@ pub struct CollectiveBenchmarkSetup;
 impl pallet_ranked_collective::BenchmarkSetup<AccountId> for CollectiveBenchmarkSetup {
 	/// Ensure that this member is registered correctly.
 	fn ensure_member(acc: &AccountId) {
-		<pallet_ranked_collective::Pallet<Runtime, KreivoCollectiveInstance> as RankedMembers>::induct(acc);
+		<pallet_ranked_collective::Pallet<Runtime, KreivoCollectiveInstance> as RankedMembers>::induct(acc)
+			.expect("Account exists");
 	}
 }

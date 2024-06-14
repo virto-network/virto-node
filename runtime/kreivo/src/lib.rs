@@ -36,7 +36,6 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use virto_common::CommunityId;
 pub use virto_common::FungibleAssetLocation;
-use xcm::v3::AssetId::Concrete;
 
 use frame_support::{
 	construct_runtime, derive_impl,
@@ -47,8 +46,8 @@ use frame_support::{
 	traits::{
 		fungible::HoldConsideration,
 		fungibles,
-		tokens::{PayFromAccount, UnityAssetBalanceConversion},
-		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, Currency, EitherOf, EitherOfDiverse,
+		tokens::{imbalance::ResolveTo, PayFromAccount, UnityAssetBalanceConversion},
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOf, EitherOfDiverse,
 		EnsureOriginWithArg, LinearStoragePrice, NeverEnsureOrigin, TransformOrigin, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
@@ -96,7 +95,7 @@ pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Nonce, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-pub use runtime_common::impls::{AssetsToBlockAuthor, DealWithFees};
+pub use runtime_common::impls::AssetsToBlockAuthor;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, CommunityId>;
@@ -339,7 +338,8 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Self>>;
+	type OnChargeTransaction =
+		pallet_transaction_payment::FungibleAdapter<Balances, ResolveTo<TreasuryAccount, Balances>>;
 	type WeightToFee = WeightToFee;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
@@ -671,7 +671,7 @@ parameter_types! {
 
 parameter_types! {
 	/// The asset ID for the asset that we use to pay for message delivery fees.
-	pub FeeAssetId: cumulus_primitives_core::AssetId = Concrete(xcm_config::RelayLocation::get());
+	pub FeeAssetId: cumulus_primitives_core::AssetId = xcm_config::RelayLocation::get().into();
 	/// The base fee for the message delivery fees.
 	pub const ToSiblingBaseDeliveryFee: u128 = CENTS.saturating_mul(3);
 	pub const ToParentBaseDeliveryFee: u128 = CENTS.saturating_mul(3);
@@ -754,7 +754,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().into_inner()
+			pallet_aura::Authorities::<Runtime>::get().into_inner()
 		}
 	}
 
@@ -977,13 +977,17 @@ impl_runtime_apis! {
 			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 			impl cumulus_pallet_session_benchmarking::Config for Runtime {}
 
-			use xcm::v3::prelude::*;
+			use xcm::latest::prelude::{
+				Asset, Assets as XcmAssets, AssetId, Fungible, GeneralIndex,
+				Here, InteriorLocation, Junction, Location, NetworkId,
+				NonFungible, Response
+			};
 			use xcm_config::RelayLocation;
 			use pallet_xcm_benchmarks::asset_instance_from;
 
 
 			parameter_types! {
-				pub ExistentialDepositMultiAsset: Option<MultiAsset> = Some((
+				pub ExistentialDepositAsset: Option<Asset> = Some((
 					RelayLocation::get(),
 					ExistentialDeposit::get()
 				).into());
@@ -994,35 +998,34 @@ impl_runtime_apis! {
 				type AccountIdConverter = xcm_config::LocationToAccountId;
 				type DeliveryHelper = cumulus_primitives_utility::ToParentDeliveryHelper<
 					xcm_config::XcmConfig,
-					ExistentialDepositMultiAsset,
+					ExistentialDepositAsset,
 					PriceForParentDelivery,
 				>;
 
-				fn valid_destination() -> Result<MultiLocation, BenchmarkError> {
+				fn valid_destination() -> Result<Location, BenchmarkError> {
 					Ok(RelayLocation::get())
 				}
-				fn worst_case_holding(depositable_count: u32) -> MultiAssets {
+				fn worst_case_holding(depositable_count: u32) -> XcmAssets {
 					// A mix of fungible, non-fungible, and concrete assets.
 					let holding_non_fungibles = xcm_config::MaxAssetsIntoHolding::get() / 2 - depositable_count;
 					let holding_fungibles = holding_non_fungibles.saturating_sub(1);
 					let fungibles_amount: u128 = 100;
 					let mut assets = (0..holding_fungibles)
 						.map(|i| {
-							MultiAsset {
-								id: Concrete(GeneralIndex(i as u128).into()),
+							Asset {
+								id: AssetId(GeneralIndex(i as u128).into()),
 								fun: Fungible(fungibles_amount * i as u128),
 							}
-							.into()
 						})
-						.chain(core::iter::once(MultiAsset { id: Concrete(Here.into()), fun: Fungible(u128::MAX) }))
-						.chain((0..holding_non_fungibles).map(|i| MultiAsset {
-							id: Concrete(GeneralIndex(i as u128).into()),
+						.chain(core::iter::once(Asset { id: AssetId(Here.into()), fun: Fungible(u128::MAX) }))
+						.chain((0..holding_non_fungibles).map(|i| Asset {
+							id: AssetId(GeneralIndex(i as u128).into()),
 							fun: NonFungible(asset_instance_from(i)),
 						}))
 						.collect::<Vec<_>>();
 
-						assets.push(MultiAsset{
-							id: Concrete(RelayLocation::get()),
+						assets.push(Asset{
+							id: AssetId(RelayLocation::get()),
 							fun: Fungible(1_000_000 * UNITS),
 						});
 						assets.into()
@@ -1030,11 +1033,11 @@ impl_runtime_apis! {
 			}
 
 			parameter_types! {
-				pub const TrustedTeleporter: Option<(MultiLocation, MultiAsset)> = Some((
+				pub const TrustedTeleporter: Option<(Location, Asset)> = Some((
 					RelayLocation::get(),
-					MultiAsset { fun: Fungible(1 * UNITS), id: Concrete(RelayLocation::get()) },
+					Asset { fun: Fungible(1 * UNITS), id: AssetId(RelayLocation::get()) },
 				));
-				pub const TrustedReserve: Option<(MultiLocation, MultiAsset)> = None;
+				pub const TrustedReserve: Option<(Location, Asset)> = None;
 				pub const CheckedAccount: Option<(AccountId, xcm_builder::MintLocation)> = None;
 
 			}
@@ -1047,8 +1050,8 @@ impl_runtime_apis! {
 				type TrustedReserve = TrustedReserve;
 
 				fn get_asset() -> Asset {
-					MultiAsset {
-						id: Concrete(RelayLocation::get()),
+					Asset {
+						id: AssetId(RelayLocation::get()),
 						fun: Fungible(1 * UNITS),
 					}.into()
 				}
@@ -1062,46 +1065,46 @@ impl_runtime_apis! {
 					(0u64, Response::Version(Default::default()))
 				}
 
-				fn worst_case_asset_exchange() -> Result<(MultiAssets, MultiAssets), BenchmarkError> {
+				fn worst_case_asset_exchange() -> Result<(XcmAssets, XcmAssets), BenchmarkError> {
 					Err(BenchmarkError::Skip)
 				}
 
-				fn universal_alias() -> Result<(MultiLocation, Junction), BenchmarkError> {
+				fn universal_alias() -> Result<(Location, Junction), BenchmarkError> {
 					Err(BenchmarkError::Skip)
 				}
 
-				fn transact_origin_and_runtime_call() -> Result<(MultiLocation, RuntimeCall), BenchmarkError> {
+				fn transact_origin_and_runtime_call() -> Result<(Location, RuntimeCall), BenchmarkError> {
 					Ok((RelayLocation::get(), frame_system::Call::remark_with_event { remark: vec![] }.into()))
 				}
 
-				fn subscribe_origin() -> Result<MultiLocation, BenchmarkError> {
+				fn subscribe_origin() -> Result<Location, BenchmarkError> {
 					Ok(RelayLocation::get())
 				}
 
-				fn claimable_asset() -> Result<(MultiLocation, MultiLocation, MultiAssets), BenchmarkError> {
+				fn claimable_asset() -> Result<(Location, Location, XcmAssets), BenchmarkError> {
 					let origin = RelayLocation::get();
-					let assets: MultiAssets = (Concrete(RelayLocation::get()), 1_000 * UNITS).into();
-					let ticket = MultiLocation { parents: 0, interior: Here };
+					let assets: XcmAssets = (AssetId(RelayLocation::get()), 1_000 * UNITS).into();
+					let ticket = Location { parents: 0, interior: Here };
 					Ok((origin, ticket, assets))
 				}
 
 				fn fee_asset() -> Result<Asset, BenchmarkError> {
-					Ok(MultiAsset {
-						id: Concrete(TokenLocation::get()),
+					Ok(Asset {
+						id: AssetId(RelayLocation::get()),
 						fun: Fungible(1_000_000 * UNITS),
 					})
 				}
 
-				fn unlockable_asset() -> Result<(MultiLocation, MultiLocation, MultiAsset), BenchmarkError> {
+				fn unlockable_asset() -> Result<(Location, Location, Asset), BenchmarkError> {
 					Err(BenchmarkError::Skip)
 				}
 
 				fn export_message_origin_and_destination(
-				) -> Result<(MultiLocation, NetworkId, InteriorMultiLocation), BenchmarkError> {
+				) -> Result<(Location, NetworkId, InteriorLocation), BenchmarkError> {
 					Err(BenchmarkError::Skip)
 				}
 
-				fn alias_origin() -> Result<(MultiLocation, MultiLocation), BenchmarkError> {
+				fn alias_origin() -> Result<(Location, Location), BenchmarkError> {
 					Err(BenchmarkError::Skip)
 				}
 			}

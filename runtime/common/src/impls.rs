@@ -19,15 +19,10 @@
 use frame_support::traits::{
 	fungible::{DecreaseIssuance, IncreaseIssuance},
 	fungibles::{Balanced, Credit},
-	Currency, Imbalance, OnUnbalanced,
+	Currency,
 };
 use pallet_asset_tx_payment::HandleCredit;
-// use pallet_balances::Pallet as Balances;
-use pallet_treasury::Pallet as Treasury;
 use sp_std::marker::PhantomData;
-
-// TODO - Create and import XCM common types
-//use xcm::latest::{AssetId, Fungibility::Fungible, MultiAsset, MultiLocation};
 
 /// Type alias to conveniently refer to `frame_system`'s `Config::AccountId`.
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -42,45 +37,6 @@ pub type FungibleImbalance<T, I> = frame_support::traits::fungible::Imbalance<
 	DecreaseIssuance<AccountIdOf<T>, pallet_balances::Pallet<T, I>>,
 	IncreaseIssuance<AccountIdOf<T>, pallet_balances::Pallet<T, I>>,
 >;
-
-/// [OnUnbalanced] handler that takes 100% of the fees + tips (if any), and
-/// makes them go to the treasury.
-pub struct DealWithFees<T, I: 'static = ()>(PhantomData<(T, I)>);
-
-impl<T, I: 'static, IB> OnUnbalanced<IB> for DealWithFees<T, I>
-where
-	T: pallet_balances::Config<I> + pallet_treasury::Config<I> + pallet_collator_selection::Config,
-	Treasury<T, I>: OnUnbalanced<IB>,
-	IB: Imbalance<<T as pallet_balances::Config<I>>::Balance>,
-{
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = IB>) {
-		if let Some(mut fees) = fees_then_tips.next() {
-			if let Some(tips) = fees_then_tips.next() {
-				tips.merge_into(&mut fees);
-				Treasury::<T, I>::on_unbalanced(fees);
-			}
-		}
-	}
-}
-
-/// [OnUnbalanced] handler that takes 100% of the fees + tips (if any), and
-/// makes them go to the treasury.
-pub struct DealWithFungibleFees<T, I: 'static = ()>(PhantomData<(T, I)>);
-
-impl<T, I: 'static> OnUnbalanced<FungibleImbalance<T, I>> for DealWithFungibleFees<T, I>
-where
-	T: pallet_balances::Config<I> + pallet_treasury::Config<I> + pallet_collator_selection::Config,
-	Treasury<T, I>: OnUnbalanced<FungibleImbalance<T, I>>,
-{
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = FungibleImbalance<T, I>>) {
-		if let Some(mut fees) = fees_then_tips.next() {
-			if let Some(tips) = fees_then_tips.next() {
-				tips.merge_into(&mut fees);
-				Treasury::<T, I>::on_unbalanced(fees);
-			}
-		}
-	}
-}
 
 /// A `HandleCredit` implementation that naively transfers the fees to the block
 /// author. Will drop and burn the assets in case the transfer fails.

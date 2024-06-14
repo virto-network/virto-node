@@ -26,7 +26,7 @@ fn reserve_transfer_native_token_from_relay_chain_to_kreivo_parachain() {
 		id: KreivoReceiver::get().into(),
 	}
 	.into();
-	let native_assets: VersionedMultiAssets = (Here, amount).into();
+	let native_assets: VersionedAssets = (Here, amount).into();
 	let fee_asset_item = 0;
 	let weight_limit = WeightLimit::Unlimited;
 
@@ -120,7 +120,7 @@ fn reserve_transfer_asset_from_statemine_parachain_to_kreivo_parachain() {
 		id: KreivoReceiver::get().into(),
 	}
 	.into();
-	let asset_to_transfer: VersionedMultiAssets =
+	let asset_to_transfer: VersionedAssets =
 		(X2(PalletInstance(50), GeneralIndex(ASSET_ID as u128)), AMOUNT).into();
 	let fee_asset_item = 0;
 	let weight_limit = WeightLimit::Unlimited;
