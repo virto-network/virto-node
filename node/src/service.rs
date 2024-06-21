@@ -208,7 +208,7 @@ where
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
-		+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	RB: Fn(Arc<ParachainClient<RuntimeApi>>) -> Result<jsonrpsee::RpcModule<()>, sc_service::Error>,
 	BIQ: FnOnce(
@@ -409,7 +409,6 @@ impl<Client, AuraId> Clone for WaitForAuraConsensus<Client, AuraId> {
 	}
 }
 
-#[async_trait::async_trait]
 impl<Client, AuraId> ParachainConsensus<Block> for WaitForAuraConsensus<Client, AuraId>
 where
 	Client: sp_api::ProvideRuntimeApi<Block> + Send + Sync,
@@ -451,7 +450,6 @@ struct Verifier<Client, AuraId> {
 	_phantom: PhantomData<AuraId>,
 }
 
-#[async_trait::async_trait]
 impl<Client, AuraId> VerifierT<Block> for Verifier<Client, AuraId>
 where
 	Client: sp_api::ProvideRuntimeApi<Block> + Send + Sync,
@@ -492,7 +490,7 @@ where
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ sp_consensus_aura::AuraApi<Block, <<AuraId as AppCrypto>::Pair as Pair>::Public>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
-		+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
 	<<AuraId as AppCrypto>::Pair as Pair>::Signature:
 		TryFrom<Vec<u8>> + std::hash::Hash + sp_runtime::traits::Member + Codec,
 {

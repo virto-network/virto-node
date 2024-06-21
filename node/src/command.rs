@@ -276,7 +276,8 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::ExportGenesisState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
-				Ok(async move { cmd.run(&*config.chain_spec, &*components.client) })
+				let partials = new_partial(&config)?;
+				Ok(async move { cmd.run(partials.client) })
 			})
 		}
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {

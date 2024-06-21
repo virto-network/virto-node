@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider;
+use cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider;
 use parity_scale_codec::Encode;
 use sc_client_api::BlockBackend;
 use sp_core::Pair;
@@ -95,6 +95,7 @@ pub fn inherent_benchmark_data() -> sc_cli::Result<InherentData> {
 
 	let parachain_inherent = MockValidationDataInherentDataProvider {
 		current_para_block: 1,
+		current_para_block_head: Some(Default::default()),
 		relay_offset: 0,
 		relay_blocks_per_para_block: 1,
 		para_blocks_per_relay_epoch: 0,
