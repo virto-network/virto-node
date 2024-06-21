@@ -107,9 +107,8 @@ release-tag:
 bump mode="minor":
 	#!/usr/bin/env nu
 	let ver = '{{ ver }}' | inc --{{ mode }}
-	let tab = (char tab)
-	open -r runtime/kreivo/Cargo.toml | str replace -m '^\tversion = "(.+)"$' $'($tab)version = "($ver)"' | save -f runtime/kreivo/Cargo.toml
-	open -r node/Cargo.toml | str replace -m '^\tversion = "(.+)"$' $'($tab)version = "($ver)"' | save -f node/Cargo.toml
+	open -r runtime/kreivo/Cargo.toml | str replace -m '^version = "(.+)"$' $'version = "($ver)"' | save -f runtime/kreivo/Cargo.toml
+	open -r node/Cargo.toml | str replace -m '^version = "(.+)"$' $'version = "($ver)"' | save -f node/Cargo.toml
 	# bump spec version
 	const SRC = 'runtime/kreivo/src/lib.rs'
 	let src = open $SRC

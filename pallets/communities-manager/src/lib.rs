@@ -189,7 +189,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::create_memberships(*amount))]
+		#[pallet::weight(<T as Config>::WeightInfo::create_memberships((*amount).into()))]
 		#[pallet::call_index(1)]
 		pub fn create_memberships(
 			origin: OriginFor<T>,
