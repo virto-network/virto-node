@@ -1,9 +1,11 @@
 [package]
 authors.workspace = true
+build = "build.rs"
 edition.workspace = true
 homepage.workspace = true
 license = "GPL-3.0-only"
 name = "virto-node"
+publish = false
 repository.workspace = true
 version = "0.12.1"
 
@@ -12,24 +14,24 @@ name = "virto-node"
 path = "src/main.rs"
 
 [dependencies]
-clap = {workspace = true}
-futures = {workspace = true}
-hex-literal = {workspace = true}
-jsonrpsee = {workspace = true, features = ["server"]}
+clap = {version = "4.5.3", features = ["derive"]}
+codec = {package = "parity-scale-codec", version = "3.6.12"}
+docify = "0.2.8"
+futures = "0.3.28"
+jsonrpsee = {version = "0.23", features = ["server"]}
 log = {workspace = true, default-features = true}
-parity-scale-codec = {workspace = true}
 serde = {features = ["derive"], workspace = true, default-features = true}
 serde_json = {workspace = true, default-features = true}
 
 # Local
-frame-system = {workspace = true, optional = true}
-kreivo-runtime = {workspace = true, optional = true}
-pallet-asset-tx-payment = {workspace = true, optional = true}
+kreivo-runtime = {workspace = true, default-features = true}
+parachains-common = {workspace = true}
 
 # Substrate
 frame-benchmarking = {workspace = true}
 frame-benchmarking-cli = {workspace = true}
 pallet-transaction-payment-rpc = {workspace = true}
+substrate-prometheus-endpoint = {workspace = true}
 sc-basic-authorship = {workspace = true}
 sc-chain-spec = {workspace = true}
 sc-cli = {workspace = true}
@@ -51,69 +53,46 @@ sp-block-builder = {workspace = true}
 sp-blockchain = {workspace = true}
 sp-consensus-aura = {workspace = true}
 sp-core = {workspace = true}
-sp-inherents = {workspace = true}
 sp-io = {workspace = true}
-sp-keyring = {workspace = true}
 sp-keystore = {workspace = true}
-sp-offchain = {workspace = true}
 sp-runtime = {workspace = true}
-sp-session = {workspace = true}
 sp-timestamp = {workspace = true}
-sp-transaction-pool = {workspace = true}
 substrate-frame-rpc-system = {workspace = true}
-substrate-prometheus-endpoint = {workspace = true}
 
 # Polkadot
 polkadot-cli = {workspace = true}
 polkadot-primitives = {workspace = true}
-xcm = {workspace = true}
+xcm = {workspace = true, default-features = false}
 
 # Cumulus
+color-print = "0.3.4"
 cumulus-client-cli = {workspace = true}
 cumulus-client-collator = {workspace = true}
 cumulus-client-consensus-aura = {workspace = true}
 cumulus-client-consensus-common = {workspace = true}
 cumulus-client-consensus-proposer = {workspace = true}
-cumulus-client-consensus-relay-chain = {workspace = true}
-cumulus-client-network = {workspace = true}
-cumulus-client-parachain-inherent = {workspace = true}
 cumulus-client-service = {workspace = true}
 cumulus-primitives-core = {workspace = true}
 cumulus-primitives-parachain-inherent = {workspace = true}
 cumulus-relay-chain-interface = {workspace = true}
 
-parachains-common = {workspace = true}
-
 [build-dependencies]
 substrate-build-script-utils = {workspace = true}
 
-[dev-dependencies]
-assert_cmd = {workspace = true}
-nix = {workspace = true}
-tempfile = "3.3.0"
-tokio = {workspace = true}
-wait-timeout = {workspace = true}
-
 [features]
-default = ["kreivo-runtime"]
-kreivo-runtime = [
-  "dep:frame-system",
-  "dep:kreivo-runtime",
-  "dep:pallet-asset-tx-payment",
-]
+default = []
 runtime-benchmarks = [
   "cumulus-primitives-core/runtime-benchmarks",
   "frame-benchmarking-cli/runtime-benchmarks",
   "frame-benchmarking/runtime-benchmarks",
-  "kreivo-runtime?/runtime-benchmarks",
-  "parachains-common/runtime-benchmarks",
+  "kreivo-runtime/runtime-benchmarks",
   "polkadot-cli/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
   "sc-service/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
-  "kreivo-runtime?/try-runtime",
+  "kreivo-runtime/try-runtime",
   "polkadot-cli/try-runtime",
   "sp-runtime/try-runtime",
 ]
