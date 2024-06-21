@@ -159,6 +159,7 @@
 	cumulus-client-consensus-proposer = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
 	cumulus-client-service = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
 	cumulus-client-network = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
+	cumulus-client-parachain-inherent = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
 	cumulus-primitives-parachain-inherent = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
 	cumulus-relay-chain-interface = { git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-v1.12.0" }
 
