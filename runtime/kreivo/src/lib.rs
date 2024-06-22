@@ -36,6 +36,8 @@ use sp_std::prelude::*;
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 use virto_common::CommunityId;
+
+pub use apis::RuntimeApi;
 pub use virto_common::FungibleAssetLocation;
 
 use frame_support::{

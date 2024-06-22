@@ -17,7 +17,11 @@ use substrate_wasm_builder::WasmBuilder;
 
 #[cfg(all(feature = "std", not(feature = "metadata-hash")))]
 fn main() {
-	WasmBuilder::build_using_defaults()
+	WasmBuilder::new()
+		.with_current_project()
+		.export_heap_base()
+		.import_memory()
+		.build()
 }
 
 #[cfg(all(feature = "std", feature = "metadata-hash"))]
@@ -29,11 +33,3 @@ fn main() {
 
 #[cfg(not(feature = "std"))]
 fn main() {}
-
-// fn main() {
-// 	WasmBuilder::new()
-// 		.with_current_project()
-// 		.export_heap_base()
-// 		.import_memory()
-// 		.build()
-// }
