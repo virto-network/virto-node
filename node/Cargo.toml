@@ -18,7 +18,7 @@ clap = {version = "4.5.3", features = ["derive"]}
 codec = {package = "parity-scale-codec", version = "3.6.12"}
 docify = "0.2.8"
 futures = "0.3.28"
-jsonrpsee = {version = "0.23", features = ["server"]}
+jsonrpsee = {version = "0.22", features = ["server"]}
 log = {workspace = true, default-features = true}
 serde = {features = ["derive"], workspace = true, default-features = true}
 serde_json = {workspace = true, default-features = true}
