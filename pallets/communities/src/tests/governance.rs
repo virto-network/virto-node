@@ -776,27 +776,6 @@ mod vote {
 			});
 		}
 
-		// Note: cannot test this unless another pallet exposes `FreezeReason`s
-		// use frame_support::traits::fungible::MutateFreeze;
-		// #[test]
-		// fn locks_can_overlap() {
-		// 	new_test_ext().execute_with(|| {
-		// 		// Suppose CHARLIE has already casted a vote on other poll (let's call it 4)
-		// 		assert_ok!(Balances::set_freeze(
-		// 			&pallet_preimage::HoldReason::Preimage.into(),
-		// 			&CHARLIE,
-		// 			12
-		// 		));
-
-		// 		assert_ok!(Communities::vote(
-		// 			RuntimeOrigin::signed(CHARLIE),
-		// 			membership(COMMUNITY_C, 3),
-		// 			2,
-		// 			Vote::NativeBalance(true, 11)
-		// 		));
-		// 	});
-		// }
-
 		#[test]
 		fn rejects_on_most_nays() {
 			new_test_ext().execute_with(|| {
