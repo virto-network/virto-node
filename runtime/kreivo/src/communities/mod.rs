@@ -1,7 +1,9 @@
 use super::*;
 
 use frame_support::traits::TryMapSuccess;
-use frame_system::{EnsureNever, EnsureRootWithSuccess, EnsureSigned};
+#[cfg(not(feature = "runtime-benchmarks"))]
+use frame_system::EnsureNever;
+use frame_system::{EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
@@ -54,7 +56,10 @@ type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, Treasury
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type CreateOrigin = EnsureNever<CreationPayment>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type CreateOrigin = RootCreatesCommunitiesForFree;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmt = CommunityMemberships;
