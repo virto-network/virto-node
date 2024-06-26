@@ -14,10 +14,9 @@ pub struct TracksInfo;
 impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 	type Id = TrackId;
 	type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
-	type TracksIter = pallet_referenda::StaticTracksIter<Self::Id, Balance, BlockNumber>;
 
-	fn tracks() -> Self::TracksIter {
-		const DATA: [pallet_referenda::Track<TrackId, Balance, BlockNumber>; 4] = [
+	fn tracks() -> impl Iterator<Item = Cow<'static, Track<TrackId, Balance, BlockNumber>>> {
+		const DATA: [Track<TrackId, Balance, BlockNumber>; 4] = [
 			Track {
 				id: 0,
 				info: pallet_referenda::TrackInfo {

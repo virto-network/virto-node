@@ -1,7 +1,6 @@
-pub use crate as pallet_payments;
-pub use crate::types::*;
+pub use crate::{self as pallet_payments, types::*, Config};
 use frame_support::{
-	parameter_types,
+	derive_impl, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64, EqualPrivilegeOnly, OnFinalize, OnInitialize},
 	weights::Weight,
 	PalletId,
@@ -10,12 +9,8 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSigned};
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_core::H256;
 use sp_keystore::{testing::MemoryKeystore, KeystoreExt};
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-	BoundedVec, BuildStorage, Percent,
-};
+use sp_runtime::{BoundedVec, BuildStorage, Percent};
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type AccountId = u64;
@@ -67,91 +62,42 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
 	pub MaxWeight: Weight = Weight::from_parts(2_000_000_000_000, u64::MAX);
-
 }
 
 pub type Balance = u64;
 
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeCall = RuntimeCall;
-	type Nonce = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
-	type Lookup = IdentityLookup<Self::AccountId>;
 	type Block = Block;
-	type RuntimeEvent = RuntimeEvent;
-	type BlockHashCount = ConstU64<250>;
-	type DbWeight = ();
-	type Version = ();
-	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<u64>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
-	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
 }
 
+#[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
 impl pallet_balances::Config for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type RuntimeEvent = RuntimeEvent;
 	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
-	type WeightInfo = ();
-	type MaxLocks = ();
-	type MaxReserves = ConstU32<50>;
-	type ReserveIdentifier = [u8; 8];
-	type FreezeIdentifier = ();
-	type MaxFreezes = ();
-	type RuntimeHoldReason = ();
-	type MaxHolds = ();
-	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
+#[derive_impl(pallet_assets::config_preludes::TestDefaultConfig as pallet_assets::DefaultConfig)]
 impl pallet_assets::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type AssetId = u32;
-	type AssetIdParameter = u32;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type ForceOrigin = frame_system::EnsureRoot<u64>;
-	type AssetDeposit = ConstU64<1>;
-	type AssetAccountDeposit = ConstU64<10>;
-	type MetadataDepositBase = ConstU64<1>;
-	type MetadataDepositPerByte = ConstU64<1>;
-	type ApprovalDeposit = ConstU64<1>;
-	type StringLimit = ConstU32<50>;
 	type Freezer = ();
-	type WeightInfo = ();
-	type Extra = ();
 	type RemoveItemsLimit = ConstU32<5>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
-	type CallbackHandle = ();
-	type MaxHolds = ConstU32<50>;
 	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
-impl pallet_sudo::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type WeightInfo = ();
-}
+#[derive_impl(pallet_sudo::config_preludes::TestDefaultConfig as pallet_sudo::DefaultConfig)]
+impl pallet_sudo::Config for Test {}
 
 impl pallet_preimage::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<u64>;
 	type Consideration = ();
+	type WeightInfo = ();
 }
 
 impl pallet_scheduler::Config for Test {
@@ -161,9 +107,9 @@ impl pallet_scheduler::Config for Test {
 	type RuntimeCall = RuntimeCall;
 	type MaximumWeight = MaxWeight;
 	type ScheduleOrigin = EnsureRoot<u64>;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type MaxScheduledPerBlock = ConstU32<100>;
 	type WeightInfo = ();
-	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type Preimages = Preimage;
 }
 
@@ -242,7 +188,7 @@ parameter_types! {
 	pub const PaymentPalletId: PalletId = PalletId(*b"payments");
 }
 
-impl pallet_payments::Config for Test {
+impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Assets = Assets;
 	type AssetsBalance = u64;

@@ -9,9 +9,7 @@ default_command = "./bin/polkadot"
   name = "alice"
   validator = true
   ws_port = 10000
-  extra_args = [
-    "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all",
-  ]
+  extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all",]
 
   [[relaychain.nodes]]
   name = "bob"
@@ -38,12 +36,10 @@ chain = "kreivo-local"
   name = "kreivo1"
   command = "./target/release/virto-node"
   ws_port = 20000
-  validator = true
   args = ["--force-authoring --log=xcm=trace,parachain=trace"]
 
   [[parachains.collators]]
   name = "kreivo2"
   command = "./target/release/virto-node"
   ws_port = 21000
-  validator = true
   args = ["--force-authoring --log=xcm=trace,parachain=trace"]

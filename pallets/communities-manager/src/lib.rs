@@ -27,7 +27,7 @@ use pallet_communities::{
 	types::{AccountIdOf, CommunityIdOf, DecisionMethodFor, NativeBalanceOf, PalletsOriginOf, RuntimeOriginFor},
 	Origin as CommunityOrigin,
 };
-use pallet_nfts::{CollectionConfig, ItemConfig};
+use pallet_nfts::CollectionConfig;
 use pallet_referenda::{TrackInfo, TracksInfo};
 use parity_scale_codec::Decode;
 use sp_runtime::{
@@ -87,7 +87,7 @@ pub mod pallet {
 
 		type CreateMemberships: ItemMutate<
 				AccountIdOf<Self>,
-				ItemConfig = ItemConfig,
+				Self::ItemConfig,
 				CollectionId = CommunityIdOf<Self>,
 				ItemId = <Self as Config>::MembershipId,
 			> + Trading<

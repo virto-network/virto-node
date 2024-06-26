@@ -15,9 +15,9 @@ fn assert_has_event<T: Config>(generic_event: RuntimeEventFor<T>) {
 
 fn setup_account<T: Config>(who: &AccountIdOf<T>) -> Result<(), BenchmarkError>
 where
-	NativeBalanceOf<T>: From<u128>,
+	NativeBalanceOf<T>: From<u64>,
 {
-	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u128.into();
+	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u64.into();
 	T::Balances::mint_into(who, initial_balance)?;
 	Ok(())
 }
@@ -25,7 +25,7 @@ where
 #[benchmarks(
 where
 	RuntimeEventFor<T>: From<pallet_communities::Event<T>>,
-	NativeBalanceOf<T>: From<u128>,
+	NativeBalanceOf<T>: From<u64>,
 	BlockNumberFor<T>: From<u32>,
 	CommunityIdOf<T>: From<u16>,
 	<T as Config>::MembershipId: From<u32>,
@@ -76,7 +76,7 @@ mod benchmarks {
 			RawOrigin::Root,
 			q.saturated_into(),
 			100u32.into(),
-			300_000_000_000u128.into(),
+			300_000_000_000u64.into(),
 		);
 
 		// verification code

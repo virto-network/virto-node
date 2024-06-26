@@ -36,10 +36,10 @@ chain = "kreivo-rococo-local"
   name = "kreivo1"
   command = "./target/release/virto-node"
   ws_port = 20000
-  args = ["--force-authoring --log=xcm=trace"]
+  args = ["--force-authoring --log=xcm=trace,parachain=trace"]
 
   [[parachains.collators]]
   name = "kreivo2"
   command = "./target/release/virto-node"
   ws_port = 21000
-  args = ["--force-authoring --log=xcm=trace"]
+  args = ["--force-authoring --log=xcm=trace,parachain=trace"]

@@ -66,7 +66,6 @@ pub enum DecisionMethod<AssetId, MinVote> {
 // Governance
 pub type VoteWeight = u32;
 
-///
 #[derive(Clone, Debug, Decode, Encode, PartialEq, MaxEncodedLen, TypeInfo)]
 #[scale_info(skip_type_params(AssetId, AssetBalance, NativeBalance))]
 pub enum Vote<AssetId, AssetBalance, NativeBalance> {
@@ -107,7 +106,6 @@ where
 	}
 }
 
-///
 #[derive(Clone, Debug, Decode, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound(T: Config))]

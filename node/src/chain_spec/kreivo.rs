@@ -43,11 +43,11 @@ pub fn kreivo_rococo_chain_spec_local() -> ChainSpec {
 		vec![
 			(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_collator_keys_from_seed::<AuraId>("Alice"),
+				get_collator_keys_from_seed("Alice"),
 			),
 			(
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_collator_keys_from_seed::<AuraId>("Bob"),
+				get_collator_keys_from_seed("Bob"),
 			),
 		],
 		vec![
@@ -92,11 +92,11 @@ pub fn kreivo_kusama_chain_spec_local() -> ChainSpec {
 		vec![
 			(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_collator_keys_from_seed::<AuraId>("Alice"),
+				get_collator_keys_from_seed("Alice"),
 			),
 			(
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_collator_keys_from_seed::<AuraId>("Bob"),
+				get_collator_keys_from_seed("Bob"),
 			),
 		],
 		vec![
@@ -143,11 +143,11 @@ pub fn local_testnet_config() -> ChainSpec {
 		vec![
 			(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				get_collator_keys_from_seed::<AuraId>("Alice"),
+				get_collator_keys_from_seed("Alice"),
 			),
 			(
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
-				get_collator_keys_from_seed::<AuraId>("Bob"),
+				get_collator_keys_from_seed("Bob"),
 			),
 		],
 		vec![
