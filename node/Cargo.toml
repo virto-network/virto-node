@@ -7,7 +7,7 @@ license = "GPL-3.0-only"
 name = "virto-node"
 publish = false
 repository.workspace = true
-version = "0.12.1"
+version = "0.13.0"
 
 [[bin]]
 name = "virto-node"
