@@ -185,9 +185,9 @@ fn matches_prefix(prefix: &Location, loc: &Location) -> bool {
 }
 pub struct ReserveAssetsFrom<T>(PhantomData<T>);
 impl<Prefix: Get<Location>> ContainsPair<Asset, Location> for ReserveAssetsFrom<Prefix> {
-	fn contains(asset: &Asset, origin: &Location) -> bool {
-		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", Prefix::get(), origin);
-		&Prefix::get() == origin && matches_prefix(&Prefix::get(), &asset.id.0)
+	fn contains(asset: &Asset, _origin: &Location) -> bool {
+		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", Prefix::get(), _origin);
+		matches_prefix(&Prefix::get(), &asset.id.0)
 	}
 }
 
