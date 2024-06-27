@@ -12,6 +12,7 @@ mod tests;
 
 pub mod apis;
 pub mod constants;
+pub mod contracts;
 pub mod governance;
 pub mod impls;
 mod weights;
@@ -217,6 +218,9 @@ construct_runtime!(
 		CommunityReferenda: pallet_referenda::<Instance2> = 73,
 		CommunityMemberships: pallet_nfts::<Instance2> = 74,
 		CommunitiesManager: pallet_communities_manager = 75,
+
+		// Contracts
+		Contracts: pallet_contracts = 80,
 	}
 );
 
@@ -759,6 +763,7 @@ mod benches {
 		[pallet_referenda, CommunityReferenda]
 		[pallet_communities_manager, CommunitiesManager]
 		[pallet_nfts, CommunityMemberships]
+		[pallet_contracts, Contracts]
 		// XCM
 		// NOTE: Make sure you point to the individual modules below.
 		[pallet_xcm_benchmarks::fungible, XcmBalances]
