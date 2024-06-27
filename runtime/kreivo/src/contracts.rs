@@ -4,10 +4,12 @@ use crate::{
 };
 use frame_support::{
 	parameter_types,
-	traits::{ConstBool, ConstU32, Randomness},
+	traits::{ConstBool, ConstU32, EitherOf, Randomness},
 };
-use frame_system::{pallet_prelude::BlockNumberFor, EnsureRootWithSuccess, EnsureSigned};
+use frame_system::{pallet_prelude::BlockNumberFor, EnsureRootWithSuccess};
 use pallet_balances::Call as BalancesCall;
+use pallet_communities::origin::AsSignedByStaticCommunity;
+use sp_core::ConstU16;
 
 pub enum AllowBalancesCall {}
 
@@ -53,7 +55,13 @@ impl pallet_contracts::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 
 	type UploadOrigin = EnsureRootWithSuccess<AccountId, TreasuryAccount>;
-	type InstantiateOrigin = EnsureSigned<AccountId>;
+	type InstantiateOrigin = EitherOf<
+		EnsureRootWithSuccess<AccountId, TreasuryAccount>,
+		EitherOf<
+			AsSignedByStaticCommunity<Runtime, ConstU16<1>>, // Virto
+			AsSignedByStaticCommunity<Runtime, ConstU16<2>>, // Kippu
+		>,
+	>;
 
 	/// The safest default is to allow no calls at all.
 	///
