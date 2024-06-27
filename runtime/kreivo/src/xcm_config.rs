@@ -190,6 +190,15 @@ impl<Prefix: Get<Location>> ContainsPair<Asset, Location> for ReserveAssetsFrom<
 		matches_prefix(&Prefix::get(), &asset.id.0)
 	}
 }
+pub struct ReserveForeignAssetsFrom<P, R>(PhantomData<(P, R)>);
+impl<Prefix: Get<Location>, ReserveLocation: Get<Location>> ContainsPair<Asset, Location>
+	for ReserveForeignAssetsFrom<Prefix, ReserveLocation>
+{
+	fn contains(asset: &Asset, origin: &Location) -> bool {
+		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", Prefix::get(), origin);
+		&ReserveLocation::get() == origin && matches_prefix(&Prefix::get(), &asset.id.0)
+	}
+}
 
 pub type AssetFeeAsExistentialDepositMultiplierFeeCharger = AssetFeeAsExistentialDepositMultiplier<
 	Runtime,
@@ -213,7 +222,7 @@ pub type Traders = (
 pub type Reserves = (
 	NativeAsset,
 	ReserveAssetsFrom<AssetHubLocation>,
-	ReserveAssetsFrom<PolkadotLocation>,
+	ReserveForeignAssetsFrom<PolkadotLocation, AssetHubLocation>,
 );
 
 pub struct XcmConfig;
