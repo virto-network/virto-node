@@ -224,3 +224,35 @@ where
 		Ok(frame_system::RawOrigin::Signed(Pallet::<T>::community_account(&community_id)).into())
 	}
 }
+
+/// Ensure the origin is any `Signed` origin.
+pub struct AsSignedByStaticCommunity<T, C>(PhantomData<(T, C)>);
+impl<T, C, OuterOrigin> EnsureOrigin<OuterOrigin> for AsSignedByStaticCommunity<T, C>
+where
+	OuterOrigin: OriginTrait
+		+ From<frame_system::RawOrigin<T::AccountId>>
+		+ From<RawOrigin<T>>
+		+ Clone
+		+ Into<Result<frame_system::RawOrigin<T::AccountId>, OuterOrigin>>
+		+ Into<Result<RawOrigin<T>, OuterOrigin>>,
+	T: Config,
+	C: Get<CommunityIdOf<T>>,
+{
+	type Success = T::AccountId;
+
+	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
+		match o.clone().into() {
+			Ok(RawOrigin { ref community_id, .. }) if community_id == &C::get() => {
+				Ok(Pallet::<T>::community_account(community_id))
+			}
+			_ => Err(o.clone()),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<OuterOrigin, ()> {
+		use crate::BenchmarkHelper;
+		let community_id = T::BenchmarkHelper::community_id();
+		Ok(frame_system::RawOrigin::Signed(Pallet::<T>::community_account(&community_id)).into())
+	}
+}

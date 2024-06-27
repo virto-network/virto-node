@@ -46,6 +46,7 @@ pallet-assets = {workspace = true}
 pallet-aura = {workspace = true}
 pallet-authorship = {workspace = true}
 pallet-balances = {workspace = true}
+pallet-contracts = {workspace = true}
 pallet-multisig = {workspace = true}
 pallet-nfts = {workspace = true}
 pallet-preimage = {workspace = true}
@@ -132,6 +133,7 @@ std = [
   "pallet-aura/std",
   "pallet-authorship/std",
   "pallet-balances/std",
+  "pallet-contracts/std",
   "pallet-communities-manager/std",
   "pallet-communities/std",
   "pallet-collator-selection/std",
@@ -195,6 +197,7 @@ runtime-benchmarks = [
   "pallet-asset-tx-payment/runtime-benchmarks",
   "pallet-assets/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
+  "pallet-contracts/runtime-benchmarks",
   "pallet-communities-manager/runtime-benchmarks",
   "pallet-communities/runtime-benchmarks",
   "pallet-collator-selection/runtime-benchmarks",
@@ -236,6 +239,7 @@ try-runtime = [
   "pallet-aura/try-runtime",
   "pallet-authorship/try-runtime",
   "pallet-balances/try-runtime",
+  "pallet-contracts/try-runtime",
   "pallet-communities-manager/try-runtime",
   "pallet-communities/try-runtime",
   "pallet-collator-selection/try-runtime",
