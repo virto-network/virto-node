@@ -67,12 +67,12 @@ benchmark pallet="" extrinsic="*":
 
 build-container:
 	#!/usr/bin/env nu
-	'FROM docker.io/paritytech/ci-linux:production as builder
+	'FROM docker.io/paritytech/ci-unified:latest as builder
 	WORKDIR /virto
 	COPY . /virto
 	RUN cargo build --release
 
-	FROM debian:bookworm-slim
+	FROM debian:bullseye-slim
 	VOLUME /data
 	COPY --from=builder /virto/{{ node }} /usr/bin
 	ENTRYPOINT ["/usr/bin/virto-node"]

@@ -42,6 +42,7 @@ parameter_types! {
 	pub AssetsPalletLocation: Location =
 		PalletInstance(<Assets as PalletInfoAccess>::index() as u8).into();
 	pub UniversalLocation: InteriorLocation = [
+		GlobalConsensus(NetworkId::Polkadot),
 		GlobalConsensus(NetworkId::Kusama),
 		Parachain(ParachainInfo::parachain_id().into()),
 	].into();
@@ -68,7 +69,7 @@ pub type LocationToAccountId = (
 pub type LocationConvertedConcreteId = xcm_builder::MatchedConvertedConcreteId<
 	FungibleAssetLocation,
 	Balance,
-	StartsWith<AssetHubLocation>,
+	(StartsWith<AssetHubLocation>, StartsWith<PolkadotLocation>),
 	AsFungibleAssetLocation,
 	JustTry,
 >;
@@ -168,7 +169,8 @@ pub type Barrier = (
 pub type AssetTransactors = (FungibleTransactor, FungiblesTransactor);
 
 parameter_types! {
-	pub AssetHubLocation: Location = Location::new(1, [Junction::Parachain(ASSET_HUB_ID)]);
+	pub AssetHubLocation: Location = Location::new(1, [Parachain(ASSET_HUB_ID)]);
+	pub PolkadotLocation: Location = Location::new(2, [GlobalConsensus(NetworkId::Polkadot)]);
 }
 
 //- From PR https://github.com/paritytech/cumulus/pull/936
@@ -183,9 +185,18 @@ fn matches_prefix(prefix: &Location, loc: &Location) -> bool {
 }
 pub struct ReserveAssetsFrom<T>(PhantomData<T>);
 impl<Prefix: Get<Location>> ContainsPair<Asset, Location> for ReserveAssetsFrom<Prefix> {
+	fn contains(asset: &Asset, _origin: &Location) -> bool {
+		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", Prefix::get(), _origin);
+		matches_prefix(&Prefix::get(), &asset.id.0)
+	}
+}
+pub struct ReserveForeignAssetsFrom<P, R>(PhantomData<(P, R)>);
+impl<Prefix: Get<Location>, ReserveLocation: Get<Location>> ContainsPair<Asset, Location>
+	for ReserveForeignAssetsFrom<Prefix, ReserveLocation>
+{
 	fn contains(asset: &Asset, origin: &Location) -> bool {
 		log::trace!(target: "xcm::AssetsFrom", "prefix: {:?}, origin: {:?}", Prefix::get(), origin);
-		&Prefix::get() == origin && matches_prefix(&Prefix::get(), &asset.id.0)
+		&ReserveLocation::get() == origin && matches_prefix(&Prefix::get(), &asset.id.0)
 	}
 }
 
@@ -208,7 +219,11 @@ pub type Traders = (
 	UsingComponents<WeightToFee, RelayLocation, AccountId, Balances, ResolveTo<TreasuryAccount, Balances>>,
 );
 
-pub type Reserves = (NativeAsset, ReserveAssetsFrom<AssetHubLocation>);
+pub type Reserves = (
+	NativeAsset,
+	ReserveAssetsFrom<AssetHubLocation>,
+	ReserveForeignAssetsFrom<PolkadotLocation, AssetHubLocation>,
+);
 
 pub struct XcmConfig;
 impl xcm_executor::Config for XcmConfig {
