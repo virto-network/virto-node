@@ -8,7 +8,7 @@ use sp_core::sr25519;
 const DEFAULT_PROTOCOL_ID: &str = "kreivo";
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<kreivo_runtime::RuntimeGenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 const KREIVO_PARA_ID: u32 = 2281;
 
