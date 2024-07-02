@@ -97,9 +97,12 @@ pub use impls::{EqualOrGreatestRootCmp, ProxyType, RuntimeBlackListedCalls};
 
 pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Nonce, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AVERAGE_ON_INITIALIZE_RATIO, NORMAL_DISPATCH_RATIO,
 };
-pub use runtime_common::impls::AssetsToBlockAuthor;
+pub use runtime_common::{
+	constants::{DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, SLOT_DURATION},
+	impls::AssetsToBlockAuthor,
+};
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, CommunityId>;
@@ -307,8 +310,8 @@ impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = Aura;
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
-	type WeightInfo = ();
+	type MinimumPeriod = ConstU64<0>;
+	type WeightInfo = pallet_timestamp::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_authorship::Config for Runtime {
@@ -389,7 +392,7 @@ impl cumulus_pallet_aura_ext::Config for Runtime {}
 const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 /// Maximum number of blocks simultaneously accepted by the Runtime, not yet
 /// included into the relay chain.
-const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
+const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
 /// Relay chain slot duration, in milliseconds.
 const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6_000;
 
@@ -425,7 +428,7 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = ConstU32<100_000>;
-	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
