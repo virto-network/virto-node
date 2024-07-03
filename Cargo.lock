@@ -569,7 +569,7 @@ checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
 [[package]]
 name = "assets-common"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -876,7 +876,7 @@ dependencies = [
 [[package]]
 name = "binary-merkle-tree"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "hash-db",
  "log",
@@ -1089,7 +1089,7 @@ dependencies = [
 [[package]]
 name = "bp-xcm-bridge-hub-router"
 version = "0.6.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -1469,7 +1469,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#b273d33f9981e2bb3375ab45faeb537f7ee35224"
+source = "git+https://github.com/w3f/ring-proof#96137b150288a66bc9e4df495efc64769b5d1321"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -1830,7 +1830,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "clap",
  "parity-scale-codec",
@@ -1847,7 +1847,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -1870,7 +1870,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-client-collator",
@@ -1912,7 +1912,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
@@ -1941,7 +1941,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-proposer"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1956,7 +1956,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1979,7 +1979,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2003,7 +2003,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2027,7 +2027,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -2064,7 +2064,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "frame-support",
@@ -2082,7 +2082,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bytes",
  "cumulus-pallet-parachain-system-proc-macro",
@@ -2118,7 +2118,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.6.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
@@ -2129,7 +2129,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-session-benchmarking"
 version = "9.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -2143,7 +2143,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2159,7 +2159,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bounded-collections",
  "bp-xcm-bridge-hub-router",
@@ -2185,7 +2185,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-aura"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -2199,7 +2199,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -2216,7 +2216,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2233,7 +2233,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-proof-size-hostfunction"
 version = "0.2.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "sp-externalities 0.25.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0)",
  "sp-runtime-interface 24.0.0 (git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0)",
@@ -2243,7 +2243,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "futures",
@@ -2256,7 +2256,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -2276,7 +2276,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2300,7 +2300,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2318,7 +2318,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "async-trait",
@@ -2360,7 +2360,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -2399,7 +2399,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec",
@@ -3118,7 +3118,7 @@ dependencies = [
 [[package]]
 name = "fc-pallet-referenda-tracks"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#0de4154a0f78fe86377d2ed2de3350a8b7f0f7de"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#b55ec4aaadcbf90f808de137e7860d1b4d623725"
 dependencies = [
  "fc-traits-tracks",
  "frame-benchmarking",
@@ -3137,7 +3137,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-memberships"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#0de4154a0f78fe86377d2ed2de3350a8b7f0f7de"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#b55ec4aaadcbf90f808de137e7860d1b4d623725"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3147,7 +3147,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-tracks"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#0de4154a0f78fe86377d2ed2de3350a8b7f0f7de"
+source = "git+https://github.com/virto-network/frame-contrib?branch=main#b55ec4aaadcbf90f808de137e7860d1b4d623725"
 dependencies = [
  "frame-support",
  "pallet-referenda",
@@ -3304,7 +3304,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 [[package]]
 name = "fork-tree"
 version = "12.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
 ]
@@ -3337,7 +3337,7 @@ checksum = "6c2141d6d6c8512188a7891b4b01590a45f6dac67afb4f255c4124dbb86d4eaa"
 [[package]]
 name = "frame-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-support-procedural",
@@ -3362,7 +3362,7 @@ dependencies = [
 [[package]]
 name = "frame-benchmarking-cli"
 version = "32.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "Inflector",
  "array-bytes",
@@ -3412,7 +3412,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-solution-type"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
@@ -3423,7 +3423,7 @@ dependencies = [
 [[package]]
 name = "frame-election-provider-support"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-election-provider-solution-type",
  "frame-support",
@@ -3440,7 +3440,7 @@ dependencies = [
 [[package]]
 name = "frame-executive"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "aquamarine",
  "frame-support",
@@ -3471,7 +3471,7 @@ dependencies = [
 [[package]]
 name = "frame-metadata-hash-extension"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "docify",
@@ -3486,7 +3486,7 @@ dependencies = [
 [[package]]
 name = "frame-support"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "aquamarine",
  "array-bytes",
@@ -3527,7 +3527,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural"
 version = "23.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "Inflector",
  "cfg-expr",
@@ -3546,7 +3546,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools"
 version = "10.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 3.1.0",
@@ -3558,7 +3558,7 @@ dependencies = [
 [[package]]
 name = "frame-support-procedural-tools-derive"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3568,7 +3568,7 @@ dependencies = [
 [[package]]
 name = "frame-system"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cfg-if",
  "docify",
@@ -3588,7 +3588,7 @@ dependencies = [
 [[package]]
 name = "frame-system-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3603,7 +3603,7 @@ dependencies = [
 [[package]]
 name = "frame-system-rpc-runtime-api"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -3612,7 +3612,7 @@ dependencies = [
 [[package]]
 name = "frame-try-runtime"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -4534,7 +4534,7 @@ dependencies = [
  "http",
  "jsonrpsee-core",
  "pin-project",
- "rustls-native-certs 0.7.0",
+ "rustls-native-certs 0.7.1",
  "rustls-pki-types",
  "soketto",
  "thiserror",
@@ -5707,7 +5707,7 @@ dependencies = [
 [[package]]
 name = "mmr-gadget"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "log",
@@ -5726,7 +5726,7 @@ dependencies = [
 [[package]]
 name = "mmr-rpc"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -6399,7 +6399,7 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 [[package]]
 name = "pallet-asset-conversion"
 version = "10.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6418,7 +6418,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-rate"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6433,7 +6433,7 @@ dependencies = [
 [[package]]
 name = "pallet-asset-tx-payment"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6451,7 +6451,7 @@ dependencies = [
 [[package]]
 name = "pallet-assets"
 version = "29.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6467,7 +6467,7 @@ dependencies = [
 [[package]]
 name = "pallet-aura"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6484,7 +6484,7 @@ dependencies = [
 [[package]]
 name = "pallet-authority-discovery"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6500,7 +6500,7 @@ dependencies = [
 [[package]]
 name = "pallet-authorship"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6514,7 +6514,7 @@ dependencies = [
 [[package]]
 name = "pallet-babe"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6538,7 +6538,7 @@ dependencies = [
 [[package]]
 name = "pallet-bags-list"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "aquamarine",
  "docify",
@@ -6560,7 +6560,7 @@ dependencies = [
 [[package]]
 name = "pallet-balances"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6576,7 +6576,7 @@ dependencies = [
 [[package]]
 name = "pallet-beefy"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6596,7 +6596,7 @@ dependencies = [
 [[package]]
 name = "pallet-beefy-mmr"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "binary-merkle-tree",
@@ -6621,7 +6621,7 @@ dependencies = [
 [[package]]
 name = "pallet-bounties"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6639,7 +6639,7 @@ dependencies = [
 [[package]]
 name = "pallet-broker"
 version = "0.6.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -6658,7 +6658,7 @@ dependencies = [
 [[package]]
 name = "pallet-child-bounties"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6677,7 +6677,7 @@ dependencies = [
 [[package]]
 name = "pallet-collator-selection"
 version = "9.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6697,7 +6697,7 @@ dependencies = [
 [[package]]
 name = "pallet-collective"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6766,7 +6766,7 @@ dependencies = [
 [[package]]
 name = "pallet-contracts"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitflags 1.3.2",
  "environmental",
@@ -6799,7 +6799,7 @@ dependencies = [
 [[package]]
 name = "pallet-contracts-proc-macro"
 version = "18.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6809,7 +6809,7 @@ dependencies = [
 [[package]]
 name = "pallet-contracts-uapi"
 version = "5.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitflags 1.3.2",
  "parity-scale-codec",
@@ -6821,7 +6821,7 @@ dependencies = [
 [[package]]
 name = "pallet-conviction-voting"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -6838,7 +6838,7 @@ dependencies = [
 [[package]]
 name = "pallet-delegated-staking"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6852,7 +6852,7 @@ dependencies = [
 [[package]]
 name = "pallet-democracy"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6870,7 +6870,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-multi-phase"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -6893,7 +6893,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-support-benchmarking"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -6907,7 +6907,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6926,7 +6926,7 @@ dependencies = [
 [[package]]
 name = "pallet-fast-unstake"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -6945,7 +6945,7 @@ dependencies = [
 [[package]]
 name = "pallet-grandpa"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6968,7 +6968,7 @@ dependencies = [
 [[package]]
 name = "pallet-identity"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -6985,7 +6985,7 @@ dependencies = [
 [[package]]
 name = "pallet-im-online"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7005,7 +7005,7 @@ dependencies = [
 [[package]]
 name = "pallet-indices"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7022,7 +7022,7 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7039,7 +7039,7 @@ dependencies = [
 [[package]]
 name = "pallet-message-queue"
 version = "31.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "environmental",
  "frame-benchmarking",
@@ -7059,7 +7059,7 @@ dependencies = [
 [[package]]
 name = "pallet-mmr"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7077,7 +7077,7 @@ dependencies = [
 [[package]]
 name = "pallet-multisig"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7093,7 +7093,7 @@ dependencies = [
 [[package]]
 name = "pallet-nfts"
 version = "22.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "enumflags2",
  "frame-benchmarking",
@@ -7111,7 +7111,7 @@ dependencies = [
 [[package]]
 name = "pallet-nis"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7127,7 +7127,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools"
 version = "25.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7146,7 +7146,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-benchmarking"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -7167,7 +7167,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-runtime-api"
 version = "23.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "pallet-nomination-pools",
  "parity-scale-codec",
@@ -7178,7 +7178,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7195,7 +7195,7 @@ dependencies = [
 [[package]]
 name = "pallet-offences-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -7219,7 +7219,7 @@ dependencies = [
 [[package]]
 name = "pallet-parameters"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -7260,7 +7260,7 @@ dependencies = [
 [[package]]
 name = "pallet-preimage"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7277,7 +7277,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7292,7 +7292,7 @@ dependencies = [
 [[package]]
 name = "pallet-ranked-collective"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7311,7 +7311,7 @@ dependencies = [
 [[package]]
 name = "pallet-recovery"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7326,7 +7326,7 @@ dependencies = [
 [[package]]
 name = "pallet-referenda"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "assert_matches",
  "frame-benchmarking",
@@ -7345,7 +7345,7 @@ dependencies = [
 [[package]]
 name = "pallet-root-testing"
 version = "4.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7360,7 +7360,7 @@ dependencies = [
 [[package]]
 name = "pallet-scheduler"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -7378,7 +7378,7 @@ dependencies = [
 [[package]]
 name = "pallet-session"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7400,7 +7400,7 @@ dependencies = [
 [[package]]
 name = "pallet-session-benchmarking"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7417,7 +7417,7 @@ dependencies = [
 [[package]]
 name = "pallet-society"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7435,7 +7435,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -7458,7 +7458,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-curve"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
@@ -7469,7 +7469,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-reward-fn"
 version = "19.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "log",
  "sp-arithmetic",
@@ -7478,7 +7478,7 @@ dependencies = [
 [[package]]
 name = "pallet-staking-runtime-api"
 version = "14.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -7488,7 +7488,7 @@ dependencies = [
 [[package]]
 name = "pallet-state-trie-migration"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7505,7 +7505,7 @@ dependencies = [
 [[package]]
 name = "pallet-sudo"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -7521,7 +7521,7 @@ dependencies = [
 [[package]]
 name = "pallet-timestamp"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -7541,7 +7541,7 @@ dependencies = [
 [[package]]
 name = "pallet-tips"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7560,7 +7560,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7576,7 +7576,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc"
 version = "30.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "jsonrpsee",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -7592,7 +7592,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-rpc-runtime-api"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
@@ -7604,7 +7604,7 @@ dependencies = [
 [[package]]
 name = "pallet-treasury"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "frame-benchmarking",
@@ -7623,7 +7623,7 @@ dependencies = [
 [[package]]
 name = "pallet-utility"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7639,7 +7639,7 @@ dependencies = [
 [[package]]
 name = "pallet-vesting"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7654,7 +7654,7 @@ dependencies = [
 [[package]]
 name = "pallet-whitelist"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7669,7 +7669,7 @@ dependencies = [
 [[package]]
 name = "pallet-xcm"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bounded-collections",
  "frame-benchmarking",
@@ -7693,7 +7693,7 @@ dependencies = [
 [[package]]
 name = "pallet-xcm-benchmarks"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -7712,7 +7712,7 @@ dependencies = [
 [[package]]
 name = "parachains-common"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-utility",
@@ -7923,9 +7923,9 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "pest"
-version = "2.7.10"
+version = "2.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "560131c633294438da9f7c4b08189194b20946c8274c6b9e38881a7874dc8ee8"
+checksum = "cd53dff83f26735fdc1ca837098ccf133605d794cdae66acfc2bfac3ec809d95"
 dependencies = [
  "memchr",
  "thiserror",
@@ -7934,9 +7934,9 @@ dependencies = [
 
 [[package]]
 name = "pest_derive"
-version = "2.7.10"
+version = "2.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26293c9193fbca7b1a3bf9b79dc1e388e927e6cacaa78b4a3ab705a1d3d41459"
+checksum = "2a548d2beca6773b1c244554d36fcf8548a8a58e74156968211567250e48e49a"
 dependencies = [
  "pest",
  "pest_generator",
@@ -7944,9 +7944,9 @@ dependencies = [
 
 [[package]]
 name = "pest_generator"
-version = "2.7.10"
+version = "2.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ec22af7d3fb470a85dd2ca96b7c577a1eb4ef6f1683a9fe9a8c16e136c04687"
+checksum = "3c93a82e8d145725dcbaf44e5ea887c8a869efdcc28706df2d08c69e17077183"
 dependencies = [
  "pest",
  "pest_meta",
@@ -7957,9 +7957,9 @@ dependencies = [
 
 [[package]]
 name = "pest_meta"
-version = "2.7.10"
+version = "2.7.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7a240022f37c361ec1878d646fc5b7d7c4d28d5946e1a80ad5a7a4f4ca0bdcd"
+checksum = "a941429fea7e08bedec25e4f6785b6ffaacc6b755da98df5ef3e7dcf4a124c4f"
 dependencies = [
  "once_cell",
  "pest",
@@ -8044,7 +8044,7 @@ checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
 [[package]]
 name = "polkadot-approval-distribution"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "futures",
@@ -8064,7 +8064,7 @@ dependencies = [
 [[package]]
 name = "polkadot-availability-bitfield-distribution"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "always-assert",
  "futures",
@@ -8080,7 +8080,7 @@ dependencies = [
 [[package]]
 name = "polkadot-availability-distribution"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "derive_more",
  "fatality",
@@ -8104,7 +8104,7 @@ dependencies = [
 [[package]]
 name = "polkadot-availability-recovery"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "fatality",
@@ -8137,7 +8137,7 @@ dependencies = [
 [[package]]
 name = "polkadot-cli"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cfg-if",
  "clap",
@@ -8165,7 +8165,7 @@ dependencies = [
 [[package]]
 name = "polkadot-collator-protocol"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "fatality",
@@ -8187,7 +8187,7 @@ dependencies = [
 [[package]]
 name = "polkadot-core-primitives"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -8199,7 +8199,7 @@ dependencies = [
 [[package]]
 name = "polkadot-dispute-distribution"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "derive_more",
  "fatality",
@@ -8224,7 +8224,7 @@ dependencies = [
 [[package]]
 name = "polkadot-erasure-coding"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "polkadot-node-primitives",
@@ -8238,7 +8238,7 @@ dependencies = [
 [[package]]
 name = "polkadot-gossip-support"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "futures-timer",
@@ -8260,7 +8260,7 @@ dependencies = [
 [[package]]
 name = "polkadot-network-bridge"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "always-assert",
  "async-trait",
@@ -8283,7 +8283,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-collation-generation"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "parity-scale-codec",
@@ -8301,7 +8301,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-approval-voting"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "derive_more",
@@ -8334,7 +8334,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-av-store"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "futures",
@@ -8356,7 +8356,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-backing"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "fatality",
@@ -8376,7 +8376,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-bitfield-signing"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "polkadot-node-subsystem",
@@ -8391,7 +8391,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-candidate-validation"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -8412,7 +8412,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-chain-api"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "polkadot-node-metrics",
@@ -8426,7 +8426,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-chain-selection"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "futures-timer",
@@ -8443,7 +8443,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-dispute-coordinator"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "fatality",
  "futures",
@@ -8462,7 +8462,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-parachains-inherent"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -8479,7 +8479,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-prospective-parachains"
 version = "6.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "fatality",
@@ -8496,7 +8496,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-provisioner"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "fatality",
@@ -8514,7 +8514,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-pvf"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "always-assert",
  "array-bytes",
@@ -8543,7 +8543,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-pvf-checker"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "polkadot-node-primitives",
@@ -8559,7 +8559,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-pvf-common"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cpu-time",
  "futures",
@@ -8585,7 +8585,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-core-runtime-api"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "polkadot-node-metrics",
@@ -8600,7 +8600,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-jaeger"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "lazy_static",
  "log",
@@ -8619,7 +8619,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-metrics"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bs58 0.5.1",
  "futures",
@@ -8638,7 +8638,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-network-protocol"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-channel 1.9.0",
  "async-trait",
@@ -8664,7 +8664,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-primitives"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "bounded-vec",
@@ -8687,7 +8687,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-subsystem"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "polkadot-node-jaeger",
  "polkadot-node-subsystem-types",
@@ -8697,7 +8697,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-subsystem-types"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -8727,7 +8727,7 @@ dependencies = [
 [[package]]
 name = "polkadot-node-subsystem-util"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -8763,7 +8763,7 @@ dependencies = [
 [[package]]
 name = "polkadot-overseer"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -8785,7 +8785,7 @@ dependencies = [
 [[package]]
 name = "polkadot-parachain-primitives"
 version = "6.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bounded-collections",
  "derive_more",
@@ -8802,7 +8802,7 @@ dependencies = [
 [[package]]
 name = "polkadot-primitives"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "hex-literal",
@@ -8829,7 +8829,7 @@ dependencies = [
 [[package]]
 name = "polkadot-rpc"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "jsonrpsee",
  "mmr-rpc",
@@ -8864,7 +8864,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-common"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitvec",
  "frame-benchmarking",
@@ -8915,7 +8915,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-metrics"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bs58 0.5.1",
  "frame-benchmarking",
@@ -8928,7 +8928,7 @@ dependencies = [
 [[package]]
 name = "polkadot-runtime-parachains"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bitflags 1.3.2",
  "bitvec",
@@ -8977,7 +8977,7 @@ dependencies = [
 [[package]]
 name = "polkadot-service"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -9098,7 +9098,7 @@ dependencies = [
 [[package]]
 name = "polkadot-statement-distribution"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "arrayvec 0.7.4",
  "bitvec",
@@ -9121,7 +9121,7 @@ dependencies = [
 [[package]]
 name = "polkadot-statement-table"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "polkadot-primitives",
@@ -10015,7 +10015,7 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#b273d33f9981e2bb3375ab45faeb537f7ee35224"
+source = "git+https://github.com/w3f/ring-proof#96137b150288a66bc9e4df495efc64769b5d1321"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -10080,7 +10080,7 @@ dependencies = [
 [[package]]
 name = "rococo-runtime"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "binary-merkle-tree",
  "bitvec",
@@ -10181,7 +10181,7 @@ dependencies = [
 [[package]]
 name = "rococo-runtime-constants"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -10405,7 +10405,7 @@ dependencies = [
  "log",
  "ring 0.17.8",
  "rustls-pki-types",
- "rustls-webpki 0.102.4",
+ "rustls-webpki 0.102.5",
  "subtle 2.6.1",
  "zeroize",
 ]
@@ -10424,9 +10424,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-native-certs"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f1fb85efa936c42c6d5fc28d2629bb51e4b2f4b8a5211e297d599cc5a093792"
+checksum = "a88d6d420651b496bdd98684116959239430022a115c1240e6c3993be0b15fba"
 dependencies = [
  "openssl-probe",
  "rustls-pemfile 2.1.2",
@@ -10472,9 +10472,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-webpki"
-version = "0.102.4"
+version = "0.102.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff448f7e92e913c4b7d4c6d8e4540a1724b319b4152b8aef6d4cf8339712b33e"
+checksum = "f9a6fccd794a42c2c105b513a2f62bc3fd8f3ba57a4593677ceb0bd035164d78"
 dependencies = [
  "ring 0.17.8",
  "rustls-pki-types",
@@ -10536,7 +10536,7 @@ dependencies = [
 [[package]]
 name = "sc-allocator"
 version = "23.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "log",
  "sp-core",
@@ -10547,7 +10547,7 @@ dependencies = [
 [[package]]
 name = "sc-authority-discovery"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -10578,7 +10578,7 @@ dependencies = [
 [[package]]
 name = "sc-basic-authorship"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "futures-timer",
@@ -10600,7 +10600,7 @@ dependencies = [
 [[package]]
 name = "sc-block-builder"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -10615,7 +10615,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "docify",
@@ -10642,7 +10642,7 @@ dependencies = [
 [[package]]
 name = "sc-chain-spec-derive"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
@@ -10653,7 +10653,7 @@ dependencies = [
 [[package]]
 name = "sc-cli"
 version = "0.36.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "chrono",
@@ -10694,7 +10694,7 @@ dependencies = [
 [[package]]
 name = "sc-client-api"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "fnv",
  "futures",
@@ -10721,7 +10721,7 @@ dependencies = [
 [[package]]
 name = "sc-client-db"
 version = "0.35.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "hash-db",
  "kvdb",
@@ -10747,7 +10747,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -10772,7 +10772,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-aura"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -10801,7 +10801,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "fork-tree",
@@ -10837,7 +10837,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-babe-rpc"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "jsonrpsee",
@@ -10859,7 +10859,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-beefy"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "async-channel 1.9.0",
@@ -10895,7 +10895,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-beefy-rpc"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "jsonrpsee",
@@ -10915,7 +10915,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-epochs"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "fork-tree",
  "parity-scale-codec",
@@ -10928,7 +10928,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-grandpa"
 version = "0.19.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "ahash",
  "array-bytes",
@@ -10972,7 +10972,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-grandpa-rpc"
 version = "0.19.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "finality-grandpa",
  "futures",
@@ -10992,7 +10992,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-slots"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -11015,7 +11015,7 @@ dependencies = [
 [[package]]
 name = "sc-executor"
 version = "0.32.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
@@ -11038,7 +11038,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-common"
 version = "0.29.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "polkavm",
  "sc-allocator",
@@ -11051,7 +11051,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-polkavm"
 version = "0.29.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "log",
  "polkavm",
@@ -11062,7 +11062,7 @@ dependencies = [
 [[package]]
 name = "sc-executor-wasmtime"
 version = "0.29.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "anyhow",
  "cfg-if",
@@ -11080,7 +11080,7 @@ dependencies = [
 [[package]]
 name = "sc-informant"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "ansi_term",
  "futures",
@@ -11097,7 +11097,7 @@ dependencies = [
 [[package]]
 name = "sc-keystore"
 version = "25.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "parking_lot 0.12.3",
@@ -11111,7 +11111,7 @@ dependencies = [
 [[package]]
 name = "sc-mixnet"
 version = "0.4.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "arrayvec 0.7.4",
@@ -11140,7 +11140,7 @@ dependencies = [
 [[package]]
 name = "sc-network"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "async-channel 1.9.0",
@@ -11191,7 +11191,7 @@ dependencies = [
 [[package]]
 name = "sc-network-common"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "bitflags 1.3.2",
@@ -11209,7 +11209,7 @@ dependencies = [
 [[package]]
 name = "sc-network-gossip"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "ahash",
  "futures",
@@ -11229,7 +11229,7 @@ dependencies = [
 [[package]]
 name = "sc-network-light"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "async-channel 1.9.0",
@@ -11250,7 +11250,7 @@ dependencies = [
 [[package]]
 name = "sc-network-sync"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "async-channel 1.9.0",
@@ -11287,7 +11287,7 @@ dependencies = [
 [[package]]
 name = "sc-network-transactions"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "futures",
@@ -11307,7 +11307,7 @@ dependencies = [
 [[package]]
 name = "sc-network-types"
 version = "0.10.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bs58 0.5.1",
  "ed25519-dalek 2.1.1",
@@ -11323,7 +11323,7 @@ dependencies = [
 [[package]]
 name = "sc-offchain"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "bytes",
@@ -11358,7 +11358,7 @@ dependencies = [
 [[package]]
 name = "sc-proposer-metrics"
 version = "0.17.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "log",
  "substrate-prometheus-endpoint",
@@ -11367,7 +11367,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "jsonrpsee",
@@ -11399,7 +11399,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-api"
 version = "0.33.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -11419,7 +11419,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-server"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "forwarded-header-value",
  "futures",
@@ -11439,7 +11439,7 @@ dependencies = [
 [[package]]
 name = "sc-rpc-spec-v2"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "futures",
@@ -11471,7 +11471,7 @@ dependencies = [
 [[package]]
 name = "sc-service"
 version = "0.35.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "directories",
@@ -11535,7 +11535,7 @@ dependencies = [
 [[package]]
 name = "sc-state-db"
 version = "0.30.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -11546,7 +11546,7 @@ dependencies = [
 [[package]]
 name = "sc-storage-monitor"
 version = "0.16.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "clap",
  "fs4",
@@ -11559,7 +11559,7 @@ dependencies = [
 [[package]]
 name = "sc-sync-state-rpc"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -11578,7 +11578,7 @@ dependencies = [
 [[package]]
 name = "sc-sysinfo"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "derive_more",
  "futures",
@@ -11599,7 +11599,7 @@ dependencies = [
 [[package]]
 name = "sc-telemetry"
 version = "15.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "chrono",
  "futures",
@@ -11619,7 +11619,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "ansi_term",
  "chrono",
@@ -11649,7 +11649,7 @@ dependencies = [
 [[package]]
 name = "sc-tracing-proc-macro"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro-crate 3.1.0",
  "proc-macro2",
@@ -11660,7 +11660,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -11687,7 +11687,7 @@ dependencies = [
 [[package]]
 name = "sc-transaction-pool-api"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -11703,7 +11703,7 @@ dependencies = [
 [[package]]
 name = "sc-utils"
 version = "14.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-channel 1.9.0",
  "futures",
@@ -12161,7 +12161,7 @@ checksum = "826167069c09b99d56f31e9ae5c99049e932a98c9dc2dac47645b08dbbf76ba7"
 [[package]]
 name = "slot-range-helper"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "enumn",
  "parity-scale-codec",
@@ -12355,7 +12355,7 @@ dependencies = [
 [[package]]
 name = "sp-api"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "hash-db",
  "log",
@@ -12377,7 +12377,7 @@ dependencies = [
 [[package]]
 name = "sp-api-proc-macro"
 version = "15.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "Inflector",
  "blake2 0.10.6",
@@ -12391,7 +12391,7 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "30.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12404,7 +12404,7 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "23.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "integer-sqrt",
@@ -12437,7 +12437,7 @@ dependencies = [
 [[package]]
 name = "sp-authority-discovery"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12449,7 +12449,7 @@ dependencies = [
 [[package]]
 name = "sp-block-builder"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "sp-api",
  "sp-inherents",
@@ -12459,7 +12459,7 @@ dependencies = [
 [[package]]
 name = "sp-blockchain"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "futures",
  "log",
@@ -12477,7 +12477,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus"
 version = "0.32.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "futures",
@@ -12492,7 +12492,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-aura"
 version = "0.32.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -12508,7 +12508,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-babe"
 version = "0.32.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -12526,7 +12526,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-beefy"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "lazy_static",
  "parity-scale-codec",
@@ -12546,7 +12546,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-grandpa"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "finality-grandpa",
  "log",
@@ -12563,7 +12563,7 @@ dependencies = [
 [[package]]
 name = "sp-consensus-slots"
 version = "0.32.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12574,7 +12574,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "bandersnatch_vrfs",
@@ -12621,7 +12621,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-ec-utils"
 version = "0.10.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "ark-bls12-377",
  "ark-bls12-377-ext",
@@ -12641,7 +12641,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -12654,7 +12654,7 @@ dependencies = [
 [[package]]
 name = "sp-crypto-hashing-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "quote",
  "sp-crypto-hashing",
@@ -12664,7 +12664,7 @@ dependencies = [
 [[package]]
 name = "sp-database"
 version = "10.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "kvdb",
  "parking_lot 0.12.3",
@@ -12673,7 +12673,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12683,7 +12683,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -12693,7 +12693,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -12703,7 +12703,7 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.25.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "environmental",
  "parity-scale-codec",
@@ -12713,7 +12713,7 @@ dependencies = [
 [[package]]
 name = "sp-genesis-builder"
 version = "0.8.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12725,7 +12725,7 @@ dependencies = [
 [[package]]
 name = "sp-inherents"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
@@ -12738,7 +12738,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "30.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bytes",
  "ed25519-dalek 2.1.1",
@@ -12764,7 +12764,7 @@ dependencies = [
 [[package]]
 name = "sp-keyring"
 version = "31.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -12774,7 +12774,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.34.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
@@ -12785,7 +12785,7 @@ dependencies = [
 [[package]]
 name = "sp-maybe-compressed-blob"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "thiserror",
  "zstd 0.12.4",
@@ -12794,7 +12794,7 @@ dependencies = [
 [[package]]
 name = "sp-metadata-ir"
 version = "0.6.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
@@ -12804,7 +12804,7 @@ dependencies = [
 [[package]]
 name = "sp-mixnet"
 version = "0.4.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12815,7 +12815,7 @@ dependencies = [
 [[package]]
 name = "sp-mmr-primitives"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "log",
  "parity-scale-codec",
@@ -12832,7 +12832,7 @@ dependencies = [
 [[package]]
 name = "sp-npos-elections"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12845,7 +12845,7 @@ dependencies = [
 [[package]]
 name = "sp-offchain"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "sp-api",
  "sp-core",
@@ -12855,7 +12855,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -12865,7 +12865,7 @@ dependencies = [
 [[package]]
 name = "sp-rpc"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "rustc-hash",
  "serde",
@@ -12875,7 +12875,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "31.0.1"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "docify",
  "either",
@@ -12900,7 +12900,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -12919,7 +12919,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "24.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "bytes",
  "impl-trait-for-tuples",
@@ -12938,7 +12938,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "Inflector",
  "expander",
@@ -12951,7 +12951,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "17.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "Inflector",
  "expander",
@@ -12964,7 +12964,7 @@ dependencies = [
 [[package]]
 name = "sp-session"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -12978,7 +12978,7 @@ dependencies = [
 [[package]]
 name = "sp-staking"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
@@ -12991,7 +12991,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.35.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "hash-db",
  "log",
@@ -13011,7 +13011,7 @@ dependencies = [
 [[package]]
 name = "sp-statement-store"
 version = "10.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "aes-gcm",
  "curve25519-dalek 4.1.3",
@@ -13035,17 +13035,17 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 
 [[package]]
 name = "sp-std"
 version = "14.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -13057,7 +13057,7 @@ dependencies = [
 [[package]]
 name = "sp-storage"
 version = "19.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -13069,7 +13069,7 @@ dependencies = [
 [[package]]
 name = "sp-timestamp"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -13081,7 +13081,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "tracing",
@@ -13092,7 +13092,7 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "16.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "parity-scale-codec",
  "tracing",
@@ -13103,7 +13103,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-pool"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "sp-api",
  "sp-runtime",
@@ -13112,7 +13112,7 @@ dependencies = [
 [[package]]
 name = "sp-transaction-storage-proof"
 version = "26.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "async-trait",
  "parity-scale-codec",
@@ -13126,7 +13126,7 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "ahash",
  "hash-db",
@@ -13149,7 +13149,7 @@ dependencies = [
 [[package]]
 name = "sp-version"
 version = "29.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
@@ -13166,7 +13166,7 @@ dependencies = [
 [[package]]
 name = "sp-version-proc-macro"
 version = "13.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "parity-scale-codec",
  "proc-macro2",
@@ -13177,7 +13177,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
@@ -13189,7 +13189,7 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "20.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk#18ed309a37036db8429665f1e91fb24ab312e646"
+source = "git+https://github.com/paritytech/polkadot-sdk#b6f18232449b003d716a0d630f3da3a9dce669ab"
 dependencies = [
  "impl-trait-for-tuples",
  "log",
@@ -13199,7 +13199,7 @@ dependencies = [
 [[package]]
 name = "sp-weights"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "bounded-collections",
  "parity-scale-codec",
@@ -13265,7 +13265,7 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "staging-parachain-info"
 version = "0.7.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -13279,7 +13279,7 @@ dependencies = [
 [[package]]
 name = "staging-xcm"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "array-bytes",
  "bounded-collections",
@@ -13297,7 +13297,7 @@ dependencies = [
 [[package]]
 name = "staging-xcm-builder"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -13319,7 +13319,7 @@ dependencies = [
 [[package]]
 name = "staging-xcm-executor"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "environmental",
  "frame-benchmarking",
@@ -13454,7 +13454,7 @@ dependencies = [
 [[package]]
 name = "substrate-bip39"
 version = "0.4.7"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "hmac 0.12.1",
  "pbkdf2",
@@ -13466,12 +13466,12 @@ dependencies = [
 [[package]]
 name = "substrate-build-script-utils"
 version = "11.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 
 [[package]]
 name = "substrate-frame-rpc-system"
 version = "28.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures",
@@ -13490,7 +13490,7 @@ dependencies = [
 [[package]]
 name = "substrate-prometheus-endpoint"
 version = "0.17.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "hyper",
  "log",
@@ -13502,7 +13502,7 @@ dependencies = [
 [[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "27.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "jsonrpsee",
  "parity-scale-codec",
@@ -13519,7 +13519,7 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder"
 version = "17.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "build-helper",
  "cargo_metadata",
@@ -14070,7 +14070,7 @@ dependencies = [
 [[package]]
 name = "tracing-gum"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "coarsetime",
  "polkadot-primitives",
@@ -14081,7 +14081,7 @@ dependencies = [
 [[package]]
 name = "tracing-gum-proc-macro"
 version = "5.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "expander",
  "proc-macro-crate 3.1.0",
@@ -14969,7 +14969,7 @@ dependencies = [
 [[package]]
 name = "westend-runtime"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "binary-merkle-tree",
  "bitvec",
@@ -15077,7 +15077,7 @@ dependencies = [
 [[package]]
 name = "westend-runtime-constants"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "polkadot-primitives",
@@ -15495,7 +15495,7 @@ dependencies = [
 [[package]]
 name = "xcm-fee-payment-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -15510,7 +15510,7 @@ dependencies = [
 [[package]]
 name = "xcm-procedural"
 version = "7.0.0"
-source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#1af75ce5f042e7cba86f32f691ddddcc5dc40dcb"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-v1.13.0#b788ee63a311984787af4d37d37c14dcff1c18c3"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -15543,18 +15543,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.7.34"
+version = "0.7.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae87e3fcd617500e5d106f0380cf7b77f3c6092aae37191433159dda23cfb087"
+checksum = "1b9b4fd18abc82b8136838da5d50bae7bdea537c574d8dc1a34ed098d6c166f0"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.34"
+version = "0.7.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15e934569e47891f7d9411f1a451d947a60e000ab3bd24fbb970f000387d1b3b"
+checksum = "fa4f8080344d4671fb4e831a13ad1e68092748387dfc4f55e356242fae12ce3e"
 dependencies = [
  "proc-macro2",
  "quote",
