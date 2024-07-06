@@ -2,35 +2,35 @@
 timeout = 1000
 
 [relaychain]
-chain_spec_path = "./release/kusama-local.raw.json"
+chain_spec_path = "./release/paseo-local-raw.json"
 default_command = "./bin/polkadot"
 
   [[relaychain.nodes]]
   name = "alice"
   validator = true
   ws_port = 10000
-  extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all",]
+  extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
 
   [[relaychain.nodes]]
   name = "bob"
   validator = true
-  extra_args = [ "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all" ]
+  extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
 
   [[relaychain.nodes]]
   name = "charlie"
   validator = true
-  extra_args = [ "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all" ]
+  extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
 
   [[relaychain.nodes]]
   name = "dave"
   validator = true
-  extra_args = [ "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all" ]
+  extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
 
 [[parachains]]
 id = 2281
 add_to_genesis = true
 cumulus_based = true
-chain = "kreivo-local"
+chain = "local"
 
   [[parachains.collators]]
   name = "kreivo1"
