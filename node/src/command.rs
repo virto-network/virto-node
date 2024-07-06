@@ -19,9 +19,14 @@ use crate::{
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 	Ok(match id {
-		"" | "kreivo" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec()),
-		"kreivo-local" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec_local()),
-		"kreivo-rococo-local" => Box::new(chain_spec::kreivo::kreivo_rococo_chain_spec_local()),
+		#[cfg(feature = "paseo")]
+		"" | "kreivo" => Box::new(chain_spec::kreivo::live::chain_spec()),
+		#[cfg(feature = "paseo")]
+		"local" => Box::new(chain_spec::kreivo::local::chain_spec()),
+		#[cfg(not(feature = "paseo"))]
+		"" | "kreivo" => Box::new(chain_spec::kreivo::live::chain_spec()),
+		#[cfg(not(feature = "paseo"))]
+		"local" => Box::new(chain_spec::kreivo::local::chain_spec()),
 		// -- Loading a specific spec from disk
 		path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 	})
