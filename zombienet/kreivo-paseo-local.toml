@@ -2,8 +2,9 @@
 timeout = 1000
 
 [relaychain]
-chain_spec_path = "./release/paseo-local-raw.json"
+chain_spec_path = "./release/paseo-local.raw.json"
 default_command = "./bin/polkadot"
+default_args = ["-lparachain=debug,xcm=trace"]
 
   [[relaychain.nodes]]
   name = "alice"
@@ -30,6 +31,7 @@ default_command = "./bin/polkadot"
 id = 2281
 add_to_genesis = true
 cumulus_based = true
+onboard_as_parachain = true
 chain = "local"
 
   [[parachains.collators]]

@@ -30,6 +30,7 @@ default_command = "./bin/polkadot"
 id = 2281
 add_to_genesis = true
 cumulus_based = true
+onboard_as_parachain = true
 chain = "local"
 
   [[parachains.collators]]
