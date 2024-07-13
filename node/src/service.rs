@@ -200,13 +200,7 @@ fn start_consensus(
 		para_client: client.clone(),
 		para_backend: backend,
 		relay_client: relay_chain_interface,
-		code_hash_provider: move |block_hash| {
-			use polkadot_cli::service::HeaderProvider;
-			let code_hash = client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash());
-			let number = client.number(block_hash).expect("block exists; qed");
-			log::trace!(">>> providing code hash for Aura: block_number = {number:?}, block_hash = {block_hash:?}, code_hash = {code_hash:?} <<<");
-			client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash())
-		},
+		code_hash_provider: move |block_hash| client.code_at(block_hash).ok().map(|c| ValidationCode::from(c).hash()),
 		sync_oracle,
 		keystore,
 		collator_key,
