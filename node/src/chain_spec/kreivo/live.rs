@@ -6,10 +6,13 @@ pub fn chain_spec() -> ChainSpec {
 }
 
 #[cfg(feature = "paseo")]
+use sp_core::crypto::Ss58Codec;
+
+#[cfg(feature = "paseo")]
 pub fn chain_spec() -> ChainSpec {
 	// Give your base currency a unit name and decimal places
 	let mut properties = sc_chain_spec::Properties::new();
-	properties.insert("tokenSymbol".into(), "KSM".into());
+	properties.insert("tokenSymbol".into(), "PAS".into());
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("ss58Format".into(), 42.into());
 
@@ -22,26 +25,24 @@ pub fn chain_spec() -> ChainSpec {
 			para_id: KREIVO_PARA_ID,
 		},
 	)
-	.with_name("Local Testnet")
-	.with_id("local_testnet")
-	.with_chain_type(ChainType::Local)
+	.with_name("Kreivo de Paseo")
+	.with_id("kreivo")
+	.with_chain_type(ChainType::Live)
 	.with_genesis_config_patch(local_genesis(
 		KREIVO_PARA_ID.into(),
 		// initial collators.
-		vec![
-			// TODO: @olanod insert collators here
-			// (
-			// 	get_account_id_from_seed::<sr25519::Public>("Alice"),
-			// 	get_collator_keys_from_seed("Alice"),
-			// ),
-		],
-		vec![],
-		// EvoLanodoqDsgHb98Ymbu41uXXKfCPDKxeM6dXHyJ2JoVus
-		[
-			0x68, 0x17, 0x07, 0x16, 0xab, 0x7c, 0x67, 0x35, 0xdd, 0x0a, 0x10, 0x12, 0x04, 0x5d, 0x9e, 0xa3, 0x38, 0x91,
-			0xb5, 0xf6, 0x59, 0x6c, 0xf9, 0x7e, 0xb2, 0x17, 0xd0, 0x96, 0x2d, 0x86, 0xa5, 0x18,
-		]
-		.into(),
+		vec![(
+			sr25519::Public::from_string("Ets3sAp4f2odq8FLEV17CYHwec5KgMvNHfV4MVuiLoadjVp")
+				.expect("valid ss58 given; qed")
+				.into(),
+			sr25519::Public::from_string("Ets3sAp4f2odq8FLEV17CYHwec5KgMvNHfV4MVuiLoadjVp")
+				.expect("valid ss58 given; qed")
+				.into(),
+		)],
+		vec![], // No endowment. Send actual assets from Relay
+		sr25519::Public::from_string("EvoLanodoqDsgHb98Ymbu41uXXKfCPDKxeM6dXHyJ2JoVus")
+			.expect("valid ss58 given; qed")
+			.into(),
 	))
 	.with_protocol_id(DEFAULT_PROTOCOL_ID)
 	.with_properties(properties)

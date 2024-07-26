@@ -76,10 +76,10 @@ pub fn chain_spec() -> ChainSpec {
 		KREIVO_PARA_ID.into(),
 		// initial collators.
 		vec![
-			// (
-			// 	get_account_id_from_seed::<sr25519::Public>("Alice"),
-			// 	get_collator_keys_from_seed("Alice"),
-			// ),
+			(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_collator_keys_from_seed("Alice"),
+			),
 			(
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
 				get_collator_keys_from_seed("Bob"),
