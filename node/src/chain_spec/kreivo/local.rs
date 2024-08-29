@@ -11,13 +11,13 @@ pub fn chain_spec() -> ChainSpec {
 	ChainSpec::builder(
 		kreivo_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
 		Extensions {
-			relay_chain: "rococo-local".into(),
+			relay_chain: "kusama-local".into(),
 			// You MUST set this to the correct network!
 			para_id: KREIVO_PARA_ID,
 		},
 	)
-	.with_name("Kreivo-Rococo Local")
-	.with_id("kreivo_rococo_local")
+	.with_name("Kreivo-Kusama Local")
+	.with_id("kreivo_kusama_local")
 	.with_chain_type(ChainType::Local)
 	.with_protocol_id(DEFAULT_PROTOCOL_ID)
 	.with_properties(properties)
