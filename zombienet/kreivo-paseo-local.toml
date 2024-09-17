@@ -2,8 +2,8 @@
 timeout = 1000
 
 [relaychain]
-chain = "kusama-local"
-chain_spec_command = "./bin/runtimes/polkadot/chain-spec-generator {% raw %} {{chainName}} {% endraw %}"
+chain = "paseo-local"
+chain_spec_command = "./bin/runtimes/paseo/chain-spec-generator {% raw %} {{chainName}} {% endraw %}"
 default_args = ["-lparachain=debug", "-lxcm=trace"]
 default_command = "./bin/polkadot"
 

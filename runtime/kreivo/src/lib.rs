@@ -176,6 +176,8 @@ construct_runtime!(
 		Timestamp: pallet_timestamp = 2,
 		ParachainInfo: parachain_info = 3,
 		Origins: pallet_custom_origins = 4,
+		#[cfg(feature = "paseo")]
+		Sudo: pallet_sudo = 5,
 
 		// Monetary stuff.
 		Balances: pallet_balances = 10,
@@ -252,6 +254,17 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 	pub const SS58Prefix: u16 = 2;
+}
+
+#[cfg(feature = "paseo")]
+mod paseo {
+	use super::{Runtime, RuntimeCall, RuntimeEvent};
+
+	impl pallet_sudo::Config for Runtime {
+		type RuntimeEvent = RuntimeEvent;
+		type RuntimeCall = RuntimeCall;
+		type WeightInfo = pallet_sudo::weights::SubstrateWeight<Self>;
+	}
 }
 
 impl pallet_custom_origins::Config for Runtime {}

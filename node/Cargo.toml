@@ -81,6 +81,9 @@ substrate-build-script-utils = {workspace = true}
 
 [features]
 default = []
+paseo = [
+  "kreivo-runtime/paseo"
+]
 runtime-benchmarks = [
   "cumulus-primitives-core/runtime-benchmarks",
   "frame-benchmarking-cli/runtime-benchmarks",
