@@ -1,5 +1,4 @@
 [workspace]
-exclude = ["xcm-emulator"]
 members = ["node", "runtime/kreivo", "common"]
 resolver = "2"
 
