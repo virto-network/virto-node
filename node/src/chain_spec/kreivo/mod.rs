@@ -5,8 +5,6 @@ use kreivo_runtime::{constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId
 use sc_service::ChainType;
 use sp_core::sr25519;
 
-const DEFAULT_PROTOCOL_ID: &str = "kreivo";
-
 #[cfg(feature = "paseo")]
 const KREIVO_PARA_ID: u32 = 2281;
 #[cfg(not(feature = "paseo"))]

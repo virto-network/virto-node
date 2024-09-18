@@ -6,9 +6,6 @@ pub fn chain_spec() -> ChainSpec {
 }
 
 #[cfg(feature = "paseo")]
-use sp_core::crypto::Ss58Codec;
-
-#[cfg(feature = "paseo")]
 pub fn chain_spec() -> ChainSpec {
 	ChainSpec::from_json_bytes(include_bytes!("./kreivo_paseador_chainspec.json").as_slice()).unwrap()
 }
