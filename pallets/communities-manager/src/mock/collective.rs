@@ -20,7 +20,7 @@ impl pallet_referenda::Config<CollectiveReferendaInstance> for Test {
 	type Slash = ();
 	type Votes = pallet_ranked_collective::Votes;
 	type Tally = pallet_ranked_collective::TallyOf<Test, CollectiveInstance>;
-	type SubmissionDeposit = ConstU128<2>;
+	type SubmissionDeposit = ConstU64<2>;
 	type MaxQueued = ConstU32<3>;
 	type UndecidingTimeout = ConstU64<20>;
 	type AlarmInterval = AlarmInterval;
@@ -32,21 +32,25 @@ pub type CollectiveInstance = pallet_ranked_collective::Instance1;
 impl pallet_ranked_collective::Config<CollectiveInstance> for Test {
 	type WeightInfo = pallet_ranked_collective::weights::SubstrateWeight<Self>;
 	type RuntimeEvent = RuntimeEvent;
-
+	type AddOrigin = EnsureNever<()>;
+	type RemoveOrigin = Self::DemoteOrigin;
+	type ExchangeOrigin = EnsureNever<()>;
+	type MemberSwappedHandler = ();
 	type PromoteOrigin = EnsureRootWithSuccess<Self::AccountId, ConstU16<65535>>;
 	type DemoteOrigin = EnsureRootWithSuccess<Self::AccountId, ConstU16<65535>>;
 	type Polls = CollectiveReferenda;
 	type MinRankOfClass = ();
 	type VoteWeight = pallet_ranked_collective::Linear;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkSetup = ();
 }
 
 pub struct TracksInfo;
 impl pallet_referenda::TracksInfo<Balance, BlockNumberFor<Test>> for TracksInfo {
 	type Id = TrackId;
 	type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
-	type TracksIter = pallet_referenda::StaticTracksIter<Self::Id, Balance, BlockNumberFor<Test>>;
 
-	fn tracks() -> Self::TracksIter {
+	fn tracks() -> impl Iterator<Item = Cow<'static, Track<TrackId, Balance, BlockNumberFor<Test>>>> {
 		const DATA: [pallet_referenda::Track<TrackId, Balance, BlockNumberFor<Test>>; 1] = [Track {
 			id: 0,
 			info: pallet_referenda::TrackInfo {

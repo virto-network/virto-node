@@ -17,44 +17,26 @@
 //! Taken from polkadot/runtime/common (at a21cd64) and adapted for parachains.
 
 use frame_support::traits::{
+	fungible::{DecreaseIssuance, IncreaseIssuance},
 	fungibles::{Balanced, Credit},
-	Currency, Imbalance, OnUnbalanced,
+	Currency,
 };
 use pallet_asset_tx_payment::HandleCredit;
-use sp_runtime::traits::MaybeEquivalence;
 use sp_std::marker::PhantomData;
-use xcm::latest::MultiLocation;
-
-// TODO - Create and import XCM common types
-//use xcm::latest::{AssetId, Fungibility::Fungible, MultiAsset, MultiLocation};
-
-/// Type alias to conveniently refer to the `Currency::NegativeImbalance`
-/// associated type.
-pub type NegativeImbalance<T> =
-	<pallet_balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// Type alias to conveniently refer to `frame_system`'s `Config::AccountId`.
-pub type AccountIdOf<R> = <R as frame_system::Config>::AccountId;
+pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 
-pub struct DealWithFees<R>(PhantomData<R>);
-impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
-where
-	R: pallet_balances::Config + pallet_collator_selection::Config + pallet_treasury::Config,
-	pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
-	AccountIdOf<R>: From<polkadot_core_primitives::v2::AccountId> + Into<polkadot_core_primitives::v2::AccountId>,
-	<R as frame_system::Config>::RuntimeEvent: From<pallet_balances::Event<R>>,
-{
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
-		use pallet_treasury::Pallet as Treasury;
-		if let Some(mut fees) = fees_then_tips.next() {
-			if let Some(tips) = fees_then_tips.next() {
-				tips.merge_into(&mut fees);
-			}
-			// 100% of the fees + tips (if any) go to the treasury
-			<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(fees);
-		}
-	}
-}
+// /// Type alias to conveniently refer to the `Currency::NegativeImbalance`
+// /// associated type.
+pub type NegativeImbalance<T, I> = <pallet_balances::Pallet<T, I> as Currency<AccountIdOf<T>>>::NegativeImbalance;
+
+/// Type Alias to represent fungible imbalances
+pub type FungibleImbalance<T, I> = frame_support::traits::fungible::Imbalance<
+	<T as pallet_balances::Config<I>>::Balance,
+	DecreaseIssuance<AccountIdOf<T>, pallet_balances::Pallet<T, I>>,
+	IncreaseIssuance<AccountIdOf<T>, pallet_balances::Pallet<T, I>>,
+>;
 
 /// A `HandleCredit` implementation that naively transfers the fees to the block
 /// author. Will drop and burn the assets in case the transfer fails.
@@ -72,25 +54,4 @@ where
 			let _ = pallet_assets::Pallet::<R, I>::resolve(&author, credit);
 		}
 	}
-}
-
-pub struct AsAssetMultiLocation<AssetId, AssetIdInfoGetter>(PhantomData<(AssetId, AssetIdInfoGetter)>);
-impl<AssetId, AssetIdInfoGetter> MaybeEquivalence<MultiLocation, AssetId>
-	for AsAssetMultiLocation<AssetId, AssetIdInfoGetter>
-where
-	AssetId: Clone,
-	AssetIdInfoGetter: AssetMultiLocationGetter<AssetId>,
-{
-	fn convert(asset_multi_location: &MultiLocation) -> Option<AssetId> {
-		AssetIdInfoGetter::get_asset_id(asset_multi_location)
-	}
-
-	fn convert_back(asset_id: &AssetId) -> Option<MultiLocation> {
-		AssetIdInfoGetter::get_asset_multi_location(asset_id.clone())
-	}
-}
-
-pub trait AssetMultiLocationGetter<AssetId> {
-	fn get_asset_multi_location(asset_id: AssetId) -> Option<MultiLocation>;
-	fn get_asset_id(asset_multi_location: &MultiLocation) -> Option<AssetId>;
 }

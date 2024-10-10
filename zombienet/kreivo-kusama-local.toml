@@ -2,48 +2,47 @@
 timeout = 1000
 
 [relaychain]
-chain_spec_path = "./release/kusama-local.raw.json"
+chain = "kusama-local"
+chain_spec_command = "./bin/runtimes/polkadot/chain-spec-generator {% raw %} {{chainName}} {% endraw %}"
+default_args = ["-lparachain=debug", "-lxcm=trace"]
 default_command = "./bin/polkadot"
 
-  [[relaychain.nodes]]
-  name = "alice"
-  validator = true
-  ws_port = 10000
-  extra_args = [
-    "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all",
-  ]
+[[relaychain.nodes]]
+extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
+name = "alice"
+validator = true
+ws_port = 10000
 
-  [[relaychain.nodes]]
-  name = "bob"
-  validator = true
-  extra_args = [ "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all" ]
+[[relaychain.nodes]]
+extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
+name = "bob"
+validator = true
 
-  [[relaychain.nodes]]
-  name = "charlie"
-  validator = true
-  extra_args = [ "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all" ]
+[[relaychain.nodes]]
+extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
+name = "charlie"
+validator = true
 
-  [[relaychain.nodes]]
-  name = "dave"
-  validator = true
-  extra_args = [ "--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all" ]
+[[relaychain.nodes]]
+extra_args = ["--force-authoring -lparachain=debug --unsafe-rpc-external --rpc-cors=all"]
+name = "dave"
+validator = true
 
 [[parachains]]
-id = 2281
 add_to_genesis = true
+chain = "local"
 cumulus_based = true
-chain = "kreivo-local"
+id = 2281
+onboard_as_parachain = true
 
-  [[parachains.collators]]
-  name = "kreivo1"
-  command = "./target/release/virto-node"
-  ws_port = 20000
-  validator = true
-  args = ["--force-authoring --log=xcm=trace,parachain=trace"]
+[[parachains.collators]]
+args = ["--force-authoring --log=xcm=trace,parachain=trace"]
+command = "./target/release/virto-node"
+name = "kreivo1"
+ws_port = 20000
 
-  [[parachains.collators]]
-  name = "kreivo2"
-  command = "./target/release/virto-node"
-  ws_port = 21000
-  validator = true
-  args = ["--force-authoring --log=xcm=trace,parachain=trace"]
+[[parachains.collators]]
+args = ["--force-authoring --log=xcm=trace,parachain=trace"]
+command = "./target/release/virto-node"
+name = "kreivo2"
+ws_port = 21000

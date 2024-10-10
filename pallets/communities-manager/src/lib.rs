@@ -16,7 +16,11 @@ pub use weights::*;
 use fc_traits_tracks::MutateTracks;
 use frame_support::{
 	pallet_prelude::*,
-	traits::{nonfungibles_v2::Create, OriginTrait, RankedMembers},
+	traits::{
+		nonfungibles_v2::Mutate as ItemMutate,
+		nonfungibles_v2::{Create as CollectionCreate, Trading},
+		Incrementable, OriginTrait, RankedMembers,
+	},
 };
 use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
 use pallet_communities::{
@@ -25,12 +29,17 @@ use pallet_communities::{
 };
 use pallet_nfts::CollectionConfig;
 use pallet_referenda::{TrackInfo, TracksInfo};
+use parity_scale_codec::Decode;
+use sp_runtime::{
+	str_array,
+	traits::{Get, StaticLookup},
+};
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use sp_runtime::str_array;
+	use parity_scale_codec::HasCompact;
 
 	use super::*;
 
@@ -44,7 +53,7 @@ pub mod pallet {
 		/// definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		type CreateCollection: Create<
+		type CreateCollection: CollectionCreate<
 			AccountIdOf<Self>,
 			CollectionConfig<NativeBalanceOf<Self>, BlockNumberFor<Self>, CommunityIdOf<Self>>,
 			CollectionId = CommunityIdOf<Self>,
@@ -63,8 +72,30 @@ pub mod pallet {
 		/// Type representing the weight of this pallet
 		type WeightInfo: WeightInfo;
 
-		// #[cfg(feature = "runtime-benchmarks")]
-		// type BenchmarkHelper: BenchmarkHelper<Self>;
+		type RegisterOrigin: EnsureOrigin<
+			OriginFor<Self>,
+			Success = Option<(NativeBalanceOf<Self>, AccountIdOf<Self>, AccountIdOf<Self>)>,
+		>;
+
+		type CreateMembershipsOrigin: EnsureOrigin<OriginFor<Self>>;
+
+		type MembershipId: Parameter + Decode + Incrementable + HasCompact;
+
+		type MembershipsManagerCollectionId: Get<CommunityIdOf<Self>>;
+
+		type MembershipsManagerOwner: Get<AccountIdOf<Self>>;
+
+		type CreateMemberships: ItemMutate<
+				AccountIdOf<Self>,
+				Self::ItemConfig,
+				CollectionId = CommunityIdOf<Self>,
+				ItemId = <Self as Config>::MembershipId,
+			> + Trading<
+				AccountIdOf<Self>,
+				NativeBalanceOf<Self>,
+				CollectionId = CommunityIdOf<Self>,
+				ItemId = <Self as Config>::MembershipId,
+			>;
 	}
 
 	#[pallet::pallet]
@@ -78,6 +109,11 @@ pub mod pallet {
 		/// The community with [`CommmunityId`](pallet_communities::CommunityId)
 		/// has been created.
 		CommunityRegistered { id: T::CommunityId },
+		/// The
+		MembershipsCreated {
+			starting_at: <T as Config>::MembershipId,
+			amount: u32,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -87,6 +123,8 @@ pub mod pallet {
 		InvalidCommunityName,
 		/// It was not possible to register the community
 		CannotRegister,
+		/// The amount of memberships to create exceeds the limit of 1024
+		CreatingTooManyMemberships,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -100,22 +138,24 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			community_id: CommunityIdOf<T>,
 			name: CommunityName,
-			maybe_admin_origin: Option<PalletsOriginOf<T>>,
+			first_admin: pallet_communities::AccountIdLookupOf<T>,
 			maybe_decision_method: Option<DecisionMethodFor<T>>,
 			maybe_track_info: Option<TrackInfoOf<T>>,
 			// _maybe_first_member: Option<AccountIdLookupOf<T>>,
 		) -> DispatchResult {
-			let maybe_deposit = T::CreateOrigin::ensure_origin(origin)?;
+			let maybe_deposit = T::RegisterOrigin::ensure_origin(origin)?;
 
 			let community_name = core::str::from_utf8(&name).map_err(|_| Error::<T>::InvalidCommunityName)?;
-			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();
-			let admin_origin = maybe_admin_origin.unwrap_or(community_origin.clone().into_caller());
+
+			let first_admin_account_id = T::Lookup::lookup(first_admin)?;
+			let admin_origin = frame_system::Origin::<T>::Signed(first_admin_account_id);
+
 			// Register first to check if community exists
-			pallet_communities::Pallet::<T>::register(&admin_origin, &community_id, maybe_deposit)?;
+			pallet_communities::Pallet::<T>::register(&admin_origin.clone().into(), &community_id, maybe_deposit)?;
 
 			if let Some(decision_method) = maybe_decision_method {
 				pallet_communities::Pallet::<T>::set_decision_method(
-					admin_origin.clone().into(),
+					admin_origin.into(),
 					community_id,
 					decision_method,
 				)?;
@@ -136,15 +176,60 @@ pub mod pallet {
 			)?;
 
 			// Create governance track for community
+			let community_origin: RuntimeOriginFor<T> = CommunityOrigin::<T>::new(community_id).into();
 			T::Tracks::insert(
 				community_id,
-				maybe_track_info.unwrap_or(Self::default_tack(community_name)),
+				maybe_track_info.unwrap_or_else(|| Self::default_tack(community_name)),
 				community_origin.into_caller(),
 			)?;
-			// Induct community at Kreivo Governance with rank 1
+			// Induct community at Kreivo Governance with rank 0
 			T::RankedCollective::induct(&community_account)?;
 
 			Self::deposit_event(Event::<T>::CommunityRegistered { id: community_id });
+			Ok(())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::create_memberships((*amount).into()))]
+		#[pallet::call_index(1)]
+		pub fn create_memberships(
+			origin: OriginFor<T>,
+			amount: u16,
+			starting_at: <T as Config>::MembershipId,
+			#[pallet::compact] price: NativeBalanceOf<T>,
+		) -> DispatchResult {
+			ensure!(amount <= 1024u16, Error::<T>::CreatingTooManyMemberships);
+			T::CreateMembershipsOrigin::ensure_origin(origin)?;
+
+			let mut id = starting_at.clone();
+			let mut minted = 0u32;
+			for _ in 0..amount {
+				T::CreateMemberships::mint_into(
+					&T::MembershipsManagerCollectionId::get(),
+					&id,
+					&T::MembershipsManagerOwner::get(),
+					&Default::default(),
+					true,
+				)?;
+
+				T::CreateMemberships::set_price(
+					&T::MembershipsManagerCollectionId::get(),
+					&id,
+					&T::MembershipsManagerOwner::get(),
+					Some(price),
+					None,
+				)?;
+				if let Some(next_id) = id.increment() {
+					id = next_id;
+					minted += 1;
+				} else {
+					break;
+				}
+			}
+
+			Self::deposit_event(Event::<T>::MembershipsCreated {
+				starting_at,
+				amount: minted,
+			});
 			Ok(())
 		}
 	}

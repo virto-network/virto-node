@@ -19,7 +19,13 @@ fn weights() {
 
 	let mut total = Weight::zero();
 
-	let calls = vec![("register", SubstrateWeight::<Test>::register())];
+	let calls = vec![
+		("register", SubstrateWeight::<Test>::register()),
+		(
+			"create_memberships(1024)",
+			SubstrateWeight::<Test>::create_memberships(1024),
+		),
+	];
 
 	for (function, weight) in calls {
 		println!("{function}: {weight:?}",);

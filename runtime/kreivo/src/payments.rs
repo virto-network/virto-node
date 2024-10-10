@@ -4,6 +4,7 @@ use frame_support::traits::EitherOf;
 use frame_system::EnsureSigned;
 use pallet_communities::origin::AsSignedByCommunity;
 use parity_scale_codec::Encode;
+use sp_runtime::traits::AccountIdConversion;
 
 parameter_types! {
 	pub const MaxRemarkLength: u8 = 50;
@@ -36,29 +37,29 @@ pub const INCENTIVE_PERCENTAGE: u8 = 10;
 impl FeeHandler<Runtime> for KreivoFeeHandler {
 	fn apply_fees(
 		asset: &AssetIdOf<Runtime>,
-		_sender: &AccountId,
-		_beneficiary: &AccountId,
+		sender: &AccountId,
+		beneficiary: &AccountId,
 		amount: &Balance,
 		_remark: Option<&[u8]>,
 	) -> Fees<Runtime> {
 		let min = <Assets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
-		let sender_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			TreasuryAccount::get(),
-			min.max(SENDER_FEE.mul_floor(*amount)),
-			MANDATORY_FEE,
-		)];
-		let beneficiary_fee: Vec<(AccountId, Balance, bool)> = vec![(
-			TreasuryAccount::get(),
-			min.max(BENEFICIARY_FEE.mul_floor(*amount)),
-			MANDATORY_FEE,
-		)];
+		let pallet_id = crate::communities::CommunityPalletId::get();
+		let default_fee = |fee: Percent| (TreasuryAccount::get(), min.max(fee.mul_floor(*amount)), MANDATORY_FEE);
+		let is_community =
+			|who| matches!(PalletId::try_from_sub_account::<CommunityId>(who), Some((pid, _)) if pallet_id == pid );
 
-		let sender_pays: FeeDetails<Runtime> = BoundedVec::try_from(sender_fee).unwrap();
-		let beneficiary_pays: FeeDetails<Runtime> = BoundedVec::try_from(beneficiary_fee).unwrap();
+		let mut sender_fees = vec![];
+		let mut beneficiary_fees = vec![];
 
+		if !is_community(sender) {
+			sender_fees.push(default_fee(SENDER_FEE))
+		}
+		if !is_community(beneficiary) {
+			beneficiary_fees.push(default_fee(BENEFICIARY_FEE))
+		}
 		Fees {
-			sender_pays,
-			beneficiary_pays,
+			sender_pays: BoundedVec::try_from(sender_fees).unwrap(),
+			beneficiary_pays: BoundedVec::try_from(beneficiary_fees).unwrap(),
 		}
 	}
 }

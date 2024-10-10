@@ -3,10 +3,10 @@ use crate::{
 	AccountIdOf, CommunityIdFor, Config, Info, Pallet,
 };
 use core::marker::PhantomData;
-use fc_traits_memberships::Inspect;
+use fc_traits_memberships::{GenericRank, Inspect};
 use frame_support::{
 	pallet_prelude::*,
-	traits::{membership::GenericRank, EnsureOriginWithArg, MapSuccess, OriginTrait},
+	traits::{EnsureOriginWithArg, MapSuccess, OriginTrait},
 };
 use frame_system::EnsureSigned;
 #[cfg(feature = "xcm")]
@@ -126,34 +126,24 @@ pub enum Subset<T: Config> {
 	AtLeastRank(GenericRank),
 }
 
-/// The mechanism used by the community or one of its subsets to make decisions
-#[derive(Clone, Debug, Decode, Default, Encode, Eq, MaxEncodedLen, PartialEq, TypeInfo)]
-pub enum DecisionMethod<AssetId> {
-	#[default]
-	Membership,
-	NativeToken,
-	CommunityAsset(AssetId),
-	Rank,
-}
-
 #[cfg(feature = "xcm")]
-impl<T> TryConvert<RuntimeOriginFor<T>, xcm::v3::MultiLocation> for RawOrigin<T>
+impl<T> TryConvert<RuntimeOriginFor<T>, xcm::latest::Location> for RawOrigin<T>
 where
 	T: Config,
 	RuntimeOriginFor<T>: Into<Result<RawOrigin<T>, RuntimeOriginFor<T>>>,
-	xcm::v3::Junction: TryFrom<RawOrigin<T>>,
+	xcm::latest::Junction: TryFrom<RawOrigin<T>>,
 {
-	fn try_convert(o: RuntimeOriginFor<T>) -> Result<xcm::v3::MultiLocation, RuntimeOriginFor<T>> {
+	fn try_convert(o: RuntimeOriginFor<T>) -> Result<xcm::latest::Location, RuntimeOriginFor<T>> {
 		let Ok(community @ RawOrigin { .. }) = o.clone().into() else {
 			return Err(o);
 		};
-		let j = xcm::v3::Junction::try_from(community).map_err(|_| o)?;
+		let j = xcm::latest::Junction::try_from(community).map_err(|_| o)?;
 		Ok(j.into())
 	}
 }
 
 #[cfg(feature = "xcm")]
-impl<T> TryFrom<RawOrigin<T>> for xcm::v3::Junction
+impl<T> TryFrom<RawOrigin<T>> for xcm::latest::Junction
 where
 	T: Config,
 	u32: From<CommunityIdOf<T>>,
@@ -161,7 +151,7 @@ where
 	type Error = ();
 
 	fn try_from(o: RawOrigin<T>) -> Result<Self, Self::Error> {
-		use xcm::v3::{BodyId, BodyPart, Junction::Plurality};
+		use xcm::latest::{BodyId, BodyPart, Junction::Plurality};
 		let part = match o.subset {
 			None => BodyPart::Voice,
 			Some(Subset::Member(_)) => BodyPart::Members { count: 1 },
@@ -180,15 +170,15 @@ where
 }
 
 #[cfg(feature = "xcm")]
-impl<T: Config> TryFrom<xcm::v3::Junction> for RawOrigin<T>
+impl<T: Config> TryFrom<xcm::latest::Junction> for RawOrigin<T>
 where
 	T: Config,
 	T::CommunityId: From<u32> + From<u64>,
 {
 	type Error = ();
 
-	fn try_from(value: xcm::v3::Junction) -> Result<Self, Self::Error> {
-		use xcm::v3::{BodyId::Index, BodyPart::*, Junction::Plurality};
+	fn try_from(value: xcm::latest::Junction) -> Result<Self, Self::Error> {
+		use xcm::latest::{BodyId::Index, BodyPart::*, Junction::Plurality};
 		let Plurality { id: Index(id), part } = value else {
 			return Err(());
 		};
@@ -223,6 +213,38 @@ where
 	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
 		match o.clone().into() {
 			Ok(RawOrigin { community_id, .. }) => Ok(Pallet::<T>::community_account(&community_id)),
+			_ => Err(o.clone()),
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<OuterOrigin, ()> {
+		use crate::BenchmarkHelper;
+		let community_id = T::BenchmarkHelper::community_id();
+		Ok(frame_system::RawOrigin::Signed(Pallet::<T>::community_account(&community_id)).into())
+	}
+}
+
+/// Ensure the origin is any `Signed` origin.
+pub struct AsSignedByStaticCommunity<T, C>(PhantomData<(T, C)>);
+impl<T, C, OuterOrigin> EnsureOrigin<OuterOrigin> for AsSignedByStaticCommunity<T, C>
+where
+	OuterOrigin: OriginTrait
+		+ From<frame_system::RawOrigin<T::AccountId>>
+		+ From<RawOrigin<T>>
+		+ Clone
+		+ Into<Result<frame_system::RawOrigin<T::AccountId>, OuterOrigin>>
+		+ Into<Result<RawOrigin<T>, OuterOrigin>>,
+	T: Config,
+	C: Get<CommunityIdOf<T>>,
+{
+	type Success = T::AccountId;
+
+	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
+		match o.clone().into() {
+			Ok(RawOrigin { ref community_id, .. }) if community_id == &C::get() => {
+				Ok(Pallet::<T>::community_account(community_id))
+			}
 			_ => Err(o.clone()),
 		}
 	}

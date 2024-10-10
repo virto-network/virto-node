@@ -146,10 +146,8 @@ pub mod pallet {
 		Blake2_128Concat, Parameter,
 	};
 	use frame_system::pallet_prelude::{ensure_signed, BlockNumberFor, OriginFor};
-	use sp_runtime::{
-		traits::{Dispatchable, StaticLookup},
-		TokenError,
-	};
+	use sp_runtime::traits::AccountIdConversion;
+	use sp_runtime::traits::{Dispatchable, StaticLookup};
 	use sp_std::prelude::Box;
 
 	const ONE: NonZeroU8 = NonZeroU8::MIN;
@@ -168,10 +166,21 @@ pub mod pallet {
 		/// community
 		type MembershipId: Parameter + MaxEncodedLen + Copy;
 
+		type ItemConfig: Default;
+
 		/// Means to manage memberships of a community
 		type MemberMgmt: membership::Inspect<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
-			+ membership::Manager<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>
-			+ membership::Rank<Self::AccountId, Group = CommunityIdOf<Self>, Membership = MembershipIdOf<Self>>;
+			+ membership::Manager<
+				Self::AccountId,
+				Self::ItemConfig,
+				Group = CommunityIdOf<Self>,
+				Membership = MembershipIdOf<Self>,
+			> + membership::Rank<
+				Self::AccountId,
+				Self::ItemConfig,
+				Group = CommunityIdOf<Self>,
+				Membership = MembershipIdOf<Self>,
+			>;
 
 		type CreateOrigin: EnsureOrigin<
 			OriginFor<Self>,
@@ -193,7 +202,7 @@ pub mod pallet {
 		>;
 
 		/// Type represents interactions between fungibles (i.e. assets)
-		type Assets: fungibles::Inspect<Self::AccountId>
+		type Assets: fungibles::Inspect<Self::AccountId, Balance = NativeBalanceOf<Self>>
 			+ fungibles::Mutate<Self::AccountId>
 			+ fungibles::Create<Self::AccountId>
 			+ fungibles::hold::Inspect<Self::AccountId, Reason = Self::RuntimeHoldReason>
@@ -202,8 +211,8 @@ pub mod pallet {
 		/// Type represents interactions between fungible tokens (native token)
 		type Balances: fungible::Inspect<Self::AccountId>
 			+ fungible::Mutate<Self::AccountId>
-			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeHoldReason>
-			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeHoldReason>;
+			+ fungible::freeze::Inspect<Self::AccountId, Id = Self::RuntimeFreezeReason>
+			+ fungible::freeze::Mutate<Self::AccountId, Id = Self::RuntimeFreezeReason>;
 
 		/// The overarching call type.
 		type RuntimeCall: Parameter
@@ -223,6 +232,9 @@ pub mod pallet {
 
 		/// The overarching hold reason.
 		type RuntimeHoldReason: From<HoldReason>;
+
+		/// The overarching freeze reason.
+		type RuntimeFreezeReason: From<FreezeReason>;
 
 		/// Because this pallet emits events, it depends on the runtime's
 		/// definition of an event.
@@ -246,6 +258,13 @@ pub mod pallet {
 	/// A reason for the pallet communities placing a hold on funds.
 	#[pallet::composite_enum]
 	pub enum HoldReason {
+		// A vote has been casted on a poll
+		VoteCasted,
+	}
+
+	/// A reason for the pallet communities placing a freeze on funds.
+	#[pallet::composite_enum]
+	pub enum FreezeReason {
 		// A vote has been casted on a poll
 		VoteCasted,
 	}
@@ -349,6 +368,10 @@ pub mod pallet {
 		NoVoteCasted,
 		/// The poll
 		NoLocksInPlace,
+		/// The origin already controls another community
+		AlreadyAdmin,
+		/// The vote is below the minimum requried
+		VoteBelowMinimum,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -475,6 +498,15 @@ pub mod pallet {
 			decision_method: DecisionMethodFor<T>,
 		) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin)?;
+			if let DecisionMethod::CommunityAsset(ref asset, min_vote) = decision_method {
+				// best effort attemt to create the asset if it doesn't exist
+				let _ = <T::Assets as fungibles::Create<T::AccountId>>::create(
+					asset.clone(),
+					T::PalletId::get().into_account_truncating(),
+					false,
+					min_vote,
+				);
+			}
 			CommunityDecisionMethod::<T>::set(community_id, decision_method);
 			Self::deposit_event(Event::DecisionMethodSet { id: community_id });
 			Ok(())
@@ -488,7 +520,7 @@ pub mod pallet {
 			#[pallet::compact] poll_index: PollIndexOf<T>,
 			vote: VoteOf<T>,
 		) -> DispatchResult {
-			ensure!(VoteWeight::from(&vote).gt(&0), TokenError::BelowMinimum);
+			ensure!(VoteWeight::from(&vote).gt(&0), Error::<T>::VoteBelowMinimum);
 			let who = ensure_signed(origin)?;
 			let community_id = T::MemberMgmt::check_membership(&who, &membership_id).ok_or(Error::<T>::NotAMember)?;
 			let decision_method = CommunityDecisionMethod::<T>::get(community_id);
@@ -555,7 +587,6 @@ pub mod pallet {
 		// 		.saturating_add(di.weight);
 		// 	(weight, di.class)
 		// })]
-		// // #[cfg(any(test, feature = "testnet"))]
 		// pub fn dispatch_as_origin(origin: OriginFor<T>, call: Box<RuntimeCallFor<T>>)
 		// -> DispatchResultWithPostInfo { 	let community_id =
 		// T::MemberMgmtOrigin::ensure_origin(origin)?; 	let origin =

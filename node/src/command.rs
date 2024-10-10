@@ -1,162 +1,40 @@
-// Copyright 2019-2021 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
+use std::net::SocketAddr;
 
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
-use crate::{
-	benchmarking::{inherent_benchmark_data, RemarkBuilder},
-	chain_spec,
-	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, Block},
-};
-
+use cumulus_client_service::storage_proof_size::HostFunctions as ReclaimHostFunctions;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-
+use kreivo_runtime::Block;
 use log::info;
-use parachains_common::AuraId;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams, NetworkParams, Result,
 	SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
-use sp_runtime::traits::AccountIdConversion;
-use std::{net::SocketAddr, path::PathBuf};
 
-/// Dispatches the code to the currently selected runtime.
-macro_rules! dispatch_runtime {
-	($runtime:expr, |$alias: ident| $code:expr) => {
-		match $runtime {
-			#[cfg(feature = "kreivo-runtime")]
-			Runtime::Kreivo => {
-				#[allow(unused_imports)]
-				use kreivo_runtime as $alias;
-
-				$code
-			}
-		}
-	};
-	($runtime:expr, $code:expr) => {
-		dispatch_runtime!($runtime, |rt| $code)
-	};
-}
-
-/// Generates boilerplate code for constructing partial node for the runtimes
-/// that are supported by the benchmarks.
-macro_rules! construct_partial {
-	($config:expr, |$partial:ident, $runtime:ident| $code:expr) => {
-		dispatch_runtime!($config.chain_spec.runtime(), |$runtime| {
-			let $partial =
-				new_partial::<$runtime::RuntimeApi, _>(&$config, crate::service::aura_build_import_queue::<_, AuraId>)?;
-
-			$code
-		})
-	};
-	($config:expr, |$partial:ident| $code:expr) => {
-		construct_partial!($config, |$partial, rt| $code)
-	};
-}
-
-/// Generates boilerplate code for async run on partial node.
-macro_rules! construct_async_run {
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident, $runtime:ident| $( $code:tt )* ) => {{
-		let runner = $cli.create_runner($cmd)?;
-		construct_partial!(runner.config(), |$components, $runtime| {
-			runner.async_run(|$config| {
-				let task_manager = $components.task_manager;
-				{ $( $code )* }.map(|v| (v, task_manager))
-			})
-		})
-	}};
-	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-		construct_async_run!(|$components, $cli, $cmd, $config, rt| { $( $code )* })
-	}};
-}
-
-/// Helper enum that is used for better distinction of different
-/// parachain/runtime configuration (it is based/calculated on ChainSpec's ID
-/// attribute)
-#[derive(Debug, PartialEq, Default)]
-enum Runtime {
-	#[cfg(feature = "kreivo-runtime")]
-	#[default]
-	Kreivo,
-}
-
-impl From<&str> for Runtime {
-	fn from(value: &str) -> Self {
-		#[cfg(feature = "kreivo-runtime")]
-		if value.starts_with("kreivo") {
-			return Runtime::Kreivo;
-		}
-
-		let fallback = Runtime::default();
-		log::warn!("No specific runtime was recognized for ChainSpec's id: '{value}', so `{fallback:?}` will be used as default.");
-		fallback
-	}
-}
-
-trait RuntimeResolver {
-	fn runtime(&self) -> Runtime;
-}
-
-impl RuntimeResolver for dyn ChainSpec {
-	fn runtime(&self) -> Runtime {
-		self.id().into()
-	}
-}
-
-/// Implementation, that can resolve [`Runtime`] from any json configuration
-/// file
-impl RuntimeResolver for PathBuf {
-	fn runtime(&self) -> Runtime {
-		#[derive(Debug, serde::Deserialize)]
-		struct EmptyChainSpecWithId {
-			id: String,
-		}
-
-		let file = std::fs::File::open(self).expect("Failed to open file");
-		let reader = std::io::BufReader::new(file);
-		let chain_spec: EmptyChainSpecWithId =
-			serde_json::from_reader(reader).expect("Failed to read 'json' file with ChainSpec configuration");
-
-		chain_spec.id.as_str().into()
-	}
-}
+use crate::{
+	chain_spec,
+	cli::{Cli, RelayChainCli, Subcommand},
+	service::new_partial,
+};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 	Ok(match id {
-		#[cfg(feature = "kreivo-runtime")]
-		"" | "kreivo" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec()),
-		#[cfg(feature = "kreivo-runtime")]
-		"kreivo-local" => Box::new(chain_spec::kreivo::kreivo_kusama_chain_spec_local()),
-		#[cfg(feature = "kreivo-runtime")]
-		"kreivo-rococo-local" => Box::new(chain_spec::kreivo::kreivo_rococo_chain_spec_local()),
+		#[cfg(feature = "paseo")]
+		"" | "kreivo" => Box::new(chain_spec::kreivo::live::chain_spec()),
+		#[cfg(feature = "paseo")]
+		"kreivo-local" => Box::new(chain_spec::kreivo::local::chain_spec()),
+		#[cfg(not(feature = "paseo"))]
+		"" | "kreivo" => Box::new(chain_spec::kreivo::live::chain_spec()),
+		#[cfg(not(feature = "paseo"))]
+		"kreivo-local" => Box::new(chain_spec::kreivo::local::chain_spec()),
 		// -- Loading a specific spec from disk
-		path => {
-			let path: PathBuf = path.into();
-			match path.runtime() {
-				#[cfg(feature = "kreivo-runtime")]
-				Runtime::Kreivo => Box::new(chain_spec::kreivo::ChainSpec::from_json_file(path)?),
-			}
-		}
+		path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
 	})
 }
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Virto parachain".into()
+		"Virto Parachain Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -168,7 +46,7 @@ impl SubstrateCli for Cli {
 			"Virto parachain\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
-		{} [parachain-args] -- [relaychain-args]",
+		{} <parachain-args> -- <relay-chain-args>",
 			Self::executable_name()
 		)
 	}
@@ -178,21 +56,21 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/paritytech/cumulus/issues/new".into()
+		"https://github.com/paritytech/polkadot-sdk/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2020
 	}
 
-	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
+	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		load_spec(id)
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Virto parachain".into()
+		"Virto Parachain Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -204,7 +82,7 @@ impl SubstrateCli for RelayChainCli {
 			"Virto parachain\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
-		{} [parachain-args] -- [relay_chain-args]",
+		{} <parachain-args> -- <relay-chain-args>",
 			Self::executable_name()
 		)
 	}
@@ -214,16 +92,27 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/paritytech/cumulus/issues/new".into()
+		"https://github.com/paritytech/polkadot-sdk/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
-		2017
+		2020
 	}
 
-	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
+	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
 	}
+}
+
+macro_rules! construct_async_run {
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		let runner = $cli.create_runner($cmd)?;
+		runner.async_run(|$config| {
+			let $components = new_partial(&$config)?;
+			let task_manager = $components.task_manager;
+			{ $( $code )* }.map(|v| (v, task_manager))
+		})
+	}}
 }
 
 /// Parse command line arguments into service configuration.
@@ -236,7 +125,7 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
-			construct_async_run!(|components, cli, cmd, _config| {
+			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
 		}
@@ -247,15 +136,15 @@ pub fn run() -> Result<()> {
 			construct_async_run!(|components, cli, cmd, config| Ok(cmd.run(components.client, config.chain_spec)))
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			construct_async_run!(
-				|components, cli, cmd, _config| Ok(cmd.run(components.client, components.import_queue))
-			)
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.import_queue))
+			})
 		}
-		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, _config| Ok(cmd.run(
-			components.client,
-			components.backend,
-			None
-		))),
+		Some(Subcommand::Revert(cmd)) => {
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.backend, None))
+			})
+		}
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
@@ -264,19 +153,22 @@ pub fn run() -> Result<()> {
 					&config,
 					[RelayChainCli::executable_name()]
 						.iter()
-						.chain(cli.relaychain_args.iter()),
+						.chain(cli.relay_chain_args.iter()),
 				);
 
 				let polkadot_config =
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, config.tokio_handle.clone())
-						.map_err(|err| format!("Relay chain argument error: {err}"))?;
+						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				cmd.run(config, polkadot_config)
 			})
 		}
-		Some(Subcommand::ExportGenesisState(cmd)) => {
-			construct_async_run!(|components, cli, cmd, config| {
-				Ok(async move { cmd.run(&*config.chain_spec, &*components.client) })
+		Some(Subcommand::ExportGenesisHead(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| {
+				let partials = new_partial(&config)?;
+
+				cmd.run(partials.client)
 			})
 		}
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
@@ -288,56 +180,46 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| {
-				// Switch on the concrete benchmark sub-command
-				match cmd {
-					BenchmarkCmd::Pallet(cmd) => {
-						if !cfg!(feature = "runtime-benchmarks") {
-							return Err("Benchmarking wasn't enabled when building the node. \
-							You can enable it with `--features runtime-benchmarks`."
-								.into());
-						}
-
-						dispatch_runtime!(config.chain_spec.runtime(), |runtime| cmd.run::<Block, ()>(config))
-					}
-					BenchmarkCmd::Block(cmd) => {
-						construct_partial!(config, |partial| cmd.run(partial.client))
-					}
-					#[cfg(not(feature = "runtime-benchmarks"))]
-					BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
-						"Compile with --features=runtime-benchmarks \
-						to enable storage benchmarks."
-							.into(),
-					)),
-					#[cfg(feature = "runtime-benchmarks")]
-					BenchmarkCmd::Storage(cmd) => {
-						construct_partial!(config, |partial| {
-							let db = partial.backend.expose_db();
-							let storage = partial.backend.expose_storage();
-
-							cmd.run(config, partial.client, db, storage)
+			// Switch on the concrete benchmark sub-command-
+			match cmd {
+				BenchmarkCmd::Pallet(cmd) => {
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| {
+							cmd.run_with_spec::<sp_runtime::traits::HashingFor<Block>, ReclaimHostFunctions>(Some(
+								config.chain_spec,
+							))
 						})
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
+					You can enable it with `--features runtime-benchmarks`."
+							.into())
 					}
-					BenchmarkCmd::Machine(cmd) => cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()),
-					BenchmarkCmd::Overhead(cmd) => {
-						construct_partial!(config, |partial| {
-							let ext_builder = RemarkBuilder::new(partial.client.clone());
-
-							cmd.run(
-								config,
-								partial.client,
-								inherent_benchmark_data()?,
-								Vec::new(),
-								&ext_builder,
-							)
-						})
-					}
-					// NOTE: this allows the Client to leniently implement
-					// new benchmark commands without requiring a companion MR.
-					#[allow(unreachable_patterns)]
-					_ => Err("Benchmarking sub-command unsupported".into()),
 				}
-			})
+				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+					let partials = new_partial(&config)?;
+					cmd.run(partials.client)
+				}),
+				#[cfg(not(feature = "runtime-benchmarks"))]
+				BenchmarkCmd::Storage(_) => Err(sc_cli::Error::Input(
+					"Compile with --features=runtime-benchmarks \
+						to enable storage benchmarks."
+						.into(),
+				)),
+				#[cfg(feature = "runtime-benchmarks")]
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+					let partials = new_partial(&config)?;
+					let db = partials.backend.expose_db();
+					let storage = partials.backend.expose_storage();
+					cmd.run(config, partials.client.clone(), db, storage)
+				}),
+				BenchmarkCmd::Machine(cmd) => {
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
+				}
+				// NOTE: this allows the Client to leniently implement
+				// new benchmark commands without requiring a companion MR.
+				#[allow(unreachable_patterns)]
+				_ => Err("Benchmarking sub-command unsupported".into()),
+			}
 		}
 		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
 		None => {
@@ -354,43 +236,30 @@ pub fn run() -> Result<()> {
 
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
-					.ok_or("Could not find parachain extension in chain-spec.")?;
+					.ok_or("Could not find parachain ID in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
 					[RelayChainCli::executable_name()]
 						.iter()
-						.chain(cli.relaychain_args.iter()),
+						.chain(cli.relay_chain_args.iter()),
 				);
 
 				let id = ParaId::from(para_id);
 
-				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(&id);
-
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config = SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
-					.map_err(|err| format!("Relay chain argument error: {err}"))?;
+					.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-				info!("Parachain id: {:?}", id);
-				info!("Parachain Account: {}", parachain_account);
 				info!(
 					"Is collating: {}",
 					if config.role.is_authority() { "yes" } else { "no" }
 				);
 
-				dispatch_runtime!(config.chain_spec.runtime(), |runtime| {
-					crate::service::start_aura_node::<runtime::RuntimeApi, AuraId>(
-						config,
-						polkadot_config,
-						collator_options,
-						id,
-						hwbench,
-					)
+				crate::service::start_parachain_node(config, polkadot_config, collator_options, id, hwbench)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
-				})
 			})
 		}
 	}
@@ -521,5 +390,3 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.node_name()
 	}
 }
-
-// TODO - Bring tests back if useful

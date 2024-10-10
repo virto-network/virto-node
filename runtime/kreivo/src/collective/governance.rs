@@ -2,17 +2,10 @@ use super::*;
 
 use frame_system::EnsureSigned;
 use pallet_ranked_collective::{TallyOf, Votes};
-use parachains_common::kusama::currency::QUID;
 use sp_core::ConstU128;
 
 pub type KreivoTracksInstance = pallet_referenda_tracks::Instance1;
 pub type KreivoReferendaInstance = pallet_referenda::Instance1;
-
-parameter_types! {
-	pub const AlarmInterval: BlockNumber = 1;
-	pub const SubmissionDeposit: Balance = QUID;
-	pub const UndecidingTimeout: BlockNumber = 14 * DAYS;
-}
 
 impl pallet_referenda::Config<KreivoReferendaInstance> for Runtime {
 	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
@@ -20,11 +13,10 @@ impl pallet_referenda::Config<KreivoReferendaInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Scheduler = Scheduler;
 	type Currency = Balances;
-	// Communities can submit proposals.
 	type SubmitOrigin = EnsureSigned<AccountId>;
-	type CancelOrigin = EnsureRoot<AccountId>;
-	type KillOrigin = EnsureRoot<AccountId>;
-	type Slash = ();
+	type CancelOrigin = ReferendumCanceller;
+	type KillOrigin = ReferendumKiller;
+	type Slash = Treasury;
 	type Votes = Votes;
 	type Tally = TallyOf<Runtime, KreivoCollectiveInstance>;
 	type SubmissionDeposit = ConstU128<{ UNITS }>;

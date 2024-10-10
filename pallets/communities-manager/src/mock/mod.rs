@@ -1,19 +1,16 @@
 use super::*;
 
 use frame_support::{
-	parameter_types,
-	traits::{
-		AsEnsureOriginWithArg, ConstU128, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, Everything,
-	},
+	derive_impl, parameter_types,
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, Everything},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
+use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
 use parity_scale_codec::Compact;
-use sp_core::H256;
 use sp_io::TestExternalities;
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	traits::{IdentifyAccount, IdentityLookup, Verify},
 	MultiSignature,
 };
 pub use virto_common::{CommunityId, MembershipId};
@@ -34,7 +31,7 @@ type WeightInfo = ();
 
 pub type AccountPublic = <MultiSignature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
-pub type Balance = u128;
+pub type Balance = u64;
 pub type AssetId = u32;
 
 // Configure a mock runtime to test the pallet.
@@ -58,72 +55,34 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const RootAccount: AccountId = AccountId::new([0xff; 32]);
 }
+
+#[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeCall = RuntimeCall;
-	type Nonce = u64;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
+	type Block = Block;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Block = Block;
-	type RuntimeEvent = RuntimeEvent;
-	type BlockHashCount = ConstU64<250>;
-	type Version = ();
-	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ConstU16<42>;
-	type OnSetCode = ();
-	type MaxConsumers = ConstU32<16>;
 }
 
+#[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
 impl pallet_balances::Config for Test {
-	type Balance = Balance;
-	type DustRemoval = ();
-	type RuntimeEvent = RuntimeEvent;
-	type ExistentialDeposit = ConstU128<1>;
+	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
-	type WeightInfo = WeightInfo;
-	type MaxLocks = ConstU32<10>;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type RuntimeHoldReason = RuntimeHoldReason;
+	type FreezeIdentifier = RuntimeFreezeReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
-	type FreezeIdentifier = RuntimeHoldReason;
-	type MaxHolds = ConstU32<10>;
-	type MaxFreezes = ConstU32<10>;
 }
 
+#[derive_impl(pallet_assets::config_preludes::TestDefaultConfig as pallet_assets::DefaultConfig)]
 impl pallet_assets::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type AssetId = AssetId;
 	type AssetIdParameter = Compact<AssetId>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
-	type AssetDeposit = ConstU128<100>;
-	type AssetAccountDeposit = ConstU128<1>;
-	type MetadataDepositBase = ConstU128<10>;
-	type MetadataDepositPerByte = ConstU128<1>;
-	type ApprovalDeposit = ConstU128<1>;
-	type StringLimit = ConstU32<50>;
 	type Freezer = ();
-	type Extra = ();
-	type CallbackHandle = ();
-	type WeightInfo = WeightInfo;
 	type RemoveItemsLimit = ConstU32<1000>;
 	type RuntimeHoldReason = RuntimeHoldReason;
-	type MaxHolds = ConstU32<10>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
 }
 
 impl pallet_scheduler::Config for Test {
@@ -156,7 +115,7 @@ impl pallet_referenda::Config for Test {
 	type Slash = ();
 	type Votes = VoteWeight;
 	type Tally = Tally<Test>;
-	type SubmissionDeposit = ConstU128<2>;
+	type SubmissionDeposit = ConstU64<2>;
 	type MaxQueued = ConstU32<3>;
 	type UndecidingTimeout = ConstU64<20>;
 	type AlarmInterval = AlarmInterval;
@@ -175,12 +134,13 @@ impl pallet_referenda_tracks::Config for Test {
 	type BenchmarkHelper = TracksBenchmarkHelper;
 }
 
+type Deposit = Option<(Balance, AccountId, AccountId)>;
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
 	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = 1;
-	pub const NoDepositOnRootRegistration: Option<(Balance, AccountId, AccountId)> = None;
+	pub const NoDepositOnRootRegistration: Deposit = None;
 }
 
 impl pallet_nfts::Config for Test {
@@ -219,15 +179,17 @@ impl pallet_communities::Config for Test {
 	type MembershipId = MembershipId;
 	type Assets = Assets;
 	type Balances = Balances;
+	type ItemConfig = pallet_nfts::ItemConfig;
 	type MemberMgmt = Memberships;
 	type Polls = Referenda;
-	type CreateOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	type CreateOrigin = EnsureNever<Deposit>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type WeightInfo = WeightInfo;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
@@ -235,9 +197,19 @@ impl pallet_communities::Config for Test {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	// Types to support community creation
 	type CreateCollection = Memberships;
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
+	type RegisterOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	// Types to support memberships creation
+	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
+	type MembershipId = MembershipId;
+
+	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
+	type MembershipsManagerOwner = RootAccount;
+	type CreateMemberships = Memberships;
+
 	type WeightInfo = WeightInfo;
 }
 

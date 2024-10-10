@@ -94,13 +94,13 @@ fn check_balance_cancellation() {
 /// Sender pays the following fees:
 ///   - 2 tokens to the FEE_SENDER_ACCOUNT(30)
 ///   - 15% of the payment amount (meaning 3 tokens) to the
-///     FEE_SYSTEM_ACCOUNT(31)
-///   (total of 5 tokens)
+///     FEE_SYSTEM_ACCOUNT(31) (total of 5 tokens)
+///
 /// Beneficiary pays the following fees:
 ///   - 3 tokens to the FEE_BENEFICIARY_ACCOUNT(32)
 ///   - 15% of the payment amount (meaning 3 tokens) to the
-///     FEE_SYSTEM_ACCOUNT(31)
-///   (total of 6 tokens)
+///     FEE_SYSTEM_ACCOUNT(31) (total of 6 tokens)
+///
 /// The PAYMENT_BENEFICIARY will receive 14 tokens free of charge
 /// The sender will need have a balance at least of 27 tokens to make the
 /// purchase:
@@ -235,7 +235,7 @@ fn payment_refunded_request() {
 /// 1) SENDER pays 20 tokens to the PAYMENT_BENEFICIARY
 /// 2) Sender requests a refund.
 /// 3) The PAYMENT_BENEFICIARY disputes the refund, a total of 2 tokens are
-/// locked from the PAYMENT_BENEFICIARY because of the incentive amount.
+///    locked from the PAYMENT_BENEFICIARY because of the incentive amount.
 /// 4) The RESOLVER, rule in favor of PAYMENT_BENEFICIARY to pay 90%.
 ///
 ///     Mandatory Fees:
@@ -252,20 +252,22 @@ fn payment_refunded_request() {
 ///        PAYMENT_BENEFICIARY's fee:
 ///           - 3 tokens to FEE_BENEFICIARY_AMOUNT
 ///
-///  4.1) PAYMENT_BENEFICIARY should receive:
+/// 4.1) PAYMENT_BENEFICIARY should receive:
 ///    + 18 token (90% because of dispute ruling)
 ///    + 2 token (incentive amount give back because of wining side of dispute)
 ///    - 3 tokens (deducted mandatory fee)
-///  Beneficiary receives: 17 token / total balance: 27 token.
-///  4.2) SENDER should receive:
+///  
+/// Beneficiary receives: 17 token / total balance: 27 token.
+/// 4.2) SENDER should receive:
 ///    + 2 token (remaining 10% of dispute ruling)
 ///    + 2 token (fee not deducted )
 ///    - 2 token (incentive amount deducted because of wining side of dispute)
-///    - 3 tokens (deducted mandatory fee)
-///    total: -1 token / total balance: 73 token.
+///    - 3 tokens (deducted mandatory fee) total: -1 token / total balance: 73
+///      token.
 ///
-///  Sender's expected Balance after dispute:
+/// Sender's expected Balance after dispute:
 ///    100(initial) - 18(payment) - 3(system fee) - 2(incentive for loosing) =
+///
 /// 77  Beneficiary's expected Balance after dispute:
 ///    10(initial) + 18(payment) - 3(system fee) = 25
 
@@ -353,7 +355,7 @@ fn payment_disputed_beneficiary_wins() {
 /// 1) SENDER pays 20 tokens to the PAYMENT_BENEFICIARY
 /// 2) Sender requests a refund.
 /// 3) The PAYMENT_BENEFICIARY disputes the refund, a total of 2 tokens are
-/// locked from the PAYMENT_BENEFICIARY because of the incentive amount.
+///    locked from the PAYMENT_BENEFICIARY because of the incentive amount.
 /// 4) The RESOLVER, rule in favor of SENDER to pay 90%.
 ///
 ///     Mandatory Fees:
@@ -370,17 +372,19 @@ fn payment_disputed_beneficiary_wins() {
 ///        PAYMENT_BENEFICIARY's fee:
 ///           - 3 tokens to FEE_BENEFICIARY_AMOUNT
 ///
-///  4.1) PAYMENT_BENEFICIARY should receive:
+/// 4.1) PAYMENT_BENEFICIARY should receive:
 ///    + 2 token (10% because of dispute ruling)
 ///    - 2 token (incentive amount give back because of loosing side of dispute)
-///    - 3 tokens (deducted mandatory fee)
-///    Beneficiary loose: -3 tokens
-///  4.2) SENDER should receive:
-///     + 18 token (remaining 90% of dispute ruling)
-///     + 2 token (fee not deducted )
-///     + 2 token (incentive amount returned because of wining side of dispute)
-///     - 3 tokens (deducted mandatory fee)
-///     total: 19 token / total balance: 81 token.
+///    - 3 tokens (deducted mandatory fee) Beneficiary loose: -3 tokens
+///
+/// 4.2) SENDER should receive:
+///       + 18 token (remaining 90% of dispute ruling)
+///       + 2 token (fee not deducted )
+///       + 2 token (incentive amount returned because of wining side of
+///         dispute)
+///       - 3 tokens (deducted mandatory fee)
+///
+///       total: 19 token / total balance: 81 token.
 ///
 ///  Sender's expected Balance after dispute:
 ///    100(initial) - 2 (dispute ruling) - 3(system fee) = 95

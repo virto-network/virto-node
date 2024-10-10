@@ -52,11 +52,10 @@ impl From<u32> for FungibleAssetLocation {
 #[cfg(feature = "runtime")]
 pub mod runtime {
 	use super::{FungibleAssetLocation, Para};
-	use cumulus_primitives_core::MultiLocation;
 	use sp_runtime::traits::MaybeEquivalence;
-	use xcm::v3::{
+	use xcm::latest::{
 		Junction::{GeneralIndex, GlobalConsensus, PalletInstance, Parachain},
-		Junctions, NetworkId,
+		Location, NetworkId,
 	};
 
 	impl TryFrom<NetworkId> for super::NetworkId {
@@ -83,72 +82,63 @@ pub mod runtime {
 	}
 
 	pub struct AsFungibleAssetLocation;
-	impl MaybeEquivalence<MultiLocation, FungibleAssetLocation> for AsFungibleAssetLocation {
-		fn convert(value: &MultiLocation) -> Option<FungibleAssetLocation> {
-			match *value {
-				MultiLocation {
-					parents: 2,
-					interior: Junctions::X1(GlobalConsensus(network)),
-				} => Some(FungibleAssetLocation::External {
-					network: network.try_into().ok()?,
+	impl MaybeEquivalence<Location, FungibleAssetLocation> for AsFungibleAssetLocation {
+		fn convert(value: &Location) -> Option<FungibleAssetLocation> {
+			match value.unpack() {
+				(2, [GlobalConsensus(network)]) => Some(FungibleAssetLocation::External {
+					network: (*network).try_into().ok()?,
 					child: None,
 				}),
-				MultiLocation {
-					parents: 2,
-					interior:
-						Junctions::X4(GlobalConsensus(network), Parachain(id), PalletInstance(pallet), GeneralIndex(index)),
-				} => Some(FungibleAssetLocation::External {
-					network: network.try_into().ok()?,
-					child: Some(Para {
-						id: id.try_into().ok()?,
-						pallet,
-						index: index.try_into().ok()?,
-					}),
-				}),
-				MultiLocation {
-					parents: 1,
-					interior: Junctions::X3(Parachain(id), PalletInstance(pallet), GeneralIndex(index)),
-				} => Some(FungibleAssetLocation::Sibling(Para {
-					id: id.try_into().ok()?,
-					pallet,
-					index: index.try_into().ok()?,
-				})),
-				MultiLocation {
-					parents: 0,
-					interior: Junctions::X2(PalletInstance(13), GeneralIndex(index)),
-				} => Some(FungibleAssetLocation::Here(
-					index.try_into().expect("as it is here, we the types will match; qed"),
+				(2, [GlobalConsensus(network), Parachain(id), PalletInstance(pallet), GeneralIndex(index)]) => {
+					Some(FungibleAssetLocation::External {
+						network: (*network).try_into().ok()?,
+						child: Some(Para {
+							id: (*id).try_into().ok()?,
+							pallet: *pallet,
+							index: (*index).try_into().ok()?,
+						}),
+					})
+				}
+				(1, [Parachain(id), PalletInstance(pallet), GeneralIndex(index)]) => {
+					Some(FungibleAssetLocation::Sibling(Para {
+						id: (*id).try_into().ok()?,
+						pallet: *pallet,
+						index: (*index).try_into().ok()?,
+					}))
+				}
+				(0, [PalletInstance(13), GeneralIndex(index)]) => Some(FungibleAssetLocation::Here(
+					(*index)
+						.try_into()
+						.expect("as it is here, we the types will match; qed"),
 				)),
 				_ => None,
 			}
 		}
 
-		fn convert_back(value: &FungibleAssetLocation) -> Option<MultiLocation> {
+		fn convert_back(value: &FungibleAssetLocation) -> Option<Location> {
 			match *value {
-				FungibleAssetLocation::Here(index) => Some(MultiLocation {
-					parents: 0,
-					interior: Junctions::X2(PalletInstance(13), GeneralIndex(index.into())),
-				}),
-				FungibleAssetLocation::Sibling(Para { id, pallet, index }) => Some(MultiLocation {
-					parents: 1,
-					interior: Junctions::X3(Parachain(id.into()), PalletInstance(pallet), GeneralIndex(index.into())),
-				}),
-				FungibleAssetLocation::External { network, child: None } => Some(MultiLocation {
-					parents: 2,
-					interior: Junctions::X1(GlobalConsensus(network.into())),
-				}),
+				FungibleAssetLocation::Here(index) => {
+					Some(Location::new(0, [PalletInstance(13), GeneralIndex(index.into())]))
+				}
+				FungibleAssetLocation::Sibling(Para { id, pallet, index }) => Some(Location::new(
+					1,
+					[Parachain(id.into()), PalletInstance(pallet), GeneralIndex(index.into())],
+				)),
+				FungibleAssetLocation::External { network, child: None } => {
+					Some(Location::new(2, [GlobalConsensus(network.into())]))
+				}
 				FungibleAssetLocation::External {
 					network,
 					child: Some(Para { id, pallet, index }),
-				} => Some(MultiLocation {
-					parents: 2,
-					interior: Junctions::X4(
+				} => Some(Location::new(
+					2,
+					[
 						GlobalConsensus(network.into()),
 						Parachain(id.into()),
 						PalletInstance(pallet),
 						GeneralIndex(index.into()),
-					),
-				}),
+					],
+				)),
 			}
 		}
 	}

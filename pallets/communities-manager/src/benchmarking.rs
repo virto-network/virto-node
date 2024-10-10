@@ -5,7 +5,7 @@ use frame_benchmarking::v2::*;
 
 use frame_support::traits::fungible::Mutate;
 use frame_system::RawOrigin;
-use sp_runtime::traits::StaticLookup;
+use sp_runtime::SaturatedConversion;
 
 type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
 
@@ -15,9 +15,9 @@ fn assert_has_event<T: Config>(generic_event: RuntimeEventFor<T>) {
 
 fn setup_account<T: Config>(who: &AccountIdOf<T>) -> Result<(), BenchmarkError>
 where
-	NativeBalanceOf<T>: From<u128>,
+	NativeBalanceOf<T>: From<u64>,
 {
-	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u128.into();
+	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u64.into();
 	T::Balances::mint_into(who, initial_balance)?;
 	Ok(())
 }
@@ -25,9 +25,10 @@ where
 #[benchmarks(
 where
 	RuntimeEventFor<T>: From<pallet_communities::Event<T>>,
-	NativeBalanceOf<T>: From<u128>,
+	NativeBalanceOf<T>: From<u64>,
 	BlockNumberFor<T>: From<u32>,
 	CommunityIdOf<T>: From<u16>,
+	<T as Config>::MembershipId: From<u32>,
 )]
 mod benchmarks {
 	use super::*;
@@ -39,21 +40,53 @@ mod benchmarks {
 		setup_account::<T>(&first_member)?;
 
 		let community_id: CommunityIdOf<T> = 1.into();
-		let admin_origin: RuntimeOriginFor<T> = frame_system::Origin::<T>::Signed(first_member.clone()).into();
-		let admin_origin_caller: PalletsOriginOf<T> = admin_origin.into_caller();
+		let first_admin = T::Lookup::unlookup(first_member.clone());
 
 		#[extrinsic_call]
 		_(
 			RawOrigin::Root,
 			community_id,
 			BoundedVec::truncate_from(b"Test Community".into()),
-			Some(admin_origin_caller.clone()),
+			first_admin,
 			None,
-			Some(T::Lookup::unlookup(first_member)),
+			None,
 		);
 
 		// verification code
 		assert_has_event::<T>(Event::<T>::CommunityRegistered { id: community_id }.into());
+		Ok(())
+	}
+
+	#[benchmark]
+	fn create_memberships(q: Linear<1, 1024>) -> Result<(), BenchmarkError> {
+		// setup code
+		T::CreateCollection::create_collection_with_id(
+			T::MembershipsManagerCollectionId::get(),
+			&T::MembershipsManagerOwner::get(),
+			&T::MembershipsManagerOwner::get(),
+			&pallet_nfts::CollectionConfig {
+				settings: Default::default(),
+				max_supply: None,
+				mint_settings: Default::default(),
+			},
+		)?;
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			q.saturated_into(),
+			100u32.into(),
+			300_000_000_000u64.into(),
+		);
+
+		// verification code
+		assert_has_event::<T>(
+			Event::<T>::MembershipsCreated {
+				starting_at: 100u32.into(),
+				amount: q.saturated_into(),
+			}
+			.into(),
+		);
 		Ok(())
 	}
 

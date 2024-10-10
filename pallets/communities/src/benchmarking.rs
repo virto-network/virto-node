@@ -3,18 +3,17 @@
 use super::*;
 
 use self::{
-	origin::DecisionMethod,
 	types::{
 		AccountIdOf, AssetIdOf, CommunityIdOf, DecisionMethodFor, MembershipIdOf, NativeBalanceOf, PalletsOriginOf,
 		PollIndexOf, RuntimeCallFor, Vote,
 	},
-	CommunityDecisionMethod, Event, HoldReason, Pallet as Communities,
+	CommunityDecisionMethod, DecisionMethod, Event, FreezeReason, Pallet as Communities,
 };
 use fc_traits_memberships::{Inspect, Rank};
 use frame_benchmarking::v2::*;
 use frame_support::traits::{
 	fungible::{InspectFreeze, Mutate},
-	fungibles::{Create, Mutate as FunsMutate},
+	fungibles::Mutate as FunsMutate,
 	OriginTrait,
 };
 use frame_system::{
@@ -139,7 +138,7 @@ where
 		T: frame_system::Config + crate::Config,
 		OriginFor<T>: From<Origin<T>> + From<frame_system::Origin<T>>,
 		RuntimeEventFor<T>: From<frame_system::Event<T>>,
-		AssetBalanceOf<T>: From<u128>,
+		AssetBalanceOf<T>: From<u64>,
 		AssetIdOf<T>: From<u32>,
 		MembershipIdOf<T>: From<u32>,
 		BlockNumberFor<T>: From<u32>
@@ -197,7 +196,7 @@ mod benchmarks {
 		_(
 			admin_origin,
 			id,
-			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id()),
+			DecisionMethod::CommunityAsset(T::BenchmarkHelper::community_asset_id(), 10u64.into()),
 		);
 
 		// verification code
@@ -316,7 +315,7 @@ mod benchmarks {
 		// setup code
 		let (id, origin) = create_community::<T>(
 			RawOrigin::Root.into(),
-			Some(DecisionMethodFor::<T>::CommunityAsset(1u32.into())),
+			Some(DecisionMethodFor::<T>::CommunityAsset(1u32.into(), 1u64.into())),
 		)?;
 		let members = setup_members::<T>(origin.clone(), id)?;
 
@@ -325,10 +324,7 @@ mod benchmarks {
 			.expect("desired size of community to be equal or greather than 1")
 			.clone();
 
-		let community_account = Communities::<T>::community_account(&id);
-
-		T::Assets::create(1u32.into(), community_account, false, 1u128.into())?;
-		T::Assets::mint_into(1u32.into(), &who, 4u128.into())?;
+		T::Assets::mint_into(1u32.into(), &who, 4u64.into())?;
 
 		prepare_track_and_prepare_poll::<T>(origin.into_caller(), who.clone())?;
 
@@ -336,7 +332,7 @@ mod benchmarks {
 			RawOrigin::Signed(who.clone()).into(),
 			membership_id,
 			0u32,
-			Vote::AssetBalance(true, 1u32.into(), 1u128.into()),
+			Vote::AssetBalance(true, 1u32.into(), 1u64.into()),
 		)?;
 
 		#[extrinsic_call]
@@ -344,7 +340,7 @@ mod benchmarks {
 			RawOrigin::Signed(who.clone()),
 			membership_id,
 			0u32,
-			Vote::AssetBalance(true, 1u32.into(), 2u128.into()),
+			Vote::AssetBalance(true, 1u32.into(), 2u64.into()),
 		);
 
 		// verification code
@@ -416,7 +412,7 @@ mod benchmarks {
 		)?;
 
 		assert_eq!(
-			T::Balances::balance_frozen(&HoldReason::VoteCasted.into(), &who),
+			T::Balances::balance_frozen(&FreezeReason::VoteCasted.into(), &who),
 			1u32.into()
 		);
 
@@ -427,7 +423,7 @@ mod benchmarks {
 
 		// verification code
 		assert_eq!(
-			T::Balances::balance_frozen(&HoldReason::VoteCasted.into(), &who),
+			T::Balances::balance_frozen(&FreezeReason::VoteCasted.into(), &who),
 			0u32.into()
 		);
 

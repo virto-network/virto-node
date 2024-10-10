@@ -1,6 +1,8 @@
 use super::*;
 
 use frame_support::traits::TryMapSuccess;
+#[cfg(not(feature = "runtime-benchmarks"))]
+use frame_system::EnsureNever;
 use frame_system::{EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
@@ -14,11 +16,12 @@ use self::{
 	governance::{CommunityReferendaInstance, CommunityTracksInstance},
 	memberships::CommunityMembershipsInstance,
 };
+use pallet_custom_origins::CreateMemberships;
 
 #[cfg(feature = "runtime-benchmarks")]
 use {
 	frame_benchmarking::BenchmarkError,
-	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::ItemOf, tokens::nonfungible_v2::Mutate},
+	frame_support::traits::{schedule::DispatchTime, tokens::nonfungible_v2::Mutate},
 	frame_system::pallet_prelude::{OriginFor, RuntimeCallFor},
 	pallet_communities::{
 		types::{CommunityIdOf, MembershipIdOf, PalletsOriginOf, PollIndexOf},
@@ -31,12 +34,14 @@ use {
 	sp_runtime::Perbill,
 };
 
+type CreationPayment = Option<(Balance, AccountId, AccountId)>;
+
 parameter_types! {
 	pub const CommunityPalletId: PalletId = PalletId(*b"kv/cmtys");
 	pub const MembershipsCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const CommunityDepositAmount: Balance = UNITS / 2;
-	pub const NoPay: Option<(Balance, AccountId, AccountId)> = None;
+	pub const NoPay: CreationPayment = None;
 }
 
 morph_types! {
@@ -51,7 +56,10 @@ type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, Treasury
 
 impl pallet_communities::Config for Runtime {
 	type CommunityId = CommunityId;
-	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type CreateOrigin = EnsureNever<CreationPayment>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type CreateOrigin = RootCreatesCommunitiesForFree;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmt = CommunityMemberships;
@@ -70,6 +78,9 @@ impl pallet_communities::Config for Runtime {
 
 	type PalletId = CommunityPalletId;
 
+	type ItemConfig = pallet_nfts::ItemConfig;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
+
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = CommunityBenchmarkHelper;
 }
@@ -79,11 +90,20 @@ impl pallet_communities_manager::Config for Runtime {
 	type CreateCollection = CommunityMemberships;
 	type Tracks = CommunityTracks;
 	type RankedCollective = KreivoCollective;
+	type RegisterOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
+
+	type CreateMembershipsOrigin = EitherOf<EnsureRoot<AccountId>, CreateMemberships>;
+	type MembershipId = MembershipId;
+	type MembershipsManagerOwner = TreasuryAccount;
+	type MembershipsManagerCollectionId = MembershipsCollectionId;
+	type CreateMemberships = CommunityMemberships;
+
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-type MembershipCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
+type MembershipCollection =
+	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;

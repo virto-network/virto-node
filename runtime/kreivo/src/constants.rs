@@ -120,7 +120,7 @@ pub mod fee {
 }
 
 pub mod locations {
-	pub const STATEMINE_PARA_ID: u32 = 1000;
+	pub const ASSET_HUB_ID: u32 = 1000;
 	// Even if they are not used yet, let's keep these for the future.
 	pub const STATEMINE_ASSET_PALLET_ID: u8 = 50;
 	pub const USDT_ASSET_ID: u128 = 1984;

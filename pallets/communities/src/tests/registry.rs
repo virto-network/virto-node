@@ -58,4 +58,19 @@ mod create {
 			assert_eq!(Balances::free_balance(ALICE), 5);
 		});
 	}
+
+	#[test]
+	fn fails_if_admin_already_controls_another_community() {
+		new_test_ext(&[], &[]).execute_with(|| {
+			const ANOTHER_COMMUNITY: CommunityId = 99;
+			// Simulate a pre-existing community
+			Info::<Test>::insert(COMMUNITY, CommunityInfo::default());
+
+			// Should fail adding another community with existing admin
+			assert_noop!(
+				Communities::create(Root.into(), COMMUNITY_ORIGIN, ANOTHER_COMMUNITY),
+				Error::AlreadyAdmin
+			);
+		});
+	}
 }
