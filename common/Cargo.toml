@@ -1,47 +1,51 @@
 [package]
-  name = "virto-common"
-  version = "0.1.0"
-  edition = "2021"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+name = "virto-common"
+repository.workspace = true
+version = "0.1.0"
 
 [dependencies]
-  bs58 = { version = "0.5.0", default-features = false }
-  wasm-bindgen = { version = "0.2.87", optional = true }
+bs58 = { version = "0.5.0", default-features = false }
+wasm-bindgen = { version = "0.2.87", optional = true }
 
-  cumulus-primitives-core = { workspace = true, optional = true }
-  frame-support = { workspace = true, optional = true }
-  pallet-payments = { workspace = true, optional = true }
-  parity-scale-codec = { workspace = true, optional = true }
-  scale-info = { workspace = true, optional = true }
-  serde = { workspace = true, optional = true, default-features = false }
-  sp-runtime = { workspace = true, optional = true }
-  xcm = { workspace = true, optional = true }
+cumulus-primitives-core = { workspace = true, optional = true }
+frame-support = { workspace = true, optional = true }
+pallet-payments = { workspace = true, optional = true }
+parity-scale-codec = { workspace = true, optional = true }
+scale-info = { workspace = true, optional = true }
+serde = { workspace = true, optional = true, default-features = false }
+sp-runtime = { workspace = true, optional = true }
+xcm = { workspace = true, optional = true }
 
 [dev-dependencies]
-  frame-support = { workspace = true, features = ["std"] }
+frame-support = { workspace = true, features = ["std"] }
 
 [features]
-  default = ["std"]
-  std = [
-    "bs58/std",
-    "cumulus-primitives-core?/std",
-    "frame-support?/std",
-    "pallet-payments?/std",
-    "parity-scale-codec?/std",
-    "scale-info?/std",
-    "serde?/std",
-    "sp-runtime?/std",
-    "xcm?/std",
-  ]
-  alloc = []
-  js = ["alloc", "wasm-bindgen"]
-  nightly = []
-  runtime = [
-    "dep:cumulus-primitives-core",
-    "dep:frame-support",
-    "dep:pallet-payments",
-    "dep:parity-scale-codec",
-    "dep:serde",
-    "dep:scale-info",
-    "dep:sp-runtime",
-    "dep:xcm",
-  ]
+default = ["std"]
+std = [
+  "bs58/std",
+  "cumulus-primitives-core?/std",
+  "frame-support?/std",
+  "pallet-payments?/std",
+  "parity-scale-codec?/std",
+  "scale-info?/std",
+  "serde?/std",
+  "sp-runtime?/std",
+  "xcm?/std",
+]
+alloc = []
+js = ["alloc", "wasm-bindgen"]
+nightly = []
+runtime = [
+  "dep:cumulus-primitives-core",
+  "dep:frame-support",
+  "dep:pallet-payments",
+  "dep:parity-scale-codec",
+  "dep:serde",
+  "dep:scale-info",
+  "dep:sp-runtime",
+  "dep:xcm",
+]
