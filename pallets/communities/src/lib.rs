@@ -204,9 +204,12 @@ pub mod pallet {
 		/// Type represents interactions between fungibles (i.e. assets)
 		type Assets: fungibles::Inspect<Self::AccountId, Balance = NativeBalanceOf<Self>>
 			+ fungibles::Mutate<Self::AccountId>
-			+ fungibles::Create<Self::AccountId>
-			+ fungibles::hold::Inspect<Self::AccountId, Reason = Self::RuntimeHoldReason>
-			+ fungibles::hold::Mutate<Self::AccountId, Reason = Self::RuntimeHoldReason>;
+			+ fungibles::Create<Self::AccountId>;
+
+		/// Type allows for handling fungibles' freezes
+		type AssetsFreezer: fungibles::Inspect<Self::AccountId, Balance = NativeBalanceOf<Self>, AssetId = AssetIdOf<Self>>
+			+ fungibles::freeze::Inspect<Self::AccountId, Id = Self::RuntimeFreezeReason, AssetId = AssetIdOf<Self>>
+			+ fungibles::freeze::Mutate<Self::AccountId, Id = Self::RuntimeFreezeReason, AssetId = AssetIdOf<Self>>;
 
 		/// Type represents interactions between fungible tokens (native token)
 		type Balances: fungible::Inspect<Self::AccountId>
@@ -230,9 +233,6 @@ pub mod pallet {
 			+ Clone
 			+ OriginTrait<Call = RuntimeCallFor<Self>, AccountId = Self::AccountId, PalletsOrigin = PalletsOriginOf<Self>>;
 
-		/// The overarching hold reason.
-		type RuntimeHoldReason: From<HoldReason>;
-
 		/// The overarching freeze reason.
 		type RuntimeFreezeReason: From<FreezeReason>;
 
@@ -254,13 +254,6 @@ pub mod pallet {
 	/// The origin of the pallet
 	#[pallet::origin]
 	pub type Origin<T> = origin::RawOrigin<T>;
-
-	/// A reason for the pallet communities placing a hold on funds.
-	#[pallet::composite_enum]
-	pub enum HoldReason {
-		// A vote has been casted on a poll
-		VoteCasted,
-	}
 
 	/// A reason for the pallet communities placing a freeze on funds.
 	#[pallet::composite_enum]

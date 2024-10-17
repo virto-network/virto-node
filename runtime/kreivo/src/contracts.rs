@@ -22,7 +22,8 @@ impl frame_support::traits::Contains<RuntimeCall> for AllowBalancesCall {
 fn schedule<T: pallet_contracts::Config>() -> pallet_contracts::Schedule<T> {
 	pallet_contracts::Schedule {
 		limits: pallet_contracts::Limits {
-			runtime_memory: 1024 * 1024 * 1024,
+			validator_runtime_memory: 1024 * 1024 * 1024,
+			runtime_memory: 1024 * 1024 * 768,
 			..Default::default()
 		},
 		..Default::default()
@@ -91,7 +92,8 @@ impl pallet_contracts::Config for Runtime {
 	// if a too-large contract is uploaded. We noticed that it poses
 	// less friction during development when the requirement here is
 	// just more lax.
-	type MaxCodeLen = ConstU32<{ 256 * 1024 }>;
+	type MaxCodeLen = ConstU32<{ 192 * 1024 }>;
+	type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
 	type DefaultDepositLimit = DefaultDepositLimit;
 	type MaxStorageKeyLen = ConstU32<128>;
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;

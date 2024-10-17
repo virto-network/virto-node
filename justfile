@@ -2,7 +2,7 @@
 set shell := ["nu", "-c"]
 
 podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
-ver := `open node/Cargo.toml | get package.version`
+ver := `open chain-spec-generator/Cargo.toml | get package.version`
 image := "ghcr.io/virto-network/virto"
 node := "target/release/virto-node"
 chain := "kreivo"
@@ -22,7 +22,7 @@ _task-selector:
 	just $selected_task
 
 @about:
-	open node/Cargo.toml | get package | table -c
+	open chain-spec-generator/Cargo.toml | get package | table -c
 
 @version:
 	echo {{ ver }}

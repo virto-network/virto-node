@@ -68,11 +68,11 @@ impl pallet_communities::Config for Runtime {
 	type Polls = CommunityReferenda;
 
 	type Assets = Assets;
+	type AssetsFreezer = AssetsFreezer;
 	type Balances = Balances;
 
 	type RuntimeCall = RuntimeCall;
 	type RuntimeOrigin = RuntimeOrigin;
-	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = crate::weights::pallet_communities::WeightInfo<Runtime>;
 

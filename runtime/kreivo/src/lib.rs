@@ -42,7 +42,7 @@ pub use apis::RuntimeApi;
 pub use virto_common::FungibleAssetLocation;
 
 use frame_support::{
-	construct_runtime, derive_impl,
+	derive_impl,
 	dispatch::DispatchClass,
 	ensure,
 	genesis_builder_helper::{build_state, get_preset},
@@ -167,64 +167,113 @@ pub fn native_version() -> NativeVersion {
 
 // Create the runtime by composing the FRAME pallets that were previously
 // configured.
-construct_runtime!(
-	pub enum Runtime
-	{
-		// System support stuff.
-		System: frame_system = 0,
-		ParachainSystem: cumulus_pallet_parachain_system = 1,
-		Timestamp: pallet_timestamp = 2,
-		ParachainInfo: parachain_info = 3,
-		Origins: pallet_custom_origins = 4,
-		#[cfg(feature = "paseo")]
-		Sudo: pallet_sudo = 5,
+#[frame_support::runtime]
+mod runtime {
+	#[runtime::runtime]
+	#[runtime::derive(
+		RuntimeCall,
+		RuntimeEvent,
+		RuntimeError,
+		RuntimeOrigin,
+		RuntimeTask,
+		RuntimeHoldReason,
+		RuntimeFreezeReason
+	)]
+	pub struct Runtime;
 
-		// Monetary stuff.
-		Balances: pallet_balances = 10,
-		TransactionPayment: pallet_transaction_payment = 11,
-		Assets: pallet_assets::<Instance1> = 13,
-		AssetTxPayment: pallet_asset_tx_payment::{Pallet, Storage, Event<T>} = 14,
-		Vesting: pallet_vesting = 15,
-
-		// Collator support. The order of these 4 are important and shall not change.
-		Authorship: pallet_authorship = 20,
-		CollatorSelection: pallet_collator_selection = 21,
-		Session: pallet_session = 22,
-		Aura: pallet_aura = 23,
-		AuraExt: cumulus_pallet_aura_ext = 24,
-
-		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue = 30,
-		PolkadotXcm: pallet_xcm = 31,
-		CumulusXcm: cumulus_pallet_xcm = 32,
-		MessageQueue: pallet_message_queue = 33,
-
-		// Utils
-		Multisig: pallet_multisig = 42,
-		Utility: pallet_utility = 43,
-		Proxy: pallet_proxy = 44,
-		Scheduler: pallet_scheduler = 45,
-		Preimage: pallet_preimage = 46,
-
-		// Governance
-		Treasury: pallet_treasury = 50,
-		KreivoCollective: pallet_ranked_collective::<Instance1> = 51,
-		KreivoReferenda: pallet_referenda::<Instance1> = 52,
-
-		// Virto Tooling
-		Payments: pallet_payments = 60,
-
-		// Communities at Kreivo
-		Communities: pallet_communities = 71,
-		CommunityTracks: pallet_referenda_tracks::<Instance2> = 72,
-		CommunityReferenda: pallet_referenda::<Instance2> = 73,
-		CommunityMemberships: pallet_nfts::<Instance2> = 74,
-		CommunitiesManager: pallet_communities_manager = 75,
-
-		// Contracts
-		Contracts: pallet_contracts = 80,
+	// System support stuff.
+	#[runtime::pallet_index(0)]
+	pub type System = frame_system;
+	#[runtime::pallet_index(1)]
+	pub type ParachainSystem = cumulus_pallet_parachain_system;
+	#[runtime::pallet_index(2)]
+	pub type Timestamp = pallet_timestamp;
+	#[runtime::pallet_index(3)]
+	pub type ParachainInfo = parachain_info;
+	#[runtime::pallet_index(4)]
+	pub type Origins = pallet_custom_origins;
+	#[cfg(feature = "paseo")]
+	mod paseo {
+		#[runtime::pallet_index(5)]
+		pub type Sudo = pallet_sudo;
 	}
-);
+
+	// Monetary stuff.
+	#[runtime::pallet_index(10)]
+	pub type Balances = pallet_balances;
+	#[runtime::pallet_index(11)]
+	pub type TransactionPayment = pallet_transaction_payment;
+	#[runtime::pallet_index(12)]
+	pub type AssetsFreezer = pallet_assets_freezer<Instance1>;
+	#[runtime::pallet_index(13)]
+	pub type Assets = pallet_assets<Instance1>;
+	#[runtime::pallet_index(14)]
+	pub type AssetsTxPayment = pallet_asset_tx_payment;
+	#[runtime::pallet_index(15)]
+	pub type Vesting = pallet_vesting;
+
+	// Collator support. The order of these 4 are important and shall not change.
+	#[runtime::pallet_index(20)]
+	pub type Authorship = pallet_authorship;
+	#[runtime::pallet_index(21)]
+	pub type CollatorSelection = pallet_collator_selection;
+	#[runtime::pallet_index(22)]
+	pub type Session = pallet_session;
+	#[runtime::pallet_index(23)]
+	pub type Aura = pallet_aura;
+	#[runtime::pallet_index(24)]
+	pub type AuraExt = cumulus_pallet_aura_ext;
+
+	// XCM helpers.
+	#[runtime::pallet_index(30)]
+	pub type XcmpQueue = cumulus_pallet_xcmp_queue;
+	#[runtime::pallet_index(31)]
+	pub type PolkadotXcm = pallet_xcm;
+	#[runtime::pallet_index(32)]
+	pub type CumulusXcm = cumulus_pallet_xcm;
+	#[runtime::pallet_index(33)]
+	pub type MessageQueue = pallet_message_queue;
+
+	// Utils
+	#[runtime::pallet_index(42)]
+	pub type Multisig = pallet_multisig;
+	#[runtime::pallet_index(43)]
+	pub type Utility = pallet_utility;
+	#[runtime::pallet_index(44)]
+	pub type Proxy = pallet_proxy;
+	#[runtime::pallet_index(45)]
+	pub type Scheduler = pallet_scheduler;
+	#[runtime::pallet_index(46)]
+	pub type Preimage = pallet_preimage;
+
+	// Governance
+	#[runtime::pallet_index(50)]
+	pub type Treasury = pallet_treasury;
+	#[runtime::pallet_index(51)]
+	pub type KreivoCollective = pallet_ranked_collective<Instance1>;
+	#[runtime::pallet_index(52)]
+	pub type KreivoReferenda = pallet_referenda<Instance1>;
+
+	// Virto Tooling
+	#[runtime::pallet_index(60)]
+	pub type Payments = pallet_payments;
+
+	// Communities at Kreivo
+	#[runtime::pallet_index(71)]
+	pub type Communities = pallet_communities;
+	#[runtime::pallet_index(72)]
+	pub type CommunityTracks = pallet_referenda_tracks<Instance2>;
+	#[runtime::pallet_index(73)]
+	pub type CommunityReferenda = pallet_referenda<Instance2>;
+	#[runtime::pallet_index(74)]
+	pub type CommunityMemberships = pallet_nfts<Instance2>;
+	#[runtime::pallet_index(75)]
+	pub type CommunitiesManager = pallet_communities_manager;
+
+	// Contracts
+	#[runtime::pallet_index(80)]
+	pub type Contracts = pallet_contracts;
+}
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
@@ -531,29 +580,22 @@ parameter_types! {
 	pub const MaxPeerDataEncodingSize: u32 = 1_000;
 	pub TreasuryAccount: AccountId = Treasury::account_id();
 	pub const PayoutSpendPeriod: BlockNumber = 30 * DAYS;
-
 }
 
 impl pallet_treasury::Config for Runtime {
-	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type RejectOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type RuntimeEvent = RuntimeEvent;
-	type OnSlash = Treasury;
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = ();
+	type PalletId = TreasuryPalletId;
 	type BurnDestination = ();
-	type MaxApprovals = MaxApprovals;
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type SpendFunds = ();
+	type MaxApprovals = MaxApprovals;
 	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	type AssetKind = ();
 	type Beneficiary = Self::AccountId;
-
 	type BeneficiaryLookup = IdentityLookup<Self::Beneficiary>;
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
@@ -620,7 +662,7 @@ impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type ApprovalDeposit = ApprovalDeposit;
 	type StringLimit = AssetsStringLimit;
-	type Freezer = ();
+	type Freezer = AssetsFreezer;
 	type Extra = ();
 	type WeightInfo = weights::pallet_assets::WeightInfo<Runtime>;
 	type CallbackHandle = ();
@@ -630,6 +672,11 @@ impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type RuntimeHoldReason = RuntimeHoldReason;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
+}
+
+impl pallet_assets_freezer::Config<KreivoAssetsInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 parameter_types! {

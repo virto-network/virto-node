@@ -6,8 +6,8 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		fungible::{InspectFreeze, Mutate, MutateFreeze},
-		fungibles::{InspectHold, MutateHold},
-		tokens::Precision,
+		fungibles::{InspectFreeze as _, MutateFreeze as _},
+		tokens::Fortitude::Polite,
 		Polling,
 	},
 };
@@ -146,6 +146,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		use sp_runtime::traits::Zero;
 
+		let reason = FreezeReason::VoteCasted.into();
+
 		match vote.clone() {
 			Vote::AssetBalance(..) | Vote::NativeBalance(..) => match update_type {
 				LockUpdateType::Add => CommunityVoteLocks::<T>::insert(who, poll_index, vote.clone()),
@@ -154,60 +156,29 @@ impl<T: Config> Pallet<T> {
 			_ => (),
 		}
 
-		match vote {
-			// Add a new lock for Vote::AssetBalance
-			Vote::AssetBalance(_, asset_id, amount) if update_type == LockUpdateType::Add => {
-				let held_amount = T::Assets::balance_on_hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who);
-				if amount > &held_amount {
-					if held_amount.gt(&Zero::zero()) {
-						T::Assets::release(
-							asset_id.clone(),
-							&HoldReason::VoteCasted.into(),
-							who,
-							held_amount,
-							Precision::Exact,
-						)?;
-					}
-					T::Assets::hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who, *amount)?;
-				}
+		match (update_type, vote) {
+			(LockUpdateType::Add, Vote::AssetBalance(_, asset_id, amount)) => {
+				let amount = T::AssetsFreezer::balance_frozen(asset_id.clone(), &reason, who).max(*amount);
+				T::AssetsFreezer::set_frozen(asset_id.clone(), &reason, who, amount, Polite)?;
 			}
-			// Add a new lock for Vote::NativeBalance
-			Vote::NativeBalance(_, amount) if update_type == LockUpdateType::Add => {
-				let amount = T::Balances::balance_frozen(&FreezeReason::VoteCasted.into(), who).max(*amount);
-				T::Balances::set_frozen(
-					&FreezeReason::VoteCasted.into(),
-					who,
-					amount,
-					frame_support::traits::tokens::Fortitude::Polite,
-				)?;
+			(LockUpdateType::Add, Vote::NativeBalance(_, amount)) => {
+				let amount = T::Balances::balance_frozen(&reason, who).max(*amount);
+				T::Balances::set_frozen(&reason, who, amount, Polite)?;
 			}
-			// Add an existing lock for Vote::AssetBalance
-			Vote::AssetBalance(_, asset_id, _) if update_type == LockUpdateType::Remove => {
-				let mut amount_to_hold: AssetBalanceOf<T> = Zero::zero();
+			(LockUpdateType::Remove, Vote::AssetBalance(_, asset_id, _)) => {
+				let mut amount_to_freeze: AssetBalanceOf<T> = Zero::zero();
 
 				for locked_vote in CommunityVoteLocks::<T>::iter_prefix_values(who) {
-					match locked_vote {
-						Vote::AssetBalance(_, asset, amount) if &asset == asset_id => {
-							amount_to_hold = amount_to_hold.max(amount);
+					if let Vote::AssetBalance(_, ref id, amount) = locked_vote {
+						if id == asset_id {
+							amount_to_freeze = amount_to_freeze.max(amount)
 						}
-						_ => (),
 					}
 				}
 
-				let held_amount = T::Assets::balance_on_hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who);
-				if held_amount.gt(&Zero::zero()) {
-					T::Assets::release(
-						asset_id.clone(),
-						&HoldReason::VoteCasted.into(),
-						who,
-						held_amount,
-						Precision::Exact,
-					)?;
-				}
-				T::Assets::hold(asset_id.clone(), &HoldReason::VoteCasted.into(), who, amount_to_hold)?;
+				T::AssetsFreezer::set_frozen(asset_id.clone(), &reason, who, amount_to_freeze, Polite)?;
 			}
-			// Remove an existing lock for Vote::NativeBalance
-			Vote::NativeBalance(_, _) if update_type == LockUpdateType::Remove => {
+			(LockUpdateType::Remove, Vote::NativeBalance(_, _)) => {
 				let mut amount_to_freeze: NativeBalanceOf<T> = Zero::zero();
 
 				for locked_vote in CommunityVoteLocks::<T>::iter_prefix_values(who) {

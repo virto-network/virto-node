@@ -46,11 +46,26 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 pub struct NftsBenchmarksHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksHelper {
+use sp_runtime::traits::IdentifyAccount;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId, <Signature as Verify>::Signer, AccountId, Signature>
+	for NftsBenchmarksHelper
+{
 	fn collection(_: u16) -> CommunityId {
 		<Runtime as pallet_communities::Config>::BenchmarkHelper::community_id()
 	}
 	fn item(i: u16) -> MembershipId {
 		i.into()
+	}
+	fn signer() -> (sp_runtime::MultiSigner, AccountId) {
+		let public = sp_io::crypto::sr25519_generate(0.into(), None);
+		let account = sp_runtime::MultiSigner::Sr25519(public).into_account();
+		(public.into(), account)
+	}
+	fn sign(signer: &sp_runtime::MultiSigner, message: &[u8]) -> Signature {
+		sp_runtime::MultiSignature::Sr25519(
+			sp_io::crypto::sr25519_sign(0.into(), &signer.clone().try_into().unwrap(), message).unwrap(),
+		)
 	}
 }

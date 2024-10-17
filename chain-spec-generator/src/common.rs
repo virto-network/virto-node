@@ -4,11 +4,8 @@ use serde::{Deserialize, Serialize};
 use sp_core::{Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
-pub mod kreivo;
-pub use kreivo::ChainSpec;
-
 /// The default XCM version to set in genesis config.
-const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
+pub const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// The extensions for the [`ChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
@@ -19,13 +16,6 @@ pub struct Extensions {
 	/// The id of the Parachain.
 	#[serde(alias = "paraId", alias = "ParaId")]
 	pub para_id: u32,
-}
-
-impl Extensions {
-	/// Try to get the extension from the given `ChainSpec`.
-	pub fn try_get(chain_spec: &dyn sc_service::ChainSpec) -> Option<&Self> {
-		sc_chain_spec::get_extension(chain_spec.extensions())
-	}
 }
 
 /// Helper function to generate a crypto pair from seed

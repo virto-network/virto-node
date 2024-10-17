@@ -1,11 +1,9 @@
-use crate::chain_spec::{get_account_id_from_seed, get_collator_keys_from_seed, Extensions, SAFE_XCM_VERSION};
+use crate::common::{get_account_id_from_seed, get_collator_keys_from_seed, Extensions, SAFE_XCM_VERSION};
 use cumulus_primitives_core::ParaId;
 
 use kreivo_runtime::{constants::currency::EXISTENTIAL_DEPOSIT, AccountId, AuraId, SessionKeys};
-use sc_service::ChainType;
+use sc_chain_spec::{ChainSpec, ChainType};
 use sp_core::sr25519;
-
-const DEFAULT_PROTOCOL_ID: &str = "kreivo";
 
 #[cfg(feature = "paseo")]
 const KREIVO_PARA_ID: u32 = 2281;
@@ -13,7 +11,7 @@ const KREIVO_PARA_ID: u32 = 2281;
 const KREIVO_PARA_ID: u32 = 2281;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
+pub type KreivoChainSpec = sc_chain_spec::GenericChainSpec<Extensions>;
 
 /// Generate the session keys from individual elements.
 ///

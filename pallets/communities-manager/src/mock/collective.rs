@@ -41,10 +41,10 @@ impl pallet_ranked_collective::Config<CollectiveInstance> for Test {
 	type Polls = CollectiveReferenda;
 	type MinRankOfClass = ();
 	type VoteWeight = pallet_ranked_collective::Linear;
+	type MaxMemberCount = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkSetup = ();
 }
-
 pub struct TracksInfo;
 impl pallet_referenda::TracksInfo<Balance, BlockNumberFor<Test>> for TracksInfo {
 	type Id = TrackId;

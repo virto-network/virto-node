@@ -4,7 +4,7 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		fungible::HoldConsideration, tokens::nonfungible_v2::ItemOf, AsEnsureOriginWithArg, ConstU32, ConstU64,
-		EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint,
+		EitherOf, EnsureOriginWithArg, EqualPrivilegeOnly, Footprint, VariantCountOf,
 	},
 	weights::{
 		constants::{WEIGHT_REF_TIME_PER_NANOS, WEIGHT_REF_TIME_PER_SECOND},
@@ -14,7 +14,6 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_referenda::{TrackIdOf, TrackInfoOf, TracksInfo};
-use parity_scale_codec::Compact;
 use sp_io::TestExternalities;
 use sp_runtime::{
 	traits::{Convert, IdentifyAccount, IdentityLookup, Verify},
@@ -49,28 +48,50 @@ type WeightInfo = ();
 
 pub type AccountPublic = <MultiSignature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
-pub type Balance = u64;
-pub type AssetId = u32;
+pub type Balance = <Test as pallet_balances::Config>::Balance;
+pub type AssetId = <Test as pallet_assets::Config>::AssetId;
 
 // Configure a mock runtime to test the pallet.
-frame_support::construct_runtime!(
-	pub enum Test
-	{
-		Assets: pallet_assets,
-		Balances: pallet_balances,
-		Communities: pallet_communities,
-		Nfts: pallet_nfts,
-		Preimage: pallet_preimage,
-		Referenda: pallet_referenda,
-		Scheduler: pallet_scheduler,
-		System: frame_system,
-		Tracks: pallet_referenda_tracks,
-	}
-);
+#[frame_support::runtime]
+mod runtime {
+	#[runtime::runtime]
+	#[runtime::derive(
+		RuntimeCall,
+		RuntimeEvent,
+		RuntimeError,
+		RuntimeOrigin,
+		RuntimeTask,
+		RuntimeHoldReason,
+		RuntimeFreezeReason
+	)]
+	pub struct Test;
+
+	#[runtime::pallet_index(0)]
+	pub type System = frame_system;
+	#[runtime::pallet_index(1)]
+	pub type Scheduler = pallet_scheduler;
+	#[runtime::pallet_index(2)]
+	pub type Preimage = pallet_preimage;
+
+	#[runtime::pallet_index(10)]
+	pub type Balances = pallet_balances;
+	#[runtime::pallet_index(11)]
+	pub type Assets = pallet_assets;
+	#[runtime::pallet_index(12)]
+	pub type AssetsFreezer = pallet_assets_freezer;
+
+	#[runtime::pallet_index(21)]
+	pub type Referenda = pallet_referenda;
+	#[runtime::pallet_index(31)]
+	pub type Communities = pallet_communities;
+	#[runtime::pallet_index(32)]
+	pub type Tracks = pallet_referenda_tracks;
+	#[runtime::pallet_index(33)]
+	pub type Nfts = pallet_nfts;
+}
 
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = frame_support::traits::Everything;
 	type Block = Block;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<AccountId>;
@@ -80,34 +101,49 @@ impl frame_system::Config for Test {
 // Monetary operations
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
 impl pallet_balances::Config for Test {
-	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type FreezeIdentifier = RuntimeFreezeReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
 }
 
 #[derive_impl(pallet_assets::config_preludes::TestDefaultConfig as pallet_assets::DefaultConfig)]
 impl pallet_assets::Config for Test {
 	type Balance = Balance;
-	type AssetIdParameter = Compact<AssetId>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
-	type Freezer = ();
-	type RemoveItemsLimit = ConstU32<5>;
+	type Freezer = AssetsFreezer;
 	type RuntimeHoldReason = RuntimeHoldReason;
+}
+
+impl pallet_assets_freezer::Config for Test {
+	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 // Memberships
 #[cfg(feature = "runtime-benchmarks")]
 pub struct NftsBenchmarksHelper;
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId> for NftsBenchmarksHelper {
+impl pallet_nfts::BenchmarkHelper<CommunityId, MembershipId, AccountPublic, AccountId, MultiSignature>
+	for NftsBenchmarksHelper
+{
 	fn collection(_i: u16) -> CommunityId {
 		COMMUNITY
 	}
 	fn item(i: u16) -> MembershipId {
 		i as MembershipId
+	}
+	fn signer() -> (AccountPublic, AccountId) {
+		let public = sp_io::crypto::sr25519_generate(0.into(), None);
+		let account = sp_runtime::MultiSigner::Sr25519(public).into_account();
+		(public.into(), account)
+	}
+	fn sign(signer: &AccountPublic, message: &[u8]) -> MultiSignature {
+		sp_runtime::MultiSignature::Sr25519(
+			sp_io::crypto::sr25519_sign(0.into(), &signer.clone().try_into().unwrap(), message).unwrap(),
+		)
 	}
 }
 
@@ -384,6 +420,7 @@ impl Config for Test {
 	type MembershipId = MembershipId;
 
 	type Assets = Assets;
+	type AssetsFreezer = AssetsFreezer;
 	type Balances = Balances;
 	type ItemConfig = pallet_nfts::ItemConfig;
 	type MemberMgmt = Nfts;
@@ -396,7 +433,6 @@ impl Config for Test {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
-	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type WeightInfo = WeightInfo;
 

@@ -45,18 +45,36 @@ pub const PAYMENT_AMOUNT: u64 = 20;
 pub const INCENTIVE_AMOUNT: u64 = PAYMENT_AMOUNT / INCENTIVE_PERCENTAGE as u64;
 
 // Configure a mock runtime to test the pallet.
-frame_support::construct_runtime!(
-	pub enum Test
-	{
-		System: frame_system,
-		Balances: pallet_balances,
-		Assets: pallet_assets,
-		Sudo: pallet_sudo,
-		Payments: pallet_payments,
-		Scheduler: pallet_scheduler,
-		Preimage: pallet_preimage,
-	}
-);
+#[frame_support::runtime]
+mod runtime {
+	#[runtime::runtime]
+	#[runtime::derive(
+		RuntimeCall,
+		RuntimeEvent,
+		RuntimeError,
+		RuntimeOrigin,
+		RuntimeTask,
+		RuntimeHoldReason,
+		RuntimeFreezeReason
+	)]
+	pub struct Test;
+
+	#[runtime::pallet_index(0)]
+	pub type System = frame_system;
+	#[runtime::pallet_index(1)]
+	pub type Sudo = pallet_sudo;
+	#[runtime::pallet_index(5)]
+	pub type Scheduler = pallet_scheduler;
+	#[runtime::pallet_index(6)]
+	pub type Preimage = pallet_preimage;
+
+	#[runtime::pallet_index(10)]
+	pub type Balances = pallet_balances;
+	#[runtime::pallet_index(11)]
+	pub type Assets = pallet_assets;
+	#[runtime::pallet_index(20)]
+	pub type Payments = pallet_payments;
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -64,18 +82,16 @@ parameter_types! {
 	pub MaxWeight: Weight = Weight::from_parts(2_000_000_000_000, u64::MAX);
 }
 
-pub type Balance = u64;
+pub type Balance = <Test as pallet_balances::Config>::Balance;
 
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = frame_support::traits::Everything;
 	type Block = Block;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<Balance>;
 }
 
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
 impl pallet_balances::Config for Test {
-	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 }
 
@@ -85,7 +101,6 @@ impl pallet_assets::Config for Test {
 	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<u64>>;
 	type ForceOrigin = frame_system::EnsureRoot<u64>;
 	type Freezer = ();
-	type RemoveItemsLimit = ConstU32<5>;
 	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
@@ -242,6 +257,7 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 			// id, account_id, balance
 			(ASSET_ID, SENDER_ACCOUNT, 100),
 		],
+		next_asset_id: None,
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();

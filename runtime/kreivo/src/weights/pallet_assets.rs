@@ -527,4 +527,18 @@ impl<T: frame_system::Config> pallet_assets::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	/// Storage: Assets Asset (r:1 w:0)
+	/// Proof: Assets Asset (max_values: None, max_size: Some(210), added: 2685, mode: MaxEncodedLen)
+	/// Storage: Assets Account (r:1 w:1)
+	/// Proof: Assets Account (max_values: None, max_size: Some(134), added: 2609, mode: MaxEncodedLen)
+	fn transfer_all() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `351`
+		//  Estimated: `3675`
+		// Minimum execution time: 16_860_000 picoseconds.
+		Weight::from_parts(17_197_000, 0)
+			.saturating_add(Weight::from_parts(0, 3675))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
