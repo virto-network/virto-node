@@ -859,7 +859,7 @@ dependencies = [
 
 [[package]]
 name = "chain-spec-generator"
-version = "0.14.0"
+version = "0.13.3"
 dependencies = [
  "clap",
  "cumulus-primitives-core",

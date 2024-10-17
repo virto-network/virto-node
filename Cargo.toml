@@ -1,5 +1,5 @@
 [workspace]
-members = ["node", "runtime/kreivo", "common"]
+members = ["chain-spec-generator", "runtime/kreivo", "common"]
 resolver = "2"
 
 [profile.release]
