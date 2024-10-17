@@ -40,6 +40,7 @@ impl pallet_ranked_collective::Config<KreivoCollectiveInstance> for Runtime {
 
 	type Polls = KreivoReferenda;
 	type MinRankOfClass = AtLeastRank<1>;
+	type MaxMemberCount = ();
 	type VoteWeight = pallet_ranked_collective::Linear;
 
 	#[cfg(feature = "runtime-benchmarks")]

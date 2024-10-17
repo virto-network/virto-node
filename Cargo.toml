@@ -122,6 +122,7 @@ frame-try-runtime = {default-features = false, git = "https://github.com/virto-n
 ## Substrate Pallet Dependencies
 pallet-asset-tx-payment = {default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409"}
 pallet-assets = {default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409"}
+pallet-assets-freezer = {default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409"}
 pallet-aura = {default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409"}
 pallet-authorship = {default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409"}
 pallet-balances = {default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409"}
