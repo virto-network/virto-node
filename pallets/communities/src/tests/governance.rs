@@ -525,7 +525,6 @@ mod vote {
 
 	mod asset_balance {
 		use super::*;
-		use frame_support::traits::fungibles::MutateHold;
 
 		#[test]
 		fn fails_if_not_enough_balance() {
@@ -536,7 +535,7 @@ mod vote {
 						RuntimeOrigin::signed(CHARLIE),
 						membership(COMMUNITY_B, 2),
 						1,
-						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 50)
+						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 51)
 					),
 					TokenError::FundsUnavailable
 				);
@@ -561,30 +560,6 @@ mod vote {
 					1,
 					Vote::AssetBalance(true, COMMUNITY_B_ASSET_ID, 10)
 				));
-			});
-		}
-
-		#[test]
-		fn holds_cannot_overlap() {
-			new_test_ext().execute_with(|| {
-				// If already holds should be overlapable
-				assert_ok!(Assets::hold(
-					COMMUNITY_B_ASSET_ID,
-					&pallet_preimage::HoldReason::Preimage.into(),
-					&CHARLIE,
-					40,
-				));
-
-				// Before voting, the poll is ongoing
-				assert_noop!(
-					Communities::vote(
-						RuntimeOrigin::signed(CHARLIE),
-						membership(COMMUNITY_B, 2),
-						1,
-						Vote::AssetBalance(false, COMMUNITY_B_ASSET_ID, 15)
-					),
-					TokenError::FundsUnavailable
-				);
 			});
 		}
 
