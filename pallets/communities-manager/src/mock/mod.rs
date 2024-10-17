@@ -2,12 +2,11 @@ use super::*;
 
 use frame_support::{
 	derive_impl, parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, Everything},
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
 	PalletId,
 };
 use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
-use parity_scale_codec::Compact;
 use sp_io::TestExternalities;
 use sp_runtime::{
 	traits::{IdentifyAccount, IdentityLookup, Verify},
@@ -31,26 +30,51 @@ type WeightInfo = ();
 
 pub type AccountPublic = <MultiSignature as Verify>::Signer;
 pub type AccountId = <AccountPublic as IdentifyAccount>::AccountId;
-pub type Balance = u64;
-pub type AssetId = u32;
+pub type Balance = <Test as pallet_balances::Config>::Balance;
 
 // Configure a mock runtime to test the pallet.
-frame_support::construct_runtime!(
-	pub enum Test
-	{
-		System: frame_system,
-		Assets: pallet_assets,
-		Balances: pallet_balances,
-		CollectiveReferenda: pallet_referenda::<Instance1>,
-		Collective: pallet_ranked_collective::<Instance1>,
-		Scheduler: pallet_scheduler,
-		Referenda: pallet_referenda,
-		Tracks: pallet_referenda_tracks,
-		Memberships: pallet_nfts,
-		Communities: pallet_communities,
-		CommunitiesManager: pallet_communities_manager,
-	}
-);
+#[frame_support::runtime]
+mod runtime {
+	#[runtime::runtime]
+	#[runtime::derive(
+		RuntimeCall,
+		RuntimeEvent,
+		RuntimeError,
+		RuntimeOrigin,
+		RuntimeTask,
+		RuntimeHoldReason,
+		RuntimeFreezeReason
+	)]
+	pub struct Test;
+
+	#[runtime::pallet_index(0)]
+	pub type System = frame_system;
+	#[runtime::pallet_index(1)]
+	pub type Scheduler = pallet_scheduler;
+	#[runtime::pallet_index(2)]
+	pub type Referenda = pallet_referenda;
+
+	#[runtime::pallet_index(10)]
+	pub type Balances = pallet_balances;
+	#[runtime::pallet_index(11)]
+	pub type Assets = pallet_assets;
+	#[runtime::pallet_index(12)]
+	pub type AssetsFreezer = pallet_assets_freezer;
+
+	#[runtime::pallet_index(21)]
+	pub type CollectiveReferenda = pallet_referenda<Instance1>;
+	#[runtime::pallet_index(22)]
+	pub type Collective = pallet_ranked_collective<Instance1>;
+
+	#[runtime::pallet_index(31)]
+	pub type Communities = pallet_communities;
+	#[runtime::pallet_index(32)]
+	pub type Tracks = pallet_referenda_tracks;
+	#[runtime::pallet_index(33)]
+	pub type Memberships = pallet_nfts;
+	#[runtime::pallet_index(34)]
+	pub type CommunitiesManager = pallet_communities_manager;
+}
 
 parameter_types! {
 	pub const RootAccount: AccountId = AccountId::new([0xff; 32]);
@@ -58,31 +82,32 @@ parameter_types! {
 
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Test {
-	type BaseCallFilter = Everything;
 	type Block = Block;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type AccountData = pallet_balances::AccountData<Balance>;
+	type RuntimeEvent = RuntimeEvent;
 }
 
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
 impl pallet_balances::Config for Test {
-	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type FreezeIdentifier = RuntimeFreezeReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
 }
 
 #[derive_impl(pallet_assets::config_preludes::TestDefaultConfig as pallet_assets::DefaultConfig)]
 impl pallet_assets::Config for Test {
-	type Balance = Balance;
-	type AssetIdParameter = Compact<AssetId>;
 	type Currency = Balances;
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
 	type ForceOrigin = EnsureRoot<Self::AccountId>;
-	type Freezer = ();
-	type RemoveItemsLimit = ConstU32<1000>;
-	type RuntimeHoldReason = RuntimeHoldReason;
+	type Freezer = AssetsFreezer;
+}
+
+impl pallet_assets_freezer::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 impl pallet_scheduler::Config for Test {
@@ -178,6 +203,7 @@ impl pallet_communities::Config for Test {
 	type CommunityId = CommunityId;
 	type MembershipId = MembershipId;
 	type Assets = Assets;
+	type AssetsFreezer = AssetsFreezer;
 	type Balances = Balances;
 	type ItemConfig = pallet_nfts::ItemConfig;
 	type MemberMgmt = Memberships;
@@ -188,7 +214,6 @@ impl pallet_communities::Config for Test {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeEvent = RuntimeEvent;
-	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type WeightInfo = WeightInfo;
 	#[cfg(feature = "runtime-benchmarks")]
