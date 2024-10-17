@@ -93,7 +93,7 @@ impl pallet_contracts::Config for Runtime {
 	// less friction during development when the requirement here is
 	// just more lax.
 	type MaxCodeLen = ConstU32<{ 192 * 1024 }>;
-	type MaxTransientStorageSize = ConstU32<{ 1 * 1024 * 1024 }>;
+	type MaxTransientStorageSize = ConstU32<{ 1024 * 1024 }>;
 	type DefaultDepositLimit = DefaultDepositLimit;
 	type MaxStorageKeyLen = ConstU32<128>;
 	type MaxDebugBufferLen = ConstU32<{ 2 * 1024 * 1024 }>;
