@@ -1,8 +1,9 @@
 //! System support stuff.
 
 use fc_traits_authn::{composite_authenticator, util::AuthorityFromPalletId, Challenge, Challenger};
-use frame_support::PalletId;
+use frame_support::{traits::EnsureOrigin, PalletId};
 use frame_system::EnsureRootWithSuccess;
+use pallet_communities::origin::AsSignedByCommunity;
 use polkadot_core_primitives::HashT;
 
 use super::*;
@@ -110,39 +111,76 @@ impl Challenger for UnincludedBlockChallenger {
 	}
 }
 
-// pub type WebAuthn = pass_webauthn::Authenticator<UnincludedBlockChallenger,
-// AuthorityFromPalletId<PassPalletId>>;
+pub type WebAuthn = pass_webauthn::Authenticator<UnincludedBlockChallenger, AuthorityFromPalletId<PassPalletId>>;
 pub type Dummy = fc_traits_authn::util::dummy::Dummy<AuthorityFromPalletId<PassPalletId>>;
 
+#[cfg(not(feature = "runtime-benchmarks"))]
 composite_authenticator!(
 	pub Pass<AuthorityFromPalletId<PassPalletId>> {
-		// WebAuthn,
+		WebAuthn,
+	}
+);
+
+#[cfg(feature = "runtime-benchmarks")]
+composite_authenticator!(
+	pub Pass<AuthorityFromPalletId<PassPalletId>> {
+		WebAuthn,
 		Dummy,
 	}
 );
+
+/// Communities don't need to pay deposit fees to create a `pass` account
+pub struct CommunitiesDontDeposit;
+
+impl<OuterOrigin> EnsureOriginWithArg<OuterOrigin, HashedUserId> for CommunitiesDontDeposit
+where
+	OuterOrigin: frame_support::traits::OriginTrait
+		+ From<frame_system::RawOrigin<AccountId>>
+		+ From<pallet_communities::Origin<Runtime>>
+		+ Clone
+		+ Into<Result<frame_system::RawOrigin<AccountId>, OuterOrigin>>
+		+ Into<Result<pallet_communities::Origin<Runtime>, OuterOrigin>>,
+{
+	type Success = Option<pallet_pass::DepositInformation<Runtime>>;
+
+	fn try_origin(o: OuterOrigin, _: &HashedUserId) -> Result<Self::Success, OuterOrigin> {
+		AsSignedByCommunity::<Runtime>::try_origin(o)?;
+		Ok(None)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(_: &HashedUserId) -> Result<OuterOrigin, ()> {
+		use pallet_communities::BenchmarkHelper;
+		let community_id = crate::communities::CommunityBenchmarkHelper::community_id();
+		Ok(
+			frame_system::RawOrigin::Signed(pallet_communities::Pallet::<Runtime>::community_account(&community_id))
+				.into(),
+		)
+	}
+}
 
 impl pallet_pass::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type Currency = Balances;
 	type WeightInfo = pallet_pass::SubstrateWeight<Self>;
-	type Authenticator = PassAuthenticator;
+	type Authenticator = PassAuthenticator; // WebAuthn;
 	type PalletsOrigin = OriginCaller;
 	type PalletId = PassPalletId;
 	type MaxSessionDuration = ConstU32<{ 15 * MINUTES }>;
 	type RegisterOrigin = EitherOf<
 		// Root never pays
 		EnsureRootWithSuccess<Self::AccountId, NeverPays>,
-		// EitherOf<
-		// 	// Communities never pay
-		// 	MapSuccess<AsSignedByCommunity<Runtime>, NeverPays>,
-		// Signed users must deposit ED for creating a pass account
-		pallet_pass::EnsureSignedPays<
-			Runtime,
-			<Runtime as pallet_balances::Config>::ExistentialDeposit,
-			TreasuryAccount,
+		EitherOf<
+			// 	// Communities never pay
+			CommunitiesDontDeposit,
+			// Signed users must deposit ED for creating a pass account
+			pallet_pass::EnsureSignedPays<
+				Runtime,
+				<Runtime as pallet_balances::Config>::ExistentialDeposit,
+				TreasuryAccount,
+			>,
 		>,
-		// >,
 	>;
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -153,16 +191,16 @@ impl pallet_pass::Config for Runtime {
 pub struct PassBenchmarkHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
-impl pallet_pass::BenchmarkHelper<Test> for PassBenchmarkHelper {
-	fn register_origin() -> frame_system::pallet_prelude::OriginFor<Test> {
+impl pallet_pass::BenchmarkHelper<Runtime> for PassBenchmarkHelper {
+	fn register_origin() -> frame_system::pallet_prelude::OriginFor<Runtime> {
 		RuntimeOrigin::root()
 	}
 
-	fn device_attestation(device_id: fc_traits_authn::DeviceId) -> pallet_pass::DeviceAttestationOf<Test, ()> {
-		todo!("Insert Dummy authenticator that works with benchmarks first")
+	fn device_attestation(_: fc_traits_authn::DeviceId) -> pallet_pass::DeviceAttestationOf<Runtime, ()> {
+		PassDeviceAttestation::Dummy(fc_traits_authn::util::dummy::DummyAttestation::new(true))
 	}
 
-	fn credential(user_id: HashedUserId) -> pallet_pass::CredentialOf<Test, ()> {
-		todo!("Insert Dummy authenticator that works with benchmarks first")
+	fn credential(_: HashedUserId) -> pallet_pass::CredentialOf<Runtime, ()> {
+		PassCredential::Dummy(fc_traits_authn::util::dummy::DummyCredential::new(true))
 	}
 }

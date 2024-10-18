@@ -111,7 +111,7 @@ fc-traits-memberships.workspace = true
 pallet-gas-transaction-payment.workspace = true
 pallet-pass.workspace = true
 pallet-referenda-tracks.workspace = true
-# pass-webauthn = { workspace = true, features = ["runtime"] }
+pass-webauthn = { workspace = true, features = ["runtime"] }
 
 [features]
 default = ["std"]
@@ -173,7 +173,7 @@ std = [
   "parachain-info/std",
   "parachains-common/std",
   "parity-scale-codec/std",
-  # "pass-webauthn/std",
+  "pass-webauthn/std",
   "polkadot-core-primitives/std",
   "polkadot-parachain-primitives/std",
   "polkadot-runtime-common/std",
@@ -237,6 +237,7 @@ runtime-benchmarks = [
   "pallet-utility/runtime-benchmarks",
   "pallet-xcm-benchmarks/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
+  "pass-webauthn/runtime-benchmarks",
   "parachains-common/runtime-benchmarks",
   "polkadot-parachain-primitives/runtime-benchmarks",
   "polkadot-runtime-common/runtime-benchmarks",
@@ -285,6 +286,7 @@ try-runtime = [
   "pallet-treasury/try-runtime",
   "pallet-utility/try-runtime",
   "pallet-xcm/try-runtime",
+  "pass-webauthn/try-runtime",
   "parachain-info/try-runtime",
   "polkadot-runtime-common/try-runtime",
   "runtime-common/try-runtime",

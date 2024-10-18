@@ -525,7 +525,7 @@ checksum = "8d9a9bf8b79a749ee0b911b91b671cc2b6c670bdbc7e3dfd537576ddc94bb2a2"
 dependencies = [
  "http 0.2.12",
  "log",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2044,7 +2044,7 @@ checksum = "e8c02a5121d4ea3eb16a80748c74f5549a5665e4c21333c6098f283870fbdea6"
 [[package]]
 name = "fc-pallet-gas-transaction-payment"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "fc-traits-gas-tank",
  "frame-support",
@@ -2057,7 +2057,7 @@ dependencies = [
 [[package]]
 name = "fc-pallet-pass"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "fc-traits-authn",
  "frame-benchmarking",
@@ -2075,7 +2075,7 @@ dependencies = [
 [[package]]
 name = "fc-pallet-referenda-tracks"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "fc-traits-tracks",
  "frame-benchmarking",
@@ -2094,7 +2094,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-authn"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "fc-traits-authn-proc",
  "frame-support",
@@ -2105,7 +2105,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-authn-proc"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "quote",
  "syn 2.0.79",
@@ -2114,7 +2114,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-gas-tank"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -2125,7 +2125,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-memberships"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -2135,7 +2135,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-tracks"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib?branch=main#bef33bbafecc760324a852381f686a898d00472f"
+source = "git+https://github.com/virto-network/frame-contrib#4f34f38ff48dd2a06e2fb594e7d5045085a37a1a"
 dependencies = [
  "frame-support",
  "pallet-referenda",
@@ -2267,7 +2267,15 @@ version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
- "percent-encoding",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "form_urlencoded"
+version = "1.2.1"
+source = "git+https://github.com/servo/rust-url#ebd5cfbf6ffa20de67e47b3b4fa1be55081d7ca8"
+dependencies = [
+ "percent-encoding 2.3.1 (git+https://github.com/servo/rust-url)",
 ]
 
 [[package]]
@@ -3103,6 +3111,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "idna"
+version = "0.5.0"
+source = "git+https://github.com/servo/rust-url#ebd5cfbf6ffa20de67e47b3b4fa1be55081d7ca8"
+dependencies = [
+ "unicode-bidi",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "if-addrs"
 version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3146,7 +3163,7 @@ dependencies = [
  "log",
  "rand",
  "tokio",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "xmltree",
 ]
 
@@ -3439,6 +3456,7 @@ dependencies = [
  "pallet-xcm-benchmarks",
  "parachains-common",
  "parity-scale-codec",
+ "pass-webauthn",
  "polkadot-core-primitives",
  "polkadot-parachain-primitives",
  "polkadot-runtime-common",
@@ -3925,7 +3943,7 @@ dependencies = [
  "rw-stream-sink",
  "soketto",
  "thiserror",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki-roots",
 ]
 
@@ -4093,7 +4111,7 @@ dependencies = [
  "trust-dns-resolver",
  "uint",
  "unsigned-varint 0.8.0",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki",
  "x25519-dalek",
  "x509-parser 0.16.0",
@@ -4376,11 +4394,11 @@ dependencies = [
  "log",
  "multibase",
  "multihash 0.17.0",
- "percent-encoding",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "static_assertions",
  "unsigned-varint 0.7.2",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4395,11 +4413,11 @@ dependencies = [
  "libp2p-identity",
  "multibase",
  "multihash 0.19.1",
- "percent-encoding",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "static_assertions",
  "unsigned-varint 0.8.0",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4837,6 +4855,18 @@ name = "overload"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
+
+[[package]]
+name = "p256"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9863ad85fa8f4460f9c48cb909d38a0d689dba1f6f6988a5e3e0d31071bcd4b"
+dependencies = [
+ "ecdsa",
+ "elliptic-curve",
+ "primeorder",
+ "sha2 0.10.8",
+]
 
 [[package]]
 name = "pallet-asset-conversion"
@@ -5728,6 +5758,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7924d1d0ad836f665c9065e26d016c673ece3993f30d340068b16f282afc1156"
 
 [[package]]
+name = "pass-webauthn"
+version = "0.1.0"
+source = "git+https://github.com/virto-network/webauthn#71f186d564f0558bc40ad903e1a9d2fcd432bf44"
+dependencies = [
+ "fc-traits-authn",
+ "frame-support",
+ "parity-scale-codec",
+ "scale-info",
+ "simple-base64",
+ "url 2.5.2 (git+https://github.com/servo/rust-url)",
+ "verifier",
+]
+
+[[package]]
 name = "password-hash"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5768,6 +5812,11 @@ name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
+
+[[package]]
+name = "percent-encoding"
+version = "2.3.1"
+source = "git+https://github.com/servo/rust-url#ebd5cfbf6ffa20de67e47b3b4fa1be55081d7ca8"
 
 [[package]]
 name = "petgraph"
@@ -6195,6 +6244,15 @@ checksum = "479cf940fbbb3426c32c5d5176f62ad57549a0bb84773423ba8be9d089f5faba"
 dependencies = [
  "proc-macro2",
  "syn 2.0.79",
+]
+
+[[package]]
+name = "primeorder"
+version = "0.13.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "353e1ca18966c16d9deb1c69278edbc5f194139612772bd9537af60ac231e1e6"
+dependencies = [
+ "elliptic-curve",
 ]
 
 [[package]]
@@ -7718,6 +7776,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "simple-base64"
+version = "0.23.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6385ef05b7bbfddaa8bf6306d059adac087990d659576c73b7da802d9a6ce91f"
+
+[[package]]
 name = "simple-dns"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9158,7 +9222,7 @@ dependencies = [
  "tinyvec",
  "tokio",
  "tracing",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -9183,7 +9247,7 @@ dependencies = [
  "tinyvec",
  "tokio",
  "tracing",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -9235,7 +9299,7 @@ dependencies = [
  "rustls 0.21.12",
  "sha1",
  "thiserror",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "utf-8",
 ]
 
@@ -9352,9 +9416,19 @@ version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22784dbdf76fdde8af1aeda5622b546b422b6fc585325248a2bf9f5e41e94d6c"
 dependencies = [
- "form_urlencoded",
- "idna 0.5.0",
- "percent-encoding",
+ "form_urlencoded 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "idna 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "percent-encoding 2.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "url"
+version = "2.5.2"
+source = "git+https://github.com/servo/rust-url#ebd5cfbf6ffa20de67e47b3b4fa1be55081d7ca8"
+dependencies = [
+ "form_urlencoded 1.2.1 (git+https://github.com/servo/rust-url)",
+ "idna 0.5.0 (git+https://github.com/servo/rust-url)",
+ "percent-encoding 2.3.1 (git+https://github.com/servo/rust-url)",
 ]
 
 [[package]]
@@ -9380,6 +9454,15 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "verifier"
+version = "0.1.0"
+source = "git+https://github.com/virto-network/webauthn#71f186d564f0558bc40ad903e1a9d2fcd432bf44"
+dependencies = [
+ "p256",
+ "sha2 0.10.8",
+]
 
 [[package]]
 name = "version_check"
@@ -9636,7 +9719,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48134de3d7598219ab9eaf6b91b15d8e50d31da76b8519fe4ecfcec2cf35104b"
 dependencies = [
  "indexmap 1.9.3",
- "url",
+ "url 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
