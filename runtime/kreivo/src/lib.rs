@@ -201,12 +201,6 @@ mod runtime {
 	pub type ParachainInfo = parachain_info;
 	#[runtime::pallet_index(4)]
 	pub type Origins = pallet_custom_origins;
-
-	#[cfg(feature = "paseo")]
-	#[runtime::pallet_index(5)]
-	#[cfg(feature = "paseo")]
-	pub type Sudo = pallet_sudo;
-
 	#[runtime::pallet_index(6)]
 	pub type Pass = pallet_pass;
 

@@ -126,15 +126,6 @@ impl parachain_info::Config for Runtime {}
 // pub type Origins
 impl pallet_custom_origins::Config for Runtime {}
 
-// #[runtime::pallet_index(5)]
-// pub type Sudo
-#[cfg(feature = "paseo")]
-impl pallet_sudo::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeCall = RuntimeCall;
-	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Self>;
-}
-
 // #[runtime::pallet_index(6)]
 // pub type Pass
 parameter_types! {
