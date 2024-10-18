@@ -118,6 +118,7 @@ pallet-referenda = { default-features = false, git = "https://github.com/virto-n
 pallet-remark = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }
 pallet-scheduler = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }
 pallet-session = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }
+pallet-skip-feeless-payment = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }
 pallet-sudo = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }
 pallet-timestamp = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }
 pallet-transaction-payment = { default-features = false, git = "https://github.com/virto-network/polkadot-sdk", branch = "release-virto-stable2409" }

@@ -11,12 +11,15 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod tests;
 
 pub mod apis;
+pub mod configuration;
 pub mod constants;
 pub mod contracts;
 pub mod governance;
 pub mod impls;
 mod weights;
 pub mod xcm_config;
+
+pub use configuration::*;
 
 use apis::*;
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
@@ -86,11 +89,10 @@ pub mod payments;
 
 pub mod communities;
 
-pub mod configuration;
-
 use pallet_asset_tx_payment::ChargeAssetTxPayment;
 use pallet_gas_transaction_payment::ChargeTransactionPayment as ChargeGasTxPayment;
 use pallet_pass::ChargeTransactionToPassAccount as ChargeTxToPassAccount;
+use pallet_skip_feeless_payment::SkipCheckIfFeeless;
 
 // XCM Imports
 use xcm::latest::prelude::BodyId;
@@ -118,6 +120,8 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
 
+pub type ChargeTransaction = ChargeGasTxPayment<Runtime, ChargeAssetTxPayment<Runtime>>;
+
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckNonZeroSender<Runtime>,
@@ -127,11 +131,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	// ChargeTxToPassAccount::<ChargeGasTxPayment, Runtime, ()>::new(
-	// 	ChargeGasTxPayment::<Runtime, ChargeAssetTxPayment>::new(
-	ChargeAssetTxPayment<Runtime>
-	// 	),
-	// ),
+	SkipCheckIfFeeless<Runtime, ChargeTxToPassAccount<ChargeTransaction, Runtime, ()>>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -202,7 +202,7 @@ mod runtime {
 	#[runtime::pallet_index(4)]
 	pub type Origins = pallet_custom_origins;
 	#[cfg(feature = "paseo")]
-	mod paseo {
+	pub mod paseo {
 		#[runtime::pallet_index(5)]
 		pub type Sudo = pallet_sudo;
 	}
@@ -223,6 +223,8 @@ mod runtime {
 	#[runtime::pallet_index(15)]
 	pub type Vesting = pallet_vesting;
 	#[runtime::pallet_index(16)]
+	pub type SkipFeeless = pallet_skip_feeless_payment;
+	#[runtime::pallet_index(17)]
 	pub type GasTxPayment = pallet_gas_transaction_payment;
 
 	// Collator support. The order of these 4 are important and shall not change.
@@ -337,28 +339,6 @@ impl StaticLookup for CommunityLookup {
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type EventHandler = (CollatorSelection,);
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
-}
-
-impl pallet_balances::Config for Runtime {
-	type MaxLocks = ConstU32<50>;
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-	type MaxReserves = ConstU32<50>;
-	type ReserveIdentifier = [u8; 8];
-	type RuntimeHoldReason = RuntimeHoldReason;
-	type FreezeIdentifier = RuntimeFreezeReason;
-	type MaxFreezes = ConstU32<256>;
-	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 parameter_types! {
@@ -561,54 +541,6 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = UNITS / 10; // 1 / 10 UNITS deposit to create asset
-	pub const AssetAccountDeposit: Balance = deposit(1, 16);
-	pub const ApprovalDeposit: Balance = EXISTENTIAL_DEPOSIT;
-	pub const AssetsStringLimit: u32 = 50;
-	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-	pub const MetadataDepositBase: Balance = deposit(1, 68);
-	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-}
-
-/// We allow root to execute privileged asset operations.
-
-pub type AssetsForceOrigin = EnsureRoot<AccountId>;
-pub type KreivoAssetsInstance = pallet_assets::Instance1;
-type KreivoAssetsCall = pallet_assets::Call<Runtime, KreivoAssetsInstance>;
-
-impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type AssetId = FungibleAssetLocation;
-	type AssetIdParameter = FungibleAssetLocation;
-	type Currency = Balances;
-	/// Only root can create assets and force state changes.
-	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
-	type ForceOrigin = AssetsForceOrigin;
-	type AssetDeposit = AssetDeposit;
-	type MetadataDepositBase = MetadataDepositBase;
-	type MetadataDepositPerByte = MetadataDepositPerByte;
-	type ApprovalDeposit = ApprovalDeposit;
-	type StringLimit = AssetsStringLimit;
-	type Freezer = AssetsFreezer;
-	type Extra = ();
-	type WeightInfo = weights::pallet_assets::WeightInfo<Runtime>;
-	type CallbackHandle = ();
-	type AssetAccountDeposit = AssetAccountDeposit;
-	type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
-	type MaxHolds = frame_support::traits::ConstU32<50>;
-	type RuntimeHoldReason = RuntimeHoldReason;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
-}
-
-impl pallet_assets_freezer::Config<KreivoAssetsInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeFreezeReason = RuntimeFreezeReason;
-}
-
-parameter_types! {
 	// One storage item; key size 32, value size 8; .
 	pub const ProxyDepositBase: Balance = deposit(1, 40);
 	// Additional storage item size of 33 bytes.
@@ -712,23 +644,6 @@ pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::Exponenti
 	TransactionByteFee,
 	ParachainSystem,
 >;
-
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * CENTS;
-	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
-		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
-}
-
-impl pallet_vesting::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
-	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
-	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-	type BlockNumberProvider = System;
-	const MAX_VESTING_SCHEDULES: u32 = 28;
-}
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {

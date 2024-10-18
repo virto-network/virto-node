@@ -3445,6 +3445,7 @@ dependencies = [
  "pallet-referenda",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-skip-feeless-payment",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -5439,6 +5440,18 @@ dependencies = [
  "sp-staking",
  "sp-state-machine",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-skip-feeless-payment"
+version = "13.0.0"
+source = "git+https://github.com/virto-network/polkadot-sdk?branch=release-virto-stable2409#d13cf291bef64b5ab713ed864df18ce763a799fc"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
 ]
 
 [[package]]
