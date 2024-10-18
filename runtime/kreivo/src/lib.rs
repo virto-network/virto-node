@@ -86,6 +86,12 @@ pub mod payments;
 
 pub mod communities;
 
+pub mod configuration;
+
+use pallet_asset_tx_payment::ChargeAssetTxPayment;
+use pallet_gas_transaction_payment::ChargeTransactionPayment as ChargeGasTxPayment;
+use pallet_pass::ChargeTransactionToPassAccount as ChargeTxToPassAccount;
+
 // XCM Imports
 use xcm::latest::prelude::BodyId;
 
@@ -99,7 +105,6 @@ pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Nonce, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-pub use runtime_common::impls::AssetsToBlockAuthor;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, CommunityId>;
@@ -122,7 +127,11 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
+	// ChargeTxToPassAccount::<ChargeGasTxPayment, Runtime, ()>::new(
+	// 	ChargeGasTxPayment::<Runtime, ChargeAssetTxPayment>::new(
+	ChargeAssetTxPayment<Runtime>
+	// 	),
+	// ),
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -197,6 +206,8 @@ mod runtime {
 		#[runtime::pallet_index(5)]
 		pub type Sudo = pallet_sudo;
 	}
+	#[runtime::pallet_index(6)]
+	pub type Pass = pallet_pass;
 
 	// Monetary stuff.
 	#[runtime::pallet_index(10)]
@@ -211,6 +222,8 @@ mod runtime {
 	pub type AssetsTxPayment = pallet_asset_tx_payment;
 	#[runtime::pallet_index(15)]
 	pub type Vesting = pallet_vesting;
+	#[runtime::pallet_index(16)]
+	pub type GasTxPayment = pallet_gas_transaction_payment;
 
 	// Collator support. The order of these 4 are important and shall not change.
 	#[runtime::pallet_index(20)]
@@ -305,19 +318,6 @@ parameter_types! {
 	pub const SS58Prefix: u16 = 2;
 }
 
-#[cfg(feature = "paseo")]
-mod paseo {
-	use super::{Runtime, RuntimeCall, RuntimeEvent};
-
-	impl pallet_sudo::Config for Runtime {
-		type RuntimeEvent = RuntimeEvent;
-		type RuntimeCall = RuntimeCall;
-		type WeightInfo = pallet_sudo::weights::SubstrateWeight<Self>;
-	}
-}
-
-impl pallet_custom_origins::Config for Runtime {}
-
 pub struct CommunityLookup;
 impl StaticLookup for CommunityLookup {
 	type Source = Address;
@@ -332,45 +332,6 @@ impl StaticLookup for CommunityLookup {
 	fn unlookup(t: Self::Target) -> Self::Source {
 		MultiAddress::Id(t)
 	}
-}
-
-// Configure FRAME pallets to include in runtime.
-#[derive_impl(frame_system::config_preludes::ParaChainDefaultConfig as frame_system::DefaultConfig)]
-impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
-	type Lookup = CommunityLookup;
-	/// The type for hashing blocks and tries.
-	type Hash = Hash;
-	type Block = Block;
-	type Nonce = Nonce;
-	/// Maximum number of block number to block hash mappings to keep (oldest
-	/// pruned first).
-	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
-	type Version = Version;
-	/// The data to be stored in an account.
-	type AccountData = pallet_balances::AccountData<Balance>;
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
-	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
-	/// This is used as an identifier of the chain. 42 is the generic substrate
-	/// prefix.
-	type SS58Prefix = SS58Prefix;
-	/// The action to take on a Runtime Upgrade
-	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-impl pallet_timestamp::Config for Runtime {
-	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
-	type OnTimestampSet = Aura;
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
-	type WeightInfo = ();
 }
 
 impl pallet_authorship::Config for Runtime {
@@ -405,16 +366,6 @@ parameter_types! {
 	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
 }
 
-impl pallet_transaction_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction =
-		pallet_transaction_payment::FungibleAdapter<Balances, ResolveTo<TreasuryAccount, Balances>>;
-	type WeightToFee = WeightToFee;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type OperationalFeeMultiplier = ConstU8<5>;
-}
-
 parameter_types! {
 	pub MessageQueueServiceWeight: Weight = Perbill::from_percent(35) * RuntimeBlockWeights::get().max_block;
 }
@@ -442,8 +393,6 @@ impl pallet_message_queue::Config for Runtime {
 	type IdleMaxServiceWeight = ();
 }
 
-impl parachain_info::Config for Runtime {}
-
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 /// How many parachain blocks are processed by the relay chain per parent.
@@ -454,26 +403,6 @@ const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
 /// Relay chain slot duration, in milliseconds.
 const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6_000;
-
-parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-	pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
-}
-
-impl cumulus_pallet_parachain_system::Config for Runtime {
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
-	type OnSystemEvent = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
-	type OutboundXcmpMessageSource = XcmpQueue;
-	type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;
-	type ReservedDmpWeight = ReservedDmpWeight;
-	type XcmpMessageHandler = XcmpQueue;
-	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
-	type ConsensusHook = ConsensusHook;
-}
 
 /// Aura consensus hook
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
@@ -783,15 +712,6 @@ pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::Exponenti
 	TransactionByteFee,
 	ParachainSystem,
 >;
-
-impl pallet_asset_tx_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Fungibles = Assets;
-	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
-		pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto, KreivoAssetsInstance>,
-		AssetsToBlockAuthor<Runtime, KreivoAssetsInstance>,
-	>;
-}
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 100 * CENTS;
