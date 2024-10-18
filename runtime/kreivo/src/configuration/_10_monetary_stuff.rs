@@ -33,6 +33,11 @@ impl pallet_balances::Config for Runtime {
 
 // #[runtime::pallet_index(11)]
 // pub type TransactionPayment
+parameter_types! {
+	/// Relay Chain `TransactionByteFee` / 10
+	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
+}
+
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = FungibleAdapter<Balances, ResolveTo<TreasuryAccount, Balances>>;
