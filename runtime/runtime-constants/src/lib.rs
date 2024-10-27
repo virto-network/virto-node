@@ -24,10 +24,25 @@ pub mod currency {
 
 	/// The existential deposit.
 	pub const EXISTENTIAL_DEPOSIT: Balance = CENTS;
+
+	#[cfg(not(feature = "paseo"))]
 	pub const UNITS: Balance = 1_000_000_000_000;
+	#[cfg(feature = "paseo")]
+	pub const UNITS: Balance = 10_000_000_000;
+
+	#[cfg(not(feature = "paseo"))]
 	pub const QUID: Balance = UNITS / 30;
+
+	#[cfg(not(feature = "paseo"))]
 	pub const CENTS: Balance = QUID / 100;
-	pub const GRAND: Balance = QUID * 1_000;
+	#[cfg(feature = "paseo")]
+	pub const CENTS: Balance = UNITS / 100;
+
+	#[cfg(not(feature = "paseo"))]
+	pub const GRAND: Balance = 1_000 * QUID;
+	#[cfg(feature = "paseo")]
+	pub const GRAND: Balance = 1_000 * UNITS;
+
 	pub const MILLICENTS: Balance = CENTS / 1_000;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {

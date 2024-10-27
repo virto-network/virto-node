@@ -3,7 +3,7 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true
-name = "kusama-runtime-constants"
+name = "runtime-constants"
 repository.workspace = true
 version = "1.0.0"
 
@@ -19,6 +19,7 @@ xcm-builder.workspace = true
 
 [features]
 default = ["std"]
+paseo = []
 std = [
 	"frame-support/std",
 	"polkadot-primitives/std",

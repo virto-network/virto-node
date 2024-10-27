@@ -79,7 +79,7 @@ sp-version.workspace = true
 sp-weights.workspace = true
 
 # Polkadot
-kusama-runtime-constants.workspace = true
+runtime-constants.workspace = true
 pallet-xcm.workspace = true
 pallet-xcm-benchmarks = { workspace = true, optional = true }
 polkadot-core-primitives.workspace = true
@@ -110,7 +110,7 @@ pallet-referenda-tracks.workspace = true
 
 [features]
 default = ["std"]
-paseo = []
+paseo = ["runtime-constants/paseo"]
 std = [
   "assets-common/std",
   "cumulus-pallet-aura-ext/std",
@@ -131,7 +131,7 @@ std = [
   "frame-system/std",
   "fc-traits-memberships/std",
   "log/std",
-  "kusama-runtime-constants/std",
+  "runtime-constants/std",
   "pallet-assets-freezer/std",
   "pallet-asset-tx-payment/std",
   "pallet-assets/std",

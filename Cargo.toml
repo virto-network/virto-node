@@ -46,7 +46,7 @@ pallet-communities = { default-features = false, path = "pallets/communities" }
 pallet-communities-manager = { default-features = false, path = "pallets/communities-manager" }
 pallet-payments = { default-features = false, path = "pallets/payments" }
 
-kusama-runtime-constants = { default-features = false, path = "runtime/kusama-runtime-constants" }
+runtime-constants = { default-features = false, path = "runtime/runtime-constants" }
 runtime-common = { default-features = false, path = "runtime/common" }
 
 # Frame Contrib
