@@ -3340,7 +3340,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
- "kusama-runtime-constants",
  "log",
  "pallet-asset-tx-payment",
  "pallet-assets",
@@ -3377,6 +3376,7 @@ dependencies = [
  "polkadot-parachain-primitives",
  "polkadot-runtime-common",
  "runtime-common",
+ "runtime-constants",
  "scale-info",
  "smallvec",
  "sp-api",
@@ -3399,20 +3399,6 @@ dependencies = [
  "staging-xcm-executor",
  "substrate-wasm-builder",
  "virto-common",
-]
-
-[[package]]
-name = "kusama-runtime-constants"
-version = "1.0.0"
-dependencies = [
- "frame-support",
- "polkadot-primitives",
- "polkadot-runtime-common",
- "smallvec",
- "sp-core",
- "sp-runtime",
- "sp-weights",
- "staging-xcm-builder",
 ]
 
 [[package]]
@@ -6791,7 +6777,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
- "kusama-runtime-constants",
  "log",
  "pallet-asset-tx-payment",
  "pallet-assets",
@@ -6810,6 +6795,7 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
  "polkadot-runtime-common",
+ "runtime-constants",
  "scale-info",
  "smallvec",
  "sp-api",
@@ -6828,6 +6814,20 @@ dependencies = [
  "staging-xcm-builder",
  "staging-xcm-executor",
  "substrate-wasm-builder",
+]
+
+[[package]]
+name = "runtime-constants"
+version = "1.0.0"
+dependencies = [
+ "frame-support",
+ "polkadot-primitives",
+ "polkadot-runtime-common",
+ "smallvec",
+ "sp-core",
+ "sp-runtime",
+ "sp-weights",
+ "staging-xcm-builder",
 ]
 
 [[package]]
