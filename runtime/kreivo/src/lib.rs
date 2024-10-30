@@ -11,12 +11,15 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod tests;
 
 pub mod apis;
+pub mod configuration;
 pub mod constants;
 pub mod contracts;
 pub mod governance;
 pub mod impls;
 mod weights;
 pub mod xcm_config;
+
+pub use configuration::*;
 
 use apis::*;
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
@@ -86,6 +89,11 @@ pub mod payments;
 
 pub mod communities;
 
+use pallet_asset_tx_payment::ChargeAssetTxPayment;
+use pallet_gas_transaction_payment::ChargeTransactionPayment as ChargeGasTxPayment;
+use pallet_pass::ChargeTransactionToPassAccount as ChargeTxToPassAccount;
+use pallet_skip_feeless_payment::SkipCheckIfFeeless;
+
 // XCM Imports
 use xcm::latest::prelude::BodyId;
 
@@ -99,7 +107,6 @@ pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Nonce, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
-pub use runtime_common::impls::AssetsToBlockAuthor;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, CommunityId>;
@@ -113,6 +120,8 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
 
+pub type ChargeTransaction = ChargeGasTxPayment<Runtime, ChargeAssetTxPayment<Runtime>>;
+
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckNonZeroSender<Runtime>,
@@ -122,7 +131,7 @@ pub type SignedExtra = (
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
+	SkipCheckIfFeeless<Runtime, ChargeTxToPassAccount<ChargeTransaction, Runtime, ()>>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -148,10 +157,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("kreivo-parachain"),
 	impl_name: create_runtime_str!("kreivo-parachain"),
 	authoring_version: 1,
-	spec_version: 111,
+	spec_version: 112,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 8,
+	transaction_version: 9,
 	state_version: 1,
 };
 
@@ -192,11 +201,8 @@ mod runtime {
 	pub type ParachainInfo = parachain_info;
 	#[runtime::pallet_index(4)]
 	pub type Origins = pallet_custom_origins;
-	#[cfg(feature = "paseo")]
-	mod paseo {
-		#[runtime::pallet_index(5)]
-		pub type Sudo = pallet_sudo;
-	}
+	#[runtime::pallet_index(6)]
+	pub type Pass = pallet_pass;
 
 	// Monetary stuff.
 	#[runtime::pallet_index(10)]
@@ -211,6 +217,10 @@ mod runtime {
 	pub type AssetsTxPayment = pallet_asset_tx_payment;
 	#[runtime::pallet_index(15)]
 	pub type Vesting = pallet_vesting;
+	#[runtime::pallet_index(16)]
+	pub type SkipFeeless = pallet_skip_feeless_payment;
+	#[runtime::pallet_index(17)]
+	pub type GasTxPayment = pallet_gas_transaction_payment;
 
 	// Collator support. The order of these 4 are important and shall not change.
 	#[runtime::pallet_index(20)]
@@ -275,144 +285,9 @@ mod runtime {
 	pub type Contracts = pallet_contracts;
 }
 
-parameter_types! {
-	pub const Version: RuntimeVersion = VERSION;
-
-	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
-	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
-	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
-	// the lazy contract deletion.
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
-	pub const SS58Prefix: u16 = 2;
-}
-
-#[cfg(feature = "paseo")]
-mod paseo {
-	use super::{Runtime, RuntimeCall, RuntimeEvent};
-
-	impl pallet_sudo::Config for Runtime {
-		type RuntimeEvent = RuntimeEvent;
-		type RuntimeCall = RuntimeCall;
-		type WeightInfo = pallet_sudo::weights::SubstrateWeight<Self>;
-	}
-}
-
-impl pallet_custom_origins::Config for Runtime {}
-
-pub struct CommunityLookup;
-impl StaticLookup for CommunityLookup {
-	type Source = Address;
-	type Target = AccountId;
-	fn lookup(s: Self::Source) -> Result<Self::Target, LookupError> {
-		match s {
-			MultiAddress::Id(i) => Ok(i),
-			MultiAddress::Index(i) => Ok(Communities::community_account(&i)),
-			_ => Err(LookupError),
-		}
-	}
-	fn unlookup(t: Self::Target) -> Self::Source {
-		MultiAddress::Id(t)
-	}
-}
-
-// Configure FRAME pallets to include in runtime.
-#[derive_impl(frame_system::config_preludes::ParaChainDefaultConfig as frame_system::DefaultConfig)]
-impl frame_system::Config for Runtime {
-	/// The identifier used to distinguish between accounts.
-	type AccountId = AccountId;
-	type Lookup = CommunityLookup;
-	/// The type for hashing blocks and tries.
-	type Hash = Hash;
-	type Block = Block;
-	type Nonce = Nonce;
-	/// Maximum number of block number to block hash mappings to keep (oldest
-	/// pruned first).
-	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
-	type Version = Version;
-	/// The data to be stored in an account.
-	type AccountData = pallet_balances::AccountData<Balance>;
-	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = RocksDbWeight;
-	/// Block & extrinsics weights: base values and limits.
-	type BlockWeights = RuntimeBlockWeights;
-	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
-	/// This is used as an identifier of the chain. 42 is the generic substrate
-	/// prefix.
-	type SS58Prefix = SS58Prefix;
-	/// The action to take on a Runtime Upgrade
-	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-impl pallet_timestamp::Config for Runtime {
-	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
-	type OnTimestampSet = Aura;
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
-	type WeightInfo = ();
-}
-
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type EventHandler = (CollatorSelection,);
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
-}
-
-impl pallet_balances::Config for Runtime {
-	type MaxLocks = ConstU32<50>;
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-	type MaxReserves = ConstU32<50>;
-	type ReserveIdentifier = [u8; 8];
-	type RuntimeHoldReason = RuntimeHoldReason;
-	type FreezeIdentifier = RuntimeFreezeReason;
-	type MaxFreezes = ConstU32<256>;
-	type RuntimeFreezeReason = RuntimeFreezeReason;
-}
-
-parameter_types! {
-	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 10 * MILLICENTS;
-}
-
-impl pallet_transaction_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type OnChargeTransaction =
-		pallet_transaction_payment::FungibleAdapter<Balances, ResolveTo<TreasuryAccount, Balances>>;
-	type WeightToFee = WeightToFee;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type OperationalFeeMultiplier = ConstU8<5>;
 }
 
 parameter_types! {
@@ -442,8 +317,6 @@ impl pallet_message_queue::Config for Runtime {
 	type IdleMaxServiceWeight = ();
 }
 
-impl parachain_info::Config for Runtime {}
-
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 /// How many parachain blocks are processed by the relay chain per parent.
@@ -454,26 +327,6 @@ const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
 /// Relay chain slot duration, in milliseconds.
 const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6_000;
-
-parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
-	pub const RelayOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
-}
-
-impl cumulus_pallet_parachain_system::Config for Runtime {
-	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
-	type OnSystemEvent = ();
-	type SelfParaId = parachain_info::Pallet<Runtime>;
-	type OutboundXcmpMessageSource = XcmpQueue;
-	type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;
-	type ReservedDmpWeight = ReservedDmpWeight;
-	type XcmpMessageHandler = XcmpQueue;
-	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = RelayNumberMonotonicallyIncreases;
-	type ConsensusHook = ConsensusHook;
-}
 
 /// Aura consensus hook
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
@@ -632,54 +485,6 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = UNITS / 10; // 1 / 10 UNITS deposit to create asset
-	pub const AssetAccountDeposit: Balance = deposit(1, 16);
-	pub const ApprovalDeposit: Balance = EXISTENTIAL_DEPOSIT;
-	pub const AssetsStringLimit: u32 = 50;
-	/// Key = 32 bytes, Value = 36 bytes (32+1+1+1+1)
-	// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-	pub const MetadataDepositBase: Balance = deposit(1, 68);
-	pub const MetadataDepositPerByte: Balance = deposit(0, 1);
-}
-
-/// We allow root to execute privileged asset operations.
-
-pub type AssetsForceOrigin = EnsureRoot<AccountId>;
-pub type KreivoAssetsInstance = pallet_assets::Instance1;
-type KreivoAssetsCall = pallet_assets::Call<Runtime, KreivoAssetsInstance>;
-
-impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type AssetId = FungibleAssetLocation;
-	type AssetIdParameter = FungibleAssetLocation;
-	type Currency = Balances;
-	/// Only root can create assets and force state changes.
-	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
-	type ForceOrigin = AssetsForceOrigin;
-	type AssetDeposit = AssetDeposit;
-	type MetadataDepositBase = MetadataDepositBase;
-	type MetadataDepositPerByte = MetadataDepositPerByte;
-	type ApprovalDeposit = ApprovalDeposit;
-	type StringLimit = AssetsStringLimit;
-	type Freezer = AssetsFreezer;
-	type Extra = ();
-	type WeightInfo = weights::pallet_assets::WeightInfo<Runtime>;
-	type CallbackHandle = ();
-	type AssetAccountDeposit = AssetAccountDeposit;
-	type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
-	type MaxHolds = frame_support::traits::ConstU32<50>;
-	type RuntimeHoldReason = RuntimeHoldReason;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = ();
-}
-
-impl pallet_assets_freezer::Config<KreivoAssetsInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type RuntimeFreezeReason = RuntimeFreezeReason;
-}
-
-parameter_types! {
 	// One storage item; key size 32, value size 8; .
 	pub const ProxyDepositBase: Balance = deposit(1, 40);
 	// Additional storage item size of 33 bytes.
@@ -783,32 +588,6 @@ pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::Exponenti
 	TransactionByteFee,
 	ParachainSystem,
 >;
-
-impl pallet_asset_tx_payment::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Fungibles = Assets;
-	type OnChargeAssetTransaction = pallet_asset_tx_payment::FungiblesAdapter<
-		pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto, KreivoAssetsInstance>,
-		AssetsToBlockAuthor<Runtime, KreivoAssetsInstance>,
-	>;
-}
-
-parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * CENTS;
-	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
-		WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
-}
-
-impl pallet_vesting::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BlockNumberToBalance = ConvertInto;
-	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
-	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
-	type BlockNumberProvider = System;
-	const MAX_VESTING_SCHEDULES: u32 = 28;
-}
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {

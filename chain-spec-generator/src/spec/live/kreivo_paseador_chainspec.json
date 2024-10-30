@@ -6,8 +6,8 @@
   "telemetryEndpoints": null,
   "protocolId": "kreivo",
   "properties": {
-    "ss58Format": 42,
-    "tokenDecimals": 12,
+    "ss58Format": 1,
+    "tokenDecimals": 10,
     "tokenSymbol": "PAS"
   },
   "relay_chain": "paseo",
