@@ -105,8 +105,14 @@ pub use impls::{EqualOrGreatestRootCmp, ProxyType, RuntimeBlackListedCalls};
 
 pub use parachains_common::{
 	opaque, AccountId, AssetIdForTrustBackedAssets, AuraId, Balance, BlockNumber, Hash, Header, Nonce, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MINUTES, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MINUTES, NORMAL_DISPATCH_RATIO,
 };
+
+pub(crate) const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
+	sp_weights::constants::WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2),
+	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
+);
+
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, CommunityId>;
@@ -129,7 +135,7 @@ pub type SignedExtra = (
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
+	SkipCheckIfFeeless<Runtime, frame_system::CheckNonce<Runtime>>,
 	frame_system::CheckWeight<Runtime>,
 	SkipCheckIfFeeless<Runtime, ChargeTxToPassAccount<ChargeTransaction, Runtime, ()>>,
 );
@@ -319,28 +325,37 @@ impl pallet_message_queue::Config for Runtime {
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-/// How many parachain blocks are processed by the relay chain per parent.
-/// Limits the number of blocks authored per slot.
-const BLOCK_PROCESSING_VELOCITY: u32 = 1;
-/// Maximum number of blocks simultaneously accepted by the Runtime, not yet
-/// included into the relay chain.
-const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
-/// Relay chain slot duration, in milliseconds.
-const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6_000;
+mod async_backing_params {
+	/// Maximum number of blocks simultaneously accepted by the Runtime, not yet
+	/// included into the relay chain.
+	pub(crate) const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
+	/// How many parachain blocks are processed by the relay chain per parent.
+	/// Limits the number of blocks authored per slot.
+	pub(crate) const BLOCK_PROCESSING_VELOCITY: u32 = 1;
+	/// Relay chain slot duration, in milliseconds.
+	pub(crate) const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6_000;
+}
 
 /// Aura consensus hook
 type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	Runtime,
-	RELAY_CHAIN_SLOT_DURATION_MILLIS,
-	BLOCK_PROCESSING_VELOCITY,
-	UNINCLUDED_SEGMENT_CAPACITY,
+	{ async_backing_params::RELAY_CHAIN_SLOT_DURATION_MILLIS },
+	{ async_backing_params::BLOCK_PROCESSING_VELOCITY },
+	{ async_backing_params::UNINCLUDED_SEGMENT_CAPACITY },
 >;
+
+// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
+// up by `pallet_aura` to implement `fn slot_duration()`.
+//
+// Change this to adjust the block time.
+pub const MILLISECS_PER_BLOCK: u64 = 6_000;
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = ConstU32<100_000>;
-	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 

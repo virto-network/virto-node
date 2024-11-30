@@ -113,7 +113,7 @@ impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = Aura;
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
+	type MinimumPeriod = ConstU64<0>;
 	type WeightInfo = ();
 }
 
@@ -144,10 +144,6 @@ impl Challenger for UnincludedBlockHashChallenger {
 	fn check_challenge(cx: &Self::Context, challenge: &[u8]) -> Option<()> {
 		(*cx >= System::block_number().saturating_sub(3)).then_some(())?;
 		Self::generate(cx).eq(challenge).then_some(())
-	}
-
-	fn generate(cx: &Self::Context) -> Challenge {
-		BlakeTwo256::hash(&cx.to_le_bytes()).0
 	}
 }
 
