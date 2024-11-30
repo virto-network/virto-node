@@ -113,7 +113,6 @@ pub(crate) const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
 );
 
-
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, CommunityId>;
 
