@@ -24,7 +24,9 @@ fn main() -> Result<(), String> {
 
 	let supported_chains = HashMap::<_, Box<dyn Fn() -> Result<Box<dyn ChainSpec>, String>>>::from([
 		("kreivo", Box::new(live::chain_spec) as Box<_>),
+		("live", Box::new(live::chain_spec) as Box<_>),
 		("kreivo-local", Box::new(local::chain_spec) as Box<_>),
+		("local", Box::new(local::chain_spec) as Box<_>),
 	]);
 
 	if let Some(function) = supported_chains.get(&*cli.chain) {
