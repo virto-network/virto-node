@@ -20,10 +20,13 @@ impl frame_support::traits::Contains<RuntimeCall> for AllowBalancesCall {
 }
 
 fn schedule<T: pallet_contracts::Config>() -> pallet_contracts::Schedule<T> {
+	const MB: u32 = 1024 * 1024;
 	pallet_contracts::Schedule {
 		limits: pallet_contracts::Limits {
-			validator_runtime_memory: 1024 * 1024 * 1024,
-			runtime_memory: 1024 * 1024 * 768,
+			validator_runtime_memory: 1024 * MB,
+			// Current `max_storage_size`: 138 MB
+			// Constraint: `runtime_memory <= validator_runtime_memory - 2 * max_storage_size`
+			runtime_memory: 748 * MB,
 			..Default::default()
 		},
 		..Default::default()

@@ -4,7 +4,6 @@ use fc_traits_authn::{composite_authenticator, util::AuthorityFromPalletId, Chal
 use frame_support::{traits::EnsureOrigin, PalletId};
 use frame_system::EnsureRootWithSuccess;
 use pallet_communities::origin::AsSignedByCommunity;
-use polkadot_core_primitives::HashT;
 
 use super::*;
 
@@ -114,7 +113,7 @@ impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = Aura;
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
+	type MinimumPeriod = ConstU64<0>;
 	type WeightInfo = ();
 }
 
@@ -133,22 +132,22 @@ parameter_types! {
 	pub NeverPays: Option<pallet_pass::DepositInformation<Runtime>> = None;
 }
 
-pub struct UnincludedBlockChallenger;
+pub struct UnincludedBlockHashChallenger;
 
-impl Challenger for UnincludedBlockChallenger {
+impl Challenger for UnincludedBlockHashChallenger {
 	type Context = BlockNumber;
+
+	fn generate(cx: &Self::Context) -> Challenge {
+		System::block_hash(cx).0
+	}
 
 	fn check_challenge(cx: &Self::Context, challenge: &[u8]) -> Option<()> {
 		(*cx >= System::block_number().saturating_sub(3)).then_some(())?;
 		Self::generate(cx).eq(challenge).then_some(())
 	}
-
-	fn generate(cx: &Self::Context) -> Challenge {
-		BlakeTwo256::hash(&cx.to_le_bytes()).0
-	}
 }
 
-pub type WebAuthn = pass_webauthn::Authenticator<UnincludedBlockChallenger, AuthorityFromPalletId<PassPalletId>>;
+pub type WebAuthn = pass_webauthn::Authenticator<UnincludedBlockHashChallenger, AuthorityFromPalletId<PassPalletId>>;
 pub type Dummy = fc_traits_authn::util::dummy::Dummy<AuthorityFromPalletId<PassPalletId>>;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -219,6 +218,7 @@ impl pallet_pass::Config for Runtime {
 			>,
 		>,
 	>;
+	type Scheduler = Scheduler;
 
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = PassBenchmarkHelper;

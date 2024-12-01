@@ -101,7 +101,6 @@ pub fn chain_spec() -> Result<Box<dyn ChainSpec>, String> {
 				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
 				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 			],
-			get_account_id_from_seed::<sr25519::Public>("Alice"),
 		))
 		.build(),
 	))
@@ -111,12 +110,9 @@ fn local_genesis(
 	id: ParaId,
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
-	#[cfg(feature = "paseo")] sudo: AccountId,
 ) -> serde_json::Value {
 	let mut config = serde_json::json!({}).as_object().expect("map given; qed").clone();
 
-	#[cfg(feature = "paseo")]
-	config.insert("sudo".into(), serde_json::json!({ "key": sudo }));
 	config.insert(
 		"balances".into(),
 		serde_json::json!({

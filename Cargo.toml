@@ -25,7 +25,7 @@ repository = 'https://github.com/virto-network/virto-node'
 clap = { version = "4.5.3" }
 futures = { version = "0.3.28" }
 hex-literal = { version = "0.4.1" }
-log = { version = "0.4.20" }
+log = { version = "0.4.22" }
 parity-scale-codec = { version = "3.6.4", default-features = false, features = [
   "derive",
 ] }
