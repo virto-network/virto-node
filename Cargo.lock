@@ -3568,7 +3568,7 @@ dependencies = [
 
 [[package]]
 name = "kreivo-runtime"
-version = "0.14.0"
+version = "0.14.2"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
