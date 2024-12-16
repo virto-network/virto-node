@@ -1,6 +1,6 @@
 use super::*;
 
-use fc_traits_gas_tank::NonFungibleGasBurner;
+use fc_traits_gas_tank::NonFungibleGasTank;
 
 use pallet_asset_tx_payment::FungiblesAdapter;
 use pallet_assets::BalanceToAssetBalance;
@@ -136,7 +136,9 @@ impl pallet_skip_feeless_payment::Config for Runtime {
 
 // #[runtime::pallet_index(17)]
 // pub type GasTxPayment
+pub type MembershipsGasTank = NonFungibleGasTank<Runtime, CommunityMemberships, pallet_nfts::ItemConfig>;
+
 impl pallet_gas_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type GasBurner = NonFungibleGasBurner<Runtime, CommunityMemberships, pallet_nfts::ItemConfig>;
+	type GasBurner = MembershipsGasTank;
 }

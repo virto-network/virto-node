@@ -7,6 +7,6 @@ pub mod system_support;
 
 pub use monetary_stuff::{
 	ExistentialDeposit, KreivoAssetsCall, KreivoAssetsInstance, MetadataDepositBase, MetadataDepositPerByte,
-	TransactionByteFee,
+	TransactionByteFee, MembershipsGasTank,
 };
 pub use system_support::RuntimeBlockWeights;

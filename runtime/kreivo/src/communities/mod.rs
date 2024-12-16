@@ -97,6 +97,7 @@ impl pallet_communities_manager::Config for Runtime {
 	type MembershipsManagerOwner = TreasuryAccount;
 	type MembershipsManagerCollectionId = MembershipsCollectionId;
 	type CreateMemberships = CommunityMemberships;
+	type MakeTank = MembershipsGasTank;
 
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
