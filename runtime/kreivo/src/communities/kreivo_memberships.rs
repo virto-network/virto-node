@@ -1,10 +1,12 @@
+use super::*;
+
+use core::marker::PhantomData;
 use fc_traits_memberships::{Inspect, Manager, Rank};
 use frame_support::traits::{
 	nonfungible_v2::Inspect as NonFunInspect,
 	nonfungibles_v2::{Inspect as NonFunsInspect, Mutate},
 };
 use sp_runtime::DispatchError;
-use std::marker::PhantomData;
 
 pub struct KreivoMemberships<F, M>(PhantomData<(F, M)>);
 
@@ -32,9 +34,9 @@ where
 }
 
 const WELL_KNOWN_ATTR_KEYS: [&[u8]; 3] = [
-	&b"membership_member_rank",
-	&b"membership_gas",
-	&b"membership_expiration",
+	&*b"membership_member_rank",
+	&*b"membership_gas",
+	&*b"membership_expiration",
 ];
 
 impl<F, M, AccountId> Manager<AccountId, pallet_nfts::ItemConfig> for KreivoMemberships<F, M>
@@ -42,8 +44,8 @@ where
 	F: Inspect<AccountId>
 		+ Manager<AccountId, pallet_nfts::ItemConfig>
 		+ NonFunsInspect<AccountId>
-		+ Mutate<AccountId, pallet_nfts::ItemConfig>,
-	M: NonFunInspect<AccountId>,
+		+ Mutate<AccountId, pallet_nfts::ItemConfig, CollectionId = Self::Group, ItemId = Self::Membership>,
+	M: NonFunInspect<AccountId, ItemId = Self::Membership>,
 {
 	fn assign(group: &Self::Group, m: &Self::Membership, who: &AccountId) -> Result<(), DispatchError> {
 		F::assign(group, m, who)?;
@@ -63,6 +65,7 @@ where
 impl<F, M, AccountId, R> Rank<AccountId, pallet_nfts::ItemConfig, R> for KreivoMemberships<F, M>
 where
 	F: Inspect<AccountId> + Rank<AccountId, pallet_nfts::ItemConfig, R>,
+	R: Eq + Ord,
 {
 	fn rank_of(group: &Self::Group, m: &Self::Membership) -> Option<R> {
 		F::rank_of(group, m)
