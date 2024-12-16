@@ -1,10 +1,7 @@
+use fc_traits_gas_tank::NonFungibleGasTank;
 use super::*;
 
-use frame_support::{
-	derive_impl, parameter_types,
-	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
-	PalletId,
-};
+use frame_support::{assert_ok, derive_impl, parameter_types, traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf}, PalletId};
 use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
 use sp_io::TestExternalities;
@@ -26,6 +23,7 @@ mod runtime_benchmarks;
 use runtime_benchmarks::*;
 
 type Block = frame_system::mocking::MockBlock<Test>;
+pub type BlockNumber = BlockNumberFor<Test>;
 type WeightInfo = ();
 
 pub type AccountPublic = <MultiSignature as Verify>::Signer;
@@ -89,7 +87,8 @@ impl frame_system::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 }
 
-#[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig)]
+#[derive_impl(pallet_balances::config_preludes::TestDefaultConfig as pallet_balances::DefaultConfig
+)]
 impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type FreezeIdentifier = RuntimeFreezeReason;
@@ -174,7 +173,7 @@ impl pallet_nfts::Config for Test {
 	type CollectionDeposit = ();
 	type CollectionId = CommunityId;
 	type CreateOrigin =
-		AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, RootAccount>, EnsureSigned<AccountId>>>;
+	AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, RootAccount>, EnsureSigned<AccountId>>>;
 	type Currency = Balances;
 	type DepositPerByte = ();
 	type Features = ();
@@ -192,7 +191,7 @@ impl pallet_nfts::Config for Test {
 	type OffchainSignature = MultiSignature;
 	type RuntimeEvent = RuntimeEvent;
 	type StringLimit = ();
-	type ValueLimit = ConstU32<10>;
+	type ValueLimit = ConstU32<40>;
 	type WeightInfo = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = ();
@@ -234,11 +233,26 @@ impl Config for Test {
 	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
 	type MembershipsManagerOwner = RootAccount;
 	type CreateMemberships = Memberships;
+	type MakeTank = NonFungibleGasTank<Test, Memberships, pallet_nfts::ItemConfig>;
 
 	type WeightInfo = WeightInfo;
 }
 
-#[allow(dead_code)]
-fn new_test_ext() -> TestExternalities {
-	TestExternalities::new(Default::default())
-}
+pub fn new_test_ext() -> TestExternalities {
+	let mut t = TestExternalities::new(Default::default());
+
+	t.execute_with(|| {
+		assert_ok!(Memberships::create_collection_with_id(
+			MembershipsManagerCollectionId::get(),
+			&RootAccount::get(),
+			&RootAccount::get(),
+			&pallet_nfts::CollectionConfig {
+				settings: Default::default(),
+				max_supply: None,
+				mint_settings: Default::default(),
+			},
+		));
+	});
+
+		t
+	}
