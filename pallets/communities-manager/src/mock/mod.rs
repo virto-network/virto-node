@@ -1,7 +1,11 @@
-use fc_traits_gas_tank::NonFungibleGasTank;
 use super::*;
+use fc_traits_gas_tank::NonFungibleGasTank;
 
-use frame_support::{assert_ok, derive_impl, parameter_types, traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf}, PalletId};
+use frame_support::{
+	assert_ok, derive_impl, parameter_types,
+	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
+	PalletId,
+};
 use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
 use sp_io::TestExternalities;
@@ -173,7 +177,7 @@ impl pallet_nfts::Config for Test {
 	type CollectionDeposit = ();
 	type CollectionId = CommunityId;
 	type CreateOrigin =
-	AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, RootAccount>, EnsureSigned<AccountId>>>;
+		AsEnsureOriginWithArg<EitherOf<EnsureRootWithSuccess<AccountId, RootAccount>, EnsureSigned<AccountId>>>;
 	type Currency = Balances;
 	type DepositPerByte = ();
 	type Features = ();
@@ -254,5 +258,5 @@ pub fn new_test_ext() -> TestExternalities {
 		));
 	});
 
-		t
-	}
+	t
+}
