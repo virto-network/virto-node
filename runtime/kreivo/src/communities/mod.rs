@@ -9,6 +9,7 @@ use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
 pub mod governance;
+mod kreivo_memberships;
 pub mod memberships;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -18,6 +19,7 @@ use self::{
 };
 use pallet_custom_origins::CreateMemberships;
 
+use crate::communities::kreivo_memberships::KreivoMemberships;
 #[cfg(feature = "runtime-benchmarks")]
 use {
 	frame_benchmarking::BenchmarkError,
@@ -33,6 +35,9 @@ use {
 	sp_core::Encode,
 	sp_runtime::Perbill,
 };
+
+type MembershipsManagementCollection =
+	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 type CreationPayment = Option<(Balance, AccountId, AccountId)>;
 
@@ -62,7 +67,7 @@ impl pallet_communities::Config for Runtime {
 	type CreateOrigin = RootCreatesCommunitiesForFree;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
-	type MemberMgmt = CommunityMemberships;
+	type MemberMgmt = KreivoMemberships<CommunityMemberships, MembershipsManagementCollection>;
 	type MembershipId = MembershipId;
 
 	type Polls = CommunityReferenda;
@@ -101,10 +106,6 @@ impl pallet_communities_manager::Config for Runtime {
 
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
-
-#[cfg(feature = "runtime-benchmarks")]
-type MembershipCollection =
-	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
@@ -158,7 +159,7 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 	) -> Result<(), BenchmarkError> {
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
 
-		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+		MembershipsManagementCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
 
 		Ok(())
 	}
