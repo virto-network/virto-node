@@ -31,6 +31,7 @@
 
 use frame_support::{traits::Get, weights::Weight};
 use core::marker::PhantomData;
+use frame_support::weights::constants::RocksDbWeight;
 
 /// Weight functions for `pallet_communities_manager`.
 pub struct WeightInfo<T>(PhantomData<T>);
@@ -100,5 +101,12 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 			.saturating_add(T::DbWeight::get().writes(1))
 			.saturating_add(T::DbWeight::get().writes((4_u64).saturating_mul(q.into())))
 			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(q.into()))
+	}
+
+	fn set_gas_tank() -> Weight {
+		Weight::from_parts(10_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 102400))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }

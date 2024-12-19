@@ -9,6 +9,7 @@ use core::marker::PhantomData;
 pub trait WeightInfo {
 	fn register() -> Weight;
 	fn create_memberships(q: u32, ) -> Weight;
+	fn set_gas_tank() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -80,6 +81,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes((4_u64).saturating_mul(q.into())))
 			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(q.into()))
 	}
+
+	fn set_gas_tank() -> Weight {
+		Weight::from_parts(10_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 102400))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
 
 impl WeightInfo for () {
@@ -148,5 +156,12 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().writes(1))
 			.saturating_add(RocksDbWeight::get().writes((4_u64).saturating_mul(q.into())))
 			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(q.into()))
+	}
+
+	fn set_gas_tank() -> Weight {
+		Weight::from_parts(10_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 102400))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 }

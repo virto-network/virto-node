@@ -1,11 +1,12 @@
 use super::*;
 
-use fc_traits_gas_tank::NonFungibleGasBurner;
+use fc_traits_gas_tank::{NonFungibleGasTank, SelectNonFungibleItem};
 
 use pallet_asset_tx_payment::FungiblesAdapter;
 use pallet_assets::BalanceToAssetBalance;
 use pallet_transaction_payment::FungibleAdapter;
 use runtime_common::impls::AssetsToBlockAuthor;
+use virto_common::MembershipId;
 
 // #[runtime::pallet_index(10)]
 // pub type Balances
@@ -136,7 +137,24 @@ impl pallet_skip_feeless_payment::Config for Runtime {
 
 // #[runtime::pallet_index(17)]
 // pub type GasTxPayment
+
+parameter_types! {
+	pub MembershipIsNotExpired: Box<dyn SelectNonFungibleItem<CommunityId, MembershipId>> =
+		Box::new(|community, membership| {
+			use frame_support::traits::nonfungibles_v2::Inspect;
+			let membership_expiration = b"membership_expiration";
+			CommunityMemberships::typed_system_attribute(&community, Some(&membership), &membership_expiration)
+				// If there's an expiration date, check it against block number
+				.map(|expiration| System::block_number() <= expiration)
+				// Otherwise, the membership will not expire
+				.unwrap_or(true)
+		});
+}
+
+pub type MembershipsGasTank =
+	NonFungibleGasTank<Runtime, CommunityMemberships, pallet_nfts::ItemConfig, MembershipIsNotExpired>;
+
 impl pallet_gas_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type GasBurner = NonFungibleGasBurner<Runtime, CommunityMemberships, pallet_nfts::ItemConfig>;
+	type GasBurner = MembershipsGasTank;
 }
