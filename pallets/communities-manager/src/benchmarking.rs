@@ -92,10 +92,10 @@ mod benchmarks {
 			100u32.into(),
 			300_000_000_000u64.into(),
 			Some(u32::MAX.into()),
-			Some(TankConfig {
+			TankConfig {
 				capacity: Some(block_weight::<T>()),
 				periodicity: Some((7 * DAYS).into()),
-			}),
+			},
 		);
 
 		// verification code

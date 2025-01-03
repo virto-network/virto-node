@@ -209,7 +209,7 @@ pub mod pallet {
 			starting_at: <T as Config>::MembershipId,
 			#[pallet::compact] price: NativeBalanceOf<T>,
 			maybe_expiration: Option<BlockNumberFor<T>>,
-			maybe_tank_config: Option<TankConfig<Weight, BlockNumberFor<T>>>,
+			tank_config: TankConfig<Weight, BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure!(amount <= 1024u16, Error::<T>::CreatingTooManyMemberships);
 			T::CreateMembershipsOrigin::ensure_origin(origin.clone())?;
@@ -226,9 +226,7 @@ pub mod pallet {
 					true,
 				)?;
 
-				if let Some(config) = maybe_tank_config.clone() {
-					Self::set_gas_tank(origin.clone(), *collection_id, id.clone(), config)?;
-				}
+				Self::set_gas_tank(origin.clone(), *collection_id, id.clone(), tank_config.clone())?;
 
 				if let Some(expiration) = maybe_expiration {
 					T::CreateMemberships::set_typed_attribute(

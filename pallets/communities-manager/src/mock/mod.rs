@@ -1,6 +1,6 @@
 use super::*;
 use fc_traits_gas_tank::NonFungibleGasTank;
-
+use fc_traits_memberships::NonFungiblesMemberships;
 use frame_support::{
 	assert_ok, derive_impl, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
@@ -209,7 +209,7 @@ impl pallet_communities::Config for Test {
 	type AssetsFreezer = AssetsFreezer;
 	type Balances = Balances;
 	type ItemConfig = pallet_nfts::ItemConfig;
-	type MemberMgmt = Memberships;
+	type MemberMgmt = NonFungiblesMemberships<Memberships>;
 	type Polls = Referenda;
 	type CreateOrigin = EnsureNever<Deposit>;
 	type AdminOrigin = EnsureCommunity<Self>;
