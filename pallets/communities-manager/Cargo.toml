@@ -32,6 +32,7 @@ sp-runtime.workspace = true
 sp-std.workspace = true
 
 [dev-dependencies]
+fc-traits-memberships.workspace = true
 sp-core.workspace = true
 sp-io.workspace = true
 
@@ -49,6 +50,7 @@ virto-common = { workspace = true, default-features = false, features = [
 default = ["std"]
 std = [
 	"fc-traits-gas-tank/std",
+	"fc-traits-memberships/std",
 	"fc-traits-tracks/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",
