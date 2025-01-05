@@ -8,6 +8,8 @@ use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
+use fc_traits_memberships::{NonFungiblesMemberships, WithHooks};
+
 pub mod governance;
 mod kreivo_memberships;
 pub mod memberships;
@@ -19,7 +21,6 @@ use self::{
 };
 use pallet_custom_origins::CreateMemberships;
 
-use crate::communities::kreivo_memberships::KreivoMemberships;
 #[cfg(feature = "runtime-benchmarks")]
 use {
 	frame_benchmarking::BenchmarkError,
@@ -67,7 +68,10 @@ impl pallet_communities::Config for Runtime {
 	type CreateOrigin = RootCreatesCommunitiesForFree;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
-	type MemberMgmt = KreivoMemberships<CommunityMemberships, MembershipsManagementCollection>;
+	type MemberMgmt = WithHooks<
+		NonFungiblesMemberships<CommunityMemberships>,
+		kreivo_memberships::TemplatePropertiesOnAssignMembership,
+	>;
 	type MembershipId = MembershipId;
 
 	type Polls = CommunityReferenda;
