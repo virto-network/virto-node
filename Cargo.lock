@@ -2052,7 +2052,7 @@ dependencies = [
  "blake2",
  "file-guard",
  "fs-err",
- "prettyplease 0.2.25",
+ "prettyplease 0.2.27",
  "proc-macro2",
  "quote",
  "syn 2.0.95",
@@ -2079,7 +2079,7 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 [[package]]
 name = "fc-pallet-gas-transaction-payment"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "fc-traits-gas-tank",
  "frame-support",
@@ -2092,7 +2092,7 @@ dependencies = [
 [[package]]
 name = "fc-pallet-pass"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "fc-traits-authn",
  "frame-benchmarking",
@@ -2110,7 +2110,7 @@ dependencies = [
 [[package]]
 name = "fc-pallet-referenda-tracks"
 version = "1.0.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "fc-traits-tracks",
  "frame-benchmarking",
@@ -2129,7 +2129,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-authn"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "fc-traits-authn-proc",
  "frame-support",
@@ -2141,7 +2141,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-authn-proc"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "quote",
  "syn 2.0.95",
@@ -2150,7 +2150,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-gas-tank"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "fc-traits-nonfungibles-helpers",
  "frame-support",
@@ -2162,7 +2162,7 @@ dependencies = [
 [[package]]
 name = "fc-traits-memberships"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -2172,12 +2172,12 @@ dependencies = [
 [[package]]
 name = "fc-traits-nonfungibles-helpers"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 
 [[package]]
 name = "fc-traits-tracks"
 version = "0.1.0"
-source = "git+https://github.com/virto-network/frame-contrib#0551f269e58365f5709bb721858353cec0deb461"
+source = "git+https://github.com/virto-network/frame-contrib#42e047c1934e642f83658c1e6fe159cb41d9fd6f"
 dependencies = [
  "frame-support",
  "pallet-referenda",
@@ -6421,9 +6421,9 @@ dependencies = [
 
 [[package]]
 name = "prettyplease"
-version = "0.2.25"
+version = "0.2.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64d1ec885c64d0457d564db4ec299b2dae3f9c02808b8ad9c3a089c591b18033"
+checksum = "483f8c21f64f3ea09fe0f30f5d48c3e8eefe5dac9129f0075f76593b4c1da705"
 dependencies = [
  "proc-macro2",
  "syn 2.0.95",
@@ -6617,7 +6617,7 @@ dependencies = [
  "multimap 0.10.0",
  "once_cell",
  "petgraph",
- "prettyplease 0.2.25",
+ "prettyplease 0.2.27",
  "prost 0.12.6",
  "prost-types 0.12.6",
  "regex",
