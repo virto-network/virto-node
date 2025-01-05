@@ -37,9 +37,6 @@ use {
 	sp_runtime::Perbill,
 };
 
-type MembershipsManagementCollection =
-	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
-
 type CreationPayment = Option<(Balance, AccountId, AccountId)>;
 
 parameter_types! {
@@ -113,6 +110,10 @@ impl pallet_communities_manager::Config for Runtime {
 
 #[cfg(feature = "runtime-benchmarks")]
 pub struct CommunityBenchmarkHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+type MembershipsManagementCollection =
+	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {

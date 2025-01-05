@@ -133,10 +133,10 @@ parameter_types! {
 }
 
 /// A [`Challenger`][`fc_traits_authn::Challenger`] which verifies the 
-/// block hash of a block of a given block that's within the last `PastBlocks`.
-pub struct BlockHashChallenger<const PastBlocks: BlockNumber>;
+/// block hash of a block of a given block that's within the last `PAST_BLOCKS`.
+pub struct BlockHashChallenger<const PAST_BLOCKS: BlockNumber>;
 
-impl<const PastBlocks: BlockNumber> Challenger for BlockHashChallenger<PastBlocks> {
+impl<const PAST_BLOCKS: BlockNumber> Challenger for BlockHashChallenger<PAST_BLOCKS> {
 	type Context = BlockNumber;
 
 	fn generate(cx: &Self::Context) -> Challenge {
@@ -144,7 +144,7 @@ impl<const PastBlocks: BlockNumber> Challenger for BlockHashChallenger<PastBlock
 	}
 
 	fn check_challenge(cx: &Self::Context, challenge: &[u8]) -> Option<()> {
-		(*cx >= System::block_number().saturating_sub(PastBlocks)).then_some(())?;
+		(*cx >= System::block_number().saturating_sub(PAST_BLOCKS)).then_some(())?;
 		Self::generate(cx).eq(challenge).then_some(())
 	}
 }
