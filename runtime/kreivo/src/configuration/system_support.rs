@@ -132,7 +132,7 @@ parameter_types! {
 	pub NeverPays: Option<pallet_pass::DepositInformation<Runtime>> = None;
 }
 
-/// A [`Challenger`][`fc_traits_authn::Challenger`] which verifies the 
+/// A [`Challenger`][`fc_traits_authn::Challenger`] which verifies the
 /// block hash of a block of a given block that's within the last `PAST_BLOCKS`.
 pub struct BlockHashChallenger<const PAST_BLOCKS: BlockNumber>;
 

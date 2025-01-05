@@ -3,11 +3,7 @@ use super::*;
 use fc_traits_memberships::OnMembershipAssigned;
 use frame_support::traits::nonfungibles_v2::{Inspect as NonFunsInspect, Mutate};
 
-const WELL_KNOWN_ATTR_KEYS: [&[u8]; 3] = [
-	&*b"membership_member_rank",
-	&*b"membership_gas",
-	&*b"membership_expiration",
-];
+const WELL_KNOWN_ATTR_KEYS: [&[u8]; 3] = [b"membership_member_rank", b"membership_gas", b"membership_expiration"];
 
 parameter_types! {
 	pub TemplatePropertiesOnAssignMembership: Box<dyn OnMembershipAssigned<AccountId, CommunityId, MembershipId>> =
