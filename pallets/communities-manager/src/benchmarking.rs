@@ -91,11 +91,11 @@ mod benchmarks {
 			q.saturated_into(),
 			100u32.into(),
 			300_000_000_000u64.into(),
-			Some(u32::MAX.into()),
 			TankConfig {
 				capacity: Some(block_weight::<T>()),
 				periodicity: Some((7 * DAYS).into()),
 			},
+			Some(u32::MAX.into()),
 		);
 
 		// verification code
@@ -113,7 +113,14 @@ mod benchmarks {
 	fn set_gas_tank() -> Result<(), BenchmarkError> {
 		// Setup code
 		setup_collection::<T>()?;
-		Pallet::<T>::create_memberships(RawOrigin::Root.into(), 1, 1u32.into(), 0u64.into(), None, None)?;
+		Pallet::<T>::create_memberships(
+			RawOrigin::Root.into(),
+			1,
+			1u32.into(),
+			0u64.into(),
+			TankConfig::default(),
+			None,
+		)?;
 
 		#[extrinsic_call]
 		_(

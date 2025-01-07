@@ -38,7 +38,7 @@ use sp_runtime::{
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo)]
+#[derive(Default, Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo)]
 pub struct TankConfig<Weight, BlockNumber> {
 	capacity: Option<Weight>,
 	periodicity: Option<BlockNumber>,
@@ -208,8 +208,8 @@ pub mod pallet {
 			amount: u16,
 			starting_at: <T as Config>::MembershipId,
 			#[pallet::compact] price: NativeBalanceOf<T>,
-			maybe_expiration: Option<BlockNumberFor<T>>,
 			tank_config: TankConfig<Weight, BlockNumberFor<T>>,
+			maybe_expiration: Option<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure!(amount <= 1024u16, Error::<T>::CreatingTooManyMemberships);
 			T::CreateMembershipsOrigin::ensure_origin(origin.clone())?;
@@ -226,7 +226,7 @@ pub mod pallet {
 					true,
 				)?;
 
-				Self::set_gas_tank(origin.clone(), *collection_id, id.clone(), tank_config.clone())?;
+				Self::do_set_gas_tank(&(*collection_id, id.clone()), &tank_config)?;
 
 				if let Some(expiration) = maybe_expiration {
 					T::CreateMemberships::set_typed_attribute(
@@ -267,15 +267,22 @@ pub mod pallet {
 			config: TankConfig<Weight, BlockNumberFor<T>>,
 		) -> DispatchResult {
 			T::CreateMembershipsOrigin::ensure_origin(origin)?;
-
-			let TankConfig { capacity, periodicity } = config;
-			T::MakeTank::make_tank(&(community_id, membership_id), capacity, periodicity)?;
-
-			Ok(())
+			Self::do_set_gas_tank(&(community_id, membership_id), &config)
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		#[inline]
+		pub(crate) fn do_set_gas_tank(
+			tank_id: &(CommunityIdOf<T>, <T as Config>::MembershipId),
+			config: &TankConfig<Weight, BlockNumberFor<T>>,
+		) -> DispatchResult {
+			let TankConfig { capacity, periodicity } = config;
+			T::MakeTank::make_tank(tank_id, *capacity, *periodicity)?;
+
+			Ok(())
+		}
+
 		fn default_tack(name: &str) -> TrackInfoOf<T> {
 			use sp_runtime::Perbill;
 			TrackInfo {

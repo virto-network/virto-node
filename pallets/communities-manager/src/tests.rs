@@ -21,8 +21,8 @@ fn create_membership_works() {
 			1,
 			1,
 			1,
-			Some(BlockNumber::MAX),
 			config,
+			Some(BlockNumber::MAX),
 		));
 	})
 }

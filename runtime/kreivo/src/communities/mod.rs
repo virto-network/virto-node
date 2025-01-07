@@ -67,7 +67,7 @@ impl pallet_communities::Config for Runtime {
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmt = WithHooks<
 		NonFungiblesMemberships<CommunityMemberships>,
-		kreivo_memberships::TemplatePropertiesOnAssignMembership,
+		kreivo_memberships::CopySystemAttributesOnAssign,
 	>;
 	type MembershipId = MembershipId;
 
