@@ -65,10 +65,8 @@ impl pallet_communities::Config for Runtime {
 	type CreateOrigin = RootCreatesCommunitiesForFree;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
-	type MemberMgmt = WithHooks<
-		NonFungiblesMemberships<CommunityMemberships>,
-		kreivo_memberships::CopySystemAttributesOnAssign,
-	>;
+	type MemberMgmt =
+		WithHooks<NonFungiblesMemberships<CommunityMemberships>, kreivo_memberships::CopySystemAttributesOnAssign>;
 	type MembershipId = MembershipId;
 
 	type Polls = CommunityReferenda;
