@@ -1,8 +1,31 @@
+use crate::mock::new_test_ext;
 use crate::{
 	mock::*,
 	weights::{SubstrateWeight, WeightInfo},
+	TankConfig,
 };
+use frame_support::assert_ok;
 use frame_support::weights::Weight;
+
+#[test]
+fn create_membership_works() {
+	new_test_ext().execute_with(|| {
+		const DAYS: u64 = 14_400;
+		let config = TankConfig {
+			capacity: Some(Weight::MAX),
+			periodicity: Some(7 * DAYS),
+		};
+
+		assert_ok!(CommunitiesManager::create_memberships(
+			RuntimeOrigin::root(),
+			1,
+			1,
+			1,
+			config,
+			Some(BlockNumber::MAX),
+		));
+	})
+}
 
 #[test]
 fn weights() {
@@ -25,6 +48,7 @@ fn weights() {
 			"create_memberships(1024)",
 			SubstrateWeight::<Test>::create_memberships(1024),
 		),
+		("set_gas_tank", SubstrateWeight::<Test>::set_gas_tank()),
 	];
 
 	for (function, weight) in calls {

@@ -132,9 +132,11 @@ parameter_types! {
 	pub NeverPays: Option<pallet_pass::DepositInformation<Runtime>> = None;
 }
 
-pub struct UnincludedBlockHashChallenger;
+/// A [`Challenger`][`fc_traits_authn::Challenger`] which verifies the
+/// block hash of a block of a given block that's within the last `PAST_BLOCKS`.
+pub struct BlockHashChallenger<const PAST_BLOCKS: BlockNumber>;
 
-impl Challenger for UnincludedBlockHashChallenger {
+impl<const PAST_BLOCKS: BlockNumber> Challenger for BlockHashChallenger<PAST_BLOCKS> {
 	type Context = BlockNumber;
 
 	fn generate(cx: &Self::Context) -> Challenge {
@@ -142,12 +144,13 @@ impl Challenger for UnincludedBlockHashChallenger {
 	}
 
 	fn check_challenge(cx: &Self::Context, challenge: &[u8]) -> Option<()> {
-		(*cx >= System::block_number().saturating_sub(3)).then_some(())?;
+		(*cx >= System::block_number().saturating_sub(PAST_BLOCKS)).then_some(())?;
 		Self::generate(cx).eq(challenge).then_some(())
 	}
 }
 
-pub type WebAuthn = pass_webauthn::Authenticator<UnincludedBlockHashChallenger, AuthorityFromPalletId<PassPalletId>>;
+pub type WebAuthn =
+	pass_webauthn::Authenticator<BlockHashChallenger<{ 30 * MINUTES }>, AuthorityFromPalletId<PassPalletId>>;
 pub type Dummy = fc_traits_authn::util::dummy::Dummy<AuthorityFromPalletId<PassPalletId>>;
 
 #[cfg(not(feature = "runtime-benchmarks"))]

@@ -366,7 +366,7 @@ mod vote {
 				);
 
 				let community_account = Communities::community_account(&COMMUNITY_A);
-				let (_, membership_id) = Nfts::user_memberships(&community_account, None)
+				let (_, membership_id) = MembershipsManager::user_memberships(&community_account, None)
 					.next()
 					.expect("CommunityA should still have memberships");
 

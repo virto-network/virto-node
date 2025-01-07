@@ -8,7 +8,10 @@ use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
+use fc_traits_memberships::{NonFungiblesMemberships, WithHooks};
+
 pub mod governance;
+mod kreivo_memberships;
 pub mod memberships;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -62,7 +65,8 @@ impl pallet_communities::Config for Runtime {
 	type CreateOrigin = RootCreatesCommunitiesForFree;
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
-	type MemberMgmt = CommunityMemberships;
+	type MemberMgmt =
+		WithHooks<NonFungiblesMemberships<CommunityMemberships>, kreivo_memberships::CopySystemAttributesOnAssign>;
 	type MembershipId = MembershipId;
 
 	type Polls = CommunityReferenda;
@@ -97,16 +101,17 @@ impl pallet_communities_manager::Config for Runtime {
 	type MembershipsManagerOwner = TreasuryAccount;
 	type MembershipsManagerCollectionId = MembershipsCollectionId;
 	type CreateMemberships = CommunityMemberships;
+	type MakeTank = MembershipsGasTank;
 
 	type WeightInfo = crate::weights::pallet_communities_manager::WeightInfo<Self>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-type MembershipCollection =
-	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
+pub struct CommunityBenchmarkHelper;
 
 #[cfg(feature = "runtime-benchmarks")]
-pub struct CommunityBenchmarkHelper;
+type MembershipsManagementCollection =
+	frame_support::traits::nonfungible_v2::ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 #[cfg(feature = "runtime-benchmarks")]
 impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
@@ -157,7 +162,7 @@ impl BenchmarkHelper<Runtime> for CommunityBenchmarkHelper {
 	) -> Result<(), BenchmarkError> {
 		let community_account = pallet_communities::Pallet::<Runtime>::community_account(&community_id);
 
-		MembershipCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+		MembershipsManagementCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
 
 		Ok(())
 	}

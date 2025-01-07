@@ -13,6 +13,7 @@ mod tests;
 pub mod weights;
 pub use weights::*;
 
+use fc_traits_gas_tank::MakeTank;
 use fc_traits_tracks::MutateTracks;
 use frame_support::{
 	pallet_prelude::*,
@@ -37,11 +38,16 @@ use sp_runtime::{
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
+#[derive(Default, Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo)]
+pub struct TankConfig<Weight, BlockNumber> {
+	capacity: Option<Weight>,
+	periodicity: Option<BlockNumber>,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
-	use parity_scale_codec::HasCompact;
-
 	use super::*;
+	use parity_scale_codec::HasCompact;
 
 	type CommunityName = BoundedVec<u8, ConstU32<25>>;
 
@@ -57,6 +63,12 @@ pub mod pallet {
 			AccountIdOf<Self>,
 			CollectionConfig<NativeBalanceOf<Self>, BlockNumberFor<Self>, CommunityIdOf<Self>>,
 			CollectionId = CommunityIdOf<Self>,
+		>;
+
+		type MakeTank: fc_traits_gas_tank::MakeTank<
+			Gas = Weight,
+			TankId = (CommunityIdOf<Self>, <Self as Config>::MembershipId),
+			BlockNumber = BlockNumberFor<Self>,
 		>;
 
 		type Tracks: TracksInfo<NativeBalanceOf<Self>, BlockNumberFor<Self>>
@@ -106,7 +118,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// The community with [`CommmunityId`](pallet_communities::CommunityId)
+		/// The community with [`CommunityId`](pallet_communities::CommunityId)
 		/// has been created.
 		CommunityRegistered { id: T::CommunityId },
 		/// The
@@ -196,20 +208,34 @@ pub mod pallet {
 			amount: u16,
 			starting_at: <T as Config>::MembershipId,
 			#[pallet::compact] price: NativeBalanceOf<T>,
+			tank_config: TankConfig<Weight, BlockNumberFor<T>>,
+			maybe_expiration: Option<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure!(amount <= 1024u16, Error::<T>::CreatingTooManyMemberships);
-			T::CreateMembershipsOrigin::ensure_origin(origin)?;
+			T::CreateMembershipsOrigin::ensure_origin(origin.clone())?;
 
+			let collection_id = &T::MembershipsManagerCollectionId::get();
 			let mut id = starting_at.clone();
 			let mut minted = 0u32;
 			for _ in 0..amount {
 				T::CreateMemberships::mint_into(
-					&T::MembershipsManagerCollectionId::get(),
+					collection_id,
 					&id,
 					&T::MembershipsManagerOwner::get(),
 					&Default::default(),
 					true,
 				)?;
+
+				Self::do_set_gas_tank(&(*collection_id, id.clone()), &tank_config)?;
+
+				if let Some(expiration) = maybe_expiration {
+					T::CreateMemberships::set_typed_attribute(
+						collection_id,
+						&id,
+						&b"membership_expiration",
+						&expiration,
+					)?;
+				}
 
 				T::CreateMemberships::set_price(
 					&T::MembershipsManagerCollectionId::get(),
@@ -232,9 +258,31 @@ pub mod pallet {
 			});
 			Ok(())
 		}
+
+		#[pallet::call_index(2)]
+		pub fn set_gas_tank(
+			origin: OriginFor<T>,
+			community_id: CommunityIdOf<T>,
+			membership_id: <T as Config>::MembershipId,
+			config: TankConfig<Weight, BlockNumberFor<T>>,
+		) -> DispatchResult {
+			T::CreateMembershipsOrigin::ensure_origin(origin)?;
+			Self::do_set_gas_tank(&(community_id, membership_id), &config)
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		#[inline]
+		pub(crate) fn do_set_gas_tank(
+			tank_id: &(CommunityIdOf<T>, <T as Config>::MembershipId),
+			config: &TankConfig<Weight, BlockNumberFor<T>>,
+		) -> DispatchResult {
+			let TankConfig { capacity, periodicity } = config;
+			T::MakeTank::make_tank(tank_id, *capacity, *periodicity)?;
+
+			Ok(())
+		}
+
 		fn default_tack(name: &str) -> TrackInfoOf<T> {
 			use sp_runtime::Perbill;
 			TrackInfo {

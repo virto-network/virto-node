@@ -12,6 +12,7 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+fc-traits-gas-tank.workspace = true
 fc-traits-tracks.workspace = true
 
 frame-benchmarking = { workspace = true, optional = true }
@@ -31,6 +32,7 @@ sp-runtime.workspace = true
 sp-std.workspace = true
 
 [dev-dependencies]
+fc-traits-memberships.workspace = true
 sp-core.workspace = true
 sp-io.workspace = true
 
@@ -47,6 +49,8 @@ virto-common = { workspace = true, default-features = false, features = [
 [features]
 default = ["std"]
 std = [
+	"fc-traits-gas-tank/std",
+	"fc-traits-memberships/std",
 	"fc-traits-tracks/std",
 	"frame-benchmarking?/std",
 	"frame-support/std",

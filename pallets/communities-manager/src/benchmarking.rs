@@ -9,6 +9,14 @@ use sp_runtime::SaturatedConversion;
 
 type RuntimeEventFor<T> = <T as Config>::RuntimeEvent;
 
+// Since `periodicity` is arbitrary, we assume `DAYS` is a nominal day for 6s
+// block.
+const DAYS: u32 = 14_400;
+
+fn block_weight<T: frame_system::Config>() -> Weight {
+	<T as frame_system::Config>::BlockWeights::get().max_block
+}
+
 fn assert_has_event<T: Config>(generic_event: RuntimeEventFor<T>) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
@@ -19,6 +27,21 @@ where
 {
 	let initial_balance: NativeBalanceOf<T> = 1_000_000_000_000_000u64.into();
 	T::Balances::mint_into(who, initial_balance)?;
+	Ok(())
+}
+
+fn setup_collection<T: Config>() -> Result<(), BenchmarkError> {
+	T::CreateCollection::create_collection_with_id(
+		T::MembershipsManagerCollectionId::get(),
+		&T::MembershipsManagerOwner::get(),
+		&T::MembershipsManagerOwner::get(),
+		&pallet_nfts::CollectionConfig {
+			settings: Default::default(),
+			max_supply: None,
+			mint_settings: Default::default(),
+		},
+	)?;
+
 	Ok(())
 }
 
@@ -60,16 +83,7 @@ mod benchmarks {
 	#[benchmark]
 	fn create_memberships(q: Linear<1, 1024>) -> Result<(), BenchmarkError> {
 		// setup code
-		T::CreateCollection::create_collection_with_id(
-			T::MembershipsManagerCollectionId::get(),
-			&T::MembershipsManagerOwner::get(),
-			&T::MembershipsManagerOwner::get(),
-			&pallet_nfts::CollectionConfig {
-				settings: Default::default(),
-				max_supply: None,
-				mint_settings: Default::default(),
-			},
-		)?;
+		setup_collection::<T>()?;
 
 		#[extrinsic_call]
 		_(
@@ -77,6 +91,11 @@ mod benchmarks {
 			q.saturated_into(),
 			100u32.into(),
 			300_000_000_000u64.into(),
+			TankConfig {
+				capacity: Some(block_weight::<T>()),
+				periodicity: Some((7 * DAYS).into()),
+			},
+			Some(u32::MAX.into()),
 		);
 
 		// verification code
@@ -87,6 +106,33 @@ mod benchmarks {
 			}
 			.into(),
 		);
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_gas_tank() -> Result<(), BenchmarkError> {
+		// Setup code
+		setup_collection::<T>()?;
+		Pallet::<T>::create_memberships(
+			RawOrigin::Root.into(),
+			1,
+			1u32.into(),
+			0u64.into(),
+			TankConfig::default(),
+			None,
+		)?;
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			T::MembershipsManagerCollectionId::get(),
+			1u32.into(),
+			TankConfig {
+				capacity: Some(block_weight::<T>()),
+				periodicity: Some((7 * DAYS).into()),
+			},
+		);
+
 		Ok(())
 	}
 

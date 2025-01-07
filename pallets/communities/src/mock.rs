@@ -1,3 +1,4 @@
+use fc_traits_memberships::NonFungiblesMemberships;
 use frame_support::{
 	derive_impl,
 	dispatch::DispatchResult,
@@ -414,6 +415,8 @@ parameter_types! {
 type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
 type AnyoneElsePays = EnsureSignedPays<Test, ConstU64<10>, RootAccount>;
 
+pub type MembershipsManager = NonFungiblesMemberships<Nfts>;
+
 impl Config for Test {
 	type PalletId = CommunitiesPalletId;
 	type CommunityId = CommunityId;
@@ -423,7 +426,7 @@ impl Config for Test {
 	type AssetsFreezer = AssetsFreezer;
 	type Balances = Balances;
 	type ItemConfig = pallet_nfts::ItemConfig;
-	type MemberMgmt = Nfts;
+	type MemberMgmt = MembershipsManager;
 	type Polls = Referenda;
 
 	type CreateOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
