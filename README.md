@@ -1,9 +1,9 @@
-# Kreivo runtime [![Build](build_badge)](build_workflow) ![Checks][checks_badge] [![PRs Welcome][pr_badge]](docs/CONTRIBUTING.adoc)
+# Kreivo Runtime [![release][release_badge]](release_workflow) ![Checks][checks_badge] [![PRs Welcome][pr_badge]](docs/CONTRIBUTING.adoc)
 
 ![Virto Logo](https://matrix.virto.community/_matrix/media/r0/download/virto.community/YGIstgrolxbgQAAsvhHdnZey)
 
-[build_badge]: https://github.com/virto-network/kreivo/actions/workflows/rust.yml/badge.svg
-[build_workflow]: https://github.com/virto-network/kreivo/actions/workflows/rust.yml
+[release_badge]: https://github.com/virto-network/kreivo/actions/workflows/release.yml/badge.svg
+[release_workflow]: https://github.com/virto-network/kreivo/actions/workflows/release.yml
 [checks_badge]: https://github.com/virto-network/virto-node/workflows/Checks/badge.svg
 [pr_badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg
 [whitepaper]: https://virto.network/docs/whitepaper.html
