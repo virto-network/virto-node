@@ -4,10 +4,13 @@ set shell := ["nu", "-c"]
 podman := `(which podman) ++ (which docker) | (first).path` # use podman otherwise docker
 ver := `open chain-spec-generator/Cargo.toml | get package.version`
 image := "ghcr.io/virto-network/virto"
-node := "target/release/virto-node"
+
 chain := "kreivo"
+runtime := "target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm"
 rol := "collator"
 relay := "kusama"
+
+
 
 alias b := build-local
 alias c := check
@@ -47,58 +50,29 @@ benchmarks:
 	# TODO: build benchmarks for every pallet that's currently within the runtime as
 	# a dependency
 	mkdir .benchmarking-logs
-	chmod +x {{node}}
 
-	ls "pallets" \
-		| each {|path| open ($path.name + /Cargo.toml) | get package.name} \
-		| filter {|pallet| cat runtime/kreivo/Cargo.toml | str contains $pallet} \
-		| filter {|pallet| cat runtime/kreivo/Cargo.toml | str contains ([$pallet, "runtime-benchmarks"] | str join '/')} \
-		| each {|pallet| str replace --all '-' '_' } \
-		| each {|pallet| just benchmark $pallet}
+	frame-omni-bencher v1 benchmark pallet --list=pallets --runtime {{runtime}} \
+	    | from csv \
+	    | each {|record| just benchmark $record.pallet}
 
 benchmark pallet="" extrinsic="*":
-	touch .benchmarking-logs/{{pallet}}.txt
-	./target/release/virto-node benchmark pallet \
-		--chain {{chain}}-local \
-		--pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
-		--steps 50 \
-		--repeat 20 \
-		--output runtime/kreivo/src/weights/{{pallet}}.rs | save -a --force .benchmarking-logs/{{pallet}}.txt
+    #!/usr/bin/env nu
+    frame-omni-bencher v1 benchmark pallet \
+        --runtime {{runtime}} \
+        --pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
+        --steps 50 \
+        --repeat 20 \
+        --output ./runtime/kreivo/src/weights/ | \
+        save --force .benchmarking-logs/{{pallet}}.out.txt \
+        --stderr .benchmarking-logs/{{pallet}}.log.txt
 
-build-container:
-	#!/usr/bin/env nu
-	'FROM docker.io/paritytech/ci-unified:latest as builder
-	WORKDIR /virto
-	COPY . /virto
-	RUN cargo build --release
-
-	FROM debian:bullseye-slim
-	VOLUME /data
-	COPY --from=builder /virto/{{ node }} /usr/bin
-	ENTRYPOINT ["/usr/bin/virto-node"]
-	CMD ["--dev"]'
-	| {{ podman }} build . -t {{ image }}:{{ ver }} --ignorefile .build-container-ignore -f -
-
-# Used to speed things up when the build environment is the same as the container(debian)
-build-container-local: build-local
-	#!/usr/bin/env nu
-	'FROM debian:bookworm-slim
-	LABEL io.containers.autoupdate="registry"
-	VOLUME /data
-	COPY {{ node }} /usr/bin
-	ENTRYPOINT ["/usr/bin/virto-node"]
-	CMD ["--dev"]'
-	| {{ podman }} build . -t {{ image }}:{{ ver }} -t {{ image }}:latest -f -
-
-_parachain_launch_artifacts:
-	@mkdir release
-	{{ node }} export-genesis-state --chain {{ chain }} | save -f release/{{ chain }}_genesis
-	{{ node }} export-genesis-wasm --chain {{ chain }} | save -f release/{{ chain }}_genesis.wasm
-	{{ node }} build-spec --disable-default-bootnode --chain {{ chain }} | save -f release/{{ chain }}_chainspec.json
+    if ((open .benchmarking-logs/{{pallet}}.out.txt | str length) == 0) {
+        rm .benchmarking-logs/{{pallet}}.out.txt
+    }
 
 release-artifacts:
 	@mkdir release; rm -f release/*
-	cp target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm release/
+	cp {{ runtime }} release/
 	cp *.container release
 
 release-tag:
