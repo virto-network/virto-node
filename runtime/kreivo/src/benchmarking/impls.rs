@@ -14,7 +14,6 @@ use xcm::latest::prelude::{
 };
 use xcm_config::RelayLocation;
 
-
 impl frame_system_benchmarking::Config for Runtime {}
 
 impl cumulus_pallet_session_benchmarking::Config for Runtime {}

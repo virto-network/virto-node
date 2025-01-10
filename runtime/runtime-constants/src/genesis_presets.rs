@@ -1,5 +1,5 @@
-// Copyright (C) Parity Technologies and the various Polkadot contributors, see Contributions.md
-// for a list of specific contributors.
+// Copyright (C) Parity Technologies and the various Polkadot contributors, see
+// Contributions.md for a list of specific contributors.
 // This file is part of Polkadot.
 
 // Polkadot is free software: you can redistribute it and/or modify
@@ -26,8 +26,14 @@ use sp_std::vec::Vec;
 /// Invulnerable Collators
 pub fn invulnerables() -> Vec<(parachains_common::AccountId, AuraId)> {
 	Vec::from([
-		(get_account_id_from_seed::<sr25519::Public>("Alice"), get_from_seed::<AuraId>("Alice")),
-		(get_account_id_from_seed::<sr25519::Public>("Bob"), get_from_seed::<AuraId>("Bob")),
+		(
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_from_seed::<AuraId>("Alice"),
+		),
+		(
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_from_seed::<AuraId>("Bob"),
+		),
 	])
 }
 

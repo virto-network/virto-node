@@ -16,8 +16,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod weights;
 pub mod genesis_presets;
+pub mod weights;
 
 /// Money matters.
 pub mod currency {

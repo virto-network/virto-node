@@ -50,11 +50,11 @@ pub fn chain_spec() -> Result<Box<dyn ChainSpec>, String> {
 				para_id: KREIVO_PARA_ID,
 			},
 		)
-			.with_id(CHAIN_ID_STRING)
-			.with_name(CHAIN_NAME_STRING)
-			.with_chain_type(ChainType::Local)
-			.with_properties(properties())
-			.with_genesis_config_preset_name("local")
-			.build(),
+		.with_id(CHAIN_ID_STRING)
+		.with_name(CHAIN_NAME_STRING)
+		.with_chain_type(ChainType::Local)
+		.with_properties(properties())
+		.with_genesis_config_preset_name("local")
+		.build(),
 	))
 }

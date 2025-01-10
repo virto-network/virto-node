@@ -1,5 +1,5 @@
+use sc_chain_spec::{ChainSpec, ChainSpecExtension, ChainSpecGroup, ChainType};
 use serde::{Deserialize, Serialize};
-use sc_chain_spec::{ChainSpec, ChainType, ChainSpecExtension, ChainSpecGroup};
 
 #[cfg(feature = "paseo")]
 const KREIVO_PARA_ID: u32 = 2281;
