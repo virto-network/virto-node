@@ -6,7 +6,7 @@ ver := `open chain-spec-generator/Cargo.toml | get package.version`
 image := "ghcr.io/virto-network/virto"
 
 chain := "kreivo"
-runtime := "target/release/wbuild/{{ chain }}-runtime/{{ chain }}_runtime.compact.compressed.wasm"
+runtime := "target/release/wbuild/kreivo-runtime/kreivo_runtime.compact.compressed.wasm"
 rol := "collator"
 relay := "kusama"
 
@@ -56,7 +56,6 @@ benchmarks:
 	    | each {|record| just benchmark $record.pallet}
 
 benchmark pallet="" extrinsic="*":
-    #!/usr/bin/env nu
     frame-omni-bencher v1 benchmark pallet \
         --runtime {{runtime}} \
         --pallet '{{pallet}}' --extrinsic '{{extrinsic}}' \
@@ -66,9 +65,7 @@ benchmark pallet="" extrinsic="*":
         save --force .benchmarking-logs/{{pallet}}.out.txt \
         --stderr .benchmarking-logs/{{pallet}}.log.txt
 
-    if ((open .benchmarking-logs/{{pallet}}.out.txt | str length) == 0) {
-        rm .benchmarking-logs/{{pallet}}.out.txt
-    }
+    if ((open .benchmarking-logs/{{pallet}}.out.txt | str length) == 0) { rm .benchmarking-logs/{{pallet}}.out.txt }
 
 release-artifacts:
 	@mkdir release; rm -f release/*
