@@ -33,7 +33,7 @@ scale-info = { version = "2.10.0", default-features = false, features = [
   "derive",
 ] }
 serde = { version = "1.0.188", default-features = false }
-serde_json = { version = "1.0.121", default-features = false, featues = ["derive"] }
+serde_json = { version = "1.0.121", default-features = false }
 smallvec = "1.11"
 
 # Local dependencies
