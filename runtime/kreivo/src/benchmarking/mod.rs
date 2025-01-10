@@ -50,7 +50,7 @@ frame_benchmarking::define_benchmarks!(
 	// Communities at Kreivo
 	[pallet_communities, Communities]
 	[pallet_referenda_tracks, CommunityTracks]
-	[pallet_referenda, CommunityReferenda]
+	// [pallet_referenda, CommunityReferenda]
 	[pallet_nfts, CommunityMemberships]
 	[pallet_communities_manager, CommunitiesManager]
 
