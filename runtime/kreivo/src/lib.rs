@@ -14,6 +14,7 @@ pub mod apis;
 pub mod configuration;
 pub mod constants;
 pub mod contracts;
+mod genesis_config_presets;
 pub mod governance;
 pub mod impls;
 mod weights;

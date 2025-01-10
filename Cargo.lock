@@ -864,14 +864,12 @@ dependencies = [
  "clap",
  "cumulus-primitives-core",
  "kreivo-runtime",
- "parachains-common",
  "sc-chain-spec",
  "sc-network",
  "serde",
  "serde_json",
  "sp-core",
  "sp-runtime",
- "staging-xcm",
 ]
 
 [[package]]
@@ -3640,6 +3638,7 @@ dependencies = [
  "runtime-common",
  "runtime-constants",
  "scale-info",
+ "serde_json",
  "smallvec",
  "sp-api",
  "sp-block-builder",
@@ -7145,12 +7144,15 @@ name = "runtime-constants"
 version = "1.0.0"
 dependencies = [
  "frame-support",
+ "parachains-common",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "smallvec",
  "sp-core",
  "sp-runtime",
+ "sp-std",
  "sp-weights",
+ "staging-xcm",
  "staging-xcm-builder",
 ]
 
