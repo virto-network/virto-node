@@ -1,26 +1,27 @@
-# Virto Node ![Build][build_badge] ![Checks][checks_badge] [![PRs Welcome][pr_badge]](docs/CONTRIBUTING.adoc)
+# Kreivo Runtime [![release][release_badge]](release_workflow) ![Checks][checks_badge] [![PRs Welcome][pr_badge]](docs/CONTRIBUTING.adoc)
 
 ![Virto Logo](https://matrix.virto.community/_matrix/media/r0/download/virto.community/YGIstgrolxbgQAAsvhHdnZey)
 
-[build_badge]: https://github.com/virto-network/virto-node/workflows/Blockchain%20Node/badge.svg
+[release_badge]: https://github.com/virto-network/kreivo/actions/workflows/release.yml/badge.svg
+[release_workflow]: https://github.com/virto-network/kreivo/actions/workflows/release.yml
 [checks_badge]: https://github.com/virto-network/virto-node/workflows/Checks/badge.svg
 [pr_badge]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg
 [whitepaper]: https://virto.network/docs/whitepaper.html
 
-[**Virto.Network**](https://virto.network), is the implementation of the [**Local Incentives Protocol**][whitepaper], 
-a decentralized payments infrastructure for local communities with social impact.
+**Kreivo** is the implementation of the [**Local Incentives Protocol**][whitepaper], 
+a decentralized infrastructure for real world buisinesses that contribute to local economic growth.
 
-Before Virto there is **Kreivo**, a token-less parachain for Kusama focused on real-world use cases such as
-bridging Fiat money with decentralized on&off-ramps, d-commerce or any marketplace communities 
+Kreivo is a token-less parachain in the [Kusama network](https://kusama.network/) focused on real-world use cases such as
+bridging Fiat money with decentralized on&off-ramps, e-commerce or any kind of marketplaces 
 that transact with day-to-day life goods and services.
 
-As part of our decentralized technology stack we tightly integrate with [Matrix](https://matrix.org), 
-the decentralized communications protocol that we extend with our plugin runtime [Valor](https://github.com/virto-network/valor)
-that allows the creation of high-level and convenient _decentralizable APIs_.
+As part of our decentralized technology stack we also integrate with [Matrix](https://matrix.org), 
+the decentralized communications protocol that we extend with [VOS](https://github.com/virto-network/vos), 
+a virual operating system to serve the off-chain companion of every organization part of the [Virto Network](https://virto.network).
 
 ## Running the parachain
 
-`virto-node` is a parachain, which means it needs to connect to a relay chain to finalize blocks. 
+The Kreivo runtime can be run with the `polkadot-parachain` node. 
 To ease the pain of setting up the different nodes required to test the network we use zombienet to set-up 
 a test network to try out the different features of the parachain.
 
@@ -36,7 +37,10 @@ Then, `just zombienet`.
 
 ## Structure
 
-### Core Pallets
+### Core modules
 
-- **Payments pallet** is the core payments primitive used by the network that enables secure reversible payments 
-and configurable fees that allow for the _contributions_ to local communities.
+- **Payments pallet** is the core payments primitive used by the network that enables secure reversible payments
+ and configurable fees that allow for the _contributions_ to local communities.
+- **Communities pallet** integrates with Polkadot's *pallet referenda* to provide DAO functionality.
+- [**Frame contrib**](https://github.com/virto-network/frame-contrib) includes **pallet pass** and
+the traits that enable using nfts as memberships with a gas tank so users can transact without wallets or tokens.
