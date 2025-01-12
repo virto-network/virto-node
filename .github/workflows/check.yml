@@ -40,6 +40,7 @@ jobs:
           profile: minimal
           toolchain: nightly
           target: wasm32-unknown-unknown
+          components: rust-src
 
       - uses: actions/checkout@v4
 
@@ -74,7 +75,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
-          components: clippy
+          components: clippy,rust-src
 
       - uses: actions/checkout@v4
 
@@ -105,6 +106,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
+          components: rust-src
 
       - uses: actions/checkout@v4
 
