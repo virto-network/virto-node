@@ -96,6 +96,8 @@ jobs:
   test:
     needs: lint
     runs-on: ubuntu-latest
+    env:
+      SKIP_WASM_BUILD: 1
     steps:
       - name: Setup Ubuntu dependencies
         shell: bash
