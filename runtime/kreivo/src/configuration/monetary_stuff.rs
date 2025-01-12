@@ -1,7 +1,6 @@
 use super::*;
 
 use fc_traits_gas_tank::{NonFungibleGasTank, SelectNonFungibleItem};
-use frame_system::EnsureSigned;
 use pallet_asset_tx_payment::FungiblesAdapter;
 use pallet_assets::BalanceToAssetBalance;
 use pallet_transaction_payment::FungibleAdapter;
@@ -10,6 +9,9 @@ use virto_common::MembershipId;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 use frame_support::traits::{AsEnsureOriginWithArg, NeverEnsureOrigin};
+
+#[cfg(feature = "runtime-benchmarks")]
+use frame_system::EnsureSigned;
 
 // #[runtime::pallet_index(10)]
 // pub type Balances

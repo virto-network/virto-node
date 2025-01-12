@@ -93,11 +93,11 @@ mod benchmarks {
 	fn pay(q: Linear<1, { T::MaxRemarkLength::get() }>) -> Result<(), BenchmarkError> {
 		let (sender, beneficiary, _, beneficiary_lookup) = create_accounts::<T>();
 
-		let asset: AssetIdOf<T> = <AssetIdOf<T>>::default();
-		create_and_mint_asset::<T>(&sender, &beneficiary, &asset)?;
-		let amount = <BalanceOf<T>>::from(100000_u32);
+		let asset_id: AssetIdOf<T> = <AssetIdOf<T>>::default();
+		create_and_mint_asset::<T>(&sender, &beneficiary, &asset_id)?;
+		let payment_amount = <BalanceOf<T>>::from(100000_u32);
 
-		let remark: Option<BoundedDataOf<T>> = if q == 0 {
+		let order_remark: Option<BoundedDataOf<T>> = if q == 0 {
 			None
 		} else {
 			Some(BoundedVec::try_from(vec![1 as u8; q as usize]).unwrap())
@@ -107,14 +107,14 @@ mod benchmarks {
 		_(
 			RawOrigin::Signed(sender.clone()),
 			beneficiary_lookup,
-			asset.clone(),
-			amount,
-			remark.clone(),
+			asset_id.clone(),
+			payment_amount,
+			order_remark.clone(),
 		);
 
 		assert_has_event!(
 			Event::PaymentCreated { asset, amount, remark, .. }
-			if asset == asset && amount == amount && remark == remark
+			if asset == asset_id && amount == payment_amount && remark == order_remark
 		);
 		Ok(())
 	}
