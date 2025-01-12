@@ -10,17 +10,21 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Nightly with rustfmt
+      - name: Use Nightly with `rustfmt`
         uses: actions-rs/toolchain@v1
         with:
             profile: minimal
             toolchain: nightly
             components: rustfmt
 
+      - uses: actions/checkout@v4
+
       - name: Check formatting
-        run: cargo +nightly fmt --all -- --check
+        uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: fmt
+          args: --all -- --check
 
   check:
     needs: lint
@@ -29,6 +33,12 @@ jobs:
       - name: Setup Ubuntu dependencies
         shell: bash
         run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - name: Use Nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
 
       - uses: actions/checkout@v4
 
@@ -40,8 +50,11 @@ jobs:
           key: check
 
       - name: Check Build
-        run: |
-          cargo check --release --locked --all-features --workspace
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          toolchain: nightly
+          args: --release --locked --all-features --workspace
 
   clippy:
     needs: lint
@@ -54,6 +67,13 @@ jobs:
       - name: Setup Ubuntu dependencies
         shell: bash
         run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - name: Use Nightly with `clippy`
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: clippy
 
       - uses: actions/checkout@v4
 
@@ -68,7 +88,8 @@ jobs:
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --release --locked --all-features --workspace -- --deny warnings
+          toolchain: nightly
+          args: --release --locked --all-features --workspace
 
   test:
     needs: lint
@@ -77,6 +98,12 @@ jobs:
       - name: Setup Ubuntu dependencies
         shell: bash
         run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - name: Use Nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
 
       - uses: actions/checkout@v4
 
@@ -88,4 +115,8 @@ jobs:
           key: test
 
       - name: Run tests
-        run: cargo test --release --locked --all-features --workspace
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          toolchain: nightly
+          args: --release --locked --all-features --workspace

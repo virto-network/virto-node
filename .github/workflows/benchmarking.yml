@@ -11,6 +11,12 @@ jobs:
         shell: bash
         run: sudo apt update && sudo apt install -y protobuf-compiler
 
+      - name: Use Nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+
       - uses: actions/checkout@v4
 
       - name: Rust Cache
