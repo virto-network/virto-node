@@ -16,6 +16,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
+          target: wasm32-unknown-unknown
 
       - uses: actions/checkout@v4
 

@@ -39,6 +39,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
+          target: wasm32-unknown-unknown
 
       - uses: actions/checkout@v4
 
@@ -119,4 +120,4 @@ jobs:
         with:
           command: test
           toolchain: nightly
-          args: --release --locked --all-features --workspace
+          args: --lib --release --locked --all-features --workspace
