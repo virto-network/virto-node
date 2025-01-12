@@ -1,0 +1,91 @@
+name: Lint, check, clippy and test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nightly with rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+            profile: minimal
+            toolchain: nightly
+            components: rustfmt
+
+      - name: Check formatting
+        run: cargo +nightly fmt --all -- --check
+
+  check:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Ubuntu dependencies
+        shell: bash
+        run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - uses: actions/checkout@v4
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          cache-all-crates: true
+          key: check
+
+      - name: Check Build
+        run: |
+          cargo check --release --locked --all-features --workspace
+
+  clippy:
+    needs: lint
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+    env:
+      SKIP_WASM_BUILD: 1
+    steps:
+      - name: Setup Ubuntu dependencies
+        shell: bash
+        run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - uses: actions/checkout@v4
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          cache-all-crates: true
+          key: check
+
+      - name: Annotate with Clippy warnings
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --release --locked --all-features --workspace -- --deny warnings
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Ubuntu dependencies
+        shell: bash
+        run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - uses: actions/checkout@v4
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          cache-all-crates: true
+          key: test
+
+      - name: Run tests
+        run: cargo test --release --locked --all-features --workspace
