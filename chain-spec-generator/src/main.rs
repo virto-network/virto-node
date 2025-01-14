@@ -2,7 +2,6 @@ use clap::Parser;
 use sc_chain_spec::ChainSpec;
 use std::collections::HashMap;
 
-mod common;
 mod spec;
 
 use spec::live;

@@ -48,8 +48,6 @@ name = "kreivo1"
 ws_port = 20000
 
 [[parachains.collators]]
-chain = "dev"
-chain_spec_command = "./target/release/chain-spec-generator {% raw %} {{chainName}} {% endraw %}"
 command = "./bin/polkadot-parachain"
 args = ["--force-authoring --log=xcm=trace,parachain=trace"]
 name = "kreivo2"

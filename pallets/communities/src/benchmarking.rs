@@ -1,5 +1,4 @@
 //! Benchmarking setup for pallet-communities
-#![cfg(feature = "runtime-benchmarks")]
 use super::*;
 
 use self::{
@@ -87,15 +86,14 @@ where
 	Ok((community_id, admin_origin))
 }
 
+type Member<T> = (AccountIdOf<T>, MembershipIdOf<T>);
+
 /// Initializes the memberships of a community built for benchmarking
 /// purposes.
 ///
 /// Then, returns a list of tuples, each one containing a member's
 /// [AccountId] and their corresponding
-fn setup_members<T>(
-	origin: OriginFor<T>,
-	community_id: CommunityIdOf<T>,
-) -> Result<Vec<(AccountIdOf<T>, MembershipIdOf<T>)>, BenchmarkError>
+fn setup_members<T>(origin: OriginFor<T>, community_id: CommunityIdOf<T>) -> Result<Vec<Member<T>>, BenchmarkError>
 where
 	T: Config,
 	T::MembershipId: From<u32>,
@@ -135,7 +133,6 @@ where
 
 #[benchmarks(
 	where
-		T: frame_system::Config + crate::Config,
 		OriginFor<T>: From<Origin<T>> + From<frame_system::Origin<T>>,
 		RuntimeEventFor<T>: From<frame_system::Event<T>>,
 		AssetBalanceOf<T>: From<u64>,

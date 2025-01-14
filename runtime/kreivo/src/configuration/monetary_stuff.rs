@@ -1,12 +1,17 @@
 use super::*;
 
 use fc_traits_gas_tank::{NonFungibleGasTank, SelectNonFungibleItem};
-
 use pallet_asset_tx_payment::FungiblesAdapter;
 use pallet_assets::BalanceToAssetBalance;
 use pallet_transaction_payment::FungibleAdapter;
 use runtime_common::impls::AssetsToBlockAuthor;
 use virto_common::MembershipId;
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+use frame_support::traits::{AsEnsureOriginWithArg, NeverEnsureOrigin};
+
+#[cfg(feature = "runtime-benchmarks")]
+use frame_system::EnsureSigned;
 
 // #[runtime::pallet_index(10)]
 // pub type Balances
@@ -80,7 +85,10 @@ impl pallet_assets::Config<KreivoAssetsInstance> for Runtime {
 	type AssetIdParameter = FungibleAssetLocation;
 	type Currency = Balances;
 	/// Only root can create assets and force state changes.
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type CreateOrigin = AsEnsureOriginWithArg<NeverEnsureOrigin<AccountId>>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type CreateOrigin = EnsureSigned<AccountId>;
 	type ForceOrigin = AssetsForceOrigin;
 	type AssetDeposit = AssetDeposit;
 	type MetadataDepositBase = MetadataDepositBase;

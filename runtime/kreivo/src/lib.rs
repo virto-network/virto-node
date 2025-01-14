@@ -10,10 +10,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub mod apis;
 pub mod configuration;
 pub mod constants;
 pub mod contracts;
+mod genesis_config_presets;
 pub mod governance;
 pub mod impls;
 mod weights;
@@ -54,8 +58,8 @@ use frame_support::{
 		fungible::HoldConsideration,
 		fungibles,
 		tokens::{imbalance::ResolveTo, PayFromAccount, UnityAssetBalanceConversion},
-		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOf, EitherOfDiverse,
-		EnsureOriginWithArg, LinearStoragePrice, NeverEnsureOrigin, TransformOrigin, WithdrawReasons,
+		ConstBool, ConstU32, ConstU64, ConstU8, Contains, EitherOf, EitherOfDiverse, EnsureOriginWithArg,
+		LinearStoragePrice, TransformOrigin, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, Weight},
 	BoundedVec, PalletId,
@@ -602,37 +606,6 @@ pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::Exponenti
 	TransactionByteFee,
 	ParachainSystem,
 >;
-
-#[cfg(feature = "runtime-benchmarks")]
-mod benches {
-	frame_benchmarking::define_benchmarks!(
-		[frame_system, SystemBench::<Runtime>]
-		[pallet_balances, Balances]
-		[pallet_session, SessionBench::<Runtime>]
-		[pallet_timestamp, Timestamp]
-		[pallet_collator_selection, CollatorSelection]
-		[cumulus_pallet_xcmp_queue, XcmpQueue]
-		[pallet_treasury, Treasury]
-		[pallet_multisig, Multisig]
-		[pallet_vesting, Vesting]
-		[pallet_utility, Utility]
-		[pallet_assets, Assets]
-		[pallet_proxy, Proxy]
-		[pallet_referenda, KreivoReferenda]
-		[pallet_ranked_collective, KreivoCollective]
-		[pallet_payments, Payments]
-		[pallet_communities, Communities]
-		[pallet_referenda_tracks, CommunityTracks]
-		[pallet_referenda, CommunityReferenda]
-		[pallet_communities_manager, CommunitiesManager]
-		[pallet_nfts, CommunityMemberships]
-		[pallet_contracts, Contracts]
-		// XCM
-		// NOTE: Make sure you point to the individual modules below.
-		[pallet_xcm_benchmarks::fungible, XcmBalances]
-		[pallet_xcm_benchmarks::generic, XcmGeneric]
-	);
-}
 
 cumulus_pallet_parachain_system::register_validate_block! {
 	Runtime = Runtime,

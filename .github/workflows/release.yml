@@ -31,16 +31,3 @@ jobs:
         with:
           files: |
             release/*
-
-  container:
-    name: Containerize & Publish
-    needs: build
-    runs-on: [self-hosted, builder]
-    steps:
-      - name: Login to registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Publish image
-        run: |
-          podman push ghcr.io/virto-network/virto:$(just version)
-          podman push ghcr.io/virto-network/virto:latest

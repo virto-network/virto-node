@@ -5,20 +5,40 @@ on:
 
 jobs:
   build:
-    name: Build Target
-    runs-on: [self-hosted, builder]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - name: Setup Ubuntu dependencies
+        shell: bash
+        run: sudo apt update && sudo apt install -y protobuf-compiler
+
+      - name: Use Nightly
+        uses: actions-rs/toolchain@v1
         with:
-          path: target
-          key: ${{ runner.os }}-target-cache
-      - run: just build-local runtime-benchmarks
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          components: rust-src
+
+      - uses: actions/checkout@v4
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          cache-all-crates: true
+          key: build
+
+      - name: Release build with runtime-benchmarks
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --features runtime-benchmarks
+
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.run_number }}-virto-node
-          path: ./target/release/virto-node
-        
+          name: ${{ github.run_number }}-runtime
+          path: ./target/release/wbuild/kreivo-runtime/kreivo_runtime.compact.compressed.wasm
+
   benchmark:
     name: Run Benchmarks
     needs: build
@@ -28,18 +48,24 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - run: |
+
+      - name: Create `target/release` folder
+        run: |
           mkdir -p .benchmarking-logs target/release
+
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ github.run_number }}-virto-node
+          name: ${{ github.run_number }}-runtime
           path: ./target/release
+
       - run: |
           just benchmarks
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ github.run_id }}-benchmark_logs
           path: ./.benchmarking-logs
+
       - uses: peter-evans/create-pull-request@v6
         with:
           add-paths: runtime/kreivo/src/weights
