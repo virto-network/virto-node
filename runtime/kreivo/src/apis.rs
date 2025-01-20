@@ -5,7 +5,7 @@ use sp_core::OpaqueMetadata;
 use sp_runtime::{
 	traits::Block as BlockT,
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidity},
-	ExtrinsicInclusionMode, ApplyExtrinsicResult, 
+	ApplyExtrinsicResult, ExtrinsicInclusionMode,
 };
 use sp_version::RuntimeVersion;
 
