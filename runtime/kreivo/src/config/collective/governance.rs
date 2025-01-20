@@ -8,9 +8,9 @@ pub type KreivoTracksInstance = pallet_referenda_tracks::Instance1;
 pub type KreivoReferendaInstance = pallet_referenda::Instance1;
 
 impl pallet_referenda::Config<KreivoReferendaInstance> for Runtime {
-	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
 	type Scheduler = Scheduler;
 	type Currency = Balances;
 	type SubmitOrigin = EnsureSigned<AccountId>;
