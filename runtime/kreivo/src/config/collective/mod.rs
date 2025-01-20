@@ -34,7 +34,7 @@ impl pallet_ranked_collective::Config<KreivoCollectiveInstance> for Runtime {
 	// In the future, it's expected to have an auxiliary pallet to observe the
 	// criteria for ranking
 	type DemoteOrigin = EnsureRootWithSuccess<Self::AccountId, ConstU16<65535>>;
-	
+
 	type ExchangeOrigin = EnsureRoot<AccountId>;
 	type Polls = KreivoReferenda;
 
