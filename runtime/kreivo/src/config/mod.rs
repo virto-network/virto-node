@@ -16,10 +16,10 @@ pub mod contracts;
 pub mod payments;
 
 pub use collator_support::{ConsensusHook, SLOT_DURATION};
-pub use currency::{
-	ExistentialDeposit, KreivoAssetsCall, KreivoAssetsInstance, MembershipsGasTank, MetadataDepositBase,
-	MetadataDepositPerByte, TransactionByteFee,
-};
+#[cfg(feature = "runtime-benchmarks")]
+pub use currency::{ExistentialDeposit, TransactionByteFee};
+pub use currency::{KreivoAssetsCall, KreivoAssetsInstance, MembershipsGasTank};
 pub use governance::{pallet_custom_origins, TreasuryAccount};
 pub use system::RuntimeBlockWeights;
+#[cfg(feature = "runtime-benchmarks")]
 pub use xcm::PriceForParentDelivery;

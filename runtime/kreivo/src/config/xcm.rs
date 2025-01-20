@@ -1,5 +1,9 @@
 use super::*;
 
+use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
+use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
+use frame_support::traits::TransformOrigin;
+
 // #[runtime::pallet_index(30)]
 // pub type XcmpQueue
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
@@ -52,6 +56,7 @@ impl pallet_message_queue::Config for Runtime {
 }
 
 // XcmSender
+#[cfg(feature = "runtime-benchmarks")]
 parameter_types! {
 	/// The asset ID for the asset that we use to pay for message delivery fees.
 	pub FeeAssetId: cumulus_primitives_core::AssetId = xcm_config::RelayLocation::get().into();
@@ -59,6 +64,7 @@ parameter_types! {
 	pub const ToParentBaseDeliveryFee: u128 = CENTS.saturating_mul(3);
 }
 
+#[cfg(feature = "runtime-benchmarks")]
 pub type PriceForParentDelivery = polkadot_runtime_common::xcm_sender::ExponentialPrice<
 	FeeAssetId,
 	ToParentBaseDeliveryFee,

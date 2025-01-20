@@ -1,5 +1,8 @@
 use super::*;
 
+use frame_support::traits::EitherOfDiverse;
+use pallet_xcm::IsVoiceOfBody;
+
 // #[runtime::pallet_index(20)]
 // pub type Authorship
 impl pallet_authorship::Config for Runtime {

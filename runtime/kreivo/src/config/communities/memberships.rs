@@ -1,6 +1,9 @@
 use super::*;
 
 use frame_system::EnsureRootWithSuccess;
+use sp_runtime::traits::Verify;
+
+use pallet_nfts::PalletFeatures;
 use virto_common::MembershipId;
 
 parameter_types! {

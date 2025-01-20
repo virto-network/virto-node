@@ -4,7 +4,6 @@ use frame_system::EnsureSigned;
 use pallet_ranked_collective::{TallyOf, Votes};
 use sp_core::ConstU128;
 
-pub type KreivoTracksInstance = pallet_referenda_tracks::Instance1;
 pub type KreivoReferendaInstance = pallet_referenda::Instance1;
 
 impl pallet_referenda::Config<KreivoReferendaInstance> for Runtime {

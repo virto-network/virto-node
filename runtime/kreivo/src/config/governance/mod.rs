@@ -7,7 +7,7 @@ use frame_support::parameter_types;
 use frame_support::traits::tokens::{PayFromAccount, UnityAssetBalanceConversion};
 pub use origins::*;
 use parachains_common::Balance;
-use sp_runtime::traits::IdentityLookup;
+use sp_runtime::{traits::IdentityLookup, Permill};
 
 // #[runtime::pallet_index(50)]
 // pub type Treasury

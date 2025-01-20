@@ -1,5 +1,8 @@
 use super::*;
 
+use frame_support::traits::{fungible::HoldConsideration, LinearStoragePrice};
+use sp_runtime::traits::BlakeTwo256;
+
 // #[runtime::pallet_index(42)]
 // pub type Multisig
 parameter_types! {
