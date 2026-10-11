@@ -22,6 +22,16 @@ where
 	Memberships(MembershipsApiInfo<T>),
 }
 
+impl<T: Config> ApiInfo<T> {
+	/// The weight to charge before dispatching the request, if any.
+	pub fn weight(&self) -> Option<frame_support::weights::Weight> {
+		match self {
+			ApiInfo::Assets(api_info) => api_info.weight(),
+			ApiInfo::Listings(_) | ApiInfo::Memberships(_) => None,
+		}
+	}
+}
+
 impl<T, E> TryFrom<&mut Environment<'_, '_, E, BufInBufOutState>> for ApiInfo<T>
 where
 	T: Config,

@@ -60,6 +60,30 @@ where
 			.assets__transfer(asset, amount, *beneficiary)
 			.map_err(|code| code.into())
 	}
+
+	fn mint(
+		env: &EnvAccess<'_, E>,
+		asset: Self::AssetId,
+		amount: Self::Balance,
+		beneficiary: &Self::AccountId,
+	) -> Result<Self::Balance, KreivoApisError> {
+		env.clone()
+			.extension()
+			.assets__mint(asset, amount, *beneficiary)
+			.map_err(|code| code.into())
+	}
+
+	fn burn(
+		env: &EnvAccess<'_, E>,
+		asset: Self::AssetId,
+		amount: Self::Balance,
+		who: &Self::AccountId,
+	) -> Result<Self::Balance, KreivoApisError> {
+		env.clone()
+			.extension()
+			.assets__burn(asset, amount, *who)
+			.map_err(|code| code.into())
+	}
 }
 
 // Listings

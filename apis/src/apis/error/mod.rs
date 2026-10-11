@@ -81,12 +81,29 @@ mod tests {
 	}
 
 	#[test]
+	fn assets_error_codes_are_stable() {
+		let code = |e: AssetsApiError| u32::from(KreivoApisErrorCode::from(KreivoApisError::from(e)));
+		assert_eq!(code(AssetsApiError::CannotDeposit), 0x0001_0000);
+		assert_eq!(code(AssetsApiError::CannotTransfer), 0x0001_0001);
+		assert_eq!(code(AssetsApiError::CannotMint), 0x0001_0002);
+		assert_eq!(code(AssetsApiError::CannotBurn), 0x0001_0003);
+		assert_eq!(code(AssetsApiError::NotAGroupContract), 0x0001_0004);
+		assert_eq!(code(AssetsApiError::NotAuthorised), 0x0001_0005);
+		assert_eq!(code(AssetsApiError::NotALocalAsset), 0x0001_0006);
+	}
+
+	#[test]
 	fn convert_from_error_to_error_code_back_to_error_works() {
 		test_error_code_conversion!(KreivoApisError::UnknownError);
 		test_error_code_conversion!(KreivoApisError::ExtQueryError);
 
 		test_error_code_conversion!(AssetsApiError::CannotDeposit);
 		test_error_code_conversion!(AssetsApiError::CannotTransfer);
+		test_error_code_conversion!(AssetsApiError::CannotMint);
+		test_error_code_conversion!(AssetsApiError::CannotBurn);
+		test_error_code_conversion!(AssetsApiError::NotAGroupContract);
+		test_error_code_conversion!(AssetsApiError::NotAuthorised);
+		test_error_code_conversion!(AssetsApiError::NotALocalAsset);
 
 		test_error_code_conversion!(ListingsApiError::NoMerchantId);
 		test_error_code_conversion!(ListingsApiError::UnknownInventory);

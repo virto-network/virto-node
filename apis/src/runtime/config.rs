@@ -1,7 +1,8 @@
 use frame_contrib_traits::listings;
 use frame_contrib_traits::listings::ListingsIdentifier;
 use frame_contrib_traits::memberships;
-use frame_support::traits::{fungible, fungibles};
+use frame_support::traits::{fungible, fungibles, Contains, Get};
+use frame_support::weights::Weight;
 use frame_support::Parameter;
 use parity_scale_codec::MaxEncodedLen;
 
@@ -12,7 +13,25 @@ where
 	/// A type that implements the balances APIs.
 	type Balances: fungible::Inspect<Self::AccountId>;
 	/// A type that implements the assets' APIs.
-	type Assets: fungibles::Inspect<Self::AccountId> + fungibles::Mutate<Self::AccountId>;
+	type Assets: fungibles::Inspect<Self::AccountId>
+		+ fungibles::Mutate<Self::AccountId>
+		+ fungibles::roles::Inspect<Self::AccountId>;
+	/// The assets contracts may mint and burn. Any other asset is refused,
+	/// whatever role the contract's group holds on it.
+	type MintableAssets: Contains<AssetIdOf<Self>>;
+	/// The weight charged for [`AssetsAPI::mint`][crate::apis::AssetsAPI::mint],
+	/// before doing any work.
+	///
+	/// It must cover minting the asset, plus the reads to find the contract's
+	/// group and the asset's roles.
+	type MintWeight: Get<Weight>;
+	/// The weight charged for [`AssetsAPI::burn`][crate::apis::AssetsAPI::burn],
+	/// before doing any work.
+	///
+	/// It must cover burning the asset, plus the reads to find the contract's
+	/// group and the asset's roles, and the reads to check the asset and the
+	/// account can be burnt from.
+	type BurnWeight: Get<Weight>;
 	/// A type that implements the `MerchantIdInfo` trait.
 	type MerchantIdInfo: MerchantIdInfo<AccountIdOf<Self>>;
 	/// A type that implements the listings' APIs.
@@ -50,7 +69,11 @@ pub trait MerchantIdInfo<AccountId> {
 pub trait GroupInfo<AccountId> {
 	type Group: Parameter;
 
+	/// The group a contract account belongs to, if any.
 	fn maybe_group(who: &AccountId) -> Option<Self::Group>;
+
+	/// The account that acts on behalf of a `group`.
+	fn group_account(group: &Self::Group) -> AccountId;
 }
 
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;

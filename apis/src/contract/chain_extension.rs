@@ -32,6 +32,22 @@ pub trait ChainExtension {
 		beneficiary: AccountIdOf<Environment>,
 	) -> Result<BalanceOf<Environment>, KreivoApisErrorCode>;
 
+	#[allow(non_snake_case)]
+	#[ink(function = 0x0003)]
+	fn assets__mint(
+		asset: AssetIdOf<Environment>,
+		amount: BalanceOf<Environment>,
+		beneficiary: AccountIdOf<Environment>,
+	) -> Result<BalanceOf<Environment>, KreivoApisErrorCode>;
+
+	#[allow(non_snake_case)]
+	#[ink(function = 0x0004)]
+	fn assets__burn(
+		asset: AssetIdOf<Environment>,
+		amount: BalanceOf<Environment>,
+		who: AccountIdOf<Environment>,
+	) -> Result<BalanceOf<Environment>, KreivoApisErrorCode>;
+
 	// Listings: Inventories
 	#[allow(non_snake_case)]
 	#[ink(function = 0x0100, handle_status = false)]

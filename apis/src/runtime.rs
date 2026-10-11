@@ -58,6 +58,11 @@ where
 
 		let request: ApiInfo<_> = ApiInfo::<T>::try_from(&mut env)?;
 
+		// Charge before doing any work, so that a refused request is paid for too.
+		if let Some(weight) = request.weight() {
+			env.charge_weight(weight)?;
+		}
+
 		let result = match request.clone() {
 			ApiInfo::Assets(ref api_info) => api_info.call(env.ext()),
 			ApiInfo::Listings(ref api_info) => api_info.call(env.ext()),

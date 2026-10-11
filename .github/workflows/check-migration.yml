@@ -15,7 +15,7 @@ on:
 
 env:
   # The live Kreivo chain (Kusama, para 2281) the runtime upgrade is checked against.
-  SNAPSHOT_URI: wss://kreivo.kippu.rocks
+  SNAPSHOT_URI: wss://rpc.kreivo.bloque.sh
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

@@ -35,10 +35,38 @@ impl<T: pallet_contracts::Config> Randomness<T::Hash, BlockNumberFor<T>> for Dum
 	}
 }
 
+parameter_types! {
+	/// `pallet_assets::mint`, plus reading the contract's community
+	/// (`ContractsStore::ContractMerchantId`) and the asset's roles
+	/// (`Assets::Asset`).
+	pub KreivoApisMintWeight: Weight =
+		<weights::pallet_assets::WeightInfo<Runtime> as pallet_assets::WeightInfo>::mint()
+			.saturating_add(<Runtime as frame_system::Config>::DbWeight::get().reads(2));
+	/// `pallet_assets::burn`, plus reading the contract's community and the
+	/// asset's roles, and the reads that check the asset and the account can be
+	/// burnt from (`Assets::Asset`, `Assets::Account`,
+	/// `AssetsHolder::BalancesOnHold`, `AssetsFreezer::FrozenBalances`).
+	pub KreivoApisBurnWeight: Weight =
+		<weights::pallet_assets::WeightInfo<Runtime> as pallet_assets::WeightInfo>::burn()
+			.saturating_add(<Runtime as frame_system::Config>::DbWeight::get().reads(6));
+}
+
+/// Contracts may only mint and burn assets local to Kreivo, never a foreign or
+/// reserve-backed one, whatever role their community holds on it.
+pub struct LocalAssets;
+impl Contains<FungibleAssetLocation> for LocalAssets {
+	fn contains(asset: &FungibleAssetLocation) -> bool {
+		matches!(asset, FungibleAssetLocation::Here(_))
+	}
+}
+
 // Use Kreivo APIs for Chain Extensions
 impl kreivo_apis::Config for Runtime {
 	type Balances = Balances;
 	type Assets = Assets;
+	type MintableAssets = LocalAssets;
+	type MintWeight = KreivoApisMintWeight;
+	type BurnWeight = KreivoApisBurnWeight;
 	type MerchantIdInfo = Self;
 	type Listings = Listings;
 	type GroupInfo = Self;
@@ -50,6 +78,10 @@ impl kreivo_apis::GroupInfo<AccountId> for Runtime {
 
 	fn maybe_group(who: &AccountId) -> Option<Self::Group> {
 		ContractsStore::maybe_merchant_id(who)
+	}
+
+	fn group_account(group: &Self::Group) -> AccountId {
+		Communities::community_account(group)
 	}
 }
 
