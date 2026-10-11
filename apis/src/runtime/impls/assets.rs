@@ -18,6 +18,14 @@ where
 				amount,
 				beneficiary,
 			} => AssetsAPIOf::<T, E>::transfer(ext, asset.clone(), *amount, beneficiary).map(|v| v.encode()),
+			AssetsApiInfo::Mint {
+				asset,
+				amount,
+				beneficiary,
+			} => AssetsAPIOf::<T, E>::mint(ext, asset.clone(), *amount, beneficiary).map(|v| v.encode()),
+			AssetsApiInfo::Burn { asset, amount, who } => {
+				AssetsAPIOf::<T, E>::burn(ext, asset.clone(), *amount, who).map(|v| v.encode())
+			}
 		}
 	}
 }

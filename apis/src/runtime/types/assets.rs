@@ -1,7 +1,8 @@
 use super::*;
 
 use frame_support::sp_runtime::DispatchError;
-use frame_support::traits::fungibles;
+use frame_support::traits::{fungibles, Get};
+use frame_support::weights::Weight;
 use pallet_contracts::chain_extension::{BufInBufOutState, Environment, Ext};
 
 pub type AssetIdOf<T> = <<T as Config>::Assets as fungibles::Inspect<AccountIdOf<T>>>::AssetId;
@@ -22,6 +23,27 @@ pub enum AssetsApiInfo<T: Config> {
 		amount: AssetBalanceOf<T>,
 		beneficiary: T::AccountId,
 	},
+	Mint {
+		asset: AssetIdOf<T>,
+		amount: AssetBalanceOf<T>,
+		beneficiary: T::AccountId,
+	},
+	Burn {
+		asset: AssetIdOf<T>,
+		amount: AssetBalanceOf<T>,
+		who: T::AccountId,
+	},
+}
+
+impl<T: Config> AssetsApiInfo<T> {
+	/// The weight to charge before dispatching the request, if any.
+	pub fn weight(&self) -> Option<Weight> {
+		match self {
+			AssetsApiInfo::Mint { .. } => Some(T::MintWeight::get()),
+			AssetsApiInfo::Burn { .. } => Some(T::BurnWeight::get()),
+			_ => None,
+		}
+	}
 }
 
 impl<T, E> TryFrom<&mut Environment<'_, '_, E, BufInBufOutState>> for AssetsApiInfo<T>
@@ -48,6 +70,18 @@ where
 					amount,
 					beneficiary,
 				})
+			}
+			0x0003 => {
+				let (asset, amount, beneficiary) = env.read_as()?;
+				Ok(AssetsApiInfo::Mint {
+					asset,
+					amount,
+					beneficiary,
+				})
+			}
+			0x0004 => {
+				let (asset, amount, who) = env.read_as()?;
+				Ok(AssetsApiInfo::Burn { asset, amount, who })
 			}
 			id => {
 				log::error!("Called an unregistered `func_id`: {id:}");

@@ -2101,7 +2101,7 @@ dependencies = [
 
 [[package]]
 name = "chain-spec-generator"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "clap",
  "kreivo-runtime",
@@ -6193,7 +6193,7 @@ dependencies = [
 
 [[package]]
 name = "kreivo-runtime"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "assets-common",
  "cumulus-pallet-aura-ext",
@@ -6232,6 +6232,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-communities-manager",
  "pallet-contracts",
+ "pallet-contracts-fixtures",
  "pallet-contracts-store",
  "pallet-message-queue",
  "pallet-multisig",
