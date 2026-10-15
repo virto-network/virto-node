@@ -127,6 +127,8 @@ impl frame_system::Config for Runtime {
 	// Sets the block's weight mode (a share of the core, or the whole core) before inherents.
 	type PreInherents =
 		cumulus_pallet_parachain_system::block_weight::DynamicMaxBlockWeightHooks<Runtime, TargetBlockRate>;
+	/// Constant-size migrations, run in the upgrade block.
+	type SingleBlockMigrations = crate::Migrations;
 	/// Stepped migrations (`DEC-30`).
 	type MultiBlockMigrator = MultiBlockMigrations;
 }
