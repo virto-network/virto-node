@@ -216,6 +216,8 @@ mod runtime {
 	pub type ParachainInfo = parachain_info;
 	#[runtime::pallet_index(4)]
 	pub type Origins = pallet_custom_origins;
+	#[runtime::pallet_index(5)]
+	pub type MultiBlockMigrations = pallet_migrations;
 	#[runtime::pallet_index(6)]
 	pub type Pass = pallet_pass;
 

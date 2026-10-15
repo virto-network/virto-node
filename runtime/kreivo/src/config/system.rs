@@ -127,6 +127,42 @@ impl frame_system::Config for Runtime {
 	// Sets the block's weight mode (a share of the core, or the whole core) before inherents.
 	type PreInherents =
 		cumulus_pallet_parachain_system::block_weight::DynamicMaxBlockWeightHooks<Runtime, TargetBlockRate>;
+	/// Stepped migrations (`DEC-30`).
+	type MultiBlockMigrator = MultiBlockMigrations;
+}
+
+// #[runtime::pallet_index(5)]
+// pub type MultiBlockMigrations
+parameter_types! {
+	/// 80 % of the one-third-core target (`ref_time` 0.67 s, proof 3.3 MiB), so that inherents and
+	/// `on_initialize` always fit in the upgrade block (`DEC-30`, `RISK-14`). Must stay at or
+	/// below `max_block` (`pallet_migrations`'s `integrity_test`).
+	pub MigrationsMaxServiceWeight: Weight = Weight::from_parts(533_333_333_333, 2_796_202);
+}
+
+/// The stepped migrations this runtime runs. None yet: the memberships migration (`F-10`) is
+/// registered here. Tests run a no-op one that takes several blocks; the benchmarks need the
+/// pallet's mocked migrations.
+#[cfg(feature = "runtime-benchmarks")]
+pub type SteppedMigrations = pallet_migrations::mock_helpers::MockedMigrations;
+#[cfg(all(test, not(feature = "runtime-benchmarks")))]
+pub type SteppedMigrations = crate::migrations::test_migration::NoopStepped;
+#[cfg(not(any(test, feature = "runtime-benchmarks")))]
+pub type SteppedMigrations = ();
+
+impl pallet_migrations::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Migrations = SteppedMigrations;
+	/// Fit every cursor and identifier this release registers (Asset Hub Westend's values).
+	type CursorMaxLen = ConstU32<65_536>;
+	type IdentifierMaxLen = ConstU32<256>;
+	/// Nothing pauses while a migration runs yet: listings' hand-off (`DEC-35`) needs
+	/// frame-contrib 2.4.0, and is bound by `F-08`.
+	type MigrationStatusHandler = ();
+	/// A half-applied migration must not keep producing blocks.
+	type FailedMigrationHandler = frame_support::migrations::FreezeChainOnFailedMigration;
+	type MaxServiceWeight = MigrationsMaxServiceWeight;
+	type WeightInfo = weights::pallet_migrations::WeightInfo<Runtime>;
 }
 
 // #[runtime::pallet_index(1)]
