@@ -7,7 +7,13 @@
 
 use super::*;
 
-use crate::{config::system::MigrationsMaxServiceWeight, MultiBlockMigrations};
+use crate::{
+	config::system::{
+		MigrationsInherentReserve, MigrationsMaxServiceWeight, MigrationsStatusHandler, ReleaseSteppedMigrations,
+	},
+	weights::BlockExecutionWeight,
+	MultiBlockMigrations,
+};
 use frame_support::{
 	traits::{Get, Hooks},
 	weights::Weight,
@@ -16,9 +22,10 @@ use frame_support::{
 // NFR-9, DEC-30: the deployment document's values (§1).
 #[test]
 fn the_service_weight_and_the_limits_are_the_deployment_values() {
+	// Derived, about 50 % of the block's share (`m3-max-service-weight`).
 	assert_eq!(
 		MigrationsMaxServiceWeight::get(),
-		Weight::from_parts(533_333_333_333, 2_796_202)
+		Weight::from_parts(332_414_064_333, 1_743_482)
 	);
 	assert_eq!(
 		<<Runtime as pallet_migrations::Config>::CursorMaxLen as Get<u32>>::get(),
@@ -30,16 +37,39 @@ fn the_service_weight_and_the_limits_are_the_deployment_values() {
 	);
 }
 
-// DEC-30, RISK-14: the service weight leaves room in the block for inherents and `on_initialize`.
+// DEC-30, RISK-14, M-2: in the third-of-a-core mode, a step plus the message queue's share, the base
+// block and the inherent reserve fit in the block, in both components.
 #[test]
-fn the_service_weight_fits_in_a_block_and_the_pallet_integrity_test_passes() {
+fn a_step_leaves_room_for_the_message_queue_the_base_block_and_the_inherents() {
 	TestExternalities::default().execute_with(|| {
 		let max_block = <Runtime as frame_system::Config>::BlockWeights::get().max_block;
-		assert!(MigrationsMaxServiceWeight::get().all_lte(max_block));
-		assert!(MigrationsMaxServiceWeight::get().all_lt(max_block));
+		// The mode this test pins: a third of a core.
+		assert_eq!(max_block, Weight::from_parts(666_666_666_666, 3_495_253));
+
+		let message_queue = <<Runtime as pallet_message_queue::Config>::ServiceWeight as Get<Option<Weight>>>::get()
+			.expect("the message queue has a service weight");
+		let step = MigrationsMaxServiceWeight::get();
+		let sum = step
+			.saturating_add(message_queue)
+			.saturating_add(BlockExecutionWeight::get())
+			.saturating_add(MigrationsInherentReserve::get());
+		assert!(sum.ref_time() <= max_block.ref_time());
+		assert!(sum.proof_size() <= max_block.proof_size());
 
 		<MultiBlockMigrations as Hooks<_>>::integrity_test();
 	});
+}
+
+// DEC-35, INV-21: while the status handler is `()`, no stepped migration may be registered.
+// `F-08` binds the handler, and must land before `F-10` registers the memberships migration.
+#[test]
+fn no_stepped_migration_is_registered_while_the_status_handler_does_nothing() {
+	use core::any::TypeId;
+	use frame_support::migrations::SteppedMigrations;
+
+	if TypeId::of::<MigrationsStatusHandler>() == TypeId::of::<()>() {
+		assert_eq!(<ReleaseSteppedMigrations as SteppedMigrations>::len(), 0);
+	}
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
@@ -142,9 +172,12 @@ mod stepped {
 		});
 	}
 
-	// DEC-30: root clears a stuck migration, and the chain takes transactions again.
+	// DEC-30, M-3: root can clear a stuck cursor, but a frozen chain only has inherents, so Root is
+	// unreachable inside Kreivo: no signed transaction, so no referendum. Recovery needs a Kusama
+	// referendum that force-sets para 2281's code to a runtime whose `SingleBlockMigrations`
+	// clears `MultiBlockMigrations::Cursor` (see F-12 NOTES). Owner ruling: `m3-mbm-failure`.
 	#[test]
-	fn root_can_clear_a_stuck_migration() {
+	fn a_stuck_cursor_clears_only_with_root_which_a_frozen_chain_cannot_reach() {
 		TestExternalities::default().execute_with(|| {
 			NoopFailsAt::set(&Some(0));
 			the_upgrade_block();
