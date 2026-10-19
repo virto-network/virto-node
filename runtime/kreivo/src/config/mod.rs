@@ -19,7 +19,7 @@ pub mod payments;
 pub use {
 	collator_support::{ConsensusHook, RELAY_CHAIN_SLOT_DURATION_MILLIS},
 	communities::Memberships,
-	currency::{KreivoAssetsCall, KreivoAssetsInstance, MembershipsGasTank},
+	currency::{KreivoAssetsCall, KreivoAssetsInstance},
 	governance::{pallet_custom_origins, TreasuryAccount},
 	payments::pallet_payment_indices,
 	system::{RelaychainData, RuntimeBlockWeights},

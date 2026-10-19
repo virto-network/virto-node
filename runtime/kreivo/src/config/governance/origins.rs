@@ -43,6 +43,8 @@ pub mod pallet_custom_origins {
 
 	macro_rules! decl_unit_ensures {
 		( $name:ident: $success_type:ty = $success:expr ) => {
+			// `CreateMemberships` has no user until `F-08` renames it (`UsageSubscriptionAdmin`).
+			#[allow(dead_code)]
 			pub struct $name;
 			impl<O: Into<Result<Origin, O>> + From<Origin>>
 				EnsureOrigin<O> for $name

@@ -9,7 +9,6 @@ use virto_common::{CommunityId, MembershipId};
 pub use memberships::Memberships;
 #[cfg(feature = "runtime-benchmarks")]
 use memberships::MembershipsManagerAccount;
-use pallet_custom_origins::CreateMemberships;
 
 pub mod governance;
 pub mod memberships;
@@ -66,16 +65,10 @@ impl pallet_communities::Config for Runtime {
 
 impl pallet_communities_manager::Config for Runtime {
 	type CreateCollection = CommunityMemberships;
-	type MakeTank = MembershipsGasTank;
 	type Tracks = CommunityTracks;
 	type RankedCollective = KreivoCollective;
 	type WeightInfo = weights::pallet_communities_manager::WeightInfo<Self>;
 	type RegisterOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
-	type CreateMembershipsOrigin = EitherOf<EnsureRoot<AccountId>, CreateMemberships>;
-	type MembershipsManagerCollectionId = MembershipsCollectionId;
-	type MembershipsManagerOwner = TreasuryAccount;
-	type ItemConfig = pallet_nfts::ItemConfig;
-	type CreateMemberships = CommunityMemberships;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

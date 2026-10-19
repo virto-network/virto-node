@@ -8,8 +8,6 @@ use core::marker::PhantomData;
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
 	fn register() -> Weight;
-	fn create_memberships(q: u32, ) -> Weight;
-	fn set_gas_tank() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -53,41 +51,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(14))
 	}
-	/// Storage: `CommunityMemberships::Item` (r:1023 w:1023)
-	/// Proof: `CommunityMemberships::Item` (`max_values`: None, `max_size`: Some(859), added: 3334, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
-	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::CollectionConfigOf` (r:1 w:0)
-	/// Proof: `CommunityMemberships::CollectionConfigOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::ItemConfigOf` (r:1023 w:1023)
-	/// Proof: `CommunityMemberships::ItemConfigOf` (`max_values`: None, `max_size`: Some(46), added: 2521, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::Account` (r:0 w:1023)
-	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1023)
-	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
-	/// The range of component `q` is `[1, 1024]`.
-	fn create_memberships(q: u32, ) -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `368`
-		//  Estimated: `3547 + q * (3334 ±0)`
-		// Minimum execution time: 125_757_000 picoseconds.
-		Weight::from_parts(127_470_000, 0)
-			.saturating_add(Weight::from_parts(0, 3547))
-			// Standard Error: 322_917
-			.saturating_add(Weight::from_parts(87_141_783, 0).saturating_mul(q.into()))
-			.saturating_add(T::DbWeight::get().reads(2))
-			.saturating_add(T::DbWeight::get().reads((2_u64).saturating_mul(q.into())))
-			.saturating_add(T::DbWeight::get().writes(1))
-			.saturating_add(T::DbWeight::get().writes((4_u64).saturating_mul(q.into())))
-			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(q.into()))
-	}
-
-	fn set_gas_tank() -> Weight {
-		Weight::from_parts(10_000_000, 0)
-			.saturating_add(Weight::from_parts(0, 102400))
-			.saturating_add(T::DbWeight::get().reads(2))
-			.saturating_add(T::DbWeight::get().writes(1))
-	}
 }
 
 impl WeightInfo for () {
@@ -128,40 +91,5 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_parts(0, 132561))
 			.saturating_add(RocksDbWeight::get().reads(8))
 			.saturating_add(RocksDbWeight::get().writes(14))
-	}
-	/// Storage: `CommunityMemberships::Item` (r:1023 w:1023)
-	/// Proof: `CommunityMemberships::Item` (`max_values`: None, `max_size`: Some(859), added: 3334, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
-	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::CollectionConfigOf` (r:1 w:0)
-	/// Proof: `CommunityMemberships::CollectionConfigOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::ItemConfigOf` (r:1023 w:1023)
-	/// Proof: `CommunityMemberships::ItemConfigOf` (`max_values`: None, `max_size`: Some(46), added: 2521, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::Account` (r:0 w:1023)
-	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1023)
-	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
-	/// The range of component `q` is `[1, 1024]`.
-	fn create_memberships(q: u32, ) -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `368`
-		//  Estimated: `3547 + q * (3334 ±0)`
-		// Minimum execution time: 125_757_000 picoseconds.
-		Weight::from_parts(127_470_000, 0)
-			.saturating_add(Weight::from_parts(0, 3547))
-			// Standard Error: 322_917
-			.saturating_add(Weight::from_parts(87_141_783, 0).saturating_mul(q.into()))
-			.saturating_add(RocksDbWeight::get().reads(2))
-			.saturating_add(RocksDbWeight::get().reads((2_u64).saturating_mul(q.into())))
-			.saturating_add(RocksDbWeight::get().writes(1))
-			.saturating_add(RocksDbWeight::get().writes((4_u64).saturating_mul(q.into())))
-			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(q.into()))
-	}
-
-	fn set_gas_tank() -> Weight {
-		Weight::from_parts(10_000_000, 0)
-			.saturating_add(Weight::from_parts(0, 102400))
-			.saturating_add(RocksDbWeight::get().reads(2))
-			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 }

@@ -5,15 +5,6 @@ use frame_benchmarking::v2::*;
 
 use frame_support::{dispatch::DispatchResult, traits::fungible::Mutate};
 use frame_system::RawOrigin;
-use sp_runtime::SaturatedConversion;
-
-// Since `periodicity` is arbitrary, we assume `DAYS` is a nominal day for 6s
-// block.
-const DAYS: u32 = 14_400;
-
-fn block_weight<T: frame_system::Config>() -> Weight {
-	<T as frame_system::Config>::BlockWeights::get().max_block / 2
-}
 
 fn assert_has_event<T: frame_system::Config>(generic_event: T::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event);
@@ -58,62 +49,6 @@ mod benchmarks {
 
 		// verification code
 		assert_has_event::<T>(Event::<T>::CommunityRegistered { id: community_id }.into());
-		Ok(())
-	}
-
-	#[benchmark]
-	fn create_memberships(q: Linear<1, 1024>) -> Result<(), BenchmarkError> {
-		setup_account::<T>(&T::MembershipsManagerOwner::get())?;
-
-		#[extrinsic_call]
-		_(
-			RawOrigin::Root,
-			q.saturated_into(),
-			100u32.into(),
-			300_000_000_000u64.into(),
-			TankConfig {
-				capacity: Some(block_weight::<T>()),
-				periodicity: Some((7 * DAYS).into()),
-			},
-			Some(u32::MAX.into()),
-		);
-
-		// verification code
-		assert_has_event::<T>(
-			Event::<T>::MembershipsCreated {
-				starting_at: 100u32.into(),
-				amount: q.saturated_into(),
-			}
-			.into(),
-		);
-		Ok(())
-	}
-
-	#[benchmark]
-	fn set_gas_tank() -> Result<(), BenchmarkError> {
-		setup_account::<T>(&T::MembershipsManagerOwner::get())?;
-
-		// Setup code
-		Pallet::<T>::create_memberships(
-			RawOrigin::Root.into(),
-			1,
-			1u32.into(),
-			0u64.into(),
-			TankConfig::default(),
-			None,
-		)?;
-
-		#[extrinsic_call]
-		_(
-			RawOrigin::Root,
-			T::MembershipsManagerCollectionId::get(),
-			1u32.into(),
-			TankConfig {
-				capacity: Some(block_weight::<T>()),
-				periodicity: Some((7 * DAYS).into()),
-			},
-		);
-
 		Ok(())
 	}
 

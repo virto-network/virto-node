@@ -1,7 +1,7 @@
 use super::*;
-use frame_contrib_traits::{gas_tank::NonFungibleGasTank, memberships::GroupCollectionMemberships};
+use frame_contrib_traits::memberships::GroupCollectionMemberships;
 use frame_support::{
-	assert_ok, derive_impl, parameter_types,
+	derive_impl, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
 	PalletId,
 };
@@ -163,7 +163,6 @@ impl pallet_referenda_tracks::Config for Test {
 type Deposit = Option<(Balance, AccountId, AccountId)>;
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
-	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = 1;
 	pub const MembershipsManagerAccountId: AccountId = AccountId::new([0xee; 32]);
@@ -233,36 +232,12 @@ impl pallet_communities::Config for Test {
 impl Config for Test {
 	// Types to support community creation
 	type CreateCollection = Memberships;
-	type MakeTank = NonFungibleGasTank<Test, System, Memberships, pallet_nfts::ItemConfig>;
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
 	type WeightInfo = WeightInfo;
 	type RegisterOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
-
-	// Types to support memberships creation
-	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
-	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
-	type MembershipsManagerOwner = RootAccount;
-	type ItemConfig = pallet_nfts::ItemConfig;
-
-	type CreateMemberships = Memberships;
 }
 
 pub fn new_test_ext() -> TestExternalities {
-	let mut t = TestExternalities::new(Default::default());
-
-	t.execute_with(|| {
-		assert_ok!(Memberships::create_collection_with_id(
-			MembershipsManagerCollectionId::get(),
-			&RootAccount::get(),
-			&RootAccount::get(),
-			&pallet_nfts::CollectionConfig {
-				settings: Default::default(),
-				max_supply: None,
-				mint_settings: Default::default(),
-			},
-		));
-	});
-
-	t
+	TestExternalities::new(Default::default())
 }

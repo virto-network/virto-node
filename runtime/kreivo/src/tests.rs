@@ -2,11 +2,11 @@ use super::{
 	config::{system::CommunityLookup, TreasuryAccount},
 	constants::currency::EXISTENTIAL_DEPOSIT,
 	xcm_config::*,
-	Balances, Communities, CommunitiesManager, FungibleAssetLocation, Runtime, RuntimeOrigin, CENTS, UNITS,
+	Balances, Communities, CommunitiesManager, CommunityMemberships, FungibleAssetLocation, Runtime, RuntimeOrigin,
+	CENTS, UNITS,
 };
 
 use frame_support::{assert_ok, traits::fungible::Mutate};
-use pallet_communities_manager::TankConfig;
 use parachains_common::AccountId;
 use parity_scale_codec::Encode;
 use sp_core::crypto::AccountId32;
@@ -631,24 +631,37 @@ mod relay_chain_time {
 	#[test]
 	fn memberships_expire_in_relay_chain_blocks() {
 		use crate::config::currency::MembershipIsNotExpired;
+		use frame_support::traits::nonfungibles_v2::{Create, Mutate};
 		use runtime_constants::time::WEEKS;
 
 		TestExternalities::default().execute_with(|| {
 			if cfg!(feature = "runtime-benchmarks") {
+				// Items have a deposit when benchmarking.
 				assert_ok!(Balances::mint_into(
 					&TreasuryAccount::get(),
 					EXISTENTIAL_DEPOSIT + 10 * CENTS
 				));
 			}
 			at(1, 1);
-			// Memberships 0..10, expiring at relay chain block `8 * WEEKS`.
-			assert_ok!(CommunitiesManager::create_memberships(
-				RuntimeOrigin::root(),
-				10,
+			// A membership of the gas tank's collection, expiring at relay chain block `8 * WEEKS`.
+			assert_ok!(<CommunityMemberships as Create<_, _>>::create_collection_with_id(
 				0,
-				CENTS,
-				TankConfig::default(),
-				Some(8 * WEEKS),
+				&TreasuryAccount::get(),
+				&TreasuryAccount::get(),
+				&Default::default(),
+			));
+			assert_ok!(<CommunityMemberships as Mutate<_, _>>::mint_into(
+				&0,
+				&0,
+				&TreasuryAccount::get(),
+				&Default::default(),
+				true,
+			));
+			assert_ok!(<CommunityMemberships as Mutate<_, _>>::set_typed_attribute(
+				&0,
+				&0,
+				&b"membership_expiration",
+				&(8 * WEEKS),
 			));
 			let not_expired = || MembershipIsNotExpired::get().select(0, 0);
 
@@ -813,12 +826,6 @@ mod scheduler_clock_switch {
 
 	/// Community 1, with `ALICE` as its admin and `BOB` as a member.
 	fn community_with_a_member() {
-		if cfg!(feature = "runtime-benchmarks") {
-			assert_ok!(Balances::mint_into(
-				&TreasuryAccount::get(),
-				EXISTENTIAL_DEPOSIT + 10 * CENTS
-			));
-		}
 		assert_ok!(CommunitiesManager::register(
 			RuntimeOrigin::root(),
 			1,
