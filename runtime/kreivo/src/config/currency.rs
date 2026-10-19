@@ -8,11 +8,9 @@ use frame_support::{
 use polkadot_runtime_common::SlowAdjustingFeeUpdate;
 use runtime_common::impls::AssetsToBlockAuthor;
 
-use frame_contrib_traits::gas_tank::{NonFungibleGasTank, SelectNonFungibleItem};
 use pallet_asset_tx_payment::FungiblesAdapter;
 use pallet_assets::BalanceToAssetBalance;
 use pallet_transaction_payment::FungibleAdapter;
-use virto_common::MembershipId;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 use frame_support::traits::{AsEnsureOriginWithArg, NeverEnsureOrigin};
@@ -159,35 +157,6 @@ impl pallet_skip_feeless_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
-// #[runtime::pallet_index(17)]
-// pub type GasTxPayment
-
-parameter_types! {
-	pub MembershipIsNotExpired: Box<dyn SelectNonFungibleItem<CommunityId, MembershipId>> =
-		Box::new(|community, membership| {
-			use frame_support::traits::nonfungibles_v2::Inspect;
-			let membership_expiration = b"membership_expiration";
-			CommunityMemberships::typed_system_attribute(&community, Some(&membership), &membership_expiration)
-				// If there's an expiration, check it against the relay chain block number, the clock
-				// of the memberships collection and its gas tank.
-				.map(|expiration| {
-					<RelaychainData as sp_runtime::traits::BlockNumberProvider>::current_block_number() <= expiration
-				})
-				// Otherwise, the membership will not expire
-				.unwrap_or(true)
-		});
-}
-
-pub type MembershipsGasTank =
-	NonFungibleGasTank<Runtime, RelaychainData, CommunityMemberships, pallet_nfts::ItemConfig, MembershipIsNotExpired>;
-
-impl pallet_gas_transaction_payment::Config for Runtime {
-	type WeightInfo = weights::pallet_gas_transaction_payment::WeightInfo<Self>;
-	type GasTank = MembershipsGasTank;
-	#[cfg(feature = "runtime-benchmarks")]
-	type BenchmarkHelper = benchmarks::GasTransactionPaymentBenchmarkHelper;
-}
-
 impl pallet_assets_holder::Config<KreivoAssetsInstance> for Runtime {
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeEvent = RuntimeEvent;
@@ -196,16 +165,10 @@ impl pallet_assets_holder::Config<KreivoAssetsInstance> for Runtime {
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks {
 	use super::*;
-	use crate::config::communities::{CommunityBenchmarkHelper, MembershipsCollectionId};
-	use frame_contrib_traits::gas_tank::MakeTank;
-	use frame_support::dispatch::DispatchResult;
 	use frame_support::traits::{
 		fungible::Mutate as FnMutate,
 		fungibles::{Create, Inspect, Mutate},
-		nonfungibles_v2::Mutate as NonTunsMutate,
 	};
-	use pallet_communities::BenchmarkHelper;
-	use sp_runtime::DispatchError;
 
 	pub struct AssetsTxPaymentBenchmarkHelper;
 
@@ -224,28 +187,6 @@ mod benchmarks {
 		fn setup_balances_and_pool(asset_id: FungibleAssetLocation, account: AccountId) {
 			Balances::mint_into(&account, UNITS).expect("minting is expected to succeed; qed");
 			Assets::set_balance(asset_id, &account, UNITS);
-		}
-	}
-
-	pub struct GasTransactionPaymentBenchmarkHelper;
-
-	impl pallet_gas_transaction_payment::BenchmarkHelper<Runtime> for GasTransactionPaymentBenchmarkHelper {
-		type Ext = ChargeAssetTxPayment<Runtime>;
-
-		fn ext() -> ChargeGasTxPayment<Runtime, Self::Ext> {
-			ChargeGasTxPayment::new(ChargeAssetTxPayment::<Runtime>::from(0, None))
-		}
-
-		fn setup_account(who: &AccountId, gas: Weight) -> DispatchResult {
-			CommunityBenchmarkHelper::initialize_memberships_collection().map_err(|_| DispatchError::Exhausted)?;
-			<CommunityMemberships as NonTunsMutate<_, _>>::mint_into(
-				&MembershipsCollectionId::get(),
-				&0,
-				who,
-				&Default::default(),
-				true,
-			)?;
-			MembershipsGasTank::make_tank(&(MembershipsCollectionId::get(), 0), Some(gas), None)
 		}
 	}
 }

@@ -40,7 +40,7 @@ morph_types! {
 		PalletId::try_from_sub_account(&a).map(|(_, id)| id).ok_or(())
 	};
 }
-type EnsureCommunityAccount = TryMapSuccess<EnsureSigned<AccountId>, AccountToCommunityId>;
+pub(crate) type EnsureCommunityAccount = TryMapSuccess<EnsureSigned<AccountId>, AccountToCommunityId>;
 
 type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
 type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, TreasuryAccount>;

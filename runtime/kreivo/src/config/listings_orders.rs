@@ -100,7 +100,7 @@ impl pallet_listings::Config<ListingsInstance> for Runtime {
 		pallet_nfts::CollectionConfig<Balance, BlockNumberFor<Runtime>, InventoryIdFor<Runtime, ListingsInstance>>;
 	type ItemConfig = pallet_nfts::ItemConfig;
 	type Balances = Balances;
-	type Assets = Assets;
+	type Assets = payments::NativeAndAssets;
 	type Nonfungibles = ListingsCatalog;
 	type NonfungiblesKeyLimit = KeyLimit;
 	type NonfungiblesValueLimit = ValueLimit;
@@ -117,8 +117,7 @@ impl pallet_listings::Config<ListingsInstance> for Runtime {
 		SubscriptionHoldReason,
 		LinearStoragePrice<SubscriptionDepositAmount, ConstU128<0>, Balance>,
 	>;
-	// `F-08` binds `UsageSubscription`.
-	type OnSubscriptionChanged = ();
+	type OnSubscriptionChanged = UsageSubscription;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = benchmarks::ListingsBenchmarkHelper;
 }

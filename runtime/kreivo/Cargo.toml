@@ -109,7 +109,7 @@ parachains-common.workspace = true
 # Frame Contrib
 frame-contrib-traits.workspace = true
 pallet-black-hole.workspace = true
-pallet-gas-transaction-payment.workspace = true
+pallet-usage-subscription.workspace = true
 pallet-listings.workspace = true
 pallet-orders.workspace = true
 pallet-pass.workspace = true
@@ -155,7 +155,7 @@ std = [
   "pallet-communities-manager/std",
   "pallet-communities/std",
   "pallet-collator-selection/std",
-  "pallet-gas-transaction-payment/std",
+  "pallet-usage-subscription/std",
   "pallet-message-queue/std",
   "pallet-migrations/std",
   "pallet-multisig/std",
@@ -234,7 +234,7 @@ runtime-benchmarks = [
   "pallet-communities-manager/runtime-benchmarks",
   "pallet-communities/runtime-benchmarks",
   "pallet-collator-selection/runtime-benchmarks",
-  "pallet-gas-transaction-payment/runtime-benchmarks",
+  "pallet-usage-subscription/runtime-benchmarks",
   "pallet-message-queue/runtime-benchmarks",
   "pallet-migrations/runtime-benchmarks",
   "pallet-multisig/runtime-benchmarks",
@@ -300,7 +300,7 @@ try-runtime = [
   "pallet-communities-manager/try-runtime",
   "pallet-communities/try-runtime",
   "pallet-collator-selection/try-runtime",
-  "pallet-gas-transaction-payment/try-runtime",
+  "pallet-usage-subscription/try-runtime",
   "pallet-listings/try-runtime",
   "pallet-message-queue/try-runtime",
   "pallet-migrations/try-runtime",

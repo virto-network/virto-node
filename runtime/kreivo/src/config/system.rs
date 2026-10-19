@@ -178,8 +178,8 @@ pub type SteppedMigrations = crate::migrations::test_migration::NoopStepped;
 #[cfg(not(any(test, feature = "runtime-benchmarks")))]
 pub type SteppedMigrations = ReleaseSteppedMigrations;
 
-/// The migrations' status handler: `()` until `F-08` binds listings' hand-off.
-pub type MigrationsStatusHandler = ();
+/// The migrations' status handler: listings pauses its due queue while a migration runs (`DEC-35`).
+pub type MigrationsStatusHandler = Listings;
 
 impl pallet_migrations::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -187,10 +187,8 @@ impl pallet_migrations::Config for Runtime {
 	/// Fit every cursor and identifier this release registers (Asset Hub Westend's values).
 	type CursorMaxLen = ConstU32<65_536>;
 	type IdentifierMaxLen = ConstU32<256>;
-	/// Nothing pauses while a migration runs yet: listings' hand-off (`DEC-35`) needs
-	/// frame-contrib 2.4.0, and is bound by `F-08`. `F-08` must land before `F-10` registers a
-	/// stepped migration: with `()`, listings' recurring charges keep running during it, which
-	/// breaks `INV-21`. A test fails if the release list is non-empty while this is `()`.
+	/// Listings pauses its due queue while a migration runs, so no recurring charge falls due in the
+	/// middle of one (`DEC-35`, `INV-21`).
 	type MigrationStatusHandler = MigrationsStatusHandler;
 	/// A half-applied migration holds every transaction until governance clears it: the chain
 	/// keeps producing blocks, with inherents only (see F-12 NOTES for the recovery path).

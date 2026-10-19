@@ -30,7 +30,6 @@ pub mod pallet_communities;
 pub mod pallet_communities_manager;
 pub mod pallet_contracts;
 pub mod pallet_contracts_store;
-pub mod pallet_gas_transaction_payment;
 pub mod pallet_listings;
 pub mod pallet_message_queue;
 pub mod pallet_migrations;

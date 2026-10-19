@@ -3,7 +3,7 @@ use super::{
 	constants::currency::EXISTENTIAL_DEPOSIT,
 	xcm_config::*,
 	Balances, Communities, CommunitiesManager, CommunityMemberships, FungibleAssetLocation, Runtime, RuntimeOrigin,
-	CENTS, UNITS,
+	UNITS,
 };
 
 use frame_support::{assert_noop, assert_ok, traits::fungible::Mutate};
@@ -18,6 +18,7 @@ mod group_issuance;
 mod kreivo_apis;
 mod listings;
 mod multi_block_migrations;
+mod usage_subscription;
 
 macro_rules! assert_call_size {
 	($pallet: ident) => {
@@ -627,51 +628,6 @@ mod relay_chain_time {
 			// The relay chain moving on doesn't expire it.
 			at(1_000 + 10, 1_000_000);
 			assert_ok!(Pass::register(RuntimeOrigin::signed(ALICE), [1u8; 32], device));
-		})
-	}
-
-	#[test]
-	fn memberships_expire_in_relay_chain_blocks() {
-		use crate::config::currency::MembershipIsNotExpired;
-		use frame_support::traits::nonfungibles_v2::{Create, Mutate};
-		use runtime_constants::time::WEEKS;
-
-		TestExternalities::default().execute_with(|| {
-			if cfg!(feature = "runtime-benchmarks") {
-				// Items have a deposit when benchmarking.
-				assert_ok!(Balances::mint_into(
-					&TreasuryAccount::get(),
-					EXISTENTIAL_DEPOSIT + 10 * CENTS
-				));
-			}
-			at(1, 1);
-			// A membership of the gas tank's collection, expiring at relay chain block `8 * WEEKS`.
-			assert_ok!(<CommunityMemberships as Create<_, _>>::create_collection_with_id(
-				0,
-				&TreasuryAccount::get(),
-				&TreasuryAccount::get(),
-				&Default::default(),
-			));
-			assert_ok!(<CommunityMemberships as Mutate<_, _>>::mint_into(
-				&0,
-				&0,
-				&TreasuryAccount::get(),
-				&Default::default(),
-				true,
-			));
-			assert_ok!(<CommunityMemberships as Mutate<_, _>>::set_typed_attribute(
-				&0,
-				&0,
-				&b"membership_expiration",
-				&(8 * WEEKS),
-			));
-			let not_expired = || MembershipIsNotExpired::get().select(0, 0);
-
-			at(8 * WEEKS * 20, 8 * WEEKS);
-			assert!(not_expired(), "the parachain block number doesn't matter");
-
-			at(1, 8 * WEEKS + 1);
-			assert!(!not_expired());
 		})
 	}
 
