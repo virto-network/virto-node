@@ -221,20 +221,21 @@ fn the_listings_clock_values_are_the_ruled_ones() {
 
 // Review of #515: a call that issues or retires `MaxIssuePerCall` memberships must be includable,
 // with room for the block's other traffic: within half of a normal-class block's `ref_time` and
-// proof size. (Weights are the pallet's estimates until `/cmd bench` replaces them.)
+// proof size, by the measured weights (`/cmd bench` on #515). The configured limit fits, and
+// twice it does not, so the limit is the largest round value that does.
 #[test]
 fn a_full_issuance_or_retirement_call_fits_half_a_block() {
 	TestExternalities::default().execute_with(|| {
 		type W = crate::weights::pallet_communities_manager::WeightInfo<Runtime>;
 		let (block, n) = (normal_block(), MaxIssuePerCall::get());
-		assert_eq!(n, 128);
 		for w in [W::issue_memberships(n), W::retire_memberships(n)] {
 			assert!(w.ref_time() <= block.ref_time() / 2, "{w:?} against {block:?}");
 			assert!(w.proof_size() <= block.proof_size() / 2, "{w:?} against {block:?}");
 		}
-		// The next power of two would not.
-		let w = W::issue_memberships(2 * n);
-		assert!(w.ref_time() > block.ref_time() / 2 || w.proof_size() > block.proof_size() / 2);
+		// Twice the limit would not fit, for issuance or retirement.
+		for w in [W::issue_memberships(2 * n), W::retire_memberships(2 * n)] {
+			assert!(w.ref_time() > block.ref_time() / 2 || w.proof_size() > block.proof_size() / 2);
+		}
 	})
 }
 

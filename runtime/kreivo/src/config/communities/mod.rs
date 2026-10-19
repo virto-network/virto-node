@@ -55,11 +55,17 @@ parameter_types! {
 	/// the XCM round trip. Both this and the deposit change only by runtime upgrade.
 	pub const RetirementDelayInBlocks: BlockNumber = 10 * DAYS;
 	/// The most memberships a call issues or retires. Lowered from 1 024, which `issue_memberships`
-	/// weighs at 1.55 s of `ref_time` and 9.2 MB of proof (the pallet's estimates, at Kreivo's
-	/// `DbWeight`) against a normal-class block of 0.5 s and 2.5 MiB: it could never be included.
-	/// 128 weighs 0.19 s and 1.16 MB, under half of either limit; 256 would take 77 % of the
-	/// `ref_time` and 88 % of the proof. `tests::deposit_values` keeps a call within half a block.
-	pub const MaxIssuePerCall: u32 = 128;
+	/// would weigh at about 0.8 s of `ref_time` and 3.4 MB of proof (measured weights, #515) against
+	/// a normal-class block of 0.5 s and 2.5 MiB: it could never be included.
+	///
+	/// Sized from the measured weights at Kreivo's `DbWeight` (25 µs a read, 100 µs a write), against
+	/// half a normal-class block (0.25 s, 1.25 MiB). Per membership, `retire_memberships` is the
+	/// larger: 80.97 µs + 4 reads + 7 writes = 880.97 µs of `ref_time`, and 3 334 B of proof;
+	/// `issue_memberships` takes 93.33 µs + 4 reads + 6 writes = 793.33 µs, and the same proof.
+	/// At 256, retiring weighs 0.226 s (90 % of the half block) and 0.857 MB of proof (65 %);
+	/// issuing weighs 0.204 s (82 %) and 0.857 MB. 320, the next multiple of 64, would take 113 %
+	/// of the `ref_time`, and 512 would take 180 %. `tests::deposit_values` checks both bounds.
+	pub const MaxIssuePerCall: u32 = 256;
 	/// The part of a registration that the community's account holds (0010-Q2, `DEP-21`): a
 	/// community's measured storage footprint at Kreivo's deposit rate, `deposit(13, 1 746)`
 	/// = 13 × 6 666 666 660 + 1 746 × 333 333 = 87 248 665 998 planck, about 0.0872 KSM.
