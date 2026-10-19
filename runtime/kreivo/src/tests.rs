@@ -16,6 +16,7 @@ use xcm_executor::{WeighedMessage, XcmExecutor};
 
 mod group_issuance;
 mod kreivo_apis;
+mod listings;
 mod multi_block_migrations;
 
 macro_rules! assert_call_size {

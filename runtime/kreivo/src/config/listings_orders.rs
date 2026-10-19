@@ -221,7 +221,9 @@ mod benchmarks {
 
 	impl pallet_listings::BenchmarkHelper<InventoryIdFor<Runtime, ListingsInstance>> for ListingsBenchmarkHelper {
 		fn inventory_id() -> InventoryIdFor<Runtime, ListingsInstance> {
-			InventoryId(0, 1)
+			// Not merchant 0, the collective's: `EnsureSubscriber` rejects subscribing to its
+			// inventories, which made every subscriber benchmark skip as weightless.
+			InventoryId(1, 1)
 		}
 	}
 
