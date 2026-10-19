@@ -261,4 +261,12 @@ impl<T: frame_system::Config> pallet_communities::WeightInfo for WeightInfo<T> {
 			.saturating_add(Weight::from_parts(0, 3484))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
+	// Provisional: frame-contrib's reference weights, until `/cmd bench --pallet pallet_communities`
+	// regenerates this file on the reference machine.
+	fn transfer_membership() -> Weight {
+		pallet_communities::weights::SubstrateWeight::<T>::transfer_membership()
+	}
+	fn set_transfer_policy() -> Weight {
+		pallet_communities::weights::SubstrateWeight::<T>::set_transfer_policy()
+	}
 }

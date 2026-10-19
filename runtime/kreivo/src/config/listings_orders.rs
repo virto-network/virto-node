@@ -1,5 +1,5 @@
 use super::*;
-use frame_support::traits::MapSuccess;
+use frame_support::traits::{fungible::HoldConsideration, EnsureOrigin, LinearStoragePrice, MapSuccess};
 
 use pallet_listings::{InventoryId, InventoryIdFor, ItemIdOf};
 use sp_runtime::traits::{AccountIdConversion, Verify};
@@ -7,7 +7,6 @@ use sp_runtime::traits::{AccountIdConversion, Verify};
 #[cfg(not(feature = "runtime-benchmarks"))]
 use frame_system::EnsureNever;
 use frame_system::EnsureSigned;
-#[cfg(feature = "runtime-benchmarks")]
 use sp_core::ConstU128;
 use sp_runtime::morph_types;
 use virto_common::listings;
@@ -15,6 +14,45 @@ use virto_common::listings;
 parameter_types! {
 	pub KeyLimit: u32 = 64;
 	pub ValueLimit: u32 = 256;
+	/// How long before a charge is due it may first be attempted: 12 hours (0009-A11).
+	pub const ListingsRenewalLead: BlockNumber = 12 * HOURS;
+	/// The width of a bucket of the due queue: 10 minutes (0009-A6). At most `ListingsRenewalLead`.
+	pub const ListingsDueBucketSize: BlockNumber = 10 * MINUTES;
+	/// Provisional, until `F-08` measures them (`deployment/kreivo-0.18.md` §1).
+	pub const ListingsMaxDuePerBucket: u32 = 64;
+	/// Provisional, until `F-08` measures it.
+	pub const ListingsMaxChargesPerBlock: u32 = 8;
+	/// A TEST VALUE: the amount each subscription holds from its subscriber, in the native currency.
+	/// `F-07b` sets the measured one (`m3-subscription-deposit`).
+	pub const SubscriptionDepositAmount: Balance = CENTS;
+	pub const SubscriptionHoldReason: RuntimeHoldReason =
+		RuntimeHoldReason::Listings(pallet_listings::HoldReason::SubscriptionDeposit);
+}
+
+/// Anyone signed may subscribe to an inventory directly, except to merchant 0's, the collective's:
+/// its subscriptions are not for a member to start (`DEC-8`).
+pub struct EnsureSubscriber;
+
+impl<Id> EnsureOriginWithArg<RuntimeOrigin, InventoryId<CommunityId, Id>> for EnsureSubscriber {
+	type Success = AccountId;
+
+	fn try_origin(
+		o: RuntimeOrigin,
+		InventoryId(merchant_id, _): &InventoryId<CommunityId, Id>,
+	) -> Result<Self::Success, RuntimeOrigin> {
+		if *merchant_id == 0 {
+			return Err(o);
+		}
+		<EnsureSigned<AccountId> as EnsureOrigin<RuntimeOrigin>>::try_origin(o)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin(InventoryId(merchant_id, _): &InventoryId<CommunityId, Id>) -> Result<RuntimeOrigin, ()> {
+		if *merchant_id == 0 {
+			return Err(());
+		}
+		<EnsureSigned<AccountId> as EnsureOrigin<RuntimeOrigin>>::try_successful_origin()
+	}
 }
 
 pub type ListingsInstance = pallet_listings::Instance1;
@@ -66,6 +104,21 @@ impl pallet_listings::Config<ListingsInstance> for Runtime {
 	type Nonfungibles = ListingsCatalog;
 	type NonfungiblesKeyLimit = KeyLimit;
 	type NonfungiblesValueLimit = ValueLimit;
+	type SubscribeOrigin = EnsureSubscriber;
+	type Payments = Payments;
+	type BlockNumberProvider = RelaychainData;
+	type RenewalLead = ListingsRenewalLead;
+	type DueBucketSize = ListingsDueBucketSize;
+	type MaxDuePerBucket = ListingsMaxDuePerBucket;
+	type MaxChargesPerBlock = ListingsMaxChargesPerBlock;
+	type SubscriptionDeposit = HoldConsideration<
+		AccountId,
+		Balances,
+		SubscriptionHoldReason,
+		LinearStoragePrice<SubscriptionDepositAmount, ConstU128<0>, Balance>,
+	>;
+	// `F-08` binds `UsageSubscription`.
+	type OnSubscriptionChanged = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = benchmarks::ListingsBenchmarkHelper;
 }
@@ -169,6 +222,26 @@ mod benchmarks {
 	impl pallet_listings::BenchmarkHelper<InventoryIdFor<Runtime, ListingsInstance>> for ListingsBenchmarkHelper {
 		fn inventory_id() -> InventoryIdFor<Runtime, ListingsInstance> {
 			InventoryId(0, 1)
+		}
+	}
+
+	impl pallet_listings::SubscriptionsBenchmarkHelper<AccountId, FungibleAssetLocation, Balance>
+		for ListingsBenchmarkHelper
+	{
+		fn price() -> (FungibleAssetLocation, Balance) {
+			use frame_support::traits::fungibles::{Create, Inspect};
+			let asset = FungibleAssetLocation::Here(1);
+			if !Assets::asset_exists(asset.clone()) {
+				<Assets as Create<_>>::create(asset.clone(), TreasuryAccount::get(), true, EXISTENTIAL_DEPOSIT)
+					.expect("creating an asset class is expected to succeed; qed");
+			}
+			(asset, 100 * EXISTENTIAL_DEPOSIT)
+		}
+
+		fn fund(who: &AccountId, asset: &FungibleAssetLocation, amount: Balance) {
+			use frame_support::traits::fungibles::Mutate;
+			Assets::mint_into(asset.clone(), who, amount.saturating_mul(1_000))
+				.expect("minting is expected to succeed; qed");
 		}
 	}
 

@@ -203,4 +203,54 @@ impl<T: frame_system::Config> pallet_listings::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
+	// Provisional: frame-contrib's reference weights, until `/cmd bench --pallet pallet_listings`
+	// regenerates this file on the reference machine.
+	fn set_subscription_conditions() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::set_subscription_conditions()
+	}
+	fn subscribe() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::subscribe()
+	}
+	fn charge_due() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::charge_due()
+	}
+	fn cancel_subscription() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::cancel_subscription()
+	}
+	fn terminate_subscription() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::terminate_subscription()
+	}
+	fn schedule_replacement() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::schedule_replacement()
+	}
+	fn amend_subscription() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::amend_subscription()
+	}
+	fn cancel_replacement() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::cancel_replacement()
+	}
+	fn amend_item_subscriptions() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::amend_item_subscriptions()
+	}
+	fn process_due_replacement() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::process_due_replacement()
+	}
+	fn skip_empty_bucket() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::skip_empty_bucket()
+	}
+	fn process_due_overflow() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::process_due_overflow()
+	}
+	fn settle_subscription() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::settle_subscription()
+	}
+	fn set_subscription_policy() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::set_subscription_policy()
+	}
+	fn withdraw_subscription_conditions() -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::withdraw_subscription_conditions()
+	}
+	fn process_due(n: u32) -> Weight {
+		pallet_listings::weights::SubstrateWeight::<T>::process_due(n)
+	}
 }

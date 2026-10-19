@@ -1,5 +1,5 @@
 use super::*;
-use frame_contrib_traits::{gas_tank::NonFungibleGasTank, memberships::NonFungiblesMemberships};
+use frame_contrib_traits::{gas_tank::NonFungibleGasTank, memberships::GroupCollectionMemberships};
 use frame_support::{
 	assert_ok, derive_impl, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
@@ -166,6 +166,7 @@ parameter_types! {
 	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = 1;
+	pub const MembershipsManagerAccountId: AccountId = AccountId::new([0xee; 32]);
 	pub const NoDepositOnRootRegistration: Deposit = None;
 }
 
@@ -200,15 +201,25 @@ impl pallet_nfts::Config for Test {
 	type BlockNumberProvider = System;
 }
 
+/// The account of a community, which holds its stock of memberships.
+pub struct CommunityAccount;
+impl sp_runtime::traits::Convert<CommunityId, AccountId> for CommunityAccount {
+	fn convert(community_id: CommunityId) -> AccountId {
+		Communities::community_account(&community_id)
+	}
+}
+
 impl pallet_communities::Config for Test {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type WeightInfo = WeightInfo;
 	type CreateOrigin = EnsureNever<Deposit>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
+	type MemberOrigin = EnsureSigned<AccountId>;
 	type CommunityId = CommunityId;
 	type MembershipId = MembershipId;
-	type MemberMgmt = NonFungiblesMemberships<Memberships, pallet_nfts::ItemConfig>;
+	type MemberMgmt =
+		GroupCollectionMemberships<Memberships, pallet_nfts::ItemConfig, CommunityAccount, MembershipsManagerAccountId>;
 	type Polls = Referenda;
 	type Assets = Assets;
 	type AssetsFreezer = AssetsFreezer;

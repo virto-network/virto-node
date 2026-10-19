@@ -1,14 +1,14 @@
 use super::*;
 
-use frame_contrib_traits::memberships::{NonFungiblesMemberships, WithHooks};
 use frame_support::traits::TryMapSuccess;
 use frame_system::{EnsureRootWithSuccess, EnsureSigned};
 use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
-use memberships::CopySystemAttributesOnAssign;
 pub use memberships::Memberships;
+#[cfg(feature = "runtime-benchmarks")]
+use memberships::MembershipsManagerAccount;
 use pallet_custom_origins::CreateMemberships;
 
 pub mod governance;
@@ -45,10 +45,12 @@ impl pallet_communities::Config for Runtime {
 
 	type AdminOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
 	type MemberMgmtOrigin = EitherOf<EnsureCommunity<Self>, EnsureCommunityAccount>;
+	// A member acts on a membership they hold (`DEC-31`).
+	type MemberOrigin = EnsureSigned<AccountId>;
 	type CommunityId = CommunityId;
 
 	type MembershipId = MembershipId;
-	type MemberMgmt = WithHooks<Memberships, CopySystemAttributesOnAssign>;
+	type MemberMgmt = Memberships;
 	type Polls = CommunityReferenda;
 	type Assets = Assets;
 
@@ -86,11 +88,8 @@ mod benchmarks {
 	use governance::{CommunityReferendaInstance, CommunityTracksInstance};
 
 	use frame_benchmarking::BenchmarkError;
-	use frame_support::traits::{
-		nonfungible_v2::{ItemOf, Mutate},
-		nonfungibles_v2::Create,
-		schedule::DispatchTime,
-	};
+	use frame_contrib_traits::memberships::Issue;
+	use frame_support::traits::{nonfungibles_v2::Create, schedule::DispatchTime};
 	use frame_system::pallet_prelude::{OriginFor, RuntimeCallFor};
 	use pallet_communities::{
 		types::{CommunityIdOf, MembershipIdOf, PalletsOriginOf, PollIndexOf},
@@ -100,8 +99,6 @@ mod benchmarks {
 	use pallet_referenda_tracks::Pallet as Tracks;
 	use parity_scale_codec::Encode;
 	use sp_runtime::Perbill;
-
-	type MembershipsManagementCollection = ItemOf<CommunityMemberships, MembershipsCollectionId, AccountId>;
 
 	/// Moves time to block `n`. Referenda (and the scheduler) count relay chain blocks, so the
 	/// relay chain block number moves along with the parachain's.
@@ -134,10 +131,12 @@ mod benchmarks {
 				&Default::default(),
 			)?;
 
+			// A community's collection is owned and administered by the manager account (`DEC-36`).
+			let manager = MembershipsManagerAccount::get();
 			CommunityMemberships::create_collection_with_id(
 				Self::community_id(),
-				&community_account,
-				&community_account,
+				&manager,
+				&manager,
 				&Default::default(),
 			)?;
 
@@ -148,9 +147,7 @@ mod benchmarks {
 			community_id: CommunityIdOf<Runtime>,
 			membership_id: MembershipIdOf<Runtime>,
 		) -> Result<(), BenchmarkError> {
-			let community_account = Communities::community_account(&community_id);
-
-			MembershipsManagementCollection::mint_into(&membership_id, &community_account, &Default::default(), true)?;
+			<Memberships as Issue<AccountId>>::issue(&community_id, &membership_id)?;
 
 			Ok(())
 		}
