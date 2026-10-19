@@ -166,7 +166,7 @@ fn a_retirement_completes_after_ten_days_of_relay_chain_blocks() {
 		// The parachain's own blocks do not count.
 		System::set_block_number(1_000_000_000);
 		assert_noop!(
-			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(CAROL), 1, 0),
+			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(CAROL), 1, 0, 0),
 			pallet_communities_manager::Error::<Runtime>::RetirementNotElapsed
 		);
 
@@ -174,7 +174,8 @@ fn a_retirement_completes_after_ten_days_of_relay_chain_blocks() {
 		assert_ok!(CommunitiesManager::complete_retirement(
 			RuntimeOrigin::signed(CAROL),
 			1,
-			0
+			0,
+			pallet_nfts::Attribute::<Runtime, CommunityMembershipsInstance>::iter_prefix((1, Some(0))).count() as u32
 		));
 
 		assert_eq!(CommunityMemberships::owner(1, 0), None);

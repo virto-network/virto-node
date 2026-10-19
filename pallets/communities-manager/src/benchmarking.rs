@@ -119,10 +119,11 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn complete_retirement() -> Result<(), BenchmarkError> {
+	fn complete_retirement(a: Linear<0, 64>) -> Result<(), BenchmarkError> {
 		let community = community_with_funds::<T>(1)?;
 		let id = NextMembershipId::<T>::get();
 		Pallet::<T>::do_issue_memberships(&community, 1)?;
+		T::ItemAttributes::set_benchmark_attributes(&community, &id, a);
 		Pallet::<T>::do_retire_memberships(&community, &[id])?;
 		// The delay has passed.
 		Retiring::<T>::insert((community, id), MomentOf::<T>::zero());
@@ -130,7 +131,7 @@ mod benchmarks {
 		let caller: AccountIdOf<T> = account("caller", 0, 0);
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller), community, id);
+		_(RawOrigin::Signed(caller), community, id, a);
 
 		// verification code
 		assert!(Retiring::<T>::get((community, id)).is_none());

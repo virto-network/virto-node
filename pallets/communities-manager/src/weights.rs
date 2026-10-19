@@ -10,7 +10,7 @@ pub trait WeightInfo {
 	fn register() -> Weight;
 	fn issue_memberships(n: u32, ) -> Weight;
 	fn retire_memberships(n: u32, ) -> Weight;
-	fn complete_retirement() -> Weight;
+	fn complete_retirement(a: u32, ) -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -91,12 +91,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
 	///
-	/// The burn, the clearing of a few attributes in each namespace, and the release of the hold.
-	fn complete_retirement() -> Weight {
-		Weight::from_parts(400_000_000, 0)
-			.saturating_add(Weight::from_parts(0, 50_000))
-			.saturating_add(T::DbWeight::get().reads(24))
-			.saturating_add(T::DbWeight::get().writes(24))
+	///
+	/// The burn and the release of the hold, plus the clearing of each of the `a` attributes.
+	fn complete_retirement(a: u32, ) -> Weight {
+		Weight::from_parts(200_000_000, 0)
+			.saturating_add(Weight::from_parts(60_000_000, 0).saturating_mul(a.into()))
+			.saturating_add(Weight::from_parts(0, 20_000))
+			.saturating_add(Weight::from_parts(0, 3_000).saturating_mul(a.into()))
+			.saturating_add(T::DbWeight::get().reads(8))
+			.saturating_add(T::DbWeight::get().reads((2_u64).saturating_mul(a.into())))
+			.saturating_add(T::DbWeight::get().writes(8))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(a.into())))
 	}
 }
 
@@ -176,11 +181,16 @@ impl WeightInfo for () {
 	}
 	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
 	///
-	/// The burn, the clearing of a few attributes in each namespace, and the release of the hold.
-	fn complete_retirement() -> Weight {
-		Weight::from_parts(400_000_000, 0)
-			.saturating_add(Weight::from_parts(0, 50_000))
-			.saturating_add(RocksDbWeight::get().reads(24))
-			.saturating_add(RocksDbWeight::get().writes(24))
+	///
+	/// The burn and the release of the hold, plus the clearing of each of the `a` attributes.
+	fn complete_retirement(a: u32, ) -> Weight {
+		Weight::from_parts(200_000_000, 0)
+			.saturating_add(Weight::from_parts(60_000_000, 0).saturating_mul(a.into()))
+			.saturating_add(Weight::from_parts(0, 20_000))
+			.saturating_add(Weight::from_parts(0, 3_000).saturating_mul(a.into()))
+			.saturating_add(RocksDbWeight::get().reads(8))
+			.saturating_add(RocksDbWeight::get().reads((2_u64).saturating_mul(a.into())))
+			.saturating_add(RocksDbWeight::get().writes(8))
+			.saturating_add(RocksDbWeight::get().writes((1_u64).saturating_mul(a.into())))
 	}
 }

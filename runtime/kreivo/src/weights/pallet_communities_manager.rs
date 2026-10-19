@@ -96,7 +96,8 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 		Weight::from_parts(0, 0)
 			.saturating_add(Weight::from_parts(0, 0))
 	}
-	fn complete_retirement() -> Weight {
+	/// The range of component `a` is `[0, 64]`.
+	fn complete_retirement(_a: u32, ) -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`

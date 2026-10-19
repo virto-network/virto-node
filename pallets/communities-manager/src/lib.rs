@@ -52,8 +52,15 @@ pub type MomentOf<T> = <<T as pallet_communities::Config>::BlockNumberProvider a
 /// a namespace the memberships manager does not own, and a burn leaves it behind. A retirement
 /// clears them all, with the root origin of the collection system.
 pub trait ClearItemAttributes<CollectionId, ItemId> {
+	/// How many attributes the item carries, in every namespace.
+	fn count(collection: &CollectionId, item: &ItemId) -> u32;
+
 	/// Clears every attribute of the item, whatever its namespace.
 	fn clear_all(collection: &CollectionId, item: &ItemId) -> DispatchResult;
+
+	/// Gives the item `amount` attributes, for the benchmark of the clearing.
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_benchmark_attributes(collection: &CollectionId, item: &ItemId, amount: u32);
 }
 
 /// Clears the attributes of a `pallet_nfts` item through its force origin, which must accept root.
@@ -62,6 +69,27 @@ pub struct ClearNftsAttributes<T, I = ()>(core::marker::PhantomData<(T, I)>);
 impl<T: pallet_nfts::Config<I>, I: 'static> ClearItemAttributes<T::CollectionId, T::ItemId>
 	for ClearNftsAttributes<T, I>
 {
+	fn count(collection: &T::CollectionId, item: &T::ItemId) -> u32 {
+		pallet_nfts::Attribute::<T, I>::iter_prefix((collection, Some(item))).count() as u32
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_benchmark_attributes(collection: &T::CollectionId, item: &T::ItemId, amount: u32) {
+		for i in 0..amount {
+			let key = i.to_le_bytes().to_vec();
+			pallet_nfts::Pallet::<T, I>::force_set_attribute(
+				frame_system::RawOrigin::Root.into(),
+				None,
+				*collection,
+				Some(*item),
+				AttributeNamespace::Pallet,
+				key.try_into().expect("the key limit holds a u32"),
+				Default::default(),
+			)
+			.expect("the benchmark sets its attributes");
+		}
+	}
+
 	fn clear_all(collection: &T::CollectionId, item: &T::ItemId) -> DispatchResult {
 		let attributes: Vec<_> = pallet_nfts::Attribute::<T, I>::iter_prefix((collection, Some(item)))
 			.map(|((namespace, key), _)| (namespace, key))
@@ -292,6 +320,8 @@ pub mod pallet {
 		NotRetiring,
 		/// The delay of the retirement has not passed.
 		RetirementNotElapsed,
+		/// The membership carries more attributes than the witness declares.
+		TooManyAttributes,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -348,15 +378,21 @@ pub mod pallet {
 
 		/// Completes a retirement, once its delay has passed: the membership is burnt, every
 		/// attribute it carries is cleared, and its deposit is released to the community's account.
+		///
+		/// `attributes` is a witness: the number of attributes the membership carries, in every
+		/// namespace. The call is refused if there are more, and the weight of the attributes that
+		/// were not there is refunded.
 		#[pallet::call_index(5)]
-		#[pallet::weight(<T as Config>::WeightInfo::complete_retirement())]
+		#[pallet::weight(<T as Config>::WeightInfo::complete_retirement(*attributes))]
 		pub fn complete_retirement(
 			origin: OriginFor<T>,
 			community_id: CommunityIdOf<T>,
 			membership_id: T::MembershipId,
-		) -> DispatchResult {
+			attributes: u32,
+		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
-			Self::do_complete_retirement(&community_id, &membership_id)
+			let cleared = Self::do_complete_retirement(&community_id, &membership_id, attributes)?;
+			Ok(Some(<T as Config>::WeightInfo::complete_retirement(cleared)).into())
 		}
 	}
 }
@@ -490,12 +526,19 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn do_complete_retirement(community: &CommunityIdOf<T>, id: &T::MembershipId) -> DispatchResult {
+	/// Completes a retirement, and returns how many attributes the item carried.
+	pub(crate) fn do_complete_retirement(
+		community: &CommunityIdOf<T>,
+		id: &T::MembershipId,
+		witness: u32,
+	) -> Result<u32, DispatchError> {
 		let completable_at = Retiring::<T>::get((community, id)).ok_or(Error::<T>::NotRetiring)?;
 		ensure!(
 			T::BlockNumberProvider::current_block_number() >= completable_at,
 			Error::<T>::RetirementNotElapsed
 		);
+		let attributes = T::ItemAttributes::count(community, id);
+		ensure!(attributes <= witness, Error::<T>::TooManyAttributes);
 
 		// Burn it (the manager unlocks it, and clears what it wrote), then clear whatever others
 		// wrote in their own namespaces, which the burn leaves behind.
@@ -513,7 +556,7 @@ impl<T: Config> Pallet<T> {
 			community: *community,
 			membership_id: *id,
 		});
-		Ok(())
+		Ok(attributes)
 	}
 
 	fn default_tack(name: &str) -> TrackInfoOf<T> {

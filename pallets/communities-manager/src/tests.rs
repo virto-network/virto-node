@@ -266,7 +266,8 @@ fn a_membership_keeps_the_deposit_it_was_issued_with() {
 		assert_ok!(CommunitiesManager::complete_retirement(
 			RuntimeOrigin::signed(BOB),
 			1,
-			0
+			0,
+			attributes_of(0)
 		));
 		assert_eq!(held_deposits(1), 25);
 	})
@@ -350,7 +351,7 @@ fn a_retirement_cannot_complete_before_its_delay_has_passed() {
 
 		at(1 + 4);
 		assert_noop!(
-			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0),
+			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0, attributes_of(0)),
 			Error::<Test>::RetirementNotElapsed
 		);
 
@@ -358,7 +359,8 @@ fn a_retirement_cannot_complete_before_its_delay_has_passed() {
 		assert_ok!(CommunitiesManager::complete_retirement(
 			RuntimeOrigin::signed(BOB),
 			1,
-			0
+			0,
+			attributes_of(0)
 		));
 	})
 }
@@ -371,11 +373,11 @@ fn only_a_retiring_membership_can_be_completed() {
 		issue(ALICE, 1);
 
 		assert_noop!(
-			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0),
+			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0, attributes_of(0)),
 			Error::<Test>::NotRetiring
 		);
 		assert_noop!(
-			CommunitiesManager::complete_retirement(RuntimeOrigin::none(), 1, 0),
+			CommunitiesManager::complete_retirement(RuntimeOrigin::none(), 1, 0, 0),
 			sp_runtime::DispatchError::BadOrigin
 		);
 	})
@@ -421,7 +423,8 @@ fn completing_a_retirement_burns_the_item_clears_every_attribute_and_releases_th
 		assert_ok!(CommunitiesManager::complete_retirement(
 			RuntimeOrigin::signed(CAROL),
 			1,
-			0
+			0,
+			attributes_of(0)
 		));
 
 		assert_eq!(Memberships::owner(1, 0), None);
@@ -484,4 +487,84 @@ fn weights() {
 
 	// output total weight, useful for evaluating net weight changes when optimising
 	println!("\ntotal weight: {total:?}");
+}
+
+/// How many attributes an item carries, in every namespace.
+fn attributes_of(item: MembershipId) -> u32 {
+	pallet_nfts::Attribute::<Test>::iter_prefix((1, Some(item))).count() as u32
+}
+
+fn set_attributes(item: MembershipId, amount: u32) {
+	for i in 0..amount {
+		assert_ok!(Memberships::force_set_attribute(
+			RuntimeOrigin::root(),
+			None,
+			1,
+			Some(item),
+			AttributeNamespace::Pallet,
+			BoundedVec::try_from(format!("extra {i}").into_bytes()).unwrap(),
+			BoundedVec::try_from(b"value".to_vec()).unwrap(),
+		));
+	}
+}
+
+// M-1 of the review of #515
+#[test]
+fn completing_a_retirement_is_refused_when_the_item_carries_more_attributes_than_the_witness() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 1);
+		retire(ALICE, vec![0]);
+		set_attributes(0, 3);
+		let carried = attributes_of(0);
+
+		at(1 + 5);
+		assert_noop!(
+			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0, carried - 1),
+			Error::<Test>::TooManyAttributes
+		);
+		assert_eq!(attributes_of(0), carried);
+	})
+}
+
+#[test]
+fn completing_a_retirement_with_the_exact_witness_passes() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 1);
+		retire(ALICE, vec![0]);
+		set_attributes(0, 3);
+
+		at(1 + 5);
+		assert_ok!(CommunitiesManager::complete_retirement(
+			RuntimeOrigin::signed(BOB),
+			1,
+			0,
+			attributes_of(0)
+		));
+		assert_eq!(attributes_of(0), 0);
+	})
+}
+
+#[test]
+fn completing_a_retirement_returns_the_weight_of_the_attributes_it_cleared() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 2);
+		retire(ALICE, vec![0, 1]);
+		set_attributes(0, 5);
+		set_attributes(1, 1);
+		let (many, few) = (attributes_of(0), attributes_of(1));
+		assert!(many > few);
+
+		at(1 + 5);
+		// The same witness for both: the item with fewer attributes weighs less.
+		let heavy = CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0, many).unwrap();
+		let light = CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 1, many).unwrap();
+
+		let weight = |a| <Test as crate::Config>::WeightInfo::complete_retirement(a);
+		assert_eq!(heavy.actual_weight, Some(weight(many)));
+		assert_eq!(light.actual_weight, Some(weight(few)));
+		assert!(light.actual_weight.unwrap().ref_time() < heavy.actual_weight.unwrap().ref_time());
+	})
 }
