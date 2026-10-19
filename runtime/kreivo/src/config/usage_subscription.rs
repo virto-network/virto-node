@@ -43,7 +43,7 @@ pub type UsageSubscriptionAdminOrigin = EitherOf<EnsureRoot<AccountId>, UsageSub
 pub type UsageSubscriptionAmendOrigin = EitherOf<EnsureRoot<AccountId>, UsageSubscriptionAmender>;
 
 impl pallet_usage_subscription::Config for Runtime {
-	type WeightInfo = pallet_usage_subscription::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_usage_subscription::WeightInfo<Runtime>;
 	type Memberships = Memberships;
 	type GroupAccount = CommunityAccount;
 	type UsableGroup = ActiveCommunity;
