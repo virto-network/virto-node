@@ -16,6 +16,8 @@ use sp_runtime::traits::BlockNumberProvider;
 #[cfg(feature = "try-runtime")]
 use sp_runtime::TryRuntimeError;
 
+pub mod memberships;
+
 const LOG_TARGET: &str = "runtime::kreivo::migrations";
 
 /// Where the scheduler switched clocks: the last parachain block counted on the parachain clock,
