@@ -4,7 +4,7 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 60.0.0
 //! DATE: 2026-10-19, STEPS: `50`, REPEAT: `20`, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! WORST CASE MAP SIZE: `1000000`
-//! HOSTNAME: `virto-bench-oarc2pwcromq`, CPU: `AMD EPYC-Milan Processor`
+//! HOSTNAME: `virto-bench-xmcn3pmazngq`, CPU: `AMD EPYC-Milan Processor`
 //! WASM-EXECUTION: `Compiled`, CHAIN: `None`, DB CACHE: 1024
 
 // Executed Command:
@@ -72,37 +72,140 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 		// Proof Size summary in bytes:
 		//  Measured:  `574`
 		//  Estimated: `132561`
-		// Minimum execution time: 149_411_000 picoseconds.
-		Weight::from_parts(155_571_000, 0)
+		// Minimum execution time: 147_422_000 picoseconds.
+		Weight::from_parts(155_184_000, 0)
 			.saturating_add(Weight::from_parts(0, 132561))
 			.saturating_add(T::DbWeight::get().reads(11))
 			.saturating_add(T::DbWeight::get().writes(18))
 	}
+	/// Storage: `Communities::Info` (r:1 w:0)
+	/// Proof: `Communities::Info` (`max_values`: None, `max_size`: Some(19), added: 2494, mode: `MaxEncodedLen`)
+	/// Storage: `CommunitiesManager::NextMembershipId` (r:1 w:1)
+	/// Proof: `CommunitiesManager::NextMembershipId` (`max_values`: Some(1), `max_size`: Some(4), added: 499, mode: `MaxEncodedLen`)
+	/// Storage: UNKNOWN KEY `0xbf649eeb65338602d9d26672f5e73434715c301ac4674a8ca4bb0b99f239bdbd` (r:1023 w:1023)
+	/// Proof: UNKNOWN KEY `0xbf649eeb65338602d9d26672f5e73434715c301ac4674a8ca4bb0b99f239bdbd` (r:1023 w:1023)
+	/// Storage: `CommunityMemberships::Item` (r:1023 w:1023)
+	/// Proof: `CommunityMemberships::Item` (`max_values`: None, `max_size`: Some(859), added: 3334, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
+	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::CollectionConfigOf` (r:1 w:0)
+	/// Proof: `CommunityMemberships::CollectionConfigOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemConfigOf` (r:1023 w:1023)
+	/// Proof: `CommunityMemberships::ItemConfigOf` (`max_values`: None, `max_size`: Some(46), added: 2521, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Attribute` (r:1023 w:1023)
+	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
+	/// Storage: `Balances::Holds` (r:1 w:1)
+	/// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(283), added: 2758, mode: `MaxEncodedLen`)
+	/// Storage: `CommunitiesManager::Deposits` (r:0 w:1023)
+	/// Proof: `CommunitiesManager::Deposits` (`max_values`: None, `max_size`: Some(38), added: 2513, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Account` (r:0 w:1023)
+	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
 	/// The range of component `n` is `[1, 1024]`.
-	fn issue_memberships(_n: u32, ) -> Weight {
+	fn issue_memberships(n: u32, ) -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 0_000 picoseconds.
-		Weight::from_parts(0, 0)
-			.saturating_add(Weight::from_parts(0, 0))
+		//  Measured:  `631`
+		//  Estimated: `3748 + n * (3334 ±0)`
+		// Minimum execution time: 111_749_000 picoseconds.
+		Weight::from_parts(112_410_000, 0)
+			.saturating_add(Weight::from_parts(0, 3748))
+			// Standard Error: 173_542
+			.saturating_add(Weight::from_parts(93_326_932, 0).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().reads(6))
+			.saturating_add(T::DbWeight::get().reads((4_u64).saturating_mul(n.into())))
+			.saturating_add(T::DbWeight::get().writes(4))
+			.saturating_add(T::DbWeight::get().writes((6_u64).saturating_mul(n.into())))
+			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(n.into()))
 	}
+	/// Storage: `Communities::Info` (r:1 w:0)
+	/// Proof: `Communities::Info` (`max_values`: None, `max_size`: Some(19), added: 2494, mode: `MaxEncodedLen`)
+	/// Storage: `ParachainSystem::ValidationData` (r:1 w:0)
+	/// Proof: `ParachainSystem::ValidationData` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `ParachainSystem::LastRelayChainBlockNumber` (r:1 w:0)
+	/// Proof: `ParachainSystem::LastRelayChainBlockNumber` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `CommunitiesManager::Deposits` (r:1023 w:0)
+	/// Proof: `CommunitiesManager::Deposits` (`max_values`: None, `max_size`: Some(38), added: 2513, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Item` (r:1023 w:1023)
+	/// Proof: `CommunityMemberships::Item` (`max_values`: None, `max_size`: Some(859), added: 3334, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Attribute` (r:1023 w:1023)
+	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
+	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::CollectionConfigOf` (r:1 w:0)
+	/// Proof: `CommunityMemberships::CollectionConfigOf` (`max_values`: None, `max_size`: Some(69), added: 2544, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemConfigOf` (r:1023 w:0)
+	/// Proof: `CommunityMemberships::ItemConfigOf` (`max_values`: None, `max_size`: Some(46), added: 2521, mode: `MaxEncodedLen`)
+	/// Storage: `CommunitiesManager::Retiring` (r:0 w:1023)
+	/// Proof: `CommunitiesManager::Retiring` (`max_values`: None, `max_size`: Some(26), added: 2501, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Account` (r:0 w:2046)
+	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1023)
+	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::PendingSwapOf` (r:0 w:1023)
+	/// Proof: `CommunityMemberships::PendingSwapOf` (`max_values`: None, `max_size`: Some(67), added: 2542, mode: `MaxEncodedLen`)
 	/// The range of component `n` is `[1, 1024]`.
-	fn retire_memberships(_n: u32, ) -> Weight {
+	fn retire_memberships(n: u32, ) -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 0_000 picoseconds.
-		Weight::from_parts(0, 0)
-			.saturating_add(Weight::from_parts(0, 0))
+		//  Measured:  `706 + n * (263 ±0)`
+		//  Estimated: `3547 + n * (3334 ±0)`
+		// Minimum execution time: 96_275_000 picoseconds.
+		Weight::from_parts(97_867_000, 0)
+			.saturating_add(Weight::from_parts(0, 3547))
+			// Standard Error: 130_522
+			.saturating_add(Weight::from_parts(80_969_753, 0).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().reads(5))
+			.saturating_add(T::DbWeight::get().reads((4_u64).saturating_mul(n.into())))
+			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(T::DbWeight::get().writes((7_u64).saturating_mul(n.into())))
+			.saturating_add(Weight::from_parts(0, 3334).saturating_mul(n.into()))
 	}
-	/// The range of component `a` is `[0, 64]`.
-	fn complete_retirement(_a: u32, ) -> Weight {
+	/// Storage: `CommunitiesManager::Retiring` (r:1 w:1)
+	/// Proof: `CommunitiesManager::Retiring` (`max_values`: None, `max_size`: Some(26), added: 2501, mode: `MaxEncodedLen`)
+	/// Storage: `ParachainSystem::ValidationData` (r:1 w:0)
+	/// Proof: `ParachainSystem::ValidationData` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `ParachainSystem::LastRelayChainBlockNumber` (r:1 w:0)
+	/// Proof: `ParachainSystem::LastRelayChainBlockNumber` (`max_values`: Some(1), `max_size`: None, mode: `Measured`)
+	/// Storage: `CommunityMemberships::Attribute` (r:66 w:64)
+	/// Proof: `CommunityMemberships::Attribute` (`max_values`: None, `max_size`: Some(477), added: 2952, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Item` (r:1 w:1)
+	/// Proof: `CommunityMemberships::Item` (`max_values`: None, `max_size`: Some(859), added: 3334, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Collection` (r:1 w:1)
+	/// Proof: `CommunityMemberships::Collection` (`max_values`: None, `max_size`: Some(82), added: 2557, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemConfigOf` (r:1 w:1)
+	/// Proof: `CommunityMemberships::ItemConfigOf` (`max_values`: None, `max_size`: Some(46), added: 2521, mode: `MaxEncodedLen`)
+	/// Storage: `System::Account` (r:1 w:1)
+	/// Proof: `System::Account` (`max_values`: None, `max_size`: Some(128), added: 2603, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemMetadataOf` (r:1 w:0)
+	/// Proof: `CommunityMemberships::ItemMetadataOf` (`max_values`: None, `max_size`: Some(345), added: 2820, mode: `MaxEncodedLen`)
+	/// Storage: UNKNOWN KEY `0xbf649eeb65338602d9d26672f5e73434715c301ac4674a8ca4bb0b99f239bdbd` (r:1 w:1)
+	/// Proof: UNKNOWN KEY `0xbf649eeb65338602d9d26672f5e73434715c301ac4674a8ca4bb0b99f239bdbd` (r:1 w:1)
+	/// Storage: `CommunitiesManager::Deposits` (r:1 w:1)
+	/// Proof: `CommunitiesManager::Deposits` (`max_values`: None, `max_size`: Some(38), added: 2513, mode: `MaxEncodedLen`)
+	/// Storage: `Balances::Holds` (r:1 w:1)
+	/// Proof: `Balances::Holds` (`max_values`: None, `max_size`: Some(283), added: 2758, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::Account` (r:0 w:1)
+	/// Proof: `CommunityMemberships::Account` (`max_values`: None, `max_size`: Some(86), added: 2561, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemPriceOf` (r:0 w:1)
+	/// Proof: `CommunityMemberships::ItemPriceOf` (`max_values`: None, `max_size`: Some(87), added: 2562, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::ItemAttributesApprovalsOf` (r:0 w:1)
+	/// Proof: `CommunityMemberships::ItemAttributesApprovalsOf` (`max_values`: None, `max_size`: Some(999), added: 3474, mode: `MaxEncodedLen`)
+	/// Storage: `CommunityMemberships::PendingSwapOf` (r:0 w:1)
+	/// Proof: `CommunityMemberships::PendingSwapOf` (`max_values`: None, `max_size`: Some(67), added: 2542, mode: `MaxEncodedLen`)
+	/// The range of component `a` is `[1, 64]`.
+	fn complete_retirement(a: u32, ) -> Weight {
 		// Proof Size summary in bytes:
-		//  Measured:  `0`
-		//  Estimated: `0`
-		// Minimum execution time: 0_000 picoseconds.
-		Weight::from_parts(0, 0)
-			.saturating_add(Weight::from_parts(0, 0))
+		//  Measured:  `999 + a * (43 ±0)`
+		//  Estimated: `6894 + a * (2952 ±0)`
+		// Minimum execution time: 144_306_000 picoseconds.
+		Weight::from_parts(131_738_226, 0)
+			.saturating_add(Weight::from_parts(0, 6894))
+			// Standard Error: 20_011
+			.saturating_add(Weight::from_parts(17_690_785, 0).saturating_mul(a.into()))
+			.saturating_add(T::DbWeight::get().reads(13))
+			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(a.into())))
+			.saturating_add(T::DbWeight::get().writes(12))
+			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(a.into())))
+			.saturating_add(Weight::from_parts(0, 2952).saturating_mul(a.into()))
 	}
 }
