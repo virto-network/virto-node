@@ -102,6 +102,7 @@ pub use benchmarks::CommunityBenchmarkHelper;
 mod benchmarks {
 	use super::*;
 
+	use alloc::boxed::Box;
 	use governance::{CommunityReferendaInstance, CommunityTracksInstance};
 
 	use frame_benchmarking::BenchmarkError;
