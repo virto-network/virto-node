@@ -211,3 +211,88 @@ fn an_assigned_membership_is_not_retired() {
 		);
 	})
 }
+
+// DEC-38, 0010-Q1, 0010-Q3: the payer pays what registration cost before, split in two.
+#[test]
+fn a_registration_pays_the_consumption_part_to_the_treasury_and_holds_the_storage_part() {
+	use crate::config::communities::{
+		CommunityConsumptionPartAmount, CommunityDepositAmount, CommunityStoragePartAmount,
+	};
+
+	TestExternalities::default().execute_with(|| {
+		let treasury = TreasuryAccount::get();
+		assert_ok!(Balances::mint_into(&treasury, EXISTENTIAL_DEPOSIT));
+		assert_ok!(Balances::mint_into(&BOB, 10 * UNITS));
+		let treasury_before = Balances::balance(&treasury);
+
+		assert_ok!(CommunitiesManager::register(
+			RuntimeOrigin::signed(BOB),
+			1,
+			BoundedVec::try_from(b"First Community".to_vec()).expect("meets max length; qed"),
+			CommunityLookup::unlookup(ALICE),
+			None,
+			None,
+		));
+
+		let account = Communities::community_account(&1);
+		// The total paid is unchanged: 0.5 KSM.
+		assert_eq!(
+			CommunityStoragePartAmount::get() + CommunityConsumptionPartAmount::get(),
+			CommunityDepositAmount::get()
+		);
+		assert_eq!(Balances::balance(&BOB), 10 * UNITS - CommunityDepositAmount::get());
+		assert_eq!(
+			Balances::balance(&treasury),
+			treasury_before + CommunityConsumptionPartAmount::get()
+		);
+		assert_eq!(Balances::total_balance(&account), CommunityStoragePartAmount::get());
+		assert_eq!(
+			Balances::balance_on_hold(
+				&RuntimeHoldReason::CommunitiesManager(HoldReason::CommunityDeposit),
+				&account
+			),
+			CommunityStoragePartAmount::get()
+		);
+		assert_eq!(
+			pallet_communities_manager::CommunityDeposits::<Runtime>::get(1),
+			Some(CommunityStoragePartAmount::get())
+		);
+	})
+}
+
+// m3-root-registration: nobody pays.
+#[test]
+fn a_root_registration_pays_nothing_and_records_nothing() {
+	TestExternalities::default().execute_with(|| {
+		let treasury_before = Balances::balance(&TreasuryAccount::get());
+
+		let account = community();
+
+		assert_eq!(Balances::balance(&TreasuryAccount::get()), treasury_before);
+		assert_eq!(pallet_communities_manager::CommunityDeposits::<Runtime>::get(1), None);
+		// Only what the test minted: nothing was held.
+		assert_eq!(Balances::total_balance(&account), 1_000 * DEPOSIT);
+		assert_eq!(
+			Balances::balance_on_hold(
+				&RuntimeHoldReason::CommunitiesManager(HoldReason::CommunityDeposit),
+				&account
+			),
+			0
+		);
+	})
+}
+
+// DEC-36: the manager owns and administers the community's collection.
+#[test]
+fn a_registration_gives_the_collection_to_the_memberships_manager() {
+	use crate::config::communities::MembershipsManagerAccount;
+
+	TestExternalities::default().execute_with(|| {
+		let account = community();
+
+		let manager = MembershipsManagerAccount::get();
+		assert_eq!(CommunityMemberships::collection_owner(1), Some(manager.clone()));
+		assert!(pallet_nfts::CollectionRoleOf::<Runtime, CommunityMembershipsInstance>::get(1, &manager).is_some());
+		assert!(pallet_nfts::CollectionRoleOf::<Runtime, CommunityMembershipsInstance>::get(1, &account).is_none());
+	})
+}

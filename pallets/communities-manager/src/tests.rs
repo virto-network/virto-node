@@ -1,7 +1,7 @@
 use crate::{
 	mock::*,
 	weights::{SubstrateWeight, WeightInfo},
-	Deposits, Error, Event, HoldReason, NextMembershipId, Retiring,
+	CommunityDeposits, Deposits, Error, Event, HoldReason, NextMembershipId, Retiring,
 };
 use frame_contrib_traits::memberships::{Inspect as _, InspectEnumerable as _};
 use frame_support::{
@@ -30,7 +30,9 @@ fn register_community(id: CommunityId, admin: AccountId, funds: Balance) {
 		None,
 		None,
 	));
-	assert_ok!(Balances::mint_into(&community_account(id), funds));
+	if funds > 0 {
+		assert_ok!(Balances::mint_into(&community_account(id), funds));
+	}
 }
 
 fn issue(admin: AccountId, amount: u32) {
@@ -59,6 +61,100 @@ fn held_deposits(community: CommunityId) -> Balance {
 
 fn at(block: BlockNumber) {
 	System::set_block_number(block);
+}
+
+fn register_as(payer: AccountId, id: CommunityId, admin: AccountId) -> frame_support::dispatch::DispatchResult {
+	CommunitiesManager::register(
+		RuntimeOrigin::signed(payer),
+		id,
+		BoundedVec::try_from(b"A Community".to_vec()).expect("meets max length; qed"),
+		admin,
+		None,
+		None,
+	)
+}
+
+fn held_community_deposit(community: CommunityId) -> Balance {
+	Balances::balance_on_hold(&HoldReason::CommunityDeposit.into(), &community_account(community))
+}
+
+// DEC-38, 0010-Q1, 0010-Q3
+#[test]
+fn registering_pays_the_consumption_part_to_the_payee_and_holds_the_storage_part() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Balances::mint_into(&BOB, 1_000));
+
+		assert_ok!(register_as(BOB, 1, ALICE));
+
+		// The total paid is the registration payment.
+		assert_eq!(Balances::balance(&BOB), 900);
+		assert_eq!(Balances::balance(&Treasury::get()), 70);
+		assert_eq!(Balances::total_balance(&community_account(1)), 30);
+		assert_eq!(held_community_deposit(1), 30);
+		assert_eq!(CommunityDeposits::<Test>::get(1), Some(30));
+	})
+}
+
+// m3-root-registration
+#[test]
+fn a_root_registration_moves_nothing_holds_nothing_and_records_nothing() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 0);
+
+		assert_eq!(Balances::balance(&Treasury::get()), 0);
+		assert_eq!(Balances::total_balance(&community_account(1)), 0);
+		assert_eq!(held_community_deposit(1), 0);
+		assert_eq!(CommunityDeposits::<Test>::get(1), None);
+	})
+}
+
+// 0010-Q3, REQ-MI-12
+#[test]
+fn a_later_change_of_the_parts_does_not_change_an_existing_hold() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(Balances::mint_into(&BOB, 1_000));
+		assert_ok!(Balances::mint_into(&CAROL, 1_000));
+		assert_ok!(register_as(BOB, 1, ALICE));
+
+		StoragePart::set(50);
+		ConsumptionPart::set(50);
+		assert_ok!(register_as(CAROL, 2, BOB));
+
+		assert_eq!(CommunityDeposits::<Test>::get(1), Some(30));
+		assert_eq!(held_community_deposit(1), 30);
+		assert_eq!(CommunityDeposits::<Test>::get(2), Some(50));
+		assert_eq!(held_community_deposit(2), 50);
+	})
+}
+
+// 0010-Q1: the payer pays the whole payment or registers nothing.
+#[test]
+fn a_registration_the_payer_cannot_afford_registers_nothing() {
+	new_test_ext().execute_with(|| {
+		// Enough for the consumption part, but not for both.
+		assert_ok!(Balances::mint_into(&BOB, 80));
+
+		assert!(register_as(BOB, 1, ALICE).is_err());
+
+		assert!(!Communities::community_exists(&1));
+		assert_eq!(Balances::balance(&BOB), 80);
+		assert_eq!(Balances::balance(&Treasury::get()), 0);
+		assert_eq!(CommunityDeposits::<Test>::get(1), None);
+	})
+}
+
+// DEC-36
+#[test]
+fn a_community_collection_is_owned_and_administered_by_the_memberships_manager() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 0);
+
+		let manager = MembershipsManagerAccountId::get();
+		assert_eq!(Memberships::collection_owner(1), Some(manager.clone()));
+		let roles = pallet_nfts::CollectionRoleOf::<Test>::get(1, &manager).expect("the manager has roles");
+		assert!(roles.has_role(pallet_nfts::CollectionRole::Admin));
+		assert!(pallet_nfts::CollectionRoleOf::<Test>::get(1, community_account(1)).is_none());
+	})
 }
 
 // AC-F1.1, REQ-MI-1, REQ-MI-2, REQ-MI-D1

@@ -6,9 +6,7 @@ use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
-#[cfg(feature = "runtime-benchmarks")]
-use memberships::MembershipsManagerAccount;
-pub use memberships::{Memberships, RetiringMembershipsAccount};
+pub use memberships::{Memberships, MembershipsManagerAccount, RetiringMembershipsAccount};
 
 pub mod governance;
 pub mod memberships;
@@ -29,6 +27,12 @@ parameter_types! {
 	pub const RetirementDelayInBlocks: BlockNumber = 10 * DAYS;
 	/// The most memberships a call issues or retires.
 	pub const MaxIssuePerCall: u32 = 1_024;
+	/// A TEST VALUE: the part of a registration that the community's account holds. `F-07b` sets the
+	/// measured one (0010-Q2, `DEP-21`).
+	pub const CommunityStoragePartAmount: Balance = UNITS / 10;
+	/// The rest of the registration payment, paid to the Treasury: 0.5 KSM less the storage part
+	/// (0010-Q1: two amounts whose sum is the payment).
+	pub const CommunityConsumptionPartAmount: Balance = UNITS / 2 - UNITS / 10;
 }
 
 morph_types! {
@@ -82,6 +86,9 @@ impl pallet_communities_manager::Config for Runtime {
 	type Issuer = Memberships;
 	type ItemAttributes =
 		pallet_communities_manager::ClearNftsAttributes<Runtime, memberships::CommunityMembershipsInstance>;
+	type MembershipsManagerAccount = MembershipsManagerAccount;
+	type CommunityStoragePart = CommunityStoragePartAmount;
+	type CommunityConsumptionPart = CommunityConsumptionPartAmount;
 	type RetirementHolder = RetiringMembershipsAccount;
 	type MembershipDeposit = MembershipDepositAmount;
 	type RetirementDelay = RetirementDelayInBlocks;

@@ -6,7 +6,10 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
-use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
+use pallet_communities::{
+	origin::{EnsureCommunity, EnsureSignedPays},
+	Tally, VoteWeight,
+};
 use sp_io::TestExternalities;
 use sp_runtime::{
 	traits::{IdentifyAccount, IdentityLookup, Verify},
@@ -172,6 +175,12 @@ parameter_types! {
 	/// What each issued membership holds, unless a test changes it.
 	pub static MembershipDepositAmount: Balance = 10;
 	pub const RetirementDelayInBlocks: BlockNumber = 5;
+	/// Where the consumption part goes.
+	pub const Treasury: AccountId = AccountId::new([0xaa; 32]);
+	/// The registration payment, and its two parts, unless a test changes them.
+	pub const RegistrationPayment: Balance = 100;
+	pub static StoragePart: Balance = 30;
+	pub static ConsumptionPart: Balance = 70;
 	pub const NoDepositOnRootRegistration: Deposit = None;
 }
 
@@ -249,7 +258,13 @@ impl Config for Test {
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
 	type WeightInfo = WeightInfo;
-	type RegisterOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	type RegisterOrigin = EitherOf<
+		EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>,
+		EnsureSignedPays<Test, RegistrationPayment, Treasury>,
+	>;
+	type MembershipsManagerAccount = MembershipsManagerAccountId;
+	type CommunityStoragePart = StoragePart;
+	type CommunityConsumptionPart = ConsumptionPart;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type GroupAdminOrigin = EnsureCommunity<Self>;
 	type Issuer = MembershipsManager;

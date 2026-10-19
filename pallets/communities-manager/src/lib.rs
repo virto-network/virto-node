@@ -7,7 +7,9 @@ use frame_contrib_traits::{memberships::Issue, tracks::MutateTracks};
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		fungible::hold::Mutate as MutateHold, nonfungibles_v2::Create as CollectionCreate, tokens::Precision,
+		fungible::{hold::Mutate as MutateHold, Mutate},
+		nonfungibles_v2::Create as CollectionCreate,
+		tokens::{Precision, Preservation},
 		Incrementable, OriginTrait, RankedMembers,
 	},
 };
@@ -23,7 +25,7 @@ use pallet_nfts::{AttributeNamespace, CollectionConfig};
 use pallet_referenda::{TrackInfo, TracksInfo};
 use sp_runtime::{
 	str_array,
-	traits::{BlockNumberProvider, Saturating, StaticLookup},
+	traits::{BlockNumberProvider, Saturating, StaticLookup, Zero},
 };
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -139,6 +141,19 @@ pub mod pallet {
 		/// Clears what holders and delegates wrote on an item, when its retirement completes.
 		type ItemAttributes: ClearItemAttributes<CommunityIdOf<Self>, Self::MembershipId>;
 
+		/// Owner and administrator of every community's collection of memberships.
+		type MembershipsManagerAccount: Get<AccountIdOf<Self>>;
+
+		/// The part of a community's registration that stays with the community: transferred to its
+		/// account and held there as [`HoldReason::CommunityDeposit`]. A change applies to new
+		/// communities only: each keeps the amount it was registered with.
+		#[pallet::constant]
+		type CommunityStoragePart: Get<NativeBalanceOf<Self>>;
+
+		/// The part of a community's registration that is paid to the payee, for good.
+		#[pallet::constant]
+		type CommunityConsumptionPart: Get<NativeBalanceOf<Self>>;
+
 		/// The account that holds a membership while it retires. It is the one the memberships manager
 		/// is configured with.
 		type RetirementHolder: Get<AccountIdOf<Self>>;
@@ -176,6 +191,11 @@ pub mod pallet {
 	/// so an identifier is never reused, in any community.
 	#[pallet::storage]
 	pub type NextMembershipId<T: Config> = StorageValue<_, T::MembershipId, ValueQuery>;
+
+	/// The storage part of its registration that a community holds on its account, by community.
+	/// A community registered for free has none.
+	#[pallet::storage]
+	pub type CommunityDeposits<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, NativeBalanceOf<T>>;
 
 	/// What a membership holds on its community's account, by community and membership.
 	#[pallet::storage]
@@ -342,8 +362,10 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
+	/// Registers a community. `maybe_payment` names who pays for it and to whom (`None`, as for Root
+	/// and genesis, pays nothing); the amounts are the pallet's own two parts.
 	pub(crate) fn try_register(
-		maybe_deposit: Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>,
+		maybe_payment: Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>,
 		community_id: CommunityIdOf<T>,
 		community_name: &str,
 		admin: &AccountIdOf<T>,
@@ -353,8 +375,9 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let admin_origin = frame_system::Origin::<T>::Signed(admin.clone());
 
-		// Register first to check if community exists
-		pallet_communities::Pallet::<T>::register(&admin_origin.clone().into(), &community_id, maybe_deposit)?;
+		// Register first to check if community exists. The registration payment is not forwarded: it
+		// is split between the payee and the community below.
+		pallet_communities::Pallet::<T>::register(&admin_origin.clone().into(), &community_id, None)?;
 
 		if let Some(decision_method) = maybe_decision_method {
 			pallet_communities::Pallet::<T>::set_decision_method(admin_origin.into(), community_id, decision_method)?;
@@ -362,11 +385,16 @@ impl<T: Config> Pallet<T> {
 
 		let community_account = pallet_communities::Pallet::<T>::community_account(&community_id);
 
-		// Create memberships collection for community
+		if let Some((_, payer, payee)) = maybe_payment {
+			Self::pay_for_registration(&community_id, &community_account, &payer, &payee)?;
+		}
+
+		// Create the community's collection of memberships, owned and administered by the manager.
+		let manager = T::MembershipsManagerAccount::get();
 		T::CreateCollection::create_collection_with_id(
 			community_id,
-			&community_account,
-			&community_account,
+			&manager,
+			&manager,
 			&CollectionConfig {
 				settings: Default::default(),
 				max_supply: None,
@@ -390,6 +418,29 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Self::deposit_event(Event::<T>::CommunityRegistered { id: community_id });
+		Ok(())
+	}
+
+	/// Splits the registration payment: the consumption part goes to the payee, and the storage part to
+	/// the community's account, where it is held and recorded.
+	fn pay_for_registration(
+		community_id: &CommunityIdOf<T>,
+		community_account: &AccountIdOf<T>,
+		payer: &AccountIdOf<T>,
+		payee: &AccountIdOf<T>,
+	) -> DispatchResult {
+		let consumption = T::CommunityConsumptionPart::get();
+		if !consumption.is_zero() {
+			T::Balances::transfer(payer, payee, consumption, Preservation::Preserve)?;
+		}
+
+		let storage = T::CommunityStoragePart::get();
+		if !storage.is_zero() {
+			T::Balances::transfer(payer, community_account, storage, Preservation::Preserve)?;
+			let reason: T::RuntimeHoldReason = HoldReason::CommunityDeposit.into();
+			T::Balances::hold(&reason, community_account, storage)?;
+			CommunityDeposits::<T>::insert(community_id, storage);
+		}
 		Ok(())
 	}
 
