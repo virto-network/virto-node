@@ -70,8 +70,8 @@ impl<T: pallet_nfts::Config<I>, I: 'static> ClearItemAttributes<T::CollectionId,
 		for (namespace, key) in attributes {
 			pallet_nfts::Pallet::<T, I>::clear_attribute(
 				frame_system::RawOrigin::Root.into(),
-				collection.clone(),
-				Some(item.clone()),
+				*collection,
+				Some(*item),
 				namespace as AttributeNamespace<T::AccountId>,
 				key,
 			)?;

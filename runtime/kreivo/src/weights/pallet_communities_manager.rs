@@ -73,6 +73,11 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 			.saturating_add(Weight::from_parts(0, 132561))
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(14))
+			// Hand-estimated, until the benchmark replaces it: a registration someone pays for makes two
+			// transfers and a hold, and writes the record.
+			.saturating_add(Weight::from_parts(60_000_000, 10_000))
+			.saturating_add(T::DbWeight::get().reads(6))
+			.saturating_add(T::DbWeight::get().writes(7))
 	}
 	// Provisional: hand-estimated in the pallet, until `/cmd bench --pallet pallet_communities_manager`
 	// regenerates this file on the reference machine.

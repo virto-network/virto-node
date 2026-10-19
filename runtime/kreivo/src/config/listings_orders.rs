@@ -231,8 +231,8 @@ mod benchmarks {
 		fn price() -> (FungibleAssetLocation, Balance) {
 			use frame_support::traits::fungibles::{Create, Inspect};
 			let asset = FungibleAssetLocation::Here(1);
-			if !Assets::asset_exists(asset.clone()) {
-				<Assets as Create<_>>::create(asset.clone(), TreasuryAccount::get(), true, EXISTENTIAL_DEPOSIT)
+			if !Assets::asset_exists(asset) {
+				<Assets as Create<_>>::create(asset, TreasuryAccount::get(), true, EXISTENTIAL_DEPOSIT)
 					.expect("creating an asset class is expected to succeed; qed");
 			}
 			(asset, 100 * EXISTENTIAL_DEPOSIT)
@@ -240,8 +240,7 @@ mod benchmarks {
 
 		fn fund(who: &AccountId, asset: &FungibleAssetLocation, amount: Balance) {
 			use frame_support::traits::fungibles::Mutate;
-			Assets::mint_into(asset.clone(), who, amount.saturating_mul(1_000))
-				.expect("minting is expected to succeed; qed");
+			Assets::mint_into(*asset, who, amount.saturating_mul(1_000)).expect("minting is expected to succeed; qed");
 		}
 	}
 
