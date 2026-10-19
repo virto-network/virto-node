@@ -5,6 +5,7 @@ use frame_benchmarking::v2::*;
 
 use frame_support::{dispatch::DispatchResult, traits::fungible::Mutate};
 use frame_system::RawOrigin;
+use pallet_communities::BenchmarkHelper;
 use sp_runtime::traits::Saturating;
 
 fn assert_has_event<T: frame_system::Config>(generic_event: T::RuntimeEvent) {
@@ -26,11 +27,20 @@ fn community_with_funds<T: Config>(memberships: u32) -> Result<CommunityIdOf<T>,
 where
 	NativeBalanceOf<T>: From<u64>,
 {
-	let origin = T::GroupAdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-	let community = T::GroupAdminOrigin::try_origin(origin).map_err(|_| BenchmarkError::Weightless)?;
+	// The group origin only recognises a community that exists, so the community is registered
+	// before the origin is checked against it.
+	let community = <T as pallet_communities::Config>::BenchmarkHelper::community_id();
 
 	let admin: AccountIdOf<T> = account("admin", 0, 0);
 	Pallet::<T>::try_register(None, community, "Benchmark", &admin, None, None, None)?;
+
+	let origin = T::GroupAdminOrigin::try_successful_origin()
+		.map_err(|_| BenchmarkError::Stop("the runtime has no successful group origin"))?;
+	if T::GroupAdminOrigin::try_origin(origin).ok() != Some(community) {
+		return Err(BenchmarkError::Stop(
+			"the group origin does not name the benchmark community",
+		));
+	}
 
 	let community_account = pallet_communities::Pallet::<T>::community_account(&community);
 	let funds = T::MembershipDeposit::get().saturating_mul((memberships as u64 + 1).into());
@@ -40,6 +50,9 @@ where
 	)?;
 	Ok(community)
 }
+
+#[cfg(feature = "std")]
+pub use benchmarks::test_group_benchmark;
 
 #[benchmarks(
 where
@@ -85,7 +98,8 @@ mod benchmarks {
 	#[benchmark]
 	fn issue_memberships(n: Linear<1, { T::MaxIssuePerCall::get() }>) -> Result<(), BenchmarkError> {
 		let community = community_with_funds::<T>(n)?;
-		let origin = T::GroupAdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let origin = T::GroupAdminOrigin::try_successful_origin()
+			.map_err(|_| BenchmarkError::Stop("the runtime has no successful group origin"))?;
 
 		#[extrinsic_call]
 		_(origin as T::RuntimeOrigin, n);
@@ -99,16 +113,17 @@ mod benchmarks {
 	#[benchmark]
 	fn retire_memberships(n: Linear<1, { T::MaxIssuePerCall::get() }>) -> Result<(), BenchmarkError> {
 		let community = community_with_funds::<T>(n)?;
-		let origin = T::GroupAdminOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let origin = T::GroupAdminOrigin::try_successful_origin()
+			.map_err(|_| BenchmarkError::Stop("the runtime has no successful group origin"))?;
 
 		let mut id = NextMembershipId::<T>::get();
 		let mut ids = Vec::new();
 		Pallet::<T>::do_issue_memberships(&community, n)?;
 		for _ in 0..n {
 			ids.push(id);
-			id = id.increment().ok_or(BenchmarkError::Weightless)?;
+			id = id.increment().ok_or(BenchmarkError::Stop("membership ids ran out"))?;
 		}
-		let ids = BoundedVec::try_from(ids).map_err(|_| BenchmarkError::Weightless)?;
+		let ids = BoundedVec::try_from(ids).map_err(|_| BenchmarkError::Stop("too many ids for one call"))?;
 
 		#[extrinsic_call]
 		_(origin as T::RuntimeOrigin, ids);
@@ -119,11 +134,14 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn complete_retirement(a: Linear<0, 64>) -> Result<(), BenchmarkError> {
+	fn complete_retirement(a: Linear<1, 64>) -> Result<(), BenchmarkError> {
 		let community = community_with_funds::<T>(1)?;
 		let id = NextMembershipId::<T>::get();
 		Pallet::<T>::do_issue_memberships(&community, 1)?;
-		T::ItemAttributes::set_benchmark_attributes(&community, &id, a);
+		// An issued membership already carries the attribute the issuer wrote, so the item carries
+		// `a` attributes in all.
+		let written = T::ItemAttributes::count(&community, &id);
+		T::ItemAttributes::set_benchmark_attributes(&community, &id, a.saturating_sub(written));
 		Pallet::<T>::do_retire_memberships(&community, &[id])?;
 		// The delay has passed.
 		Retiring::<T>::insert((community, id), MomentOf::<T>::zero());
@@ -137,6 +155,29 @@ mod benchmarks {
 		assert!(Retiring::<T>::get((community, id)).is_none());
 		assert!(Deposits::<T>::get((community, id)).is_none());
 		Ok(())
+	}
+
+	/// Runs the setup, the call and the verification of one of the group benchmarks, as a runtime's
+	/// tests do, in a fresh state. A skipped (weightless) benchmark would pass unnoticed, so the
+	/// setups stop on errors instead.
+	#[cfg(feature = "std")]
+	pub fn test_group_benchmark<T: Config>(name: &str) -> Result<(), BenchmarkError>
+	where
+		T::RuntimeEvent: From<pallet_communities::Event<T>>,
+		NativeBalanceOf<T>: From<u64>,
+		CommunityIdOf<T>: One,
+		T::MembershipId: From<u32>,
+	{
+		use frame_benchmarking::{BenchmarkParameter, BenchmarkingSetup};
+
+		let (benchmark, component) = match name {
+			"issue_memberships" => (SelectedBenchmark::issue_memberships, BenchmarkParameter::n),
+			"retire_memberships" => (SelectedBenchmark::retire_memberships, BenchmarkParameter::n),
+			"complete_retirement" => (SelectedBenchmark::complete_retirement, BenchmarkParameter::a),
+			_ => return Err(BenchmarkError::Stop("not a group benchmark")),
+		};
+		let before_start = || frame_system::Pallet::<T>::set_block_number(1u32.into());
+		<SelectedBenchmark as BenchmarkingSetup<T, _>>::test_instance(&benchmark, &[(component, 4)], &before_start)
 	}
 
 	impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), mock::Test);

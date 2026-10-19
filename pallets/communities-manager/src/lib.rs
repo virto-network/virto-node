@@ -30,6 +30,8 @@ use sp_runtime::{
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(all(feature = "runtime-benchmarks", feature = "std"))]
+pub use benchmarking::test_group_benchmark;
 
 #[cfg(test)]
 pub(crate) mod mock;

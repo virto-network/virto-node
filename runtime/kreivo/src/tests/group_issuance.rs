@@ -297,3 +297,16 @@ fn a_registration_gives_the_collection_to_the_memberships_manager() {
 		assert!(pallet_nfts::CollectionRoleOf::<Runtime, CommunityMembershipsInstance>::get(1, &account).is_none());
 	})
 }
+
+/// The benchmarks of the group calls run in Kreivo's runtime: they stop on any setup the runtime
+/// cannot satisfy, where a skipped (weightless) benchmark would leave its call without a weight.
+#[cfg(feature = "runtime-benchmarks")]
+#[test]
+fn group_benchmarks_run_in_the_runtime() {
+	for name in ["issue_memberships", "retire_memberships", "complete_retirement"] {
+		TestExternalities::default().execute_with(|| {
+			relay_block(1);
+			assert_ok!(pallet_communities_manager::test_group_benchmark::<crate::Runtime>(name));
+		});
+	}
+}
