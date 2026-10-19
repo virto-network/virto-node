@@ -17,6 +17,7 @@ use xcm_executor::{WeighedMessage, XcmExecutor};
 mod group_issuance;
 mod kreivo_apis;
 mod listings;
+mod memberships_migration;
 mod multi_block_migrations;
 #[cfg(feature = "runtime-benchmarks")]
 mod payments_orders;
