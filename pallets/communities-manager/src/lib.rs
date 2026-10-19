@@ -203,7 +203,13 @@ pub mod pallet {
 		type MaxIssuePerCall: Get<u32>;
 	}
 
+	/// The in-code storage version: 1 since the memberships live in their groups' collections
+	/// (`NextMembershipId`, `Deposits`, `Retiring` and `CommunityDeposits` are new). The runtime's
+	/// stepped migration moves the data and sets the on-chain version.
+	pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	/// The reasons this pallet holds funds on a community's account.
