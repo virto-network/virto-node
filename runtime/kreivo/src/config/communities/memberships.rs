@@ -16,7 +16,8 @@ parameter_types! {
 	pub const MembershipsManagerPalletId: PalletId = PalletId(*b"kv/mbmgr");
 	pub MembershipsManagerAccount: AccountId = MembershipsManagerPalletId::get().into_account_truncating();
 	/// Holds the memberships a community retires until they are burnt (`DEC-19`). Keyless.
-	pub RetirementHolder: Option<AccountId> = Some(RETIRING_MEMBERSHIPS_ACCOUNT.into());
+	pub RetiringMembershipsAccount: AccountId = RETIRING_MEMBERSHIPS_ACCOUNT.into();
+	pub RetirementHolder: Option<AccountId> = Some(RetiringMembershipsAccount::get());
 	/// The attribute keys Kreivo lets `set_membership_attribute` write. None beyond what the
 	/// manager writes itself.
 	pub AttributeKeys: &'static [&'static [u8]] = &[];

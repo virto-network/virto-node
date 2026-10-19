@@ -1,8 +1,355 @@
 use crate::{
 	mock::*,
 	weights::{SubstrateWeight, WeightInfo},
+	Deposits, Error, Event, HoldReason, NextMembershipId, Retiring,
 };
-use frame_support::weights::Weight;
+use frame_contrib_traits::memberships::{Inspect as _, InspectEnumerable as _};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::fungible::{hold::Inspect as _, Inspect as _, Mutate as _},
+	weights::Weight,
+	BoundedVec,
+};
+use pallet_nfts::AttributeNamespace;
+
+const ALICE: AccountId = AccountId::new([1; 32]);
+const BOB: AccountId = AccountId::new([2; 32]);
+const CAROL: AccountId = AccountId::new([3; 32]);
+
+fn community_account(id: CommunityId) -> AccountId {
+	Communities::community_account(&id)
+}
+
+/// Registers a community administered by `admin` (Root registers for free), and funds its account.
+fn register_community(id: CommunityId, admin: AccountId, funds: Balance) {
+	assert_ok!(CommunitiesManager::register(
+		RuntimeOrigin::root(),
+		id,
+		BoundedVec::try_from(b"A Community".to_vec()).expect("meets max length; qed"),
+		admin,
+		None,
+		None,
+	));
+	assert_ok!(Balances::mint_into(&community_account(id), funds));
+}
+
+fn issue(admin: AccountId, amount: u32) {
+	assert_ok!(CommunitiesManager::issue_memberships(
+		RuntimeOrigin::signed(admin),
+		amount
+	));
+}
+
+fn retire(admin: AccountId, ids: Vec<MembershipId>) {
+	assert_ok!(CommunitiesManager::retire_memberships(
+		RuntimeOrigin::signed(admin),
+		BoundedVec::try_from(ids).expect("meets the limit; qed"),
+	));
+}
+
+fn stock(community: CommunityId) -> Vec<MembershipId> {
+	let mut stock: Vec<_> = MembershipsManager::group_available_memberships(&community).collect();
+	stock.sort();
+	stock
+}
+
+fn held_deposits(community: CommunityId) -> Balance {
+	Balances::balance_on_hold(&HoldReason::MembershipDeposit.into(), &community_account(community))
+}
+
+fn at(block: BlockNumber) {
+	System::set_block_number(block);
+}
+
+// AC-F1.1, REQ-MI-1, REQ-MI-2, REQ-MI-D1
+#[test]
+fn issuing_places_memberships_in_the_stock_and_holds_their_deposits() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 3);
+
+		assert_eq!(stock(1), vec![0, 1, 2]);
+		for id in 0..3 {
+			assert_eq!(Memberships::owner(1, id), Some(community_account(1)));
+			assert_eq!(Deposits::<Test>::get((1, id)), Some(10));
+		}
+		assert_eq!(held_deposits(1), 30);
+		assert_eq!(NextMembershipId::<Test>::get(), 3);
+		System::assert_last_event(
+			Event::<Test>::MembershipsIssued {
+				community: 1,
+				first: 0,
+				amount: 3,
+			}
+			.into(),
+		);
+	})
+}
+
+// AC-F1.3, REQ-MI-14
+#[test]
+fn identifiers_are_never_reused_across_communities() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		register_community(2, BOB, 1_000);
+
+		issue(ALICE, 2);
+		issue(BOB, 2);
+		issue(ALICE, 1);
+
+		assert_eq!(stock(1), vec![0, 1, 4]);
+		assert_eq!(stock(2), vec![2, 3]);
+		assert_eq!(NextMembershipId::<Test>::get(), 5);
+	})
+}
+
+// AC-F2.1, REQ-MI-D1
+#[test]
+fn an_issuance_the_account_cannot_cover_is_refused_and_issues_nothing() {
+	new_test_ext().execute_with(|| {
+		// Enough for two deposits, not for three.
+		register_community(1, ALICE, 25);
+
+		assert_noop!(
+			CommunitiesManager::issue_memberships(RuntimeOrigin::signed(ALICE), 3),
+			Error::<Test>::MembershipLimit
+		);
+
+		assert!(stock(1).is_empty());
+		assert_eq!(held_deposits(1), 0);
+		assert_eq!(NextMembershipId::<Test>::get(), 0);
+		assert_eq!(Deposits::<Test>::iter().count(), 0);
+	})
+}
+
+// ERR-TooManyMemberships
+#[test]
+fn an_issuance_beyond_the_limit_is_refused() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+
+		assert_noop!(
+			CommunitiesManager::issue_memberships(RuntimeOrigin::signed(ALICE), 9),
+			Error::<Test>::TooManyMemberships
+		);
+		issue(ALICE, 8);
+	})
+}
+
+// DEC-31
+#[test]
+fn only_a_community_administrator_can_issue_or_retire() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 1);
+
+		for origin in [RuntimeOrigin::signed(BOB), RuntimeOrigin::root(), RuntimeOrigin::none()] {
+			assert!(CommunitiesManager::issue_memberships(origin.clone(), 1).is_err());
+			assert!(CommunitiesManager::retire_memberships(origin, BoundedVec::try_from(vec![0]).unwrap()).is_err());
+		}
+		assert_eq!(stock(1), vec![0]);
+	})
+}
+
+// REQ-MI-12
+#[test]
+fn a_membership_keeps_the_deposit_it_was_issued_with() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 1);
+
+		MembershipDepositAmount::set(25);
+		issue(ALICE, 1);
+
+		assert_eq!(Deposits::<Test>::get((1, 0)), Some(10));
+		assert_eq!(Deposits::<Test>::get((1, 1)), Some(25));
+		assert_eq!(held_deposits(1), 35);
+
+		retire(ALICE, vec![0]);
+		at(1 + 5);
+		assert_ok!(CommunitiesManager::complete_retirement(
+			RuntimeOrigin::signed(BOB),
+			1,
+			0
+		));
+		assert_eq!(held_deposits(1), 25);
+	})
+}
+
+// AC-F5.1, REQ-MI-D2
+#[test]
+fn retiring_takes_memberships_out_of_the_stock_at_once() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 2);
+
+		retire(ALICE, vec![0, 1]);
+
+		assert!(stock(1).is_empty());
+		assert_eq!(Memberships::owner(1, 0), Some(RetiringMembershipsAccount::get()));
+		assert_eq!(Retiring::<Test>::get((1, 0)), Some(1 + 5));
+		assert_eq!(Retiring::<Test>::get((1, 1)), Some(1 + 5));
+		// Nothing is left to assign, and the deposits are still held.
+		assert!(Communities::add_member(RuntimeOrigin::signed(ALICE), BOB).is_err());
+		assert_eq!(held_deposits(1), 20);
+		System::assert_last_event(
+			Event::<Test>::MembershipsRetiring {
+				community: 1,
+				amount: 2,
+				completable_at: 6,
+			}
+			.into(),
+		);
+	})
+}
+
+// AC-F5.3, ERR-NotRetirable
+#[test]
+fn an_assigned_membership_cannot_be_retired() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 2);
+		assert_ok!(Communities::add_member(RuntimeOrigin::signed(ALICE), BOB));
+		let (_, assigned) = MembershipsManager::user_memberships(&BOB, Some(1))
+			.next()
+			.expect("BOB holds a membership");
+
+		assert_noop!(
+			CommunitiesManager::retire_memberships(
+				RuntimeOrigin::signed(ALICE),
+				BoundedVec::try_from(vec![assigned]).unwrap()
+			),
+			Error::<Test>::NotRetirable
+		);
+		assert_eq!(Memberships::owner(1, assigned), Some(BOB));
+	})
+}
+
+// ERR-NotRetirable
+#[test]
+fn a_community_cannot_retire_the_memberships_of_another() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		register_community(2, BOB, 1_000);
+		issue(BOB, 1);
+
+		assert_noop!(
+			CommunitiesManager::retire_memberships(
+				RuntimeOrigin::signed(ALICE),
+				BoundedVec::try_from(vec![0]).unwrap()
+			),
+			Error::<Test>::NotRetirable
+		);
+		assert_eq!(stock(2), vec![0]);
+	})
+}
+
+// AC-F5.2, ERR-RetirementNotElapsed
+#[test]
+fn a_retirement_cannot_complete_before_its_delay_has_passed() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 1);
+		retire(ALICE, vec![0]);
+
+		at(1 + 4);
+		assert_noop!(
+			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0),
+			Error::<Test>::RetirementNotElapsed
+		);
+
+		at(1 + 5);
+		assert_ok!(CommunitiesManager::complete_retirement(
+			RuntimeOrigin::signed(BOB),
+			1,
+			0
+		));
+	})
+}
+
+// ERR-RetirementNotElapsed
+#[test]
+fn only_a_retiring_membership_can_be_completed() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 1);
+
+		assert_noop!(
+			CommunitiesManager::complete_retirement(RuntimeOrigin::signed(BOB), 1, 0),
+			Error::<Test>::NotRetiring
+		);
+		assert_noop!(
+			CommunitiesManager::complete_retirement(RuntimeOrigin::none(), 1, 0),
+			sp_runtime::DispatchError::BadOrigin
+		);
+	})
+}
+
+// AC-F5.2, AC-F3.2, REQ-MI-4, REQ-MI-D2, 0009-A2
+#[test]
+fn completing_a_retirement_burns_the_item_clears_every_attribute_and_releases_the_deposit() {
+	new_test_ext().execute_with(|| {
+		register_community(1, ALICE, 1_000);
+		issue(ALICE, 2);
+		let free_before = Balances::balance(&community_account(1));
+		retire(ALICE, vec![0]);
+
+		// Whatever others wrote, in each namespace of the collection system.
+		let attribute = |namespace: AttributeNamespace<AccountId>, key: &[u8]| {
+			assert_ok!(Memberships::force_set_attribute(
+				RuntimeOrigin::root(),
+				None,
+				1,
+				Some(0),
+				namespace,
+				BoundedVec::try_from(key.to_vec()).unwrap(),
+				BoundedVec::try_from(b"value".to_vec()).unwrap(),
+			));
+		};
+		attribute(AttributeNamespace::Pallet, b"in the pallet namespace");
+		attribute(AttributeNamespace::ItemOwner, b"by the owner");
+		attribute(AttributeNamespace::Account(CAROL), b"by an account");
+		attribute(AttributeNamespace::CollectionOwner, b"by the collection owner");
+		// The neighbour keeps its own.
+		assert_ok!(Memberships::force_set_attribute(
+			RuntimeOrigin::root(),
+			None,
+			1,
+			Some(1),
+			AttributeNamespace::ItemOwner,
+			BoundedVec::try_from(b"theirs".to_vec()).unwrap(),
+			BoundedVec::try_from(b"value".to_vec()).unwrap(),
+		));
+
+		at(1 + 5);
+		assert_ok!(CommunitiesManager::complete_retirement(
+			RuntimeOrigin::signed(CAROL),
+			1,
+			0
+		));
+
+		assert_eq!(Memberships::owner(1, 0), None);
+		assert_eq!(pallet_nfts::Attribute::<Test>::iter_prefix((1, Some(0))).count(), 0);
+		assert!(pallet_nfts::Attribute::<Test>::contains_key((
+			1,
+			Some(1),
+			AttributeNamespace::<AccountId>::ItemOwner,
+			BoundedVec::<u8, _>::try_from(b"theirs".to_vec()).unwrap(),
+		)));
+		assert_eq!(Deposits::<Test>::get((1, 0)), None);
+		assert_eq!(Retiring::<Test>::get((1, 0)), None);
+		assert_eq!(held_deposits(1), 10);
+		assert_eq!(Balances::balance(&community_account(1)), free_before + 10);
+		assert_eq!(stock(1), vec![1]);
+		System::assert_last_event(
+			Event::<Test>::RetirementCompleted {
+				community: 1,
+				membership_id: 0,
+			}
+			.into(),
+		);
+	})
+}
 
 #[test]
 fn weights() {

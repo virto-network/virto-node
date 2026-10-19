@@ -74,4 +74,15 @@ impl<T: frame_system::Config> pallet_communities_manager::WeightInfo for WeightI
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(14))
 	}
+	// Provisional: hand-estimated in the pallet, until `/cmd bench --pallet pallet_communities_manager`
+	// regenerates this file on the reference machine.
+	fn issue_memberships(n: u32, ) -> Weight {
+		pallet_communities_manager::SubstrateWeight::<T>::issue_memberships(n)
+	}
+	fn retire_memberships(n: u32, ) -> Weight {
+		pallet_communities_manager::SubstrateWeight::<T>::retire_memberships(n)
+	}
+	fn complete_retirement() -> Weight {
+		pallet_communities_manager::SubstrateWeight::<T>::complete_retirement()
+	}
 }

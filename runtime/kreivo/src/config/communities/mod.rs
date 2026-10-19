@@ -6,9 +6,9 @@ use pallet_communities::origin::{EnsureCommunity, EnsureSignedPays};
 use sp_runtime::{morph_types, traits::AccountIdConversion};
 use virto_common::{CommunityId, MembershipId};
 
-pub use memberships::Memberships;
 #[cfg(feature = "runtime-benchmarks")]
 use memberships::MembershipsManagerAccount;
+pub use memberships::{Memberships, RetiringMembershipsAccount};
 
 pub mod governance;
 pub mod memberships;
@@ -21,6 +21,14 @@ parameter_types! {
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const CommunityDepositAmount: Balance = UNITS / 2;
 	pub const NoPay: CreationPayment = None;
+	/// What each issued membership holds on its community's account (`DEC-19`): the existential
+	/// deposit, provisional until the economic study (0007-A1; `deployment/kreivo-0.18.md` §1).
+	pub const MembershipDepositAmount: Balance = EXISTENTIAL_DEPOSIT;
+	/// How long a retiring membership waits: 10 days of relay chain blocks (m3-retirement-delay).
+	/// Both change only by runtime upgrade.
+	pub const RetirementDelayInBlocks: BlockNumber = 10 * DAYS;
+	/// The most memberships a call issues or retires.
+	pub const MaxIssuePerCall: u32 = 1_024;
 }
 
 morph_types! {
@@ -69,6 +77,15 @@ impl pallet_communities_manager::Config for Runtime {
 	type RankedCollective = KreivoCollective;
 	type WeightInfo = weights::pallet_communities_manager::WeightInfo<Self>;
 	type RegisterOrigin = EitherOf<RootCreatesCommunitiesForFree, AnyoneElsePays>;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type GroupAdminOrigin = EitherOf<EnsureCommunity<Runtime>, EnsureCommunityAccount>;
+	type Issuer = Memberships;
+	type ItemAttributes =
+		pallet_communities_manager::ClearNftsAttributes<Runtime, memberships::CommunityMembershipsInstance>;
+	type RetirementHolder = RetiringMembershipsAccount;
+	type MembershipDeposit = MembershipDepositAmount;
+	type RetirementDelay = RetirementDelayInBlocks;
+	type MaxIssuePerCall = MaxIssuePerCall;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

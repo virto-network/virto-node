@@ -92,6 +92,7 @@ impl frame_system::Config for Test {
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig)]
 impl pallet_balances::Config for Test {
 	type AccountStore = System;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type FreezeIdentifier = RuntimeFreezeReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
@@ -166,6 +167,11 @@ parameter_types! {
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = 1;
 	pub const MembershipsManagerAccountId: AccountId = AccountId::new([0xee; 32]);
+	pub const RetiringMembershipsAccount: AccountId = AccountId::new([0xdd; 32]);
+	pub const RetirementHolderOption: Option<AccountId> = Some(AccountId::new([0xdd; 32]));
+	/// What each issued membership holds, unless a test changes it.
+	pub static MembershipDepositAmount: Balance = 10;
+	pub const RetirementDelayInBlocks: BlockNumber = 5;
 	pub const NoDepositOnRootRegistration: Deposit = None;
 }
 
@@ -200,6 +206,15 @@ impl pallet_nfts::Config for Test {
 	type BlockNumberProvider = System;
 }
 
+/// Every community's memberships live in the community's own collection.
+pub type MembershipsManager = GroupCollectionMemberships<
+	Memberships,
+	pallet_nfts::ItemConfig,
+	CommunityAccount,
+	MembershipsManagerAccountId,
+	RetirementHolderOption,
+>;
+
 /// The account of a community, which holds its stock of memberships.
 pub struct CommunityAccount;
 impl sp_runtime::traits::Convert<CommunityId, AccountId> for CommunityAccount {
@@ -217,8 +232,7 @@ impl pallet_communities::Config for Test {
 	type MemberOrigin = EnsureSigned<AccountId>;
 	type CommunityId = CommunityId;
 	type MembershipId = MembershipId;
-	type MemberMgmt =
-		GroupCollectionMemberships<Memberships, pallet_nfts::ItemConfig, CommunityAccount, MembershipsManagerAccountId>;
+	type MemberMgmt = MembershipsManager;
 	type Polls = Referenda;
 	type Assets = Assets;
 	type AssetsFreezer = AssetsFreezer;
@@ -236,8 +250,18 @@ impl Config for Test {
 	type RankedCollective = Collective;
 	type WeightInfo = WeightInfo;
 	type RegisterOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type GroupAdminOrigin = EnsureCommunity<Self>;
+	type Issuer = MembershipsManager;
+	type ItemAttributes = ClearNftsAttributes<Test>;
+	type RetirementHolder = RetiringMembershipsAccount;
+	type MembershipDeposit = MembershipDepositAmount;
+	type RetirementDelay = RetirementDelayInBlocks;
+	type MaxIssuePerCall = ConstU32<8>;
 }
 
 pub fn new_test_ext() -> TestExternalities {
-	TestExternalities::new(Default::default())
+	let mut t = TestExternalities::new(Default::default());
+	t.execute_with(|| System::set_block_number(1));
+	t
 }

@@ -8,6 +8,9 @@ use core::marker::PhantomData;
 /// Weight functions needed for pallet_communities.
 pub trait WeightInfo {
 	fn register() -> Weight;
+	fn issue_memberships(n: u32, ) -> Weight;
+	fn retire_memberships(n: u32, ) -> Weight;
+	fn complete_retirement() -> Weight;
 }
 
 /// Weights for pallet_communities using the Substrate node and recommended hardware.
@@ -51,6 +54,45 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(8))
 			.saturating_add(T::DbWeight::get().writes(14))
 	}
+	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
+	///
+	/// Per membership: the manager's mint, lock and index (the item, its config, its owner and the
+	/// collection), the hold on the community account, and the deposit record.
+	/// The range of component `n` is `[0, 1024]`.
+	fn issue_memberships(n: u32, ) -> Weight {
+		Weight::from_parts(60_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 8_000))
+			.saturating_add(Weight::from_parts(160_000_000, 0).saturating_mul(n.into()))
+			.saturating_add(Weight::from_parts(0, 9_000).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().reads(4))
+			.saturating_add(T::DbWeight::get().reads((10_u64).saturating_mul(n.into())))
+			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(T::DbWeight::get().writes((11_u64).saturating_mul(n.into())))
+	}
+	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
+	///
+	/// Per membership: the deposit record, the manager's move to the retirement holder, and the
+	/// retirement record.
+	/// The range of component `n` is `[0, 1024]`.
+	fn retire_memberships(n: u32, ) -> Weight {
+		Weight::from_parts(40_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 4_000))
+			.saturating_add(Weight::from_parts(120_000_000, 0).saturating_mul(n.into()))
+			.saturating_add(Weight::from_parts(0, 7_000).saturating_mul(n.into()))
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().reads((6_u64).saturating_mul(n.into())))
+			.saturating_add(T::DbWeight::get().writes(1))
+			.saturating_add(T::DbWeight::get().writes((5_u64).saturating_mul(n.into())))
+	}
+	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
+	///
+	/// The burn, the clearing of a few attributes in each namespace, and the release of the hold.
+	fn complete_retirement() -> Weight {
+		Weight::from_parts(400_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 50_000))
+			.saturating_add(T::DbWeight::get().reads(24))
+			.saturating_add(T::DbWeight::get().writes(24))
+	}
 }
 
 impl WeightInfo for () {
@@ -91,5 +133,44 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_parts(0, 132561))
 			.saturating_add(RocksDbWeight::get().reads(8))
 			.saturating_add(RocksDbWeight::get().writes(14))
+	}
+	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
+	///
+	/// Per membership: the manager's mint, lock and index (the item, its config, its owner and the
+	/// collection), the hold on the community account, and the deposit record.
+	/// The range of component `n` is `[0, 1024]`.
+	fn issue_memberships(n: u32, ) -> Weight {
+		Weight::from_parts(60_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 8_000))
+			.saturating_add(Weight::from_parts(160_000_000, 0).saturating_mul(n.into()))
+			.saturating_add(Weight::from_parts(0, 9_000).saturating_mul(n.into()))
+			.saturating_add(RocksDbWeight::get().reads(4))
+			.saturating_add(RocksDbWeight::get().reads((10_u64).saturating_mul(n.into())))
+			.saturating_add(RocksDbWeight::get().writes(1))
+			.saturating_add(RocksDbWeight::get().writes((11_u64).saturating_mul(n.into())))
+	}
+	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
+	///
+	/// Per membership: the deposit record, the manager's move to the retirement holder, and the
+	/// retirement record.
+	/// The range of component `n` is `[0, 1024]`.
+	fn retire_memberships(n: u32, ) -> Weight {
+		Weight::from_parts(40_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 4_000))
+			.saturating_add(Weight::from_parts(120_000_000, 0).saturating_mul(n.into()))
+			.saturating_add(Weight::from_parts(0, 7_000).saturating_mul(n.into()))
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().reads((6_u64).saturating_mul(n.into())))
+			.saturating_add(RocksDbWeight::get().writes(1))
+			.saturating_add(RocksDbWeight::get().writes((5_u64).saturating_mul(n.into())))
+	}
+	/// Hand-estimated, until `/cmd bench --pallet pallet_communities_manager` replaces it.
+	///
+	/// The burn, the clearing of a few attributes in each namespace, and the release of the hold.
+	fn complete_retirement() -> Weight {
+		Weight::from_parts(400_000_000, 0)
+			.saturating_add(Weight::from_parts(0, 50_000))
+			.saturating_add(RocksDbWeight::get().reads(24))
+			.saturating_add(RocksDbWeight::get().writes(24))
 	}
 }

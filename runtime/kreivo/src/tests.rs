@@ -6,7 +6,7 @@ use super::{
 	CENTS, UNITS,
 };
 
-use frame_support::{assert_ok, traits::fungible::Mutate};
+use frame_support::{assert_noop, assert_ok, traits::fungible::Mutate};
 use parachains_common::AccountId;
 use parity_scale_codec::Encode;
 use sp_core::crypto::AccountId32;
@@ -14,6 +14,7 @@ use sp_io::TestExternalities;
 use sp_runtime::{traits::StaticLookup, BoundedVec};
 use xcm_executor::{WeighedMessage, XcmExecutor};
 
+mod group_issuance;
 mod kreivo_apis;
 mod multi_block_migrations;
 
@@ -836,16 +837,7 @@ mod scheduler_clock_switch {
 		));
 		assert_ok!(Balances::mint_into(&Communities::community_account(&1), UNITS));
 		// Two memberships in the community's stock; `add_member` assigns one.
-		assert_ok!(
-			<crate::config::communities::Memberships as frame_contrib_traits::memberships::Issue<AccountId>>::issue(
-				&1, &0
-			)
-		);
-		assert_ok!(
-			<crate::config::communities::Memberships as frame_contrib_traits::memberships::Issue<AccountId>>::issue(
-				&1, &1
-			)
-		);
+		assert_ok!(CommunitiesManager::issue_memberships(RuntimeOrigin::signed(ALICE), 2));
 		assert_ok!(Communities::add_member(
 			RuntimeOrigin::signed(ALICE),
 			CommunityLookup::unlookup(BOB)
