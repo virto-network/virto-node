@@ -31,20 +31,21 @@ pub mod pallet_custom_origins {
 	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, DecodeWithMemTracking, TypeInfo, Debug)]
 	#[pallet::origin]
 	pub enum Origin {
-		/// Origin for issuing new memberships.
-		CreateMemberships,
+		/// Origin for the collective's usage subscription offers, contract terminations and
+		/// capacity (track 3). Variant 0, so its encoding does not change (`DEC-10`).
+		UsageSubscriptionAdmin,
 		/// Origin able to cancel referenda.
 		ReferendumCanceller,
 		/// Origin able to kill referenda.
 		ReferendumKiller,
 		/// Origin able to control the black hole event horizon
 		BlackHoleEventHorizon,
+		/// Origin for amending usage subscription offers and custom contracts (track 5, `DEC-28`).
+		UsageSubscriptionAmender,
 	}
 
 	macro_rules! decl_unit_ensures {
 		( $name:ident: $success_type:ty = $success:expr ) => {
-			// `CreateMemberships` has no user until `F-08` renames it (`UsageSubscriptionAdmin`).
-			#[allow(dead_code)]
 			pub struct $name;
 			impl<O: Into<Result<Origin, O>> + From<Origin>>
 				EnsureOrigin<O> for $name
@@ -75,9 +76,10 @@ pub mod pallet_custom_origins {
 	}
 
 	decl_unit_ensures!(
-		CreateMemberships,
+		UsageSubscriptionAdmin,
 		ReferendumCanceller,
 		ReferendumKiller,
-		BlackHoleEventHorizon
+		BlackHoleEventHorizon,
+		UsageSubscriptionAmender
 	);
 }
