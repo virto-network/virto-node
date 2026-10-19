@@ -607,6 +607,11 @@ pub struct Snapshot {
 	pub highest_id: Option<MembershipId>,
 	/// The Treasury's free balance, and the holders' of the refunds.
 	pub treasury_free: Balance,
+	/// What the burns (M2, M4) and the attribute clears (M5) release to the Treasury: the item,
+	/// metadata and attribute deposits it paid (or owes as the store's owner).
+	pub released_to_treasury: Balance,
+	/// The memberships (members and stock) that M6 will fund: those without a deposit row yet.
+	pub unfunded: u32,
 	pub holders_free: Vec<(AccountId, Balance)>,
 	/// The communities that already record a storage part.
 	pub with_storage_part: Vec<CommunityId>,
@@ -707,6 +712,16 @@ impl MembershipsToGroupCollections {
 		snapshot.communities = Info::iter_keys().collect();
 		snapshot.with_storage_part = CommunityDeposits::<Runtime>::iter_keys().collect();
 		snapshot.treasury_free = Balances::free_balance(treasury());
+		snapshot.released_to_treasury = Self::released_to_treasury();
+		snapshot.unfunded = (snapshot
+			.members
+			.iter()
+			.filter(|(c, i, ..)| !Deposits::<Runtime>::contains_key((c, i)))
+			.count() + snapshot
+			.stock
+			.iter()
+			.filter(|(c, i)| !Deposits::<Runtime>::contains_key((c, i)))
+			.count()) as u32;
 		let owed = Self::owed(&snapshot, total_refunds);
 		ensure(
 			Balances::reducible_balance(&treasury(), Preservation::Preserve, Fortitude::Polite) >= owed,
@@ -716,9 +731,47 @@ impl MembershipsToGroupCollections {
 		Ok(snapshot)
 	}
 
+	/// What the burns and the clears give back to the Treasury (`pallet_nfts` unreserves each
+	/// deposit to `deposit.account`, or to the collection's owner for an owner attribute without one):
+	/// the item and metadata deposits of every store item (all burnt by M2 and M4), and the deposits
+	/// of every attribute left on a missing item (M5's orphans, the burnt store items' included).
+	fn released_to_treasury() -> Balance {
+		let treasury = treasury();
+		let owner_of_collection = |c: CommunityId| Collection::<Runtime, I>::get(c).map(|d| d.owner);
+		let mut released: Balance = 0;
+		for (item, details) in ItemOf::iter_prefix(STORE) {
+			if details.deposit.account == treasury {
+				released = released.saturating_add(details.deposit.amount);
+			}
+			let unlocked = ItemConfigOf::<Runtime, I>::get(STORE, item)
+				.is_none_or(|c| c.is_setting_enabled(ItemSetting::UnlockedMetadata));
+			if let (true, Some(metadata)) = (unlocked, pallet_nfts::ItemMetadataOf::<Runtime, I>::get(STORE, item)) {
+				let payer = metadata.deposit.account.or_else(|| owner_of_collection(STORE));
+				if payer.as_ref() == Some(&treasury) {
+					released = released.saturating_add(metadata.deposit.amount);
+				}
+			}
+		}
+		for ((collection, item, namespace, _), (_, deposit)) in Attribute::<Runtime, I>::iter() {
+			let Some(item) = item else { continue };
+			if collection != STORE && ItemOf::contains_key(collection, item) {
+				continue;
+			}
+			let payer = match (deposit.account, namespace) {
+				(Some(account), _) => Some(account),
+				(None, AttributeNamespace::CollectionOwner) => owner_of_collection(collection),
+				_ => None,
+			};
+			if payer.as_ref() == Some(&treasury) {
+				released = released.saturating_add(deposit.amount);
+			}
+		}
+		released
+	}
+
 	/// What the migration takes from the Treasury.
 	fn owed(snapshot: &Snapshot, refunds: Balance) -> Balance {
-		let memberships = (snapshot.members.len() + snapshot.stock.len()) as u128;
+		let memberships = snapshot.unfunded as u128;
 		let parts = snapshot
 			.communities
 			.iter()
@@ -773,11 +826,32 @@ impl MembershipsToGroupCollections {
 			)?;
 		}
 		ensure(PendingRefunds::iter().next().is_none(), "a refund is still pending")?;
-		// REQ-RT-7, INV-19: the Treasury fell by exactly the total.
-		ensure(
-			Balances::free_balance(treasury()) == before.treasury_free.saturating_sub(Self::owed(before, paid)),
-			"the Treasury didn't fall by exactly the total",
-		)?;
+		// REQ-RT-7, INV-19: the Treasury fell by exactly the total, less what the burns and the
+		// clears released to it.
+		let expected = before
+			.treasury_free
+			.saturating_sub(Self::owed(before, paid))
+			.saturating_add(before.released_to_treasury);
+		let actual = Balances::free_balance(treasury());
+		if actual != expected {
+			let memberships = before.unfunded as u128;
+			let parts = before
+				.communities
+				.iter()
+				.filter(|c| !before.with_storage_part.contains(c))
+				.count() as u128;
+			log::error!(
+				target: LOG_TARGET,
+				"memberships migration: the Treasury was {} before, is {actual} after, and should be {expected} \
+				 (M6 deposits {} for {memberships} memberships, M9 refunds {paid}, M11 storage parts {} for \
+				 {parts} communities, nft deposits released to the Treasury {})",
+				before.treasury_free,
+				memberships.saturating_mul(MembershipDepositAmount::get()),
+				parts.saturating_mul(CommunityStoragePartAmount::get()),
+				before.released_to_treasury,
+			);
+			return Err("the Treasury didn't fall by exactly the total");
+		}
 
 		// Totals unchanged.
 		for (collection, members, ranks) in &before.totals {

@@ -458,6 +458,48 @@ fn the_migration_passes_the_checks_and_a_second_run_changes_nothing() {
 	});
 }
 
+// REQ-RT-7, INV-19: the burns and the clears give the Treasury back the deposits it paid on the store's
+// items and attributes, so the Treasury falls by the total less those; `post_upgrade` expects exactly
+// that.
+#[test]
+fn deposits_released_to_the_treasury_are_part_of_the_expected_balance() {
+	use frame_support::traits::ReservableCurrency;
+	use pallet_nfts::{Attribute, ItemDeposit};
+
+	TestExternalities::default().execute_with(|| {
+		live_state();
+		let (item_deposit, attribute_deposit) = (UNITS / 100, UNITS / 50);
+		// A store item whose deposit the Treasury paid, and the attribute on another one.
+		assert_ok!(Balances::reserve(&treasury(), item_deposit + attribute_deposit));
+		Item::<Runtime, Instance>::mutate(0, 1, |details| {
+			details.as_mut().expect("minted").deposit = ItemDeposit {
+				account: treasury(),
+				amount: item_deposit,
+			};
+		});
+		let key = Attribute::<Runtime, Instance>::iter_keys()
+			.find(|(c, i, _, _)| *c == 0 && *i == Some(4))
+			.expect("the leftover attribute");
+		Attribute::<Runtime, Instance>::mutate(key, |value| {
+			value.as_mut().expect("set").1.account = Some(treasury());
+			value.as_mut().expect("set").1.amount = attribute_deposit;
+		});
+
+		let snapshot = Migration::pre_upgrade_checks().expect("the state is as the rehearsal needs");
+		assert_eq!(snapshot.released_to_treasury, item_deposit + attribute_deposit);
+
+		assert_eq!(run_to_the_end(max_service()), 1);
+		assert_eq!(Migration::post_upgrade_checks(&snapshot), Ok(()));
+		// Without the released deposits, the Treasury would not have fallen by exactly the total.
+		let mut without = snapshot.clone();
+		without.released_to_treasury = 0;
+		assert_eq!(
+			Migration::post_upgrade_checks(&without),
+			Err("the Treasury didn't fall by exactly the total")
+		);
+	});
+}
+
 // T-10-00: a phase that spans more items than a block's weight yields, and the next block resumes
 // at the cursor: the store's items go three at a time, in storage order.
 #[test]
