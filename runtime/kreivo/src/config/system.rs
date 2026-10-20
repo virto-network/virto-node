@@ -167,10 +167,9 @@ parameter_types! {
 		.saturating_sub(MigrationsInherentReserve::get());
 }
 
-/// The stepped migrations this runtime runs. None yet: the memberships migration (`F-10`) is
-/// registered here. Tests run a no-op one that takes several blocks; the benchmarks need the
-/// pallet's mocked migrations.
-pub type ReleaseSteppedMigrations = ();
+/// The stepped migrations this runtime runs: the memberships migration (`F-10`). Tests run a no-op
+/// one that takes several blocks; the benchmarks need the pallet's mocked migrations.
+pub type ReleaseSteppedMigrations = (crate::migrations::memberships::MembershipsToGroupCollections,);
 #[cfg(feature = "runtime-benchmarks")]
 pub type SteppedMigrations = pallet_migrations::mock_helpers::MockedMigrations;
 #[cfg(all(test, not(feature = "runtime-benchmarks")))]
