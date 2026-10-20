@@ -88,10 +88,22 @@ fn an_administrator_issues_memberships_into_the_stock_and_holds_their_deposits()
 }
 
 // AC-F2.1, REQ-MI-D1: nothing is issued when the account cannot cover every deposit.
+// Benchmark builds charge an item deposit on each membership (`config/communities/memberships.rs`),
+// which fails the issuance before the hold this test measures.
+#[cfg(not(feature = "runtime-benchmarks"))]
 #[test]
 fn an_issuance_the_account_cannot_cover_issues_nothing() {
 	TestExternalities::default().execute_with(|| {
 		let account = community();
+		// Leave the account a few deposits, so that one more than it holds is within a call's limit.
+		assert_ok!(
+			<Balances as frame_support::traits::fungible::Mutate<AccountId>>::transfer(
+				&account,
+				&BOB,
+				990 * DEPOSIT,
+				frame_support::traits::tokens::Preservation::Expendable,
+			)
+		);
 		let free = Balances::reducible_balance(
 			&account,
 			frame_support::traits::tokens::Preservation::Expendable,

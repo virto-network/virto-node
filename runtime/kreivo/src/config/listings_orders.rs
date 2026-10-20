@@ -11,6 +11,9 @@ use sp_core::ConstU128;
 use sp_runtime::morph_types;
 use virto_common::listings;
 
+/// The bytes of a subscription record with its key, at their largest encoding.
+pub const SUBSCRIPTION_BYTES: u32 = 225;
+
 parameter_types! {
 	pub KeyLimit: u32 = 64;
 	pub ValueLimit: u32 = 256;
@@ -18,13 +21,18 @@ parameter_types! {
 	pub const ListingsRenewalLead: BlockNumber = 12 * HOURS;
 	/// The width of a bucket of the due queue: 10 minutes (0009-A6). At most `ListingsRenewalLead`.
 	pub const ListingsDueBucketSize: BlockNumber = 10 * MINUTES;
-	/// Provisional, until `F-08` measures them (`deployment/kreivo-0.18.md` §1).
+	/// Provisional until `/cmd bench` measures `pallet_listings` (`F-08`, T-08-07): the pallet's
+	/// estimate of 64 entries is 32 ms. `tests::deposit_values` keeps a full batch under its limit.
 	pub const ListingsMaxDuePerBucket: u32 = 64;
-	/// Provisional, until `F-08` measures it.
+	/// Provisional, as above: 8 charges weigh 4.7 ms, under the 50 ms (10 % of a block's normal
+	/// `ref_time`) a batch may take (`deployment/kreivo-0.18.md` §1).
 	pub const ListingsMaxChargesPerBlock: u32 = 8;
-	/// A TEST VALUE: the amount each subscription holds from its subscriber, in the native currency.
-	/// `F-07b` sets the measured one (`m3-subscription-deposit`).
-	pub const SubscriptionDepositAmount: Balance = CENTS;
+	/// What each subscription holds from its subscriber, in the native currency: a fixed price at
+	/// the measured footprint of one subscription, `Listings::subscription_footprint()` (one record
+	/// with its key at their largest encoding: 1 entry, 225 bytes), at Kreivo's deposit rate:
+	/// `deposit(1, 225)` = 6 666 666 660 + 225 × 333 333 = 6 741 666 585 planck, about 0.00674 KSM
+	/// (0012-Q1d). `tests::deposit_values` ties it to the pallet's footprint.
+	pub const SubscriptionDepositAmount: Balance = deposit(1, SUBSCRIPTION_BYTES);
 	pub const SubscriptionHoldReason: RuntimeHoldReason =
 		RuntimeHoldReason::Listings(pallet_listings::HoldReason::SubscriptionDeposit);
 }

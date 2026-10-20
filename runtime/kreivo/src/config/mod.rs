@@ -13,7 +13,7 @@ pub mod communities;
 pub mod governance;
 // Virto toolchain
 pub mod contracts;
-mod listings_orders;
+pub(crate) mod listings_orders;
 pub mod payments;
 pub mod usage_subscription;
 
