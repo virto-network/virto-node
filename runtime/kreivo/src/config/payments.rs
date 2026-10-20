@@ -2,12 +2,37 @@ use super::*;
 
 mod indices;
 
+use frame_support::traits::fungible;
 use frame_support::traits::EitherOf;
 use frame_system::EnsureSigned;
 use pallet_communities::origin::AsSignedByCommunity;
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::traits::{AccountIdConversion, Convert};
+use sp_runtime::Either;
 
 pub use indices::pallet_payment_indices;
+
+/// Tells the native token from the assets: `Here(0)` is `Balances`, any other id is an `Assets` asset
+/// (`DEC-11`). Never create `Assets` asset `Here(0)` (`RISK-5`).
+pub struct NativeOrAsset;
+
+impl Convert<FungibleAssetLocation, Either<(), FungibleAssetLocation>> for NativeOrAsset {
+	fn convert(asset: FungibleAssetLocation) -> Either<(), FungibleAssetLocation> {
+		match asset {
+			// The benchmarks of payments and orders pick the default asset id, `Here(0)`, and mint
+			// amounts far below the native existential deposit, so benchmark builds keep it in
+			// `Assets`, where the benchmarks create it.
+			#[cfg(not(feature = "runtime-benchmarks"))]
+			FungibleAssetLocation::Here(0) => Either::Left(()),
+			asset => Either::Right(asset),
+		}
+	}
+}
+
+/// What payments and listings see: KSM as `Here(0)`, and every asset of `Assets`.
+pub type NativeAndAssets = fungible::UnionOf<Balances, Assets, NativeOrAsset, FungibleAssetLocation, AccountId>;
+/// The holds of [`NativeAndAssets`].
+pub type NativeAndAssetsHold =
+	fungible::UnionOf<Balances, AssetsHolder, NativeOrAsset, FungibleAssetLocation, AccountId>;
 
 parameter_types! {
 	pub const MaxRemarkLength: u8 = 50;
@@ -30,7 +55,14 @@ impl FeeHandler<Runtime> for KreivoFeeHandler {
 		amount: &Balance,
 		_remark: Option<&[u8]>,
 	) -> Fees<Runtime> {
-		let min = <Assets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
+		// A charge to the payee (the Treasury) pays no fee on either side (`DEC-5`, `REQ-BL-3`).
+		if beneficiary == &TreasuryAccount::get() {
+			return Fees {
+				sender_pays: Default::default(),
+				beneficiary_pays: Default::default(),
+			};
+		}
+		let min = <NativeAndAssets as fungibles::Inspect<AccountId>>::minimum_balance(*asset);
 		let pallet_id = communities::CommunityPalletId::get();
 		let default_fee = |fee: Percent| (TreasuryAccount::get(), min.max(fee.mul_floor(*amount)), MANDATORY_FEE);
 		let is_community =
@@ -62,8 +94,8 @@ impl pallet_payments::Config for Runtime {
 	type BeneficiaryOrigin = EnsureSigned<AccountId>;
 	type DisputeResolver = frame_system::EnsureRootWithSuccess<AccountId, TreasuryAccount>;
 	type PaymentId = virto_common::PaymentId;
-	type Assets = Assets;
-	type AssetsHold = AssetsHolder;
+	type Assets = NativeAndAssets;
+	type AssetsHold = NativeAndAssetsHold;
 	type BlockNumberProvider = RelaychainData;
 	type FeeHandler = KreivoFeeHandler;
 	type Scheduler = Scheduler;

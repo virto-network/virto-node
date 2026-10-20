@@ -34,7 +34,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 	type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
 
 	fn tracks() -> impl Iterator<Item = Cow<'static, Track<TrackId, Balance, BlockNumber>>> {
-		const DATA: [Track<TrackId, Balance, BlockNumber>; 5] = [
+		const DATA: [Track<TrackId, Balance, BlockNumber>; 6] = [
 			Track {
 				id: 0,
 				info: pallet_referenda::TrackInfo {
@@ -104,7 +104,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 			Track {
 				id: 3,
 				info: pallet_referenda::TrackInfo {
-					name: s("Create Memberships"),
+					name: s("Usage Subscriptions"),
 					max_deciding: 1,
 					decision_deposit: UNITS,
 					prepare_period: period::PREPARE,
@@ -137,6 +137,26 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 					min_support: pallet_referenda::Curve::make_linear(28, 28, percent(50), percent(100)),
 				},
 			},
+			Track {
+				id: 5,
+				info: pallet_referenda::TrackInfo {
+					name: s("Usage Sub. Amendments"),
+					max_deciding: 1,
+					decision_deposit: UNITS,
+					prepare_period: DAYS,
+					decision_period: 28 * DAYS,
+					confirm_period: 14 * DAYS,
+					min_enactment_period: 7 * DAYS,
+					min_approval: pallet_referenda::Curve::make_reciprocal(
+						3,
+						28,
+						percent(75),
+						percent(60),
+						percent(100),
+					),
+					min_support: pallet_referenda::Curve::make_linear(28, 28, percent(60), percent(60)),
+				},
+			},
 		];
 		DATA.iter().map(Borrowed)
 	}
@@ -151,8 +171,9 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 			match custom_origin {
 				Origin::ReferendumCanceller => Ok(1),
 				Origin::ReferendumKiller => Ok(2),
-				Origin::CreateMemberships => Ok(3),
+				Origin::UsageSubscriptionAdmin => Ok(3),
 				Origin::BlackHoleEventHorizon => Ok(4),
+				Origin::UsageSubscriptionAmender => Ok(5),
 			}
 		} else {
 			Err(())

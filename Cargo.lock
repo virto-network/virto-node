@@ -3960,18 +3960,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fc-pallet-gas-transaction-payment"
-version = "2.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32eccb10faa816ffbd34ca2a9260dadfc9e318d3b378484aaa688b636f9e4dc7"
-dependencies = [
- "frame-contrib-traits",
- "parity-scale-codec",
- "polkadot-sdk-frame",
- "scale-info",
-]
-
-[[package]]
 name = "fc-pallet-listings"
 version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4061,6 +4049,22 @@ dependencies = [
  "serde",
  "sp-core",
  "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
+name = "fc-pallet-usage-subscription"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c43f2606f284c9a8ab76d3dfd45c846de7963149cfce3391edc7f33549206534"
+dependencies = [
+ "fc-traits-listings",
+ "fc-traits-memberships",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime",
 ]
 
@@ -6208,12 +6212,12 @@ dependencies = [
  "cumulus-primitives-utility",
  "fc-pallet-black-hole",
  "fc-pallet-communities",
- "fc-pallet-gas-transaction-payment",
  "fc-pallet-listings",
  "fc-pallet-orders",
  "fc-pallet-pass",
  "fc-pallet-payments",
  "fc-pallet-referenda-tracks",
+ "fc-pallet-usage-subscription",
  "frame-benchmarking",
  "frame-contrib-traits",
  "frame-executive",

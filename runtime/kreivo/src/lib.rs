@@ -28,7 +28,7 @@ pub mod xcm_config;
 use apis::*;
 use config::*;
 
-use alloc::{borrow::Cow::Borrowed, boxed::Box, string::String, vec, vec::Vec};
+use alloc::{borrow::Cow::Borrowed, string::String, vec, vec::Vec};
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use sp_core::crypto::KeyTypeId;
 
@@ -64,7 +64,7 @@ use xcm_config::{LocationConvertedConcreteId, RelayLocation, XcmOriginToTransact
 pub use sp_runtime::BuildStorage;
 
 use pallet_asset_tx_payment::ChargeAssetTxPayment;
-use pallet_gas_transaction_payment::ChargeTransactionPayment as ChargeGasTxPayment;
+use pallet_usage_subscription::ChargeUsageSubscription;
 
 use pallet_pass::PassAuthenticate;
 use pallet_skip_feeless_payment::SkipCheckIfFeeless;
@@ -90,7 +90,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
 
-pub type ChargeTransaction = ChargeGasTxPayment<Runtime, ChargeAssetTxPayment<Runtime>>;
+pub type ChargeTransaction = ChargeUsageSubscription<Runtime, ChargeAssetTxPayment<Runtime>>;
 
 /// The TransactionExtensions to the basic transaction logic. `DynamicMaxBlockWeight` wraps
 /// them all, so a transaction too heavy for a block's share of the core can take the whole
@@ -131,7 +131,15 @@ pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, Tr
 pub type Migrations = (
 	// Permanent
 	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
+	// 0.18: usage subscriptions take `GasTxPayment`'s place at index 17 (`DEC-25`). Its tanks live in
+	// the memberships' attributes, so the pallet's own prefix holds nothing to keep: this clears it.
+	frame_support::migrations::RemovePallet<GasTxPaymentPrefix, RocksDbWeight>,
 );
+
+frame_support::parameter_types! {
+	/// The prefix of the removed `GasTxPayment` pallet.
+	pub const GasTxPaymentPrefix: &'static str = "GasTxPayment";
+}
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive =
@@ -214,7 +222,7 @@ mod runtime {
 	#[runtime::pallet_index(16)]
 	pub type SkipFeeless = pallet_skip_feeless_payment;
 	#[runtime::pallet_index(17)]
-	pub type GasTxPayment = pallet_gas_transaction_payment;
+	pub type UsageSubscription = pallet_usage_subscription;
 	#[runtime::pallet_index(18)]
 	pub type AssetsHolder = pallet_assets_holder<Instance1>;
 

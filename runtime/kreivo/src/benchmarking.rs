@@ -26,7 +26,7 @@ frame_benchmarking::define_benchmarks!(
 	[pallet_assets, Assets]
 	[pallet_asset_tx_payment, AssetsTxPayment]
 	[pallet_vesting, Vesting]
-	[pallet_gas_transaction_payment, GasTxPayment]
+	[pallet_usage_subscription, UsageSubscription]
 
 	// Collator support
 	[pallet_collator_selection, CollatorSelection]

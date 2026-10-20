@@ -40,7 +40,7 @@ morph_types! {
 		PalletId::try_from_sub_account(&a).map(|(_, id)| id).ok_or(())
 	};
 }
-type EnsureCommunityAccount = TryMapSuccess<EnsureSigned<AccountId>, AccountToCommunityId>;
+pub(crate) type EnsureCommunityAccount = TryMapSuccess<EnsureSigned<AccountId>, AccountToCommunityId>;
 
 type RootCreatesCommunitiesForFree = EnsureRootWithSuccess<AccountId, NoPay>;
 type AnyoneElsePays = EnsureSignedPays<Runtime, CommunityDepositAmount, TreasuryAccount>;
@@ -102,6 +102,7 @@ pub use benchmarks::CommunityBenchmarkHelper;
 mod benchmarks {
 	use super::*;
 
+	use alloc::boxed::Box;
 	use governance::{CommunityReferendaInstance, CommunityTracksInstance};
 
 	use frame_benchmarking::BenchmarkError;
