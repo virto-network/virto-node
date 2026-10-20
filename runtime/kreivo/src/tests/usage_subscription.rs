@@ -3,6 +3,9 @@
 //!
 //! The values are test values: `F-07b` sets the measured ones.
 
+// The tests of the KSM price are off in benchmark builds (see below), and so are their helpers.
+#![cfg_attr(feature = "runtime-benchmarks", allow(dead_code, unused_imports))]
+
 use super::*;
 use frame_support::weights::Weight;
 
@@ -263,6 +266,9 @@ fn a_payment_to_the_treasury_pays_no_fee() {
 
 // DEC-11, REQ-BL-3: a KSM charge moves exactly the price from the group to the Treasury, and the
 // subscription's deposit is held on the group.
+// Benchmark builds keep `Here(0)` in `Assets` (`config/payments.rs`), so the KSM price is not paid
+// in `Balances` there.
+#[cfg(not(feature = "runtime-benchmarks"))]
 #[test]
 fn a_ksm_charge_moves_exactly_the_price_to_the_treasury() {
 	TestExternalities::default().execute_with(|| {
@@ -288,6 +294,9 @@ fn a_ksm_charge_moves_exactly_the_price_to_the_treasury() {
 
 // AC-C3.3, 0009-A12: a member with no balance transacts on its group's pool, through the real
 // nonce, weight and payment extensions.
+// Benchmark builds keep `Here(0)` in `Assets` (`config/payments.rs`), so the KSM price is not paid
+// in `Balances` there.
+#[cfg(not(feature = "runtime-benchmarks"))]
 #[test]
 fn a_member_with_no_balance_transacts_on_the_pool_of_its_group() {
 	TestExternalities::default().execute_with(|| {
@@ -305,6 +314,9 @@ fn a_member_with_no_balance_transacts_on_the_pool_of_its_group() {
 }
 
 // A non-member with no balance cannot pay the fee: the pool is not theirs (REQ-PL-7).
+// Benchmark builds keep `Here(0)` in `Assets` (`config/payments.rs`), so the KSM price is not paid
+// in `Balances` there.
+#[cfg(not(feature = "runtime-benchmarks"))]
 #[test]
 fn an_account_outside_the_group_with_no_balance_cannot_transact() {
 	TestExternalities::default().execute_with(|| {
@@ -318,6 +330,9 @@ fn an_account_outside_the_group_with_no_balance_cannot_transact() {
 }
 
 // m3-capacity-origin, DEC-10, DEC-28: Root and track 3 publish and cap; the amender only amends.
+// Benchmark builds keep `Here(0)` in `Assets` (`config/payments.rs`), so the KSM price is not paid
+// in `Balances` there.
+#[cfg(not(feature = "runtime-benchmarks"))]
 #[test]
 fn offers_and_capacity_answer_to_root_and_track_three_and_amendments_to_track_five() {
 	TestExternalities::default().execute_with(|| {
