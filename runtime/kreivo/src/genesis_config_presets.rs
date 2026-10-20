@@ -66,7 +66,6 @@ mod local {
 			"communitiesManager": CommunitiesManagerConfig {
 				// A community to cover a sudo-ish management.
 				communities: vec![(1, String::from("root"), sudo, None, Some(1))],
-				memberships: vec![(1, 10, UNITS, (None, None), None)],
 			},
 		});
 

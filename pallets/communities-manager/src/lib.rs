@@ -3,31 +3,35 @@
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
-use frame_contrib_traits::{gas_tank::MakeTank, tracks::MutateTracks};
+use frame_contrib_traits::{memberships::Issue, tracks::MutateTracks};
 use frame_support::{
 	pallet_prelude::*,
 	traits::{
-		nonfungibles_v2::Inspect,
-		nonfungibles_v2::Mutate as ItemMutate,
-		nonfungibles_v2::{Create as CollectionCreate, Trading},
+		fungible::{hold::Mutate as MutateHold, Mutate},
+		nonfungibles_v2::Create as CollectionCreate,
+		tokens::{Precision, Preservation},
 		Incrementable, OriginTrait, RankedMembers,
 	},
 };
-use frame_system::pallet_prelude::{BlockNumberFor, OriginFor};
+use frame_system::{
+	ensure_signed,
+	pallet_prelude::{BlockNumberFor, OriginFor},
+};
 use pallet_communities::{
 	AccountIdOf, AssetIdOf, CommunityIdOf, DecisionMethodFor, NativeBalanceOf, Origin as CommunityOrigin,
 	PalletsOriginOf, RuntimeOriginFor,
 };
-use pallet_nfts::{CollectionConfig, MintSettings, MintType};
+use pallet_nfts::{AttributeNamespace, CollectionConfig};
 use pallet_referenda::{TrackInfo, TracksInfo};
-use parity_scale_codec::Decode;
 use sp_runtime::{
 	str_array,
-	traits::{Get, StaticLookup},
+	traits::{BlockNumberProvider, Saturating, StaticLookup, Zero},
 };
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+#[cfg(all(feature = "runtime-benchmarks", feature = "std"))]
+pub use benchmarking::test_group_benchmark;
 
 #[cfg(test)]
 pub(crate) mod mock;
@@ -41,10 +45,69 @@ pub use weights::*;
 
 type TrackInfoOf<T> = TrackInfo<NativeBalanceOf<T>, BlockNumberFor<T>>;
 
-#[derive(Default, Encode, Decode, DecodeWithMemTracking, Clone, PartialEq, Eq, Debug, TypeInfo)]
-pub struct TankConfig<Weight, BlockNumber> {
-	capacity: Option<Weight>,
-	periodicity: Option<BlockNumber>,
+/// A moment of the clock communities (and so retirements) are timed with.
+pub type MomentOf<T> = <<T as pallet_communities::Config>::BlockNumberProvider as BlockNumberProvider>::BlockNumber;
+
+/// Clears the attributes of a membership item, in every namespace of its collection system.
+///
+/// Whoever sets an attribute on an item (its holder, a delegate, the collection's team) writes it in
+/// a namespace the memberships manager does not own, and a burn leaves it behind. A retirement
+/// clears them all, with the root origin of the collection system.
+pub trait ClearItemAttributes<CollectionId, ItemId> {
+	/// How many attributes the item carries, in every namespace.
+	fn count(collection: &CollectionId, item: &ItemId) -> u32;
+
+	/// Clears every attribute of the item, whatever its namespace.
+	fn clear_all(collection: &CollectionId, item: &ItemId) -> DispatchResult;
+
+	/// Gives the item `amount` attributes, for the benchmark of the clearing.
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_benchmark_attributes(collection: &CollectionId, item: &ItemId, amount: u32);
+}
+
+/// Clears the attributes of a `pallet_nfts` item through its force origin, which must accept root.
+pub struct ClearNftsAttributes<T, I = ()>(core::marker::PhantomData<(T, I)>);
+
+impl<T: pallet_nfts::Config<I>, I: 'static> ClearItemAttributes<T::CollectionId, T::ItemId>
+	for ClearNftsAttributes<T, I>
+{
+	fn count(collection: &T::CollectionId, item: &T::ItemId) -> u32 {
+		pallet_nfts::Attribute::<T, I>::iter_prefix((collection, Some(item))).count() as u32
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_benchmark_attributes(collection: &T::CollectionId, item: &T::ItemId, amount: u32) {
+		for i in 0..amount {
+			let key = i.to_le_bytes().to_vec();
+			pallet_nfts::Pallet::<T, I>::force_set_attribute(
+				frame_system::RawOrigin::Root.into(),
+				None,
+				*collection,
+				Some(*item),
+				AttributeNamespace::Pallet,
+				key.try_into().expect("the key limit holds a u32"),
+				Default::default(),
+			)
+			.expect("the benchmark sets its attributes");
+		}
+	}
+
+	fn clear_all(collection: &T::CollectionId, item: &T::ItemId) -> DispatchResult {
+		let attributes: Vec<_> = pallet_nfts::Attribute::<T, I>::iter_prefix((collection, Some(item)))
+			.map(|((namespace, key), _)| (namespace, key))
+			.collect();
+
+		for (namespace, key) in attributes {
+			pallet_nfts::Pallet::<T, I>::clear_attribute(
+				frame_system::RawOrigin::Root.into(),
+				*collection,
+				Some(*item),
+				namespace as AttributeNamespace<T::AccountId>,
+				key,
+			)?;
+		}
+		Ok(())
+	}
 }
 
 // The pallet macros clone every call argument, `Copy` ones included.
@@ -62,20 +125,23 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config<RuntimeEvent: From<Event<Self>>>
-		+ pallet_communities::Config<MembershipId: Incrementable + HasCompact + MaybeSerializeDeserialize>
+		+ pallet_communities::Config<
+			MembershipId: Incrementable + HasCompact + MaybeSerializeDeserialize + Default,
+			Balances: MutateHold<
+				<Self as frame_system::Config>::AccountId,
+				Reason = <Self as Config>::RuntimeHoldReason,
+			>,
+		>
 	where
 		AssetIdOf<Self>: MaybeSerializeDeserialize,
 	{
+		/// The overarching hold reason.
+		type RuntimeHoldReason: From<HoldReason>;
+
 		type CreateCollection: CollectionCreate<
 			AccountIdOf<Self>,
 			CollectionConfig<NativeBalanceOf<Self>, BlockNumberFor<Self>, CommunityIdOf<Self>>,
 			CollectionId = CommunityIdOf<Self>,
-		>;
-
-		type MakeTank: MakeTank<
-			Gas = Weight,
-			TankId = (CommunityIdOf<Self>, Self::MembershipId),
-			BlockNumber = BlockNumberFor<Self>,
 		>;
 
 		type Tracks: TracksInfo<NativeBalanceOf<Self>, BlockNumberFor<Self>>
@@ -96,32 +162,79 @@ pub mod pallet {
 			Success = Option<(NativeBalanceOf<Self>, AccountIdOf<Self>, AccountIdOf<Self>)>,
 		>;
 
-		type CreateMembershipsOrigin: EnsureOrigin<OriginFor<Self>>;
+		/// The origin of a community's administration. It resolves to the community.
+		type GroupAdminOrigin: EnsureOrigin<OriginFor<Self>, Success = CommunityIdOf<Self>>;
 
-		type MembershipsManagerCollectionId: Get<CommunityIdOf<Self>>;
+		/// The memberships manager: the part of issuing and retiring a membership that touches the item.
+		type Issuer: Issue<AccountIdOf<Self>, Group = CommunityIdOf<Self>, Membership = Self::MembershipId>;
 
-		type MembershipsManagerOwner: Get<AccountIdOf<Self>>;
+		/// Clears what holders and delegates wrote on an item, when its retirement completes.
+		type ItemAttributes: ClearItemAttributes<CommunityIdOf<Self>, Self::MembershipId>;
 
-		type ItemConfig: Default;
+		/// Owner and administrator of every community's collection of memberships.
+		type MembershipsManagerAccount: Get<AccountIdOf<Self>>;
 
-		type CreateMemberships: CollectionCreate<
-				AccountIdOf<Self>,
-				CollectionConfig<NativeBalanceOf<Self>, BlockNumberFor<Self>, CommunityIdOf<Self>>,
-			> + ItemMutate<
-				AccountIdOf<Self>,
-				Self::ItemConfig,
-				CollectionId = CommunityIdOf<Self>,
-				ItemId = Self::MembershipId,
-			> + Trading<
-				AccountIdOf<Self>,
-				NativeBalanceOf<Self>,
-				CollectionId = CommunityIdOf<Self>,
-				ItemId = Self::MembershipId,
-			>;
+		/// The part of a community's registration that stays with the community: transferred to its
+		/// account and held there as [`HoldReason::CommunityDeposit`]. A change applies to new
+		/// communities only: each keeps the amount it was registered with.
+		#[pallet::constant]
+		type CommunityStoragePart: Get<NativeBalanceOf<Self>>;
+
+		/// The part of a community's registration that is paid to the payee, for good.
+		#[pallet::constant]
+		type CommunityConsumptionPart: Get<NativeBalanceOf<Self>>;
+
+		/// The account that holds a membership while it retires. It is the one the memberships manager
+		/// is configured with.
+		type RetirementHolder: Get<AccountIdOf<Self>>;
+
+		/// What each issued membership holds on its community's account. A change applies to new
+		/// issuances only: each membership keeps the amount it was issued with.
+		#[pallet::constant]
+		type MembershipDeposit: Get<NativeBalanceOf<Self>>;
+
+		/// How long a retiring membership waits before its retirement can be completed, in the clock of
+		/// [`pallet_communities::Config::BlockNumberProvider`].
+		#[pallet::constant]
+		type RetirementDelay: Get<MomentOf<Self>>;
+
+		/// The most memberships a call issues or retires.
+		#[pallet::constant]
+		type MaxIssuePerCall: Get<u32>;
 	}
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
+
+	/// The reasons this pallet holds funds on a community's account.
+	#[pallet::composite_enum]
+	pub enum HoldReason {
+		/// The deposit of an issued membership.
+		#[codec(index = 0)]
+		MembershipDeposit,
+		/// The storage part of a community's registration.
+		#[codec(index = 1)]
+		CommunityDeposit,
+	}
+
+	/// The identifier the next issued membership takes. Memberships of every community draw from it,
+	/// so an identifier is never reused, in any community.
+	#[pallet::storage]
+	pub type NextMembershipId<T: Config> = StorageValue<_, T::MembershipId, ValueQuery>;
+
+	/// The storage part of its registration that a community holds on its account, by community.
+	/// A community registered for free has none.
+	#[pallet::storage]
+	pub type CommunityDeposits<T: Config> = StorageMap<_, Blake2_128Concat, CommunityIdOf<T>, NativeBalanceOf<T>>;
+
+	/// What a membership holds on its community's account, by community and membership.
+	#[pallet::storage]
+	pub type Deposits<T: Config> =
+		StorageMap<_, Blake2_128Concat, (CommunityIdOf<T>, T::MembershipId), NativeBalanceOf<T>>;
+
+	/// When a retiring membership's retirement can be completed, by community and membership.
+	#[pallet::storage]
+	pub type Retiring<T: Config> = StorageMap<_, Blake2_128Concat, (CommunityIdOf<T>, T::MembershipId), MomentOf<T>>;
 
 	/// A genesis community info.
 	pub type GenesisCommunityOf<T> = (
@@ -137,26 +250,11 @@ pub mod pallet {
 		Option<u16>,
 	);
 
-	/// A genesis membership info.
-	pub type GenesisMembershipOf<T> = (
-		// starting_at
-		<T as pallet_communities::Config>::MembershipId,
-		// amount
-		u16,
-		// price
-		NativeBalanceOf<T>,
-		// tank_config,
-		(Option<Weight>, Option<BlockNumberFor<T>>),
-		// maybe_expiration
-		Option<BlockNumberFor<T>>,
-	);
-
 	#[pallet::genesis_config]
 	#[derive(DefaultNoBound)]
 	pub struct GenesisConfig<T: Config> {
 		/// A list of initial communities, with the most basic settings.
 		pub communities: Vec<GenesisCommunityOf<T>>,
-		pub memberships: Vec<GenesisMembershipOf<T>>,
 	}
 
 	#[pallet::genesis_build]
@@ -174,18 +272,6 @@ pub mod pallet {
 				)
 				.unwrap();
 			}
-
-			for (starting_at, amount, price, tank_config, maybe_expiration) in &self.memberships {
-				let (capacity, periodicity) = *tank_config;
-				Pallet::<T>::try_create_memberships(
-					*starting_at,
-					*amount,
-					*price,
-					TankConfig { capacity, periodicity },
-					*maybe_expiration,
-				)
-				.unwrap()
-			}
 		}
 	}
 
@@ -197,8 +283,24 @@ pub mod pallet {
 		/// The community with [`CommunityId`](pallet_communities::CommunityId)
 		/// has been created.
 		CommunityRegistered { id: T::CommunityId },
-		/// The
-		MembershipsCreated { starting_at: T::MembershipId, amount: u32 },
+		/// A community issued memberships into its stock, with fresh identifiers from `first` on.
+		MembershipsIssued {
+			community: T::CommunityId,
+			first: T::MembershipId,
+			amount: u32,
+		},
+		/// A community retired memberships from its stock. Their retirements can be completed from
+		/// `completable_at` on.
+		MembershipsRetiring {
+			community: T::CommunityId,
+			amount: u32,
+			completable_at: MomentOf<T>,
+		},
+		/// A retirement was completed: the membership was burnt and its deposit released.
+		RetirementCompleted {
+			community: T::CommunityId,
+			membership_id: T::MembershipId,
+		},
 	}
 
 	// Errors inform users that something worked or went wrong.
@@ -208,8 +310,20 @@ pub mod pallet {
 		InvalidCommunityName,
 		/// It was not possible to register the community
 		CannotRegister,
-		/// The amount of memberships to create exceeds the limit of 1024
-		CreatingTooManyMemberships,
+		/// The community's account cannot cover the deposits of the issuance.
+		MembershipLimit,
+		/// The call issues more memberships than the limit.
+		TooManyMemberships,
+		/// No identifier is left for a new membership.
+		NoMembershipIdLeft,
+		/// The membership is not in the community's stock, or has no deposit.
+		NotRetirable,
+		/// The membership is not retiring.
+		NotRetiring,
+		/// The delay of the retirement has not passed.
+		RetirementNotElapsed,
+		/// The membership carries more attributes than the witness declares.
+		TooManyAttributes,
 	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke
@@ -238,38 +352,58 @@ pub mod pallet {
 			)
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::create_memberships((*amount).into()))]
-		#[pallet::call_index(1)]
-		pub fn create_memberships(
-			origin: OriginFor<T>,
-			amount: u16,
-			starting_at: T::MembershipId,
-			#[pallet::compact] price: NativeBalanceOf<T>,
-			tank_config: TankConfig<Weight, BlockNumberFor<T>>,
-			maybe_expiration: Option<BlockNumberFor<T>>,
-		) -> DispatchResult {
-			ensure!(amount <= 1024u16, Error::<T>::CreatingTooManyMemberships);
-			T::CreateMembershipsOrigin::ensure_origin(origin.clone())?;
-
-			Self::try_create_memberships(starting_at, amount, price, tank_config, maybe_expiration)
+		/// Issues `amount` memberships into the stock of the community, each with a fresh identifier,
+		/// held by the community's account, locked, and backed by a deposit held on that account.
+		///
+		/// Refused, and nothing is issued, if the community's account cannot cover every deposit.
+		#[pallet::call_index(3)]
+		#[pallet::weight(<T as Config>::WeightInfo::issue_memberships((*amount).min(T::MaxIssuePerCall::get())))]
+		pub fn issue_memberships(origin: OriginFor<T>, amount: u32) -> DispatchResult {
+			let community = T::GroupAdminOrigin::ensure_origin(origin)?;
+			ensure!(amount <= T::MaxIssuePerCall::get(), Error::<T>::TooManyMemberships);
+			Self::do_issue_memberships(&community, amount)
 		}
 
-		#[pallet::call_index(2)]
-		pub fn set_gas_tank(
+		/// Retires memberships of the community's stock. Each leaves the stock at once, and its
+		/// retirement can be completed after the delay.
+		///
+		/// An assigned membership is released first.
+		#[pallet::call_index(4)]
+		#[pallet::weight(<T as Config>::WeightInfo::retire_memberships(ids.len() as u32))]
+		pub fn retire_memberships(
+			origin: OriginFor<T>,
+			ids: BoundedVec<T::MembershipId, T::MaxIssuePerCall>,
+		) -> DispatchResult {
+			let community = T::GroupAdminOrigin::ensure_origin(origin)?;
+			Self::do_retire_memberships(&community, &ids)
+		}
+
+		/// Completes a retirement, once its delay has passed: the membership is burnt, every
+		/// attribute it carries is cleared, and its deposit is released to the community's account.
+		///
+		/// `attributes` is a witness: the number of attributes the membership carries, in every
+		/// namespace. The call is refused if there are more, and the weight of the attributes that
+		/// were not there is refunded.
+		#[pallet::call_index(5)]
+		#[pallet::weight(<T as Config>::WeightInfo::complete_retirement(*attributes))]
+		pub fn complete_retirement(
 			origin: OriginFor<T>,
 			community_id: CommunityIdOf<T>,
 			membership_id: T::MembershipId,
-			config: TankConfig<Weight, BlockNumberFor<T>>,
-		) -> DispatchResult {
-			T::CreateMembershipsOrigin::ensure_origin(origin)?;
-			Self::do_set_gas_tank(&(community_id, membership_id), &config)
+			attributes: u32,
+		) -> DispatchResultWithPostInfo {
+			ensure_signed(origin)?;
+			let cleared = Self::do_complete_retirement(&community_id, &membership_id, attributes)?;
+			Ok(Some(<T as Config>::WeightInfo::complete_retirement(cleared)).into())
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
+	/// Registers a community. `maybe_payment` names who pays for it and to whom (`None`, as for Root
+	/// and genesis, pays nothing); the amounts are the pallet's own two parts.
 	pub(crate) fn try_register(
-		maybe_deposit: Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>,
+		maybe_payment: Option<(NativeBalanceOf<T>, AccountIdOf<T>, AccountIdOf<T>)>,
 		community_id: CommunityIdOf<T>,
 		community_name: &str,
 		admin: &AccountIdOf<T>,
@@ -279,8 +413,9 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let admin_origin = frame_system::Origin::<T>::Signed(admin.clone());
 
-		// Register first to check if community exists
-		pallet_communities::Pallet::<T>::register(&admin_origin.clone().into(), &community_id, maybe_deposit)?;
+		// Register first to check if community exists. The registration payment is not forwarded: it
+		// is split between the payee and the community below.
+		pallet_communities::Pallet::<T>::register(&admin_origin.clone().into(), &community_id, None)?;
 
 		if let Some(decision_method) = maybe_decision_method {
 			pallet_communities::Pallet::<T>::set_decision_method(admin_origin.into(), community_id, decision_method)?;
@@ -288,11 +423,16 @@ impl<T: Config> Pallet<T> {
 
 		let community_account = pallet_communities::Pallet::<T>::community_account(&community_id);
 
-		// Create memberships collection for community
+		if let Some((_, payer, payee)) = maybe_payment {
+			Self::pay_for_registration(&community_id, &community_account, &payer, &payee)?;
+		}
+
+		// Create the community's collection of memberships, owned and administered by the manager.
+		let manager = T::MembershipsManagerAccount::get();
 		T::CreateCollection::create_collection_with_id(
 			community_id,
-			&community_account,
-			&community_account,
+			&manager,
+			&manager,
 			&CollectionConfig {
 				settings: Default::default(),
 				max_supply: None,
@@ -319,90 +459,106 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub(crate) fn prepare_memberships_collection() -> Result<CommunityIdOf<T>, DispatchError> {
-		let collection_id = &T::MembershipsManagerCollectionId::get();
-
-		if T::CreateMemberships::collection_owner(collection_id).is_none() {
-			let owner = &T::MembershipsManagerOwner::get();
-			T::CreateMemberships::create_collection_with_id(
-				*collection_id,
-				owner,
-				owner,
-				&CollectionConfig {
-					settings: Default::default(),
-					max_supply: None,
-					mint_settings: MintSettings {
-						mint_type: MintType::Issuer,
-						price: None,
-						start_block: None,
-						end_block: None,
-						default_item_settings: Default::default(),
-					},
-				},
-			)?;
+	/// Splits the registration payment: the consumption part goes to the payee, and the storage part to
+	/// the community's account, where it is held and recorded.
+	fn pay_for_registration(
+		community_id: &CommunityIdOf<T>,
+		community_account: &AccountIdOf<T>,
+		payer: &AccountIdOf<T>,
+		payee: &AccountIdOf<T>,
+	) -> DispatchResult {
+		let consumption = T::CommunityConsumptionPart::get();
+		if !consumption.is_zero() {
+			T::Balances::transfer(payer, payee, consumption, Preservation::Preserve)?;
 		}
 
-		Ok(*collection_id)
+		let storage = T::CommunityStoragePart::get();
+		if !storage.is_zero() {
+			T::Balances::transfer(payer, community_account, storage, Preservation::Preserve)?;
+			let reason: T::RuntimeHoldReason = HoldReason::CommunityDeposit.into();
+			T::Balances::hold(&reason, community_account, storage)?;
+			CommunityDeposits::<T>::insert(community_id, storage);
+		}
+		Ok(())
 	}
 
-	pub(crate) fn try_create_memberships(
-		starting_at: T::MembershipId,
-		amount: u16,
-		price: NativeBalanceOf<T>,
-		tank_config: TankConfig<Weight, BlockNumberFor<T>>,
-		maybe_expiration: Option<BlockNumberFor<T>>,
-	) -> DispatchResult {
-		let collection_id = &Self::prepare_memberships_collection()?;
+	pub(crate) fn do_issue_memberships(community: &CommunityIdOf<T>, amount: u32) -> DispatchResult {
+		ensure!(
+			pallet_communities::Pallet::<T>::community_exists(community),
+			pallet_communities::Error::<T>::CommunityDoesNotExist
+		);
 
-		let mut id = starting_at;
-		let mut minted = 0u32;
+		let community_account = pallet_communities::Pallet::<T>::community_account(community);
+		let deposit = T::MembershipDeposit::get();
+		let reason: T::RuntimeHoldReason = HoldReason::MembershipDeposit.into();
+
+		let first = NextMembershipId::<T>::get();
+		let mut id = first;
 		for _ in 0..amount {
-			T::CreateMemberships::mint_into(
-				collection_id,
-				&id,
-				&T::MembershipsManagerOwner::get(),
-				&Default::default(),
-				true,
-			)?;
-
-			Self::do_set_gas_tank(&(*collection_id, id), &tank_config)?;
-
-			if let Some(expiration) = maybe_expiration {
-				T::CreateMemberships::set_typed_attribute(collection_id, &id, &b"membership_expiration", &expiration)?;
-			}
-
-			T::CreateMemberships::set_price(
-				&T::MembershipsManagerCollectionId::get(),
-				&id,
-				&T::MembershipsManagerOwner::get(),
-				Some(price),
-				None,
-			)?;
-			if let Some(next_id) = id.increment() {
-				id = next_id;
-				minted += 1;
-			} else {
-				break;
-			}
+			T::Issuer::issue(community, &id)?;
+			T::Balances::hold(&reason, &community_account, deposit).map_err(|_| Error::<T>::MembershipLimit)?;
+			Deposits::<T>::insert((community, id), deposit);
+			id = id.increment().ok_or(Error::<T>::NoMembershipIdLeft)?;
 		}
+		NextMembershipId::<T>::put(id);
 
-		Self::deposit_event(Event::<T>::MembershipsCreated {
-			starting_at,
-			amount: minted,
+		Self::deposit_event(Event::<T>::MembershipsIssued {
+			community: *community,
+			first,
+			amount,
 		});
-
 		Ok(())
 	}
 
-	#[inline]
-	pub(crate) fn do_set_gas_tank(
-		tank_id: &(CommunityIdOf<T>, T::MembershipId),
-		config: &TankConfig<Weight, BlockNumberFor<T>>,
-	) -> DispatchResult {
-		let TankConfig { capacity, periodicity } = config;
-		T::MakeTank::make_tank(tank_id, *capacity, *periodicity)?;
+	pub(crate) fn do_retire_memberships(community: &CommunityIdOf<T>, ids: &[T::MembershipId]) -> DispatchResult {
+		let holder = T::RetirementHolder::get();
+		let completable_at = T::BlockNumberProvider::current_block_number().saturating_add(T::RetirementDelay::get());
 
+		for id in ids {
+			ensure!(Deposits::<T>::contains_key((community, id)), Error::<T>::NotRetirable);
+			T::Issuer::retire(community, id, &holder).map_err(|_| Error::<T>::NotRetirable)?;
+			Retiring::<T>::insert((community, id), completable_at);
+		}
+
+		Self::deposit_event(Event::<T>::MembershipsRetiring {
+			community: *community,
+			amount: ids.len() as u32,
+			completable_at,
+		});
 		Ok(())
+	}
+
+	/// Completes a retirement, and returns how many attributes the item carried.
+	pub(crate) fn do_complete_retirement(
+		community: &CommunityIdOf<T>,
+		id: &T::MembershipId,
+		witness: u32,
+	) -> Result<u32, DispatchError> {
+		let completable_at = Retiring::<T>::get((community, id)).ok_or(Error::<T>::NotRetiring)?;
+		ensure!(
+			T::BlockNumberProvider::current_block_number() >= completable_at,
+			Error::<T>::RetirementNotElapsed
+		);
+		let attributes = T::ItemAttributes::count(community, id);
+		ensure!(attributes <= witness, Error::<T>::TooManyAttributes);
+
+		// Burn it (the manager unlocks it, and clears what it wrote), then clear whatever others
+		// wrote in their own namespaces, which the burn leaves behind.
+		T::Issuer::burn(community, id)?;
+		T::ItemAttributes::clear_all(community, id)?;
+
+		Retiring::<T>::remove((community, id));
+		if let Some(deposit) = Deposits::<T>::take((community, id)) {
+			let community_account = pallet_communities::Pallet::<T>::community_account(community);
+			let reason: T::RuntimeHoldReason = HoldReason::MembershipDeposit.into();
+			T::Balances::release(&reason, &community_account, deposit, Precision::Exact)?;
+		}
+
+		Self::deposit_event(Event::<T>::RetirementCompleted {
+			community: *community,
+			membership_id: *id,
+		});
+		Ok(attributes)
 	}
 
 	fn default_tack(name: &str) -> TrackInfoOf<T> {

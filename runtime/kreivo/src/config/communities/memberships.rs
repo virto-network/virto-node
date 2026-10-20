@@ -1,9 +1,10 @@
 use super::*;
 
-use frame_contrib_traits::memberships::OnMembershipAssigned;
-use frame_system::EnsureRootWithSuccess;
-use parity_scale_codec::Encode;
-use sp_runtime::traits::Verify;
+use frame_contrib_traits::memberships::GroupCollectionMemberships;
+use sp_runtime::{
+	str_array,
+	traits::{AccountIdConversion, Convert, Verify},
+};
 
 use pallet_nfts::PalletFeatures;
 use virto_common::MembershipId;
@@ -11,23 +12,27 @@ use virto_common::MembershipId;
 parameter_types! {
 	pub MembershipsPalletFeatures: PalletFeatures = PalletFeatures::all_enabled();
 	pub const MaxDeadlineDuration: BlockNumber = 12 * 30 * DAYS;
+	/// Owner and administrator of every membership collection (`DEC-36`). A keyless account.
+	pub const MembershipsManagerPalletId: PalletId = PalletId(*b"kv/mbmgr");
+	pub MembershipsManagerAccount: AccountId = MembershipsManagerPalletId::get().into_account_truncating();
+	/// Holds the memberships a community retires until they are burnt (`DEC-19`). Keyless.
+	pub RetiringMembershipsAccount: AccountId = RETIRING_MEMBERSHIPS_ACCOUNT.into();
+	pub RetirementHolder: Option<AccountId> = Some(RetiringMembershipsAccount::get());
+	/// The attribute keys Kreivo lets `set_membership_attribute` write. None beyond what the
+	/// manager writes itself.
+	pub AttributeKeys: &'static [&'static [u8]] = &[];
 }
 
-const WELL_KNOWN_ATTR_KEYS: [&[u8]; 3] = [b"membership_member_rank", b"membership_gas", b"membership_expiration"];
+/// The account that holds retiring memberships: `memberships/retiring_memberships`, 32 bytes.
+pub const RETIRING_MEMBERSHIPS_ACCOUNT: [u8; 32] = str_array("memberships/retiring_memberships");
 
-parameter_types! {
-	pub CopySystemAttributesOnAssign: Box<dyn OnMembershipAssigned<AccountId, CommunityId, MembershipId>> =
-		Box::new(|_, group, m| {
-			use frame_support::traits::nonfungibles_v2::{Inspect as NonFunsInspect, Mutate};
-			for key in WELL_KNOWN_ATTR_KEYS.into_iter() {
-				let key = key.to_vec();
-				if let Some(value) = CommunityMemberships::system_attribute(&MembershipsCollectionId::get(), Some(&m), &key.encode()) {
-					<CommunityMemberships as Mutate<_, _>>::set_attribute(&group, &m, &key.encode(), &value)?;
-				}
-			}
+/// The account of a community, which holds the community's stock of memberships.
+pub struct CommunityAccount;
 
-			Ok(())
-		});
+impl Convert<CommunityId, AccountId> for CommunityAccount {
+	fn convert(community_id: CommunityId) -> AccountId {
+		Communities::community_account(&community_id)
+	}
 }
 
 pub type CommunityMembershipsInstance = pallet_nfts::Instance2;
@@ -38,8 +43,12 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type ItemId = MembershipId;
 	type Currency = Balances;
 	type ForceOrigin = EnsureRoot<AccountId>;
-	// Ensure only root is allowed to issue new membership groups.
-	type CreateOrigin = EnsureRootWithSuccess<AccountId, TreasuryAccount>;
+	// Nobody creates a collection through a call: `communities-manager` creates each community's
+	// collection when it registers the community (`DEC-36`).
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type CreateOrigin = frame_system::EnsureNever<AccountId>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type CreateOrigin = frame_system::EnsureSigned<AccountId>;
 	type Locker = ();
 	type CollectionDeposit = ();
 	#[cfg(not(feature = "runtime-benchmarks"))]
@@ -68,5 +77,12 @@ impl pallet_nfts::Config<CommunityMembershipsInstance> for Runtime {
 	type BlockNumberProvider = RelaychainData;
 }
 
-pub type Memberships =
-	WithHooks<NonFungiblesMemberships<CommunityMemberships, pallet_nfts::ItemConfig>, CopySystemAttributesOnAssign>;
+/// Every community's memberships live in the community's own collection (`DEC-17`).
+pub type Memberships = GroupCollectionMemberships<
+	CommunityMemberships,
+	pallet_nfts::ItemConfig,
+	CommunityAccount,
+	MembershipsManagerAccount,
+	RetirementHolder,
+	AttributeKeys,
+>;

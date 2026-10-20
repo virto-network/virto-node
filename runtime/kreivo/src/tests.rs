@@ -1,25 +1,22 @@
 use super::{
-	config::{communities::memberships::CommunityMembershipsInstance, system::CommunityLookup, TreasuryAccount},
+	config::{system::CommunityLookup, TreasuryAccount},
 	constants::currency::EXISTENTIAL_DEPOSIT,
 	xcm_config::*,
 	Balances, Communities, CommunitiesManager, CommunityMemberships, FungibleAssetLocation, Runtime, RuntimeOrigin,
 	CENTS, UNITS,
 };
 
-use frame_support::{
-	assert_ok,
-	traits::{fungible::Mutate, nonfungibles_v2::Inspect},
-};
-use pallet_communities_manager::TankConfig;
+use frame_support::{assert_noop, assert_ok, traits::fungible::Mutate};
 use parachains_common::AccountId;
 use parity_scale_codec::Encode;
-use runtime_constants::time::WEEKS;
 use sp_core::crypto::AccountId32;
 use sp_io::TestExternalities;
 use sp_runtime::{traits::StaticLookup, BoundedVec};
 use xcm_executor::{WeighedMessage, XcmExecutor};
 
+mod group_issuance;
 mod kreivo_apis;
+mod listings;
 mod multi_block_migrations;
 
 macro_rules! assert_call_size {
@@ -96,68 +93,6 @@ fn runtime_sanity_call_does_not_exceed_1kb() {
 	assert_call_size!(pallet_treasury);
 	// Payments: pallet_payments = 60
 	assert_call_size!(pallet_payments);
-}
-
-#[test]
-fn ensure_copying_membership_attributes_works() {
-	TestExternalities::default().execute_with(|| {
-		if cfg!(feature = "runtime-benchmarks") {
-			// Note: Need to cover the deposit when the `runtime-benchmarks` feature is set.
-			assert_ok!(Balances::mint_into(
-				&TreasuryAccount::get(),
-				EXISTENTIAL_DEPOSIT + 10 * CENTS
-			));
-		}
-
-		// Create some memberships.
-		assert_ok!(CommunitiesManager::create_memberships(
-			RuntimeOrigin::root(),
-			10,
-			0,
-			CENTS,                 // Any price works
-			TankConfig::default(), // default means unlimited tank — also, the only publicly exposed constructor ;)
-			Some(8 * WEEKS),       // expires in
-		));
-
-		const ALICE: AccountId32 = AccountId32::new([1; 32]);
-		const BOB: AccountId32 = AccountId32::new([2; 32]);
-		assert_ok!(Balances::mint_into(&ALICE, UNITS));
-		assert_ok!(Balances::mint_into(&BOB, UNITS));
-
-		assert_ok!(CommunitiesManager::register(
-			RuntimeOrigin::root(),
-			1,
-			BoundedVec::try_from(b"First Community".to_vec()).expect("meets max length; qed"),
-			CommunityLookup::unlookup(ALICE),
-			// Use default values for decision method and track info
-			None,
-			None,
-		));
-
-		// Let's load some amount to the community, so the community can buy memberships
-		// itself.
-		assert_ok!(Balances::mint_into(&Communities::community_account(&1), UNITS));
-
-		assert_ok!(Communities::dispatch_as_account(
-			RuntimeOrigin::signed(ALICE),
-			Box::new(
-				pallet_nfts::Call::<Runtime, CommunityMembershipsInstance>::buy_item {
-					collection: 0,
-					item: 0,
-					bid_price: CENTS
-				}
-				.into()
-			)
-		));
-
-		assert_ok!(Communities::add_member(
-			RuntimeOrigin::signed(ALICE),
-			CommunityLookup::unlookup(BOB)
-		));
-
-		let key: Vec<u8> = b"membership_gas".to_vec();
-		assert!(CommunityMemberships::system_attribute(&1, Some(&0), &key.encode()).is_some());
-	})
 }
 
 #[test]
@@ -698,24 +633,37 @@ mod relay_chain_time {
 	#[test]
 	fn memberships_expire_in_relay_chain_blocks() {
 		use crate::config::currency::MembershipIsNotExpired;
+		use frame_support::traits::nonfungibles_v2::{Create, Mutate};
 		use runtime_constants::time::WEEKS;
 
 		TestExternalities::default().execute_with(|| {
 			if cfg!(feature = "runtime-benchmarks") {
+				// Items have a deposit when benchmarking.
 				assert_ok!(Balances::mint_into(
 					&TreasuryAccount::get(),
 					EXISTENTIAL_DEPOSIT + 10 * CENTS
 				));
 			}
 			at(1, 1);
-			// Memberships 0..10, expiring at relay chain block `8 * WEEKS`.
-			assert_ok!(CommunitiesManager::create_memberships(
-				RuntimeOrigin::root(),
-				10,
+			// A membership of the gas tank's collection, expiring at relay chain block `8 * WEEKS`.
+			assert_ok!(<CommunityMemberships as Create<_, _>>::create_collection_with_id(
 				0,
-				CENTS,
-				TankConfig::default(),
-				Some(8 * WEEKS),
+				&TreasuryAccount::get(),
+				&TreasuryAccount::get(),
+				&Default::default(),
+			));
+			assert_ok!(<CommunityMemberships as Mutate<_, _>>::mint_into(
+				&0,
+				&0,
+				&TreasuryAccount::get(),
+				&Default::default(),
+				true,
+			));
+			assert_ok!(<CommunityMemberships as Mutate<_, _>>::set_typed_attribute(
+				&0,
+				&0,
+				&b"membership_expiration",
+				&(8 * WEEKS),
 			));
 			let not_expired = || MembershipIsNotExpired::get().select(0, 0);
 
@@ -880,20 +828,6 @@ mod scheduler_clock_switch {
 
 	/// Community 1, with `ALICE` as its admin and `BOB` as a member.
 	fn community_with_a_member() {
-		if cfg!(feature = "runtime-benchmarks") {
-			assert_ok!(Balances::mint_into(
-				&TreasuryAccount::get(),
-				EXISTENTIAL_DEPOSIT + 10 * CENTS
-			));
-		}
-		assert_ok!(CommunitiesManager::create_memberships(
-			RuntimeOrigin::root(),
-			10,
-			0,
-			CENTS,
-			TankConfig::default(),
-			None,
-		));
 		assert_ok!(CommunitiesManager::register(
 			RuntimeOrigin::root(),
 			1,
@@ -903,17 +837,8 @@ mod scheduler_clock_switch {
 			None,
 		));
 		assert_ok!(Balances::mint_into(&Communities::community_account(&1), UNITS));
-		assert_ok!(Communities::dispatch_as_account(
-			RuntimeOrigin::signed(ALICE),
-			Box::new(
-				pallet_nfts::Call::<Runtime, CommunityMembershipsInstance>::buy_item {
-					collection: 0,
-					item: 0,
-					bid_price: CENTS
-				}
-				.into()
-			)
-		));
+		// Two memberships in the community's stock; `add_member` assigns one.
+		assert_ok!(CommunitiesManager::issue_memberships(RuntimeOrigin::signed(ALICE), 2));
 		assert_ok!(Communities::add_member(
 			RuntimeOrigin::signed(ALICE),
 			CommunityLookup::unlookup(BOB)

@@ -1,12 +1,15 @@
 use super::*;
-use frame_contrib_traits::{gas_tank::NonFungibleGasTank, memberships::NonFungiblesMemberships};
+use frame_contrib_traits::memberships::GroupCollectionMemberships;
 use frame_support::{
-	assert_ok, derive_impl, parameter_types,
+	derive_impl, parameter_types,
 	traits::{AsEnsureOriginWithArg, ConstU16, ConstU32, ConstU64, EitherOf, EqualPrivilegeOnly, VariantCountOf},
 	PalletId,
 };
 use frame_system::{EnsureNever, EnsureRoot, EnsureRootWithSuccess, EnsureSigned};
-use pallet_communities::{origin::EnsureCommunity, Tally, VoteWeight};
+use pallet_communities::{
+	origin::{EnsureCommunity, EnsureSignedPays},
+	Tally, VoteWeight,
+};
 use sp_io::TestExternalities;
 use sp_runtime::{
 	traits::{IdentifyAccount, IdentityLookup, Verify},
@@ -92,6 +95,7 @@ impl frame_system::Config for Test {
 #[derive_impl(pallet_balances::config_preludes::TestDefaultConfig)]
 impl pallet_balances::Config for Test {
 	type AccountStore = System;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type FreezeIdentifier = RuntimeFreezeReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
@@ -163,9 +167,20 @@ impl pallet_referenda_tracks::Config for Test {
 type Deposit = Option<(Balance, AccountId, AccountId)>;
 parameter_types! {
 	pub const CommunitiesPalletId: PalletId = PalletId(*b"kv/comms");
-	pub const MembershipsManagerCollectionId: CommunityId = 0;
 	pub const MembershipNftAttr: &'static [u8; 10] = b"membership";
 	pub const TestCommunity: CommunityId = 1;
+	pub const MembershipsManagerAccountId: AccountId = AccountId::new([0xee; 32]);
+	pub const RetiringMembershipsAccount: AccountId = AccountId::new([0xdd; 32]);
+	pub const RetirementHolderOption: Option<AccountId> = Some(AccountId::new([0xdd; 32]));
+	/// What each issued membership holds, unless a test changes it.
+	pub static MembershipDepositAmount: Balance = 10;
+	pub const RetirementDelayInBlocks: BlockNumber = 5;
+	/// Where the consumption part goes.
+	pub const Treasury: AccountId = AccountId::new([0xaa; 32]);
+	/// The registration payment, and its two parts, unless a test changes them.
+	pub const RegistrationPayment: Balance = 100;
+	pub static StoragePart: Balance = 30;
+	pub static ConsumptionPart: Balance = 70;
 	pub const NoDepositOnRootRegistration: Deposit = None;
 }
 
@@ -200,15 +215,33 @@ impl pallet_nfts::Config for Test {
 	type BlockNumberProvider = System;
 }
 
+/// Every community's memberships live in the community's own collection.
+pub type MembershipsManager = GroupCollectionMemberships<
+	Memberships,
+	pallet_nfts::ItemConfig,
+	CommunityAccount,
+	MembershipsManagerAccountId,
+	RetirementHolderOption,
+>;
+
+/// The account of a community, which holds its stock of memberships.
+pub struct CommunityAccount;
+impl sp_runtime::traits::Convert<CommunityId, AccountId> for CommunityAccount {
+	fn convert(community_id: CommunityId) -> AccountId {
+		Communities::community_account(&community_id)
+	}
+}
+
 impl pallet_communities::Config for Test {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type WeightInfo = WeightInfo;
 	type CreateOrigin = EnsureNever<Deposit>;
 	type AdminOrigin = EnsureCommunity<Self>;
 	type MemberMgmtOrigin = EnsureCommunity<Self>;
+	type MemberOrigin = EnsureSigned<AccountId>;
 	type CommunityId = CommunityId;
 	type MembershipId = MembershipId;
-	type MemberMgmt = NonFungiblesMemberships<Memberships, pallet_nfts::ItemConfig>;
+	type MemberMgmt = MembershipsManager;
 	type Polls = Referenda;
 	type Assets = Assets;
 	type AssetsFreezer = AssetsFreezer;
@@ -222,36 +255,28 @@ impl pallet_communities::Config for Test {
 impl Config for Test {
 	// Types to support community creation
 	type CreateCollection = Memberships;
-	type MakeTank = NonFungibleGasTank<Test, System, Memberships, pallet_nfts::ItemConfig>;
 	type Tracks = Tracks;
 	type RankedCollective = Collective;
 	type WeightInfo = WeightInfo;
-	type RegisterOrigin = EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>;
-
-	// Types to support memberships creation
-	type CreateMembershipsOrigin = EnsureRoot<AccountId>;
-	type MembershipsManagerCollectionId = MembershipsManagerCollectionId;
-	type MembershipsManagerOwner = RootAccount;
-	type ItemConfig = pallet_nfts::ItemConfig;
-
-	type CreateMemberships = Memberships;
+	type RegisterOrigin = EitherOf<
+		EnsureRootWithSuccess<AccountId, NoDepositOnRootRegistration>,
+		EnsureSignedPays<Test, RegistrationPayment, Treasury>,
+	>;
+	type MembershipsManagerAccount = MembershipsManagerAccountId;
+	type CommunityStoragePart = StoragePart;
+	type CommunityConsumptionPart = ConsumptionPart;
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type GroupAdminOrigin = EnsureCommunity<Self>;
+	type Issuer = MembershipsManager;
+	type ItemAttributes = ClearNftsAttributes<Test>;
+	type RetirementHolder = RetiringMembershipsAccount;
+	type MembershipDeposit = MembershipDepositAmount;
+	type RetirementDelay = RetirementDelayInBlocks;
+	type MaxIssuePerCall = ConstU32<8>;
 }
 
 pub fn new_test_ext() -> TestExternalities {
 	let mut t = TestExternalities::new(Default::default());
-
-	t.execute_with(|| {
-		assert_ok!(Memberships::create_collection_with_id(
-			MembershipsManagerCollectionId::get(),
-			&RootAccount::get(),
-			&RootAccount::get(),
-			&pallet_nfts::CollectionConfig {
-				settings: Default::default(),
-				max_supply: None,
-				mint_settings: Default::default(),
-			},
-		));
-	});
-
+	t.execute_with(|| System::set_block_number(1));
 	t
 }
