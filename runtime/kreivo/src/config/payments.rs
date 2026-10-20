@@ -18,6 +18,10 @@ pub struct NativeOrAsset;
 impl Convert<FungibleAssetLocation, Either<(), FungibleAssetLocation>> for NativeOrAsset {
 	fn convert(asset: FungibleAssetLocation) -> Either<(), FungibleAssetLocation> {
 		match asset {
+			// The benchmarks of payments and orders pick the default asset id, `Here(0)`, and mint
+			// amounts far below the native existential deposit, so benchmark builds keep it in
+			// `Assets`, where the benchmarks create it.
+			#[cfg(not(feature = "runtime-benchmarks"))]
 			FungibleAssetLocation::Here(0) => Either::Left(()),
 			asset => Either::Right(asset),
 		}

@@ -18,6 +18,8 @@ mod group_issuance;
 mod kreivo_apis;
 mod listings;
 mod multi_block_migrations;
+#[cfg(feature = "runtime-benchmarks")]
+mod payments_orders;
 mod usage_subscription;
 
 macro_rules! assert_call_size {
