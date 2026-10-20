@@ -717,11 +717,12 @@ impl MembershipsToGroupCollections {
 			.members
 			.iter()
 			.filter(|(c, i, ..)| !Deposits::<Runtime>::contains_key((c, i)))
-			.count() + snapshot
-			.stock
-			.iter()
-			.filter(|(c, i)| !Deposits::<Runtime>::contains_key((c, i)))
-			.count()) as u32;
+			.count()
+			+ snapshot
+				.stock
+				.iter()
+				.filter(|(c, i)| !Deposits::<Runtime>::contains_key((c, i)))
+				.count()) as u32;
 		let owed = Self::owed(&snapshot, total_refunds);
 		ensure(
 			Balances::reducible_balance(&treasury(), Preservation::Preserve, Fortitude::Polite) >= owed,
