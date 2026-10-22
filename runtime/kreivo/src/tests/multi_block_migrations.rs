@@ -189,3 +189,111 @@ mod stepped {
 		});
 	}
 }
+
+// The weight of the heaviest unit of every migration `pallet_migrations` runs has to fit
+// `MaxServiceWeight`, or its first block would not hold even that unit.
+mod unit_weights {
+	use super::*;
+
+	use crate::{
+		config::communities::governance::CommunityTracksInstance,
+		migrations::{memberships, referenda_rekey},
+		weights,
+	};
+	use pallet_pass::WeightInfo as _;
+	use pallet_referenda_tracks::WeightInfo as _;
+
+	type Pass = weights::pallet_pass::WeightInfo<Runtime>;
+	type Tracks = weights::pallet_referenda_tracks::WeightInfo<Runtime>;
+
+	fn assert_fits(name: &str, heaviest: Weight) {
+		let max = MigrationsMaxServiceWeight::get();
+		println!("{name}: {heaviest:?} of {max:?}");
+		assert!(
+			heaviest.all_lte(max),
+			"{name}: the heaviest unit, {heaviest:?}, does not fit MaxServiceWeight, {max:?}"
+		);
+	}
+
+	#[test]
+	fn the_pass_migration_units_fit() {
+		assert_fits("pass", Pass::migrate_device_filter().max(Pass::migrate_session_key()));
+	}
+
+	#[test]
+	fn the_tracks_migration_units_fit_with_the_chains_max_tracks() {
+		let max_tracks = <Runtime as pallet_referenda_tracks::Config<CommunityTracksInstance>>::MaxTracks::get();
+		assert_eq!(max_tracks, 65_536);
+		assert_fits(
+			"tracks (migrate_ids at MaxTracks)",
+			Tracks::migrate_track()
+				.max(Tracks::migrate_origin())
+				.max(Tracks::migrate_ids(max_tracks))
+				.max(Tracks::migrate_finalize()),
+		);
+	}
+
+	// `WeightInfo::migrate_ids` was measured with the kitchensink's `MaxTracks` (255): its proof size
+	// is a constant, 3 610 bytes, that does not grow with `MaxTracks`. The unit reads and writes
+	// `TracksIds` at its largest, `MaxTracks` ids: at Kreivo's 65 536 that is 262 KB, 30 times what is
+	// declared. The declared weight still fits `MaxServiceWeight`, and so would the real one: this
+	// fails on the figure, so that the benchmark of `migrate_ids` is run with Kreivo's `MaxTracks`.
+	#[test]
+	#[ignore = "until `/cmd bench` measures `migrate_ids` with Kreivo's `MaxTracks` (W6 commit 5), which removes this ignore"]
+	fn the_tracks_migrate_ids_proof_size_covers_tracks_ids_at_max_tracks() {
+		use frame_support::BoundedBTreeSet;
+		use parity_scale_codec::MaxEncodedLen;
+
+		type MaxTracks = <Runtime as pallet_referenda_tracks::Config<CommunityTracksInstance>>::MaxTracks;
+		let tracks_ids = BoundedBTreeSet::<u32, MaxTracks>::max_encoded_len() as u64;
+		let declared = Tracks::migrate_ids(MaxTracks::get()).proof_size();
+		println!("migrate_ids at MaxTracks: declared proof size {declared}, TracksIds at most {tracks_ids}");
+		assert!(
+			declared >= tracks_ids,
+			"migrate_ids declares a proof size of {declared} bytes, and TracksIds is {tracks_ids} at MaxTracks"
+		);
+		assert!(tracks_ids <= MigrationsMaxServiceWeight::get().proof_size());
+	}
+
+	#[test]
+	fn the_referenda_rekey_units_fit() {
+		assert_fits("referenda re-key", referenda_rekey::heaviest_unit());
+	}
+
+	#[test]
+	fn the_memberships_migration_units_fit() {
+		assert_fits("memberships", memberships::heaviest_unit());
+	}
+}
+
+mod registration {
+	use super::*;
+
+	use crate::{
+		config::communities::governance::CommunityTracksInstance,
+		migrations::{memberships::MembershipsToGroupCollections, referenda_rekey::ReferendaTrackIds},
+	};
+	use frame_support::migrations::{SteppedMigration, SteppedMigrations};
+	use pallet_referenda_tracks::migration::{MigrateV0ToV1 as TracksMigration, TryIntoGroup};
+	use parity_scale_codec::Encode;
+
+	// The tracks come first, and the re-key needs the same `combine(old, 0)`: it follows them. Every
+	// migration registered has its heaviest unit checked in `unit_weights`: a new one fails this
+	// test until it is there.
+	#[test]
+	fn the_migrations_run_in_order_and_all_are_weight_checked() {
+		type Registered = ReleaseSteppedMigrations;
+		assert_eq!(<Registered as SteppedMigrations>::len(), 4);
+
+		let ids = (0..4)
+			.map(|n| <Registered as SteppedMigrations>::nth_id(n).expect("registered"))
+			.collect::<Vec<_>>();
+		assert_eq!(
+			ids[0],
+			TracksMigration::<Runtime, CommunityTracksInstance, u16, TryIntoGroup>::id().encode()
+		);
+		assert_eq!(ids[1], ReferendaTrackIds::id().encode());
+		assert_eq!(ids[2], pallet_pass::migrations::MigrateV0ToV1::<Runtime>::id().encode());
+		assert_eq!(ids[3], MembershipsToGroupCollections::id().encode());
+	}
+}
