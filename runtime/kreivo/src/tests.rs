@@ -14,6 +14,8 @@ use sp_io::TestExternalities;
 use sp_runtime::{traits::StaticLookup, BoundedVec};
 use xcm_executor::{WeighedMessage, XcmExecutor};
 
+#[cfg(feature = "runtime-benchmarks")]
+mod community_tracks;
 mod deposit_values;
 mod group_issuance;
 mod kreivo_apis;

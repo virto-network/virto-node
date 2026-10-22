@@ -26,7 +26,7 @@ use sp_core::crypto::AccountId32 as Account;
 use sp_core::{sr25519, Pair};
 use sp_io::hashing::blake2_256;
 use sp_runtime::{
-	traits::{DispatchTransaction, Implication, TransactionExtension, TxBaseImplication},
+	traits::{TransactionExtension, TxBaseImplication},
 	transaction_validity::{InvalidTransaction, TransactionSource, TransactionValidityError},
 	MultiSignature,
 };

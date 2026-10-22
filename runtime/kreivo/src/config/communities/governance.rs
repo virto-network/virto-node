@@ -2,7 +2,9 @@ use super::*;
 
 use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResult, traits::AsEnsureOriginWithArg};
-use frame_system::{pallet_prelude::BlockNumberFor, EnsureNever, EnsureRootWithSuccess};
+#[cfg(not(feature = "runtime-benchmarks"))]
+use frame_system::EnsureNever;
+use frame_system::{pallet_prelude::BlockNumberFor, EnsureRootWithSuccess};
 use pallet_communities::RuntimeOriginFor;
 use sp_runtime::traits::Convert;
 
@@ -66,12 +68,37 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Runtime, CommunityTracksInstan
 	}
 }
 
+/// Root creates groups (and sub-tracks) on the first group, as frame-contrib's kitchensink does.
+/// Only in the benchmark build: it is what the benchmarks of `pallet_referenda_tracks` call with.
+#[cfg(feature = "runtime-benchmarks")]
+pub struct EnsureRootReturnsFirstGroup;
+#[cfg(feature = "runtime-benchmarks")]
+impl EnsureOriginWithArg<RuntimeOrigin, PalletsOriginOf<Runtime>> for EnsureRootReturnsFirstGroup {
+	type Success = <CommunityTrackId as SplitId>::Half;
+
+	fn try_origin(o: RuntimeOrigin, _: &PalletsOriginOf<Runtime>) -> Result<Self::Success, RuntimeOrigin> {
+		<EnsureRoot<AccountId> as frame_support::traits::EnsureOrigin<RuntimeOrigin>>::try_origin(o)
+			.map(|_| Default::default())
+	}
+
+	fn try_successful_origin(_: &PalletsOriginOf<Runtime>) -> Result<RuntimeOrigin, ()> {
+		Ok(RuntimeOrigin::root())
+	}
+}
+
 impl pallet_referenda_tracks::Config<CommunityTracksInstance> for Runtime {
 	// Community tracks are created by `pallet_communities_manager` (`CommunityTracksWrapper`), never by
 	// a call, and no call adds sub-tracks to a community yet.
 	// TODO(W3c): `CreateOrigin` and `GroupManagerCreateOrigin` stay `EnsureNever`.
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureNever<AccountId>>;
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type GroupManagerCreateOrigin = AsEnsureOriginWithArg<EnsureNever<<CommunityTrackId as SplitId>::Half>>;
+	// The benchmarks of `pallet_referenda_tracks` create groups and sub-tracks as root.
+	#[cfg(feature = "runtime-benchmarks")]
+	type CreateOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type GroupManagerCreateOrigin = EnsureRootReturnsFirstGroup;
 	// Provisional: the track's own community origin (the former `UpdateOrigin`) or root (the former
 	// `AdminOrigin`). Note that it also lets a community remove its own track.
 	// TODO(W3c): today a community can remove its own track (2.x needed Root to remove, and the community
