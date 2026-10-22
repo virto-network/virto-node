@@ -38,36 +38,6 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_referenda_tracks::WeightInfo for WeightInfo<T> {
 	/// Storage: `CommunityTracks::Tracks` (r:1 w:1)
 	/// Proof: `CommunityTracks::Tracks` (`max_values`: None, `max_size`: Some(129), added: 2604, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityTracks::TracksIds` (r:1 w:1)
-	/// Proof: `CommunityTracks::TracksIds` (`max_values`: Some(1), `max_size`: Some(131076), added: 131571, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityTracks::OriginToTrackId` (r:0 w:1)
-	/// Proof: `CommunityTracks::OriginToTrackId` (`max_values`: None, `max_size`: Some(622), added: 3097, mode: `MaxEncodedLen`)
-	fn insert() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `133107`
-		//  Estimated: `132561`
-		// Minimum execution time: 92_460_000 picoseconds.
-		Weight::from_parts(100_171_000, 0)
-			.saturating_add(Weight::from_parts(0, 132561))
-			.saturating_add(T::DbWeight::get().reads(2))
-			.saturating_add(T::DbWeight::get().writes(3))
-	}
-	/// Storage: `CommunityTracks::OriginToTrackId` (r:1 w:0)
-	/// Proof: `CommunityTracks::OriginToTrackId` (`max_values`: None, `max_size`: Some(622), added: 3097, mode: `MaxEncodedLen`)
-	/// Storage: `CommunityTracks::Tracks` (r:1 w:1)
-	/// Proof: `CommunityTracks::Tracks` (`max_values`: None, `max_size`: Some(129), added: 2604, mode: `MaxEncodedLen`)
-	fn update() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `2192`
-		//  Estimated: `4087`
-		// Minimum execution time: 52_540_000 picoseconds.
-		Weight::from_parts(54_400_000, 0)
-			.saturating_add(Weight::from_parts(0, 4087))
-			.saturating_add(T::DbWeight::get().reads(2))
-			.saturating_add(T::DbWeight::get().writes(1))
-	}
-	/// Storage: `CommunityTracks::Tracks` (r:1 w:1)
-	/// Proof: `CommunityTracks::Tracks` (`max_values`: None, `max_size`: Some(129), added: 2604, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityTracks::OriginToTrackId` (r:1 w:1)
 	/// Proof: `CommunityTracks::OriginToTrackId` (`max_values`: None, `max_size`: Some(622), added: 3097, mode: `MaxEncodedLen`)
 	/// Storage: `CommunityTracks::TracksIds` (r:1 w:1)
@@ -81,5 +51,41 @@ impl<T: frame_system::Config> pallet_referenda_tracks::WeightInfo for WeightInfo
 			.saturating_add(Weight::from_parts(0, 132561))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
+	}
+
+	// PLACEHOLDER (until `/cmd bench`): these calls are new in frame-contrib 3.x and have not been
+	// benchmarked on Kreivo's reference hardware. They take frame-contrib's own weights.
+	fn new_group_with_track() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::new_group_with_track()
+	}
+	fn add_sub_track() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::add_sub_track()
+	}
+	fn set_decision_deposit() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::set_decision_deposit()
+	}
+	fn set_periods() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::set_periods()
+	}
+	fn set_curves() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::set_curves()
+	}
+	fn remove_group(n: u32) -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::remove_group(n)
+	}
+	fn set_max_deciding() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::set_max_deciding()
+	}
+	fn migrate_track() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::migrate_track()
+	}
+	fn migrate_origin() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::migrate_origin()
+	}
+	fn migrate_ids(n: u32) -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::migrate_ids(n)
+	}
+	fn migrate_finalize() -> Weight {
+		<pallet_referenda_tracks::weights::SubstrateWeight<T> as pallet_referenda_tracks::WeightInfo>::migrate_finalize()
 	}
 }

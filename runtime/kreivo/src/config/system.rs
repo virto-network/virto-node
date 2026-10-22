@@ -17,7 +17,7 @@ use pallet_pass::FirstItemsAreFree;
 use parachains_common::{AVERAGE_ON_INITIALIZE_RATIO, NORMAL_DISPATCH_RATIO};
 use polkadot_runtime_common::BlockHashCount;
 pub use runtime_constants::async_backing_params::{BLOCK_PROCESSING_VELOCITY, RELAY_PARENT_OFFSET};
-use sp_core::ConstU128;
+use sp_core::{ConstBool, ConstU128};
 use sp_runtime::{
 	traits::{AccountIdConversion, LookupError, StaticLookup},
 	DispatchError,
@@ -390,6 +390,13 @@ impl pallet_pass::Config for Runtime {
 	type MaxSessionDuration = ConstU32<{ 15 * MINUTES }>;
 	type MaxDevicesPerAccount = ConstU32<100>;
 	type MaxSessionsPerAccount = ConstU32<10>;
+	// Provisional: frame-contrib's kitchensink values.
+	type SpendMatcher = ();
+	type CallMatcher = pallet_pass::ScaleCallMatcher;
+	type MaxFilteredCalls = ConstU32<32>;
+	type MaxFilteredAssets = ConstU32<8>;
+	// Existing integrators keep `add_session_key` until they move to `add_session_key_with_filter`.
+	type UnrestrictedSessionKeys = ConstBool<true>;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

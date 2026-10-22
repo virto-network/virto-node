@@ -165,4 +165,23 @@ impl<T: frame_system::Config> pallet_pass::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
+
+	// PLACEHOLDER (until `/cmd bench`): these calls are new in frame-contrib 3.x and have not been
+	// benchmarked on Kreivo's reference hardware. They take frame-contrib's own placeholder weights,
+	// which count each code path's DB accesses.
+	fn add_device_with_filter() -> Weight {
+		<pallet_pass::weights::SubstrateWeight<T> as pallet_pass::WeightInfo>::add_device_with_filter()
+	}
+	fn add_session_key_with_filter() -> Weight {
+		<pallet_pass::weights::SubstrateWeight<T> as pallet_pass::WeightInfo>::add_session_key_with_filter()
+	}
+	fn migrate_device_filter() -> Weight {
+		<pallet_pass::weights::SubstrateWeight<T> as pallet_pass::WeightInfo>::migrate_device_filter()
+	}
+	fn migrate_session_key() -> Weight {
+		<pallet_pass::weights::SubstrateWeight<T> as pallet_pass::WeightInfo>::migrate_session_key()
+	}
+	fn set_device_filter() -> Weight {
+		<pallet_pass::weights::SubstrateWeight<T> as pallet_pass::WeightInfo>::set_device_filter()
+	}
 }
