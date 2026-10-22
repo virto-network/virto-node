@@ -23,6 +23,7 @@ mod multi_block_migrations;
 mod pass_migration;
 #[cfg(feature = "runtime-benchmarks")]
 mod payments_orders;
+mod referenda_rekey;
 mod usage_subscription;
 
 macro_rules! assert_call_size {

@@ -167,11 +167,25 @@ parameter_types! {
 		.saturating_sub(MigrationsInherentReserve::get());
 }
 
-/// The stepped migrations this runtime runs, in order: the pass migration (backfills every device's
-/// call filter, which frame-contrib 3.x denies without; `SessionKeys` gain their filter), and the
-/// memberships migration (`F-10`). Tests run a no-op one that takes several blocks; the benchmarks
-/// need the pallet's mocked migrations.
+/// The stepped migrations this runtime runs, in order:
+/// 1. the community tracks (`pallet_referenda_tracks` `MigrateV0ToV1`: the old id becomes the group of
+///    the new `u32` one);
+/// 2. the community referenda's storage, re-keyed by the new track id (it needs the same
+///    `combine(old, 0)`);
+/// 3. the pass migration (backfills every device's call filter, which frame-contrib 3.x denies
+///    without; `SessionKeys` gain their filter);
+/// 4. the memberships migration (`F-10`).
+///
+/// Tests run a no-op one that takes several blocks; the benchmarks need the pallet's mocked
+/// migrations.
 pub type ReleaseSteppedMigrations = (
+	pallet_referenda_tracks::migration::MigrateV0ToV1<
+		Runtime,
+		communities::governance::CommunityTracksInstance,
+		u16,
+		pallet_referenda_tracks::migration::TryIntoGroup,
+	>,
+	crate::migrations::referenda_rekey::ReferendaTrackIds,
 	pallet_pass::migrations::MigrateV0ToV1<Runtime>,
 	crate::migrations::memberships::MembershipsToGroupCollections,
 );
