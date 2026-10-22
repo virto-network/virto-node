@@ -20,6 +20,7 @@ mod kreivo_apis;
 mod listings;
 mod memberships_migration;
 mod multi_block_migrations;
+mod pass_migration;
 #[cfg(feature = "runtime-benchmarks")]
 mod payments_orders;
 mod usage_subscription;

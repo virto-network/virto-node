@@ -167,9 +167,14 @@ parameter_types! {
 		.saturating_sub(MigrationsInherentReserve::get());
 }
 
-/// The stepped migrations this runtime runs: the memberships migration (`F-10`). Tests run a no-op
-/// one that takes several blocks; the benchmarks need the pallet's mocked migrations.
-pub type ReleaseSteppedMigrations = (crate::migrations::memberships::MembershipsToGroupCollections,);
+/// The stepped migrations this runtime runs, in order: the pass migration (backfills every device's
+/// call filter, which frame-contrib 3.x denies without; `SessionKeys` gain their filter), and the
+/// memberships migration (`F-10`). Tests run a no-op one that takes several blocks; the benchmarks
+/// need the pallet's mocked migrations.
+pub type ReleaseSteppedMigrations = (
+	pallet_pass::migrations::MigrateV0ToV1<Runtime>,
+	crate::migrations::memberships::MembershipsToGroupCollections,
+);
 #[cfg(feature = "runtime-benchmarks")]
 pub type SteppedMigrations = pallet_migrations::mock_helpers::MockedMigrations;
 #[cfg(all(test, not(feature = "runtime-benchmarks")))]
@@ -392,6 +397,9 @@ impl pallet_pass::Config for Runtime {
 	type MaxSessionsPerAccount = ConstU32<10>;
 	// Provisional: frame-contrib's kitchensink values.
 	type SpendMatcher = ();
+	// TODO(W6): replace with a matcher that flattens nested calls (design pending, owner). Interim:
+	// `ScaleCallMatcher` reads only the outer call's first two bytes, so a device allowed `Utility.batch`,
+	// `Proxy.proxy`, `Multisig`, `Scheduler` or `dispatch_as` can wrap any forbidden call.
 	type CallMatcher = pallet_pass::ScaleCallMatcher;
 	type MaxFilteredCalls = ConstU32<32>;
 	type MaxFilteredAssets = ConstU32<8>;

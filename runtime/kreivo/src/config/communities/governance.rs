@@ -69,10 +69,14 @@ impl EnsureOriginWithArg<RuntimeOrigin, TrackIdOf<Runtime, CommunityTracksInstan
 impl pallet_referenda_tracks::Config<CommunityTracksInstance> for Runtime {
 	// Community tracks are created by `pallet_communities_manager` (`CommunityTracksWrapper`), never by
 	// a call, and no call adds sub-tracks to a community yet.
+	// TODO(W3c): `CreateOrigin` and `GroupManagerCreateOrigin` stay `EnsureNever`.
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureNever<AccountId>>;
 	type GroupManagerCreateOrigin = AsEnsureOriginWithArg<EnsureNever<<CommunityTrackId as SplitId>::Half>>;
 	// Provisional: the track's own community origin (the former `UpdateOrigin`) or root (the former
 	// `AdminOrigin`). Note that it also lets a community remove its own track.
+	// TODO(W3c): today a community can remove its own track (2.x needed Root to remove, and the community
+	// origin only to update). When referenda-tracks adds `RemoveOrigin`: `RemoveOrigin` = root and
+	// `GroupManagerOrigin` = settings only.
 	type GroupManagerOrigin = EitherOf<AsEnsureOriginWithArg<EnsureRoot<AccountId>>, EnsureOriginToTrack>;
 	type RemoveGroupOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
 	type TrackId = CommunityTrackId;
