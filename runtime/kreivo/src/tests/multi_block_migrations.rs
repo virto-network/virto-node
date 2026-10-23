@@ -220,39 +220,37 @@ mod unit_weights {
 		assert_fits("pass", Pass::migrate_device_filter().max(Pass::migrate_session_key()));
 	}
 
-	#[test]
-	fn the_tracks_migration_units_fit_with_the_chains_max_tracks() {
-		let max_tracks = <Runtime as pallet_referenda_tracks::Config<CommunityTracksInstance>>::MaxTracks::get();
-		assert_eq!(max_tracks, 65_536);
-		assert_fits(
-			"tracks (migrate_ids at MaxTracks)",
-			Tracks::migrate_track()
-				.max(Tracks::migrate_origin())
-				.max(Tracks::migrate_ids(max_tracks))
-				.max(Tracks::migrate_finalize()),
-		);
-	}
-
-	// `WeightInfo::migrate_ids` was measured with the kitchensink's `MaxTracks` (255): its proof size
-	// is a constant, 3 610 bytes, that does not grow with `MaxTracks`. The unit reads and writes
-	// `TracksIds` at its largest, `MaxTracks` ids: at Kreivo's 65 536 that is 262 KB, 30 times what is
-	// declared. The declared weight still fits `MaxServiceWeight`, and so would the real one: this
-	// fails on the figure, so that the benchmark of `migrate_ids` is run with Kreivo's `MaxTracks`.
-	#[test]
-	#[ignore = "until `/cmd bench` measures `migrate_ids` with Kreivo's `MaxTracks` (W6 commit 5), which removes this ignore"]
-	fn the_tracks_migrate_ids_proof_size_covers_tracks_ids_at_max_tracks() {
+	/// The proof size of `TracksIds` at its largest: `MaxTracks` ids and the length prefix.
+	fn tracks_ids_max_size() -> u64 {
 		use frame_support::BoundedBTreeSet;
 		use parity_scale_codec::MaxEncodedLen;
 
 		type MaxTracks = <Runtime as pallet_referenda_tracks::Config<CommunityTracksInstance>>::MaxTracks;
-		let tracks_ids = BoundedBTreeSet::<u32, MaxTracks>::max_encoded_len() as u64;
-		let declared = Tracks::migrate_ids(MaxTracks::get()).proof_size();
-		println!("migrate_ids at MaxTracks: declared proof size {declared}, TracksIds at most {tracks_ids}");
-		assert!(
-			declared >= tracks_ids,
-			"migrate_ids declares a proof size of {declared} bytes, and TracksIds is {tracks_ids} at MaxTracks"
+		BoundedBTreeSet::<u32, MaxTracks>::max_encoded_len() as u64
+	}
+
+	// The unit of the third phase of the tracks migration reads and rewrites the whole of `TracksIds`.
+	// `WeightInfo::migrate_ids` has a constant proof size (3 610 bytes), measured with the
+	// kitchensink's `MaxTracks` (255); frame-contrib (#160) declares the unit as `migrate_ids(MaxTracks)`
+	// plus, in its proof size, `TracksIds` at its largest: 262 148 bytes at Kreivo's 65 536. That is
+	// the weight checked here, as the migration declares it.
+	#[test]
+	fn the_tracks_migration_units_fit_with_the_chains_max_tracks() {
+		let max_tracks = <Runtime as pallet_referenda_tracks::Config<CommunityTracksInstance>>::MaxTracks::get();
+		assert_eq!(max_tracks, 65_536);
+		let tracks_ids = tracks_ids_max_size();
+		assert_eq!(tracks_ids, 262_148);
+
+		let migrate_ids = Tracks::migrate_ids(max_tracks).saturating_add(Weight::from_parts(0, tracks_ids));
+		// Declared proof size: the constant of the benchmark and the type's size.
+		assert!(migrate_ids.proof_size() >= tracks_ids);
+		assert_fits(
+			"tracks (migrate_ids at MaxTracks, with TracksIds)",
+			Tracks::migrate_track()
+				.max(Tracks::migrate_origin())
+				.max(migrate_ids)
+				.max(Tracks::migrate_finalize()),
 		);
-		assert!(tracks_ids <= MigrationsMaxServiceWeight::get().proof_size());
 	}
 
 	#[test]

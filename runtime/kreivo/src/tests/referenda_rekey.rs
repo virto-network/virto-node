@@ -241,12 +241,10 @@ fn it_fails_only_when_not_even_one_unit_fits_an_empty_meter() {
 	})
 }
 
-// frame-contrib's `integrity_test` of the tracks migration asks for the largest possible origin
-// to fit its 256-byte cursor key (32 + 16 + the origin). Kreivo's `PalletsOrigin` is larger than
-// that (XCM and the governance origins), so it does not hold: this is reported, not silenced. What
-// the migration actually walks is `OriginToTrackId` of community origins, which do fit.
+// frame-contrib's `integrity_test` of the tracks migration asks the largest possible origin to fit
+// the cursor key (32 + 16 + the origin). Kreivo's `PalletsOrigin` is 604 bytes at most, and the cursor
+// key holds 1 024 since frame-contrib #160, so it holds (it did not at the 256 bytes of a86ebf0).
 #[test]
-#[ignore = "fails by design of the check: the largest `PalletsOrigin` exceeds the cursor, see the test below"]
 fn the_tracks_migration_integrity_test_holds() {
 	pallet_referenda_tracks::migration::MigrateV0ToV1::<
 		Runtime,
