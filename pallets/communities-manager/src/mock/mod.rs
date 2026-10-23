@@ -167,6 +167,7 @@ impl pallet_referenda_tracks::Config for Test {
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureNever<AccountId>>;
 	type GroupManagerCreateOrigin = EnsureNeverGroup;
 	type GroupManagerOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
+	type RemoveOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
 	type RemoveGroupOrigin = AsEnsureOriginWithArg<EnsureRoot<AccountId>>;
 	type WeightInfo = ();
 	#[cfg(feature = "runtime-benchmarks")]
