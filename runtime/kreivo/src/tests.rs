@@ -22,6 +22,7 @@ mod kreivo_apis;
 mod listings;
 mod memberships_migration;
 mod multi_block_migrations;
+mod pass_deposits;
 mod pass_migration;
 #[cfg(feature = "runtime-benchmarks")]
 mod payments_orders;
@@ -251,6 +252,25 @@ mod pass {
 			}),
 			device_id,
 		)
+	}
+
+	/// Builds a valid `SubstrateKey` credential, as the `PassAuthenticate` transaction extension
+	/// would carry it. `xtc` is the extrinsic context the challenge is bound to.
+	pub fn credential(user_id: HashedUserId, seed: [u8; 32], xtc: &[u8]) -> crate::config::system::PassCredential {
+		let pair = sr25519::Pair::from_seed(&seed);
+		let context: BlockNumber = System::block_number();
+		let message = SignedMessage {
+			context,
+			challenge: KreivoChallenger::generate(&context, &xtc),
+			authority_id: AuthorityFromPalletId::<PassPalletId>::get(),
+		};
+		let signature = MultiSignature::Sr25519(pair.sign(message.message().as_ref()));
+
+		crate::config::system::PassCredential::SubstrateKey(pass_substrate_keys::KeySignature {
+			user_id,
+			message,
+			signature,
+		})
 	}
 
 	/// The address `pallet_pass` derives for a given user id.
