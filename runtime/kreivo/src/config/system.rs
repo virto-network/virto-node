@@ -415,6 +415,9 @@ impl pallet_pass::Config for Runtime {
 	// `ScaleCallMatcher` reads only the outer call's first two bytes, so a device allowed `Utility.batch`,
 	// `Proxy.proxy`, `Multisig`, `Scheduler` or `dispatch_as` can wrap any forbidden call.
 	type CallMatcher = pallet_pass::ScaleCallMatcher;
+	// How deep and how wide a transaction of a restricted device or session key may nest wrapper calls.
+	type MaxNestedCallDepth = ConstU32<4>;
+	type MaxNestedCalls = ConstU32<64>;
 	type MaxFilteredCalls = ConstU32<32>;
 	type MaxFilteredAssets = ConstU32<8>;
 	// Existing integrators keep `add_session_key` until they move to `add_session_key_with_filter`.
