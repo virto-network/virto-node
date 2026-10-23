@@ -411,10 +411,8 @@ impl pallet_pass::Config for Runtime {
 	type MaxSessionsPerAccount = ConstU32<10>;
 	// Provisional: frame-contrib's kitchensink values.
 	type SpendMatcher = ();
-	// TODO(W6): replace with a matcher that flattens nested calls (design pending, owner). Interim:
-	// `ScaleCallMatcher` reads only the outer call's first two bytes, so a device allowed `Utility.batch`,
-	// `Proxy.proxy`, `Multisig`, `Scheduler` or `dispatch_as` can wrap any forbidden call.
-	type CallMatcher = pallet_pass::ScaleCallMatcher;
+	// Sees through the wrappers of the runtime (`Utility`, `Proxy`, `Multisig`, `Scheduler`, ...).
+	type CallMatcher = call_matcher::KreivoCallMatcher;
 	// How deep and how wide a transaction of a restricted device or session key may nest wrapper calls.
 	type MaxNestedCallDepth = ConstU32<4>;
 	type MaxNestedCalls = ConstU32<64>;

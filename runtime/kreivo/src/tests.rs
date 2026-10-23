@@ -14,6 +14,7 @@ use sp_io::TestExternalities;
 use sp_runtime::{traits::StaticLookup, BoundedVec};
 use xcm_executor::{WeighedMessage, XcmExecutor};
 
+mod call_matcher_completeness;
 #[cfg(feature = "runtime-benchmarks")]
 mod community_tracks;
 mod deposit_values;
@@ -24,6 +25,7 @@ mod memberships_migration;
 mod multi_block_migrations;
 mod pass_deposits;
 mod pass_migration;
+mod pass_nested_calls;
 #[cfg(feature = "runtime-benchmarks")]
 mod payments_orders;
 mod referenda_rekey;
